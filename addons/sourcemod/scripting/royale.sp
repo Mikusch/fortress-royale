@@ -30,10 +30,10 @@ public void OnPluginEnd()
 
 public void OnClientPutInServer(int client)
 {
-	SDKHook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
+	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 }
 
-public bool Entity_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
+public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
 {
 	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
 		return true;

@@ -15,7 +15,7 @@ void SDK_Init()
 
 public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
 {
-	//In friendly fire we only want to return true if both entity has same owner
+	//In friendly fire we only want to return true if both entity owner is the same
 	
 	if (DHookIsNullParam(params, 1))
 	{
