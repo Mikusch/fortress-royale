@@ -45,6 +45,8 @@ public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmas
 		return true;
 	
 	return originalResult;
+}
+
 public void Pipebomb_Touch(int entity, int other)
 {
 	//This function have team check, change grenade pipe to enemy team
