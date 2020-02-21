@@ -59,4 +59,8 @@ public void Pipebomb_Touch(int entity, int other)
 	TF2_ChangeTeam(entity, team);
 }
 
+public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
+{
+	result = TF2_IsObjectFriendly(teleporter, client);
+	return Plugin_Changed;
 }

@@ -10,6 +10,18 @@
 				"linux"		"@_ZNK11CBaseEntity10InSameTeamEPKS_"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x57\x8B\xF9\x85\xC0\x75\x2A"
 			}
+			"CObjectSentrygun::ValidTargetPlayer"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CObjectSentrygun17ValidTargetPlayerEP9CTFPlayerRK6VectorS4_"
+				"windows"	"\x55\x8B\xEC\x51\x53\x8B\x5D\x08\x57\x89\x4D\xFC"
+			}
+			"CObjectDispenser::CouldHealTarget"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CObjectDispenser15CouldHealTargetEP11CBaseEntity"
+				"windows"	"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x8B\x87\x10\x01\x00\x00"
+			}
 		}
 		"Functions"
 		{
@@ -22,6 +34,42 @@
 				"arguments"
 				{
 					"pEntity"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CObjectSentrygun::ValidTargetPlayer"
+			{
+				"signature"	"CObjectSentrygun::ValidTargetPlayer"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pPlayer"
+					{
+						"type"	"cbaseentity"
+					}
+					"vecStart"
+					{
+						"type"	"vectorptr"
+					}
+					"vecEnd"
+					{
+						"type"	"vectorptr"
+					}
+				}
+			}
+			"CObjectDispenser::CouldHealTarget"
+			{
+				"signature"	"CObjectDispenser::CouldHealTarget"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pTarget"
 					{
 						"type"	"cbaseentity"
 					}

@@ -8,11 +8,30 @@ stock int GetOwnerLoop(int entity)
 		return entity;
 }
 
-stock void TF2_SwapClientTeam(int client)
+stock void TF2_ChangeTeam(int client, TFTeam team)
 {
-	switch (TF2_GetClientTeam(client))
+	SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(team));
+}
+
+stock TFTeam TF2_GetEnemyTeam(int entity)
+{
+	TFTeam team = view_as<TFTeam>(GetEntProp(entity, Prop_Send, "m_iTeamNum"));
+	
+	switch (team)
 	{
-		case TFTeam_Red: SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(TFTeam_Blue));
-		case TFTeam_Blue: SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(TFTeam_Red));
+		case TFTeam_Red: return TFTeam_Blue;
+		case TFTeam_Blue: return TFTeam_Red;
+		default: return team;
 	}
+}
+
+stock bool TF2_IsObjectFriendly(int obj, int client)
+{
+	if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == client)
+		return true;
+	
+	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_nDisguiseClass")) == TFClass_Engineer)
+		return true;
+	
+	return false;
 }
