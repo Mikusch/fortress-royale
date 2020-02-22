@@ -37,6 +37,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "tf_projectile_pipe"))
 		SDKHook(entity, SDKHook_Touch, Pipebomb_Touch);
+	else if (StrContains(classname, "tf_weapon_sniperrifle") == 0 || StrEqual(classname, "tf_weapon_knife"))
+		SDK_HookPrimaryAttack(entity);
 }
 
 public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)

@@ -1,3 +1,8 @@
+static Handle g_DHookPrimaryAttack;
+
+static int g_PrimaryAttackClient;
+static TFTeam g_PrimaryAttackTeam;
+
 void SDK_Init()
 {
 	GameData gamedata = new GameData("royale");
@@ -7,6 +12,10 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeam, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPlayer, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
+	
+	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
+	
+	delete gamedata;
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -28,6 +37,21 @@ static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallba
 		
 		delete detour;
 	}
+}
+
+static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
+{
+	Handle hook = DHookCreateFromConf(gamedata, name);
+	if (!hook)
+		LogError("Failed to create detour: %s", name);
+	
+	return hook;
+}
+
+void SDK_HookPrimaryAttack(int weapon)
+{
+	DHookEntity(g_DHookPrimaryAttack, false, weapon, _, DHook_PrimaryAttackPre);
+	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
 }
 
 public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
@@ -71,4 +95,21 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hP
 	}
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_PrimaryAttackPre(int weapon)
+{
+	//This weapon may not work for teammate, swap client team
+	
+	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
+	TF2_ChangeTeam(g_PrimaryAttackClient, TF2_GetEnemyTeam(g_PrimaryAttackClient));
+}
+
+public MRESReturn DHook_PrimaryAttackPost(int weapon)
+{
+	//DHook bug with Pre and Post giving incorrect 'weapon' entity for post,
+	//Set team back to what it was
+	
+	TF2_ChangeTeam(g_PrimaryAttackClient, g_PrimaryAttackTeam);
 }
