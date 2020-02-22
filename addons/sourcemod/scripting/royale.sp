@@ -30,6 +30,7 @@ public void OnPluginEnd()
 
 public void OnClientPutInServer(int client)
 {
+	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 }
 
@@ -41,6 +42,27 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDK_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
 		SDK_HookFlamethrower(entity);
+}
+
+public Action Client_SetTransmit(int entity, int client)
+{
+	//Don't allow teammates see invis spy
+	
+	if (entity == client
+		|| TF2_GetClientTeam(client) <= TFTeam_Spectator
+		|| TF2_IsPlayerInCondition(entity, TFCond_Bleeding)
+		|| TF2_IsPlayerInCondition(entity, TFCond_Jarated)
+		|| TF2_IsPlayerInCondition(entity, TFCond_Milked)
+		|| TF2_IsPlayerInCondition(entity, TFCond_OnFire)
+		|| TF2_IsPlayerInCondition(entity, TFCond_Gas))
+	{
+		return Plugin_Continue;
+	}
+	
+	if (TF2_GetPercentInvisible(entity) >= 1.0)
+		return Plugin_Handled;
+	
+	return Plugin_Continue;
 }
 
 public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
