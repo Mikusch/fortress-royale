@@ -30,6 +30,16 @@
 				"linux"		"285"
 				"windows"	"279"
 			}
+			"CTFWeaponBase::DeflectPlayer"
+			{
+				"linux"		"419"
+				"windows"	"412"
+			}
+			"CTFWeaponBase::DeflectEntity"
+			{
+				"linux"		"420"
+				"windows"	"413"
+			}
 		}
 		"Functions"
 		{
@@ -62,10 +72,12 @@
 					"vecStart"
 					{
 						"type"	"vectorptr"
+						"flags"	"byref"
 					}
 					"vecEnd"
 					{
 						"type"	"vectorptr"
+						"flags"	"byref"
 					}
 				}
 			}
@@ -89,6 +101,52 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"CTFWeaponBase::DeflectPlayer"
+			{
+				"offset"	"CTFWeaponBase::DeflectPlayer"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pVictim"
+					{
+						"type"	"cbaseentity"
+					}
+					"pAttacker"
+					{
+						"type"	"cbaseentity"
+					}
+					"vecDir"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+				}
+			}
+			"CTFWeaponBase::DeflectEntity"
+			{
+				"offset"	"CTFWeaponBase::DeflectEntity"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pEntity"
+					{
+						"type"	"cbaseentity"
+					}
+					"pAttacker"
+					{
+						"type"	"cbaseentity"
+					}
+					"vecDir"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+				}
 			}
 		}
 	}

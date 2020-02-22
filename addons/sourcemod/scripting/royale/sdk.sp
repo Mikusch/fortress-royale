@@ -1,4 +1,6 @@
 static Handle g_DHookPrimaryAttack;
+static Handle g_DHookDeflectPlayer;
+static Handle g_DHookDeflectEntity;
 
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
@@ -14,6 +16,8 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
+	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
+	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
 	
 	delete gamedata;
 }
@@ -52,6 +56,14 @@ void SDK_HookPrimaryAttack(int weapon)
 {
 	DHookEntity(g_DHookPrimaryAttack, false, weapon, _, DHook_PrimaryAttackPre);
 	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
+}
+
+void SDK_HookFlamethrower(int weapon)
+{
+	DHookEntity(g_DHookDeflectPlayer, false, weapon, _, DHook_DeflectPre);
+	DHookEntity(g_DHookDeflectPlayer, true, weapon, _, DHook_DeflectPost);
+	DHookEntity(g_DHookDeflectEntity, false, weapon, _, DHook_DeflectPre);
+	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
 }
 
 public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
@@ -112,4 +124,16 @@ public MRESReturn DHook_PrimaryAttackPost(int weapon)
 	//Set team back to what it was
 	
 	TF2_ChangeTeam(g_PrimaryAttackClient, g_PrimaryAttackTeam);
+}
+
+public MRESReturn DHook_DeflectPre(int weapon, Handle params)
+{
+	//Allow airblast teamates, change attacker team to victim/entity's enemy team
+	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetEnemyTeam(DHookGetParam(params, 1)));
+}
+
+public MRESReturn DHook_DeflectPost(int weapon, Handle params)
+{
+	//Change attacker team back to what it was, using flamethrower weapon team
+	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetTeam(weapon));
 }

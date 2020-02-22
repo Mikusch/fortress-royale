@@ -13,6 +13,11 @@ stock void TF2_ChangeTeam(int client, TFTeam team)
 	SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(team));
 }
 
+stock TFTeam TF2_GetTeam(int entity)
+{
+	return view_as<TFTeam>(GetEntProp(entity, Prop_Send, "m_iTeamNum"));
+}
+
 stock TFTeam TF2_GetEnemyTeam(int entity)
 {
 	TFTeam team = view_as<TFTeam>(GetEntProp(entity, Prop_Send, "m_iTeamNum"));
