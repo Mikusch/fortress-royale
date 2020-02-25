@@ -111,11 +111,11 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hP
 
 public MRESReturn DHook_PrimaryAttackPre(int weapon)
 {
-	//This weapon may not work for teammate, swap client team
+	//This weapon may not work for teammate, set team to spectator so he can deal damage to both red and blue
 	
 	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
-	TF2_ChangeTeam(g_PrimaryAttackClient, TF2_GetEnemyTeam(g_PrimaryAttackClient));
+	TF2_ChangeTeam(g_PrimaryAttackClient, TFTeam_Spectator);
 }
 
 public MRESReturn DHook_PrimaryAttackPost(int weapon)
