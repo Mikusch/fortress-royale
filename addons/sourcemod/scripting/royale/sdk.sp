@@ -5,6 +5,8 @@ static Handle g_DHookDeflectEntity;
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
 
+static int g_CreateRuneOffset;
+
 void SDK_Init()
 {
 	GameData gamedata = new GameData("royale");
@@ -18,6 +20,8 @@ void SDK_Init()
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
+	
+	g_CreateRuneOffset = gamedata.GetOffset("TF2_CreateRune");
 	
 	delete gamedata;
 }
@@ -136,4 +140,9 @@ public MRESReturn DHook_DeflectPost(int weapon, Handle params)
 {
 	//Change attacker team back to what it was, using flamethrower weapon team
 	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetTeam(weapon));
+}
+
+public Address GameData_GetCreateRuneOffset()
+{
+	return view_as<Address>(g_CreateRuneOffset);
 }

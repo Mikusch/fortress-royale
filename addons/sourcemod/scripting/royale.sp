@@ -13,6 +13,23 @@
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
+// TF2 Mannpower Powerups
+enum TFRune
+{
+	TFRune_Strength = 0, 
+	TFRune_Haste, 
+	TFRune_Regen, 
+	TFRune_Defense, 
+	TFRune_Vampire, 
+	TFRune_Reflect, 
+	TFRune_Precision, 
+	TFRune_Agility, 
+	TFRune_Knockout, 
+	TFRune_King, 
+	TFRune_Plague, 
+	TFRune_Supernova
+}
+
 bool g_IsRoundActive;
 
 #include "royale/stocks.sp"
