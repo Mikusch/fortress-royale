@@ -6,10 +6,6 @@
 
 #define TF_MAXPLAYERS	32
 
-#define TARGETNAME_BATTLEBUS_TRACK_DEST		"fr_battlebus_path_dest"
-#define TARGETNAME_BATTLEBUS_PROP			"fr_battlebus_prop"
-#define TARGETNAME_BATTLEBUS_DROP_DEST		"fr_battlebus_drop_dest"
-
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
@@ -39,6 +35,18 @@ enum
 	LifeState_Dead = 2
 }
 
+enum SolidType_t
+{
+	SOLID_NONE			= 0,	// no solid model
+	SOLID_BSP			= 1,	// a BSP tree
+	SOLID_BBOX			= 2,	// an AABB
+	SOLID_OBB			= 3,	// an OBB (not implemented yet)
+	SOLID_OBB_YAW		= 4,	// an OBB, constrained so that it can only yaw
+	SOLID_CUSTOM		= 5,	// Always call into the entity for tests
+	SOLID_VPHYSICS		= 6,	// solid vphysics object, get vcollide from the model and collide with that
+	SOLID_LAST,
+};
+
 bool g_IsRoundActive;
 
 #include "royale/player.sp"
@@ -52,6 +60,7 @@ bool g_IsRoundActive;
 
 public void OnPluginStart()
 {
+	BattleBus_Init();
 	Console_Init();
 	ConVar_Init();
 	Event_Init();
@@ -84,16 +93,16 @@ public void OnClientPutInServer(int client)
 	BattleBus_SpectateBus(client);
 }
 
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
+{
+	if (FRPlayer(client).InBattleBus && buttons & IN_JUMP)
+		BattleBus_EjectClient(client);
+}
+
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "tf_projectile_pipe"))
 		SDKHook(entity, SDKHook_Touch, Pipebomb_Touch);
-	else if (StrEqual(classname, "path_track"))
-		SDKHook(entity, SDKHook_Spawn, PathTrack_Spawn);
-	else if (StrEqual(classname, "prop_dynamic_override"))
-		SDKHook(entity, SDKHook_Spawn, PropDynamicOverride_Spawn);
-	else if (StrEqual(classname, "info_teleport_destination"))
-		SDKHook(entity, SDKHook_Spawn, InfoTeleportDestination_Spawn);
 	else if (StrContains(classname, "tf_weapon_sniperrifle") == 0 || StrEqual(classname, "tf_weapon_knife"))
 		SDK_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
@@ -141,30 +150,6 @@ public void Pipebomb_Touch(int entity, int other)
 		return;
 	
 	TF2_ChangeTeam(entity, team);
-}
-
-public void PathTrack_Spawn(int entity)
-{
-	char targetname[PLATFORM_MAX_PATH];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-	if (StrEqual(targetname, TARGETNAME_BATTLEBUS_TRACK_DEST))
-		BattleBus_OnDestPathTrackSpawn(entity);
-}
-
-public void PropDynamicOverride_Spawn(int entity)
-{
-	char targetname[PLATFORM_MAX_PATH];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-	if (StrEqual(targetname, TARGETNAME_BATTLEBUS_PROP))
-		BattleBus_OnPropSpawn(entity);
-}
-
-public void InfoTeleportDestination_Spawn(int entity)
-{
-	char targetname[PLATFORM_MAX_PATH];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-	if (StrEqual(targetname, TARGETNAME_BATTLEBUS_DROP_DEST))
-		BattleBus_OnDropDestinationSpawn(entity);
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)

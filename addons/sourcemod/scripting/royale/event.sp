@@ -1,14 +1,22 @@
 void Event_Init()
 {
+	HookEvent("teamplay_round_start", Event_RoundStart);
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("arena_win_panel", Event_ArenaWinPanel);
 	HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("player_death", Event_PlayerDeath);
 }
 
+public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+	BattleBus_NewPos();
+	BattleBus_SpawnProp();
+}
+
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	g_IsRoundActive = true;
+	BattleBus_SpawnProp();
 }
 
 public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
