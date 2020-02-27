@@ -13,6 +13,9 @@
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
+const TFTeam TFTeam_Alive = TFTeam_Red;
+const TFTeam TFTeam_Dead = TFTeam_Blue;
+
 // TF2 Mannpower Powerups
 enum TFRune
 {
@@ -30,17 +33,28 @@ enum TFRune
 	TFRune_Supernova
 }
 
+enum
+{
+	LifeState_Alive = 0,
+	LifeState_Dead = 2
+}
+
 bool g_IsRoundActive;
 
-#include "royale/stocks.sp"
 #include "royale/player.sp"
-#include "royale/convar.sp"
-#include "royale/sdk.sp"
+
 #include "royale/battlebus.sp"
+#include "royale/console.sp"
+#include "royale/convar.sp"
+#include "royale/event.sp"
+#include "royale/sdk.sp"
+#include "royale/stocks.sp"
 
 public void OnPluginStart()
 {
+	Console_Init();
 	ConVar_Init();
+	Event_Init();
 	SDK_Init();
 	
 	ConVar_Toggle(true);
@@ -50,19 +64,6 @@ public void OnPluginStart()
 		if (IsClientInGame(client))
 			OnClientPutInServer(client);
 	}
-	
-	HookEvent("arena_round_start", Event_ArenaRoundStart);
-	HookEvent("arena_win_panel", Event_ArenaWinPanel);
-}
-
-public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
-{
-	g_IsRoundActive = true;
-}
-
-public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
-{
-	g_IsRoundActive = false;
 }
 
 public void OnPluginEnd()
