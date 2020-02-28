@@ -49,6 +49,25 @@ enum SolidType_t
 	SOLID_LAST,
 };
 
+enum struct BattleBusConfig
+{
+	char model[PLATFORM_MAX_PATH];
+	int skin;
+	float center[3];
+	float diameter;
+	float time;
+	float height;
+	float cameraOffset[3];
+	float cameraAngles[3];
+}
+
+enum struct MapConfig
+{
+	BattleBusConfig bus;
+	// TODO: Move LootCrate struct into this (perhaps call it CrateConfig?)
+}
+
+MapConfig g_CurrentMapConfig;
 bool g_IsRoundActive;
 
 #include "royale/player.sp"
@@ -63,7 +82,6 @@ bool g_IsRoundActive;
 
 public void OnPluginStart()
 {
-	BattleBus_Init();
 	Console_Init();
 	ConVar_Init();
 	Event_Init();
@@ -85,8 +103,10 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
+	Config_Init();
+	
 	BattleBus_Precache();
-	Config_ReadMapConfig();
+	
 	SDK_HookGamerules();
 }
 

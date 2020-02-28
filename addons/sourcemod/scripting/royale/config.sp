@@ -1,35 +1,12 @@
-enum struct BattleBusConfig
-{
-	char model[PLATFORM_MAX_PATH];
-	int skin;
-	float diameter;
-	float time;
-	float height;
-	float cameraOffset[3];
-	float cameraAngles[3];
-}
-
-enum struct MapConfig
-{
-	BattleBusConfig battleBusConfig;
-	// TODO: Move LootCrate struct into this (perhaps call it CrateConfig?)
-}
-
-public void Config_ReadMapConfig()
+public void Config_Init()
 {
 	char mapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(mapName, sizeof(mapName));
-	
-	char nameParts[2][PLATFORM_MAX_PATH];
+	GetMapDisplayName(mapName, mapName, sizeof(mapName));
 	
 	//Split map prefix and first part of its name (e.g. pl_hightower)
+	char nameParts[2][PLATFORM_MAX_PATH];
 	ExplodeString(mapName, "_", nameParts, 2, 32);
-	
-	//Clean up workshop map names
-	if (strncmp("workshop/", nameParts[0], 9) == 0)
-		ReplaceString(nameParts[0], sizeof(nameParts[]), "workshop/", "");
-	else if (strncmp("workshop\\", nameParts[0], 9) == 0)
-		ReplaceString(nameParts[0], sizeof(nameParts[]), "workshop\\", "");
 	
 	//Stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
@@ -43,7 +20,7 @@ public void Config_ReadMapConfig()
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
-		ReadMapConfig(kv);
+		Config_ReadMapConfig(kv);
 	}
 	else
 	{
@@ -53,7 +30,21 @@ public void Config_ReadMapConfig()
 	delete kv;
 } 
 
-void ReadMapConfig(KeyValues kv)
+void Config_ReadMapConfig(KeyValues kv)
 {
-	// TODO: I'm lazy ok :(
+	if (kv.JumpToKey("BattleBus", false))
+	{
+		BattleBusConfig busConfig;
+		
+		kv.GetString("model", busConfig.model, sizeof(busConfig.model), "models/props_soho/bus001.mdl");
+		busConfig.skin = kv.GetNum("skin");
+		kv.GetVector("center", busConfig.center);
+		busConfig.diameter = kv.GetFloat("diameter");
+		busConfig.time = kv.GetFloat("time");
+		busConfig.height = kv.GetFloat("height");
+		kv.GetVector("camera_offset", busConfig.cameraOffset);
+		kv.GetVector("camera_angles", busConfig.cameraAngles);
+		
+		g_CurrentMapConfig.bus = busConfig;
+	}
 }

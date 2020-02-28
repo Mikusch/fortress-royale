@@ -37,34 +37,9 @@ static float g_BattleBusEjectOffset[][3] = {
 
 static char g_BattleBusClientDropSound[] = ")mvm/mvm_tele_deliver.wav";
 
-static char g_BattleBusModel[PLATFORM_MAX_PATH];
-static float g_BattleBusCameraOffset[3];	//Camera offset from bus prop origin
-static float g_BattleBusCameraAngles[3];	//Camera angle
-
-static float g_BattleBusCentre[3];	//Centre of the map
-static float g_BattleBusLength;		//Diameter of the map
-static float g_BattleBusTime;		//How long it takes to go from starting position to end position
-
 static float g_BattleBusOrigin[3];	//Bus starting origin
 static float g_BattleBusAngles[3];	//Bus starting angles
 static float g_BattleBusVel[3];		//Bus starting vel
-
-void BattleBus_Init()
-{
-	//TODO move all of this to config
-	g_BattleBusModel = "models/props_soho/bus001.mdl";
-	
-	g_BattleBusCameraOffset[0] = -128.0;
-	g_BattleBusCameraOffset[1] = -320.0;
-	g_BattleBusCameraOffset[2] = 384.0;
-	
-	g_BattleBusCameraAngles[0] = 75.0;
-	g_BattleBusCameraAngles[1] = 15.0;
-	
-	g_BattleBusCentre[2] = 4096.0;
-	g_BattleBusLength = 10000.0;
-	g_BattleBusTime = 20.0;
-}
 
 void BattleBus_Precache()
 {
@@ -80,7 +55,7 @@ void BattleBus_Precache()
 	
 	PrecacheSound(g_BattleBusClientDropSound);
 	
-	PrecacheModel(g_BattleBusModel);
+	PrecacheModel(g_CurrentMapConfig.bus.model);
 }
 
 void BattleBus_NewPos()
@@ -93,12 +68,12 @@ void BattleBus_NewPos()
 	else
 		g_BattleBusAngles[1] = angleDirection + 180.0;
 	
-	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * g_BattleBusLength / 2.0) + g_BattleBusCentre[0];
-	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_BattleBusLength / 2.0) + g_BattleBusCentre[1];
-	g_BattleBusOrigin[2] = g_BattleBusCentre[2];
+	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / 2.0) + g_CurrentMapConfig.bus.center[0];
+	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / 2.0) + g_CurrentMapConfig.bus.center[1];
+	g_BattleBusOrigin[2] = g_CurrentMapConfig.bus.center[2];
 	
-	g_BattleBusVel[0] = -Cosine(DegToRad(angleDirection)) * g_BattleBusLength / g_BattleBusTime;
-	g_BattleBusVel[1] = -Sine(DegToRad(angleDirection)) * g_BattleBusLength / g_BattleBusTime;
+	g_BattleBusVel[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / g_CurrentMapConfig.bus.time;
+	g_BattleBusVel[1] = -Sine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / g_CurrentMapConfig.bus.time;
 	
 	//Check if it safe to go this path with nothing in the way
 	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_SOLID, RayType_Infinite);
@@ -112,7 +87,7 @@ void BattleBus_NewPos()
 		//TE_SendToAll();
 		
 		//Something is in the way, try agian find new path
-		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_BattleBusLength)
+		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentMapConfig.bus.diameter)
 			BattleBus_NewPos();
 	}
 		
@@ -126,7 +101,7 @@ void BattleBus_SpawnProp()
 		return;
 	
 	DispatchSpawn(bus);
-	SetEntityModel(bus, g_BattleBusModel);
+	SetEntityModel(bus, g_CurrentMapConfig.bus.model);
 	g_BattleBusPropRef = EntIndexToEntRef(bus);
 	
 	SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
@@ -139,7 +114,7 @@ void BattleBus_SpawnProp()
 	DispatchSpawn(camera);
 	g_BattleBusCameraRef = EntIndexToEntRef(camera);
 	
-	TeleportEntity(camera, g_BattleBusCameraOffset, g_BattleBusCameraAngles, NULL_VECTOR);
+	TeleportEntity(camera, g_CurrentMapConfig.bus.cameraOffset, g_CurrentMapConfig.bus.cameraAngles, NULL_VECTOR);
 	
 	SetVariantString("!activator");
 	AcceptEntityInput(camera, "SetParent", bus, bus);
@@ -147,7 +122,7 @@ void BattleBus_SpawnProp()
 	//Teleport bus after camera, so camera can follow where bus is teleporting
 	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVel);
 	
-	g_BattleBusEndTimer = CreateTimer(g_BattleBusTime, BattleBus_EndProp);
+	g_BattleBusEndTimer = CreateTimer(g_CurrentMapConfig.bus.time, BattleBus_EndProp);
 }
 
 public Action BattleBus_EndProp(Handle timer)
