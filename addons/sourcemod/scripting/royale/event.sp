@@ -18,7 +18,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-//	g_IsRoundActive = true;
+	g_IsRoundActive = true;
 	BattleBus_SpawnProp();
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -30,7 +30,7 @@ public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBro
 
 public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
 {
-//	g_IsRoundActive = false;
+	g_IsRoundActive = false;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -40,6 +40,13 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	TFTeam team = TF2_GetClientTeam(client);
 	if (team <= TFTeam_Spectator)
 		return;
+	
+	if (g_IsRoundActive)
+	{
+		//Latespawn
+		ForcePlayerSuicide(client);
+		return;
+	}
 	
 	if (team == TFTeam_Dead)
 	{

@@ -49,7 +49,7 @@ enum SolidType_t
 	SOLID_LAST,
 };
 
-//bool g_IsRoundActive;
+bool g_IsRoundActive;
 
 #include "royale/player.sp"
 
