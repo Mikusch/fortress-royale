@@ -8,6 +8,19 @@ stock int GetOwnerLoop(int entity)
 		return entity;
 }
 
+stock int GetAlivePlayersCount()
+{
+	int count = 0;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && IsPlayerAlive(client))
+			count++;
+	}
+	
+	return count;
+}
+
 stock void TF2_ChangeTeam(int client, TFTeam team)
 {
 	SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(team));

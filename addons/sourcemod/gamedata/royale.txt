@@ -25,6 +25,11 @@
 		}
 		"Offsets"
 		{
+			"CTFGameRules::SetWinningTeam"
+			{
+				"linux"		"161"
+				"windows"	"160"
+			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
 				"linux"		"285"
@@ -97,6 +102,40 @@
 					"pTarget"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFGameRules::SetWinningTeam"
+			{
+				"offset"	"CTFGameRules::SetWinningTeam"
+				"hooktype"	"gamerules"
+				"return"	"void"
+				"this"		"ignore"
+				"arguments"
+				{
+					"team"
+					{
+						"type"	"int"
+					}
+					"iWinReason"
+					{
+						"type"	"int"
+					}
+					"bForceMapReset"
+					{
+						"type"	"bool"
+					}
+					"bSwitchTeams"
+					{
+						"type"	"bool"
+					}
+					"bDontAddScore"
+					{
+						"type"	"bool"
+					}
+					"bFinal"
+					{
+						"type"	"bool"
 					}
 				}
 			}

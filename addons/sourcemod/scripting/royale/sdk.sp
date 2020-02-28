@@ -1,3 +1,4 @@
+static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
 static Handle g_DHookDeflectEntity;
@@ -17,6 +18,7 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPlayer, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	
+	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
@@ -54,6 +56,11 @@ static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
 		LogError("Failed to create detour: %s", name);
 	
 	return hook;
+}
+
+void SDK_HookGamerules()
+{
+	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeam);
 }
 
 void SDK_HookPrimaryAttack(int weapon)
@@ -120,6 +127,15 @@ public MRESReturn DHook_PrimaryAttackPre(int weapon)
 	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
 	TF2_ChangeTeam(g_PrimaryAttackClient, TFTeam_Spectator);
+}
+
+public MRESReturn DHook_SetWinningTeam(Handle params)
+{
+	//Prevent round win if atleast 2 players alive
+	if (GetAlivePlayersCount() >= 2)
+		return MRES_Supercede;
+	
+	return MRES_Ignored;
 }
 
 public MRESReturn DHook_PrimaryAttackPost(int weapon)

@@ -85,6 +85,7 @@ public void OnPluginEnd()
 public void OnMapStart()
 {
 	BattleBus_Precache();
+	SDK_HookGamerules();
 }
 
 public void OnClientPutInServer(int client)
