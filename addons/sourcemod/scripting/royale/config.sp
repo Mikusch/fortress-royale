@@ -1,4 +1,4 @@
-public void Config_Init()
+public void Config_Refresh()
 {
 	char mapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(mapName, sizeof(mapName));
@@ -45,6 +45,6 @@ void Config_ReadMapConfig(KeyValues kv)
 		kv.GetVector("camera_offset", busConfig.cameraOffset);
 		kv.GetVector("camera_angles", busConfig.cameraAngles);
 		
-		g_CurrentMapConfig.bus = busConfig;
+		g_CurrentBattleBusConfig = busConfig;
 	}
 }

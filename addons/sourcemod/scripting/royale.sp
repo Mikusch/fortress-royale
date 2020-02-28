@@ -60,14 +60,15 @@ enum struct BattleBusConfig
 	float cameraOffset[3];
 	float cameraAngles[3];
 }
-
+/*
 enum struct MapConfig
 {
-	BattleBusConfig bus;
 	// TODO: Move LootCrate struct into this (perhaps call it CrateConfig?)
 }
+*/
+BattleBusConfig g_CurrentBattleBusConfig;
+//MapConfig g_CurrentMapConfig;
 
-MapConfig g_CurrentMapConfig;
 bool g_IsRoundActive;
 
 #include "royale/player.sp"
@@ -103,7 +104,7 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
-	Config_Init();
+	Config_Refresh();
 	
 	BattleBus_Precache();
 	

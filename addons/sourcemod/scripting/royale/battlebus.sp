@@ -55,7 +55,7 @@ void BattleBus_Precache()
 	
 	PrecacheSound(g_BattleBusClientDropSound);
 	
-	PrecacheModel(g_CurrentMapConfig.bus.model);
+	PrecacheModel(g_CurrentBattleBusConfig.model);
 }
 
 void BattleBus_NewPos()
@@ -71,12 +71,12 @@ void BattleBus_NewPos()
 	else
 		g_BattleBusAngles[1] = angleDirection + 180.0;
 	
-	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / 2.0) + g_CurrentMapConfig.bus.center[0];
-	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / 2.0) + g_CurrentMapConfig.bus.center[1];
-	g_BattleBusOrigin[2] = g_CurrentMapConfig.bus.center[2];
+	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / 2.0) + g_CurrentBattleBusConfig.center[0];
+	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / 2.0) + g_CurrentBattleBusConfig.center[1];
+	g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.center[2];
 	
-	g_BattleBusVel[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / g_CurrentMapConfig.bus.time;
-	g_BattleBusVel[1] = -Sine(DegToRad(angleDirection)) * g_CurrentMapConfig.bus.diameter / g_CurrentMapConfig.bus.time;
+	g_BattleBusVel[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
+	g_BattleBusVel[1] = -Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
 	
 	//Check if it safe to go this path with nothing in the way
 	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_SOLID, RayType_Infinite);
@@ -90,7 +90,7 @@ void BattleBus_NewPos()
 		//TE_SendToAll();
 		
 		//Something is in the way, try agian find new path
-		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentMapConfig.bus.diameter)
+		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentBattleBusConfig.diameter)
 			BattleBus_NewPos();
 	}
 		
@@ -104,7 +104,7 @@ void BattleBus_SpawnProp()
 		return;
 	
 	DispatchSpawn(bus);
-	SetEntityModel(bus, g_CurrentMapConfig.bus.model);
+	SetEntityModel(bus, g_CurrentBattleBusConfig.model);
 	g_BattleBusPropRef = EntIndexToEntRef(bus);
 	
 	SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
@@ -117,7 +117,7 @@ void BattleBus_SpawnProp()
 	DispatchSpawn(camera);
 	g_BattleBusCameraRef = EntIndexToEntRef(camera);
 	
-	TeleportEntity(camera, g_CurrentMapConfig.bus.cameraOffset, g_CurrentMapConfig.bus.cameraAngles, NULL_VECTOR);
+	TeleportEntity(camera, g_CurrentBattleBusConfig.cameraOffset, g_CurrentBattleBusConfig.cameraAngles, NULL_VECTOR);
 	
 	SetVariantString("!activator");
 	AcceptEntityInput(camera, "SetParent", bus, bus);
@@ -125,7 +125,7 @@ void BattleBus_SpawnProp()
 	//Teleport bus after camera, so camera can follow where bus is teleporting
 	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVel);
 	
-	g_BattleBusEndTimer = CreateTimer(g_CurrentMapConfig.bus.time, BattleBus_EndProp);
+	g_BattleBusEndTimer = CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndProp);
 }
 
 public Action BattleBus_EndProp(Handle timer)
