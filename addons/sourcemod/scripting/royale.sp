@@ -114,8 +114,6 @@ public void OnClientPutInServer(int client)
 {
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
-	
-	BattleBus_SpectateBus(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])

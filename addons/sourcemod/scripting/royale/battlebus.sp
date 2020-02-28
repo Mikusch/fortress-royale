@@ -60,6 +60,9 @@ void BattleBus_Precache()
 
 void BattleBus_NewPos()
 {
+	g_BattleBusPropRef = INVALID_ENT_REFERENCE;
+	g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
+	
 	//Create new pos to spawn bus for this round
 	float angleDirection = GetRandomFloat(0.0, 360.0);
 	
@@ -138,7 +141,8 @@ public Action BattleBus_EndProp(Handle timer)
 	}
 	
 	// Destroy prop
-	RemoveEntity(g_BattleBusPropRef);
+	if (g_BattleBusPropRef != INVALID_ENT_REFERENCE)
+		RemoveEntity(g_BattleBusPropRef);
 }
 
 void BattleBus_SpectateBus(int client)
@@ -159,6 +163,9 @@ public void RequestFrame_EjectClient(int serial)
 
 void BattleBus_EjectClient(int client)
 {
+	if (g_BattleBusPropRef == INVALID_ENT_REFERENCE)
+		return;
+	
 	FRPlayer(client).InBattleBus = false;
 	
 	SetClientViewEntity(client, client);
