@@ -22,6 +22,19 @@ static char g_BattleBusHornSounds[][] =  {
 	")ambient_mp3/mvm_warehouse/car_horn_05.mp3"
 };
 
+//Eject offsets to pick one at random
+static float g_BattleBusEjectOffset[][3] = {
+	{-128.0, -128.0, 0.0},
+	{-128.0, 0.0, 0.0},
+	{-128.0, 128.0, 0.0},
+	{0.0, -128.0, 0.0},
+	{0.0, 0.0, 0.0},
+	{0.0, 128.0, 0.0},
+	{128.0, -128.0, 0.0},
+	{128.0, 0.0, 0.0},
+	{128.0, 128.0, 0.0}
+}
+
 static char g_BattleBusClientDropSound[] = ")mvm/mvm_tele_deliver.wav";
 
 static char g_BattleBusModel[PLATFORM_MAX_PATH];
@@ -142,11 +155,11 @@ public Action BattleBus_EndProp(Handle timer)
 	if (g_BattleBusEndTimer != timer)
 		return;
 	
-	// Battle bus has reached its destination, eject all players still here
+	// Battle bus has reached its destination, eject all players still here a frame later
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && FRPlayer(client).InBattleBus)
-			BattleBus_EjectClient(client);
+			RequestFrame(RequestFrame_EjectClient, GetClientSerial(client));
 	}
 	
 	// Destroy prop
@@ -162,22 +175,76 @@ void BattleBus_SpectateBus(int client)
 	}
 }
 
+public void RequestFrame_EjectClient(int serial)
+{
+	int client = GetClientFromSerial(serial);
+	if (0 < client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
+		BattleBus_EjectClient(client);
+}
+
 void BattleBus_EjectClient(int client)
 {
 	FRPlayer(client).InBattleBus = false;
 	
-	RequestFrame(RequestFrame_DeployParachute, client);
-	
 	SetClientViewEntity(client, client);
 	
-	float origin[3];
-	GetEntPropVector(g_BattleBusPropRef, Prop_Data, "m_vecAbsOrigin", origin);
-	TeleportEntity(client, origin, NULL_VECTOR, NULL_VECTOR);
+	float ejectOrigin[3], busOrigin[3], clientMins[3], clientMaxs[3];
+	GetEntPropVector(g_BattleBusPropRef, Prop_Data, "m_vecAbsOrigin", busOrigin);
+	GetClientMins(client, clientMins);
+	GetClientMaxs(client, clientMaxs);
 	
+	bool found;
+	ejectOrigin = busOrigin;
+	
+	//Randomize list
+	SortCustom2D(g_BattleBusEjectOffset, sizeof(g_BattleBusEjectOffset), SortCustom_Random);
+	
+	do
+	{
+		for (int i = 0; i < sizeof(g_BattleBusEjectOffset); i++)
+		{
+			float searchOrigin[3];
+			AddVectors(ejectOrigin, g_BattleBusEjectOffset[i], searchOrigin);
+			
+			TR_TraceHull(searchOrigin, searchOrigin, clientMins, clientMaxs, MASK_SOLID);
+			if (!TR_DidHit(null))
+			{
+				//Nothing was hit, safe to launch here
+				ejectOrigin = searchOrigin;
+				found = true;
+				break;
+			}
+		}
+		
+		//If still could not be found, try again but higher up
+		if (!found)
+		{
+			float searchOrigin[3]
+			searchOrigin = ejectOrigin;
+			searchOrigin[2] += 128.0;
+			
+			if (TR_PointOutsideWorld(searchOrigin))
+				found = true;	//fuck it
+			else
+				ejectOrigin = searchOrigin;
+		}
+	}
+	while (!found);
+	
+	TeleportEntity(client, ejectOrigin, NULL_VECTOR, NULL_VECTOR);
 	EmitSoundToAll(g_BattleBusClientDropSound, client);
+	
+	RequestFrame(RequestFrame_DeployParachute, GetClientSerial(client));
 }
 
-void RequestFrame_DeployParachute(int client)
+void RequestFrame_DeployParachute(int serial)
 {
-	TF2_AddCondition(client, TFCond_Parachute);
+	int client = GetClientFromSerial(serial);
+	if (0 < client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
+		TF2_AddCondition(client, TFCond_Parachute);
+}
+
+public int SortCustom_Random(int[] elem1, int[] elem2, const int[][] array, Handle hndl)
+{
+	return GetRandomInt(0, 1) ? -1 : 1;
 }
