@@ -21,6 +21,41 @@ stock int GetAlivePlayersCount()
 	return count;
 }
 
+stock bool TF2_CheckTeamClientCount()
+{
+	//Count red and blu players
+	int countAlive = 0;
+	int countDead = 0;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+		{
+			switch (TF2_GetClientTeam(client))
+			{
+				case TFTeam_Alive: countAlive++;
+				case TFTeam_Dead: countDead++;
+			}
+		}
+	}
+	
+	//If there atleast 1 player in alive team, nothing need to be done,
+	// if there only 1 player total in red + blu, we cant fix it
+	if (countAlive || countAlive + countDead < 2)
+		return false;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+		{
+			TF2_ChangeClientTeam(client, TFTeam_Alive);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
 stock void TF2_ChangeTeam(int client, TFTeam team)
 {
 	SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(team));

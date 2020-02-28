@@ -9,6 +9,10 @@ void Event_Init()
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	//Check if there players in red and blu
+	if (TF2_CheckTeamClientCount())
+		return;
+	
 	BattleBus_NewPos();
 }
 

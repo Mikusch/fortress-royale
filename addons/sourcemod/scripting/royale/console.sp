@@ -21,5 +21,8 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 	
 	TF2_ChangeClientTeam(client, TFTeam_Dead);
 	ShowVGUIPanel(client, TF2_GetClientTeam(client) == TFTeam_Blue ? "class_blue" : "class_red");
+	
+	//Check if there even any red players to fix new round
+	TF2_CheckTeamClientCount();
 	return Plugin_Handled;
 }
