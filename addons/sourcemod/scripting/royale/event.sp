@@ -10,18 +10,23 @@ void Event_Init()
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	BattleBus_NewPos();
-	BattleBus_SpawnProp();
 }
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	g_IsRoundActive = true;
+//	g_IsRoundActive = true;
 	BattleBus_SpawnProp();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			BattleBus_SpectateBus(client);
+	}
 }
 
 public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
 {
-	g_IsRoundActive = false;
+//	g_IsRoundActive = false;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)

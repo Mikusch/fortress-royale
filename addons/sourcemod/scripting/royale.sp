@@ -9,6 +9,8 @@
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
+#define MODEL_EMPTY			"models/empty.mdl"
+
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
 
@@ -47,7 +49,7 @@ enum SolidType_t
 	SOLID_LAST,
 };
 
-bool g_IsRoundActive;
+//bool g_IsRoundActive;
 
 #include "royale/player.sp"
 
@@ -95,8 +97,13 @@ public void OnClientPutInServer(int client)
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if (FRPlayer(client).InBattleBus && buttons & IN_JUMP)
-		BattleBus_EjectClient(client);
+	if (FRPlayer(client).InBattleBus)
+	{
+		if (buttons & IN_JUMP)
+			BattleBus_EjectClient(client);
+		else
+			buttons = 0;	//Don't allow client in battle bus process any other buttons
+	}
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
