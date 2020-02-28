@@ -6,7 +6,7 @@ public void Config_Refresh()
 	
 	//Split map prefix and first part of its name (e.g. pl_hightower)
 	char nameParts[2][PLATFORM_MAX_PATH];
-	ExplodeString(mapName, "_", nameParts, 2, 32);
+	ExplodeString(mapName, "_", nameParts, sizeof(nameParts), sizeof(nameParts[]));
 	
 	//Stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
@@ -20,7 +20,7 @@ public void Config_Refresh()
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
-		Config_ReadMapConfig(kv);
+		g_CurrentBattleBusConfig.ReadConfig(kv);
 	}
 	else
 	{
@@ -28,23 +28,4 @@ public void Config_Refresh()
 	}
 	
 	delete kv;
-} 
-
-void Config_ReadMapConfig(KeyValues kv)
-{
-	if (kv.JumpToKey("BattleBus", false))
-	{
-		BattleBusConfig busConfig;
-		
-		kv.GetString("model", busConfig.model, sizeof(busConfig.model), "models/props_soho/bus001.mdl");
-		busConfig.skin = kv.GetNum("skin");
-		kv.GetVector("center", busConfig.center);
-		busConfig.diameter = kv.GetFloat("diameter");
-		busConfig.time = kv.GetFloat("time");
-		busConfig.height = kv.GetFloat("height");
-		kv.GetVector("camera_offset", busConfig.cameraOffset);
-		kv.GetVector("camera_angles", busConfig.cameraAngles);
-		
-		g_CurrentBattleBusConfig = busConfig;
-	}
 }

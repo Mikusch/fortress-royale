@@ -59,6 +59,21 @@ enum struct BattleBusConfig
 	float height;
 	float cameraOffset[3];
 	float cameraAngles[3];
+	
+	void ReadConfig(KeyValues kv)
+	{
+		if (kv.JumpToKey("BattleBus", false))
+		{
+			kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_soho/bus001.mdl");
+			this.skin = kv.GetNum("skin");
+			kv.GetVector("center", this.center);
+			this.diameter = kv.GetFloat("diameter");
+			this.time = kv.GetFloat("time");
+			this.height = kv.GetFloat("height");
+			kv.GetVector("camera_offset", this.cameraOffset);
+			kv.GetVector("camera_angles", this.cameraAngles);
+		}
+	}
 }
 /*
 enum struct MapConfig
