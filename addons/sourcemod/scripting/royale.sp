@@ -54,6 +54,7 @@ bool g_IsRoundActive;
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
+#include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convar.sp"
 #include "royale/event.sp"
@@ -85,6 +86,7 @@ public void OnPluginEnd()
 public void OnMapStart()
 {
 	BattleBus_Precache();
+	Config_ReadMapConfig();
 	SDK_HookGamerules();
 }
 
