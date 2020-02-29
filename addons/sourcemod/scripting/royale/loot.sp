@@ -43,16 +43,21 @@ public void Loot_SpawnCratesInWorld()
 
 public void Loot_SpawnCrateInWorld(LootCrateConfig config)
 {
-	int crate = CreateEntityByName("prop_dynamic_override");
-	if (IsValidEntity(crate))
+	if (GetRandomFloat() <= config.chance)
 	{
-		SetEntityModel(crate, config.model);
-		// TODO: Set the rest of the config properties here (Hint: Also need to make crate solid)
-		
-		if (DispatchSpawn(crate))
+		int crate = CreateEntityByName("prop_dynamic_override");
+		if (IsValidEntity(crate))
 		{
-			TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
-			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
+			DispatchKeyValue(crate, "solid", "6");
+			SetEntityModel(crate, config.model);
+			SetEntProp(crate, Prop_Data, "m_nSkin", config.skin);
+			SetEntProp(crate, Prop_Data, "m_iHealth", config.health);
+			
+			if (DispatchSpawn(crate))
+			{
+				TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
+				HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
+			}
 		}
 	}
 }
@@ -61,5 +66,7 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 {
 	PrintToChatAll("Crate was broken!");
 	
+	// TODO: Fetch config for this crate
+	// EmitSoundToAll(config.sound, caller);
 	// TODO: Spawn loot
 }

@@ -92,7 +92,7 @@ enum struct LootCrateConfig
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_urban/urban_crate002.mdl");
 		PrecacheModel(this.model);
 		this.skin = kv.GetNum("skin");
-		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, "ui/itemcrate_smash_ultrarare_short.wav");
+		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, ")ui/itemcrate_smash_ultrarare_short.wav");
 		PrecacheSound(this.sound);
 		this.health = kv.GetNum("health", 125);
 		this.chance = kv.GetFloat("chance", 1.0);
