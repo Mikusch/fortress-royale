@@ -14,8 +14,8 @@
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
 
-// TF2 Mannpower Powerups
-enum TFRune
+//TF2 Mannpower Powerups
+enum TFRuneType
 {
 	TFRune_Strength = 0, 
 	TFRune_Haste, 

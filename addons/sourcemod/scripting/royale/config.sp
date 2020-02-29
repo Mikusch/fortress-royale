@@ -21,7 +21,9 @@ public void Config_Refresh()
 	if (kv.ImportFromFile(filePath))
 	{
 		if (kv.JumpToKey("BattleBus", false))
+		{
 			g_CurrentBattleBusConfig.ReadConfig(kv);
+		}
 		kv.GoBack();
 		
 		if (kv.JumpToKey("LootCrates", false))
