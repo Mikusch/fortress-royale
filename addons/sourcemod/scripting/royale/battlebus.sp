@@ -54,8 +54,6 @@ void BattleBus_Precache()
 	}
 	
 	PrecacheSound(g_BattleBusClientDropSound);
-	
-	PrecacheModel(g_CurrentBattleBusConfig.model);
 }
 
 void BattleBus_NewPos()

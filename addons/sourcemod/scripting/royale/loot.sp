@@ -21,23 +21,6 @@ enum ContentType
 #define CONTENT_TYPE_ALL		view_as<ContentType>(0xFFFFFFFF)
 
 /**
- * Loot crate information from configuration
- */
-enum struct LootCrate
-{
-	int entRef;						/**< Entity reference of this crate.
-									 Should be set when spawning a new loot crate using this definition.
-									 A crate that has not spawned yet should set this to INVALID_ENT_REFERENCE. */
-	float origin[3];				/**< Spawn origin */
-	float angles[3];				/**< Spawn angles */
-	char model[PLATFORM_MAX_PATH];	/**< World model */
-	int skin;						/**< Model skin */
-	int health;						/**< Amount of damage required to open */
-	float chance;					/**< Chance for this crate to spawn at all */
-	ContentType contents;			/**< Content bitflags **/
-}
-
-/**
  * Weapon information from configuration
  */
 enum struct LootCrateWeapon
@@ -46,6 +29,35 @@ enum struct LootCrateWeapon
 	int chance;
 }
 
-// TODO: Spawn all crates according to LootCrate struct retrieved from config
-//		Populate the LootCrate.entRef attribute after spawn
-//    Hook OnBreak entity output and fetch the LootCrate struct using the ent ref, then spawn loot accordingly
+public void Loot_SpawnCratesInWorld()
+{
+	for (int i = 0; i < g_CurrentLootCrateConfig.Length; i++)
+	{
+		LootCrateConfig config;
+		g_CurrentLootCrateConfig.GetArray(i, config, sizeof(config));
+		Loot_SpawnCrateInWorld(config)
+	}
+}
+
+public void Loot_SpawnCrateInWorld(LootCrateConfig config)
+{
+	int crate = CreateEntityByName("prop_dynamic_override");
+	if (IsValidEntity(crate))
+	{
+		SetEntityModel(crate, config.model);
+		// TODO: Set the rest of the config properties here (Hint: Also need to make crate solid)
+		
+		if (DispatchSpawn(crate))
+		{
+			TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
+			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
+		}
+	}
+}
+
+public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
+{
+	PrintToChatAll("Crate was broken!");
+	
+	// TODO: Spawn loot
+}

@@ -62,27 +62,70 @@ enum struct BattleBusConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		if (kv.JumpToKey("BattleBus", false))
-		{
-			kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_soho/bus001.mdl");
-			this.skin = kv.GetNum("skin");
-			kv.GetVector("center", this.center);
-			this.diameter = kv.GetFloat("diameter");
-			this.time = kv.GetFloat("time");
-			this.height = kv.GetFloat("height");
-			kv.GetVector("camera_offset", this.cameraOffset);
-			kv.GetVector("camera_angles", this.cameraAngles);
-		}
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_soho/bus001.mdl");
+		PrecacheModel(this.model);
+		this.skin = kv.GetNum("skin");
+		kv.GetVector("center", this.center);
+		this.diameter = kv.GetFloat("diameter");
+		this.time = kv.GetFloat("time");
+		this.height = kv.GetFloat("height");
+		kv.GetVector("camera_offset", this.cameraOffset);
+		kv.GetVector("camera_angles", this.cameraAngles);
 	}
 }
-/*
-enum struct MapConfig
+
+enum struct LootCrateConfig
 {
-	// TODO: Move LootCrate struct into this (perhaps call it CrateConfig?)
+	float origin[3];				/**< Spawn origin */
+	float angles[3];				/**< Spawn angles */
+	char model[PLATFORM_MAX_PATH];	/**< World model */
+	int skin;						/**< Model skin */
+	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
+	int health;						/**< Amount of damage required to open */
+	float chance;					/**< Chance for this crate to spawn at all */
+	//ContentType contents;			/**< Content bitflags **/
+	
+	void ReadConfig(KeyValues kv)
+	{
+		kv.GetVector("origin", this.origin);
+		kv.GetVector("angles", this.angles);
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_urban/urban_crate002.mdl");
+		PrecacheModel(this.model);
+		this.skin = kv.GetNum("skin");
+		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, "ui/itemcrate_smash_ultrarare_short.wav");
+		PrecacheSound(this.sound);
+		this.health = kv.GetNum("health", 125);
+		this.chance = kv.GetFloat("chance", 1.0);
+		// TODO: Contents, impl of this is still debateable
+	}
 }
-*/
+
+methodmap LootCratesConfig < ArrayList
+{
+	public LootCratesConfig()
+	{
+		return view_as<LootCratesConfig>(new ArrayList(sizeof(LootCrateConfig)));
+	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				LootCrateConfig lootCrate;
+				lootCrate.ReadConfig(kv);
+				this.PushArray(lootCrate);
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
+}
+
 BattleBusConfig g_CurrentBattleBusConfig;
-//MapConfig g_CurrentMapConfig;
+LootCratesConfig g_CurrentLootCrateConfig;
 
 bool g_IsRoundActive;
 
@@ -93,6 +136,7 @@ bool g_IsRoundActive;
 #include "royale/console.sp"
 #include "royale/convar.sp"
 #include "royale/event.sp"
+#include "royale/loot.sp"
 #include "royale/sdk.sp"
 #include "royale/stocks.sp"
 

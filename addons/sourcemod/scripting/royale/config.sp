@@ -20,7 +20,20 @@ public void Config_Refresh()
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
-		g_CurrentBattleBusConfig.ReadConfig(kv);
+		if (kv.JumpToKey("BattleBus", false))
+			g_CurrentBattleBusConfig.ReadConfig(kv);
+		kv.GoBack();
+		
+		if (kv.JumpToKey("LootCrates", false))
+		{
+			//Get rid of previous config, if any
+			if (g_CurrentLootCrateConfig != null)
+				delete g_CurrentLootCrateConfig;
+				
+			g_CurrentLootCrateConfig = new LootCratesConfig();
+			g_CurrentLootCrateConfig.ReadConfig(kv);
+		}
+		kv.GoBack();
 	}
 	else
 	{

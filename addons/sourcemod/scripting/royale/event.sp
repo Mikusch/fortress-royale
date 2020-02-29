@@ -14,6 +14,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		return;
 	
 	BattleBus_NewPos();
+	Loot_SpawnCratesInWorld();
 }
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
