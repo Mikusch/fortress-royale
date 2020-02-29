@@ -2,6 +2,8 @@ static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
 static Handle g_DHookDeflectEntity;
+static Handle g_DHookExplode;
+static Handle g_DHookShouldCollide;
 
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
@@ -22,6 +24,8 @@ void SDK_Init()
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
+	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	
 	g_CreateRuneOffset = gamedata.GetOffset("TF2_CreateRune");
 	
@@ -77,6 +81,17 @@ void SDK_HookFlamethrower(int weapon)
 	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
 }
 
+void SDK_HookProjectile(int projectile)
+{
+	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
+	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
+}
+
+void SDK_HookGasManager(int gasManager)
+{
+	DHookEntity(g_DHookShouldCollide, false, gasManager, _, DHook_ShouldCollidePre);
+}
+
 public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
 {
 	//In friendly fire we only want to return true if both entity owner is the same
@@ -120,15 +135,6 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hP
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_PrimaryAttackPre(int weapon)
-{
-	//This weapon may not work for teammate, set team to spectator so he can deal damage to both red and blue
-	
-	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
-	TF2_ChangeTeam(g_PrimaryAttackClient, TFTeam_Spectator);
-}
-
 public MRESReturn DHook_SetWinningTeam(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
@@ -136,6 +142,15 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 		return MRES_Supercede;
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_PrimaryAttackPre(int weapon)
+{
+	//This weapon may not work for teammate, set team to spectator so he can deal damage to both red and blue
+	
+	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
+	TF2_ChangeTeam(g_PrimaryAttackClient, TFTeam_Spectator);
 }
 
 public MRESReturn DHook_PrimaryAttackPost(int weapon)
@@ -156,6 +171,42 @@ public MRESReturn DHook_DeflectPost(int weapon, Handle params)
 {
 	//Change attacker team back to what it was, using flamethrower weapon team
 	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetTeam(weapon));
+}
+
+public MRESReturn DHook_ExplodePre(int entity, Handle params)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
+		return;
+	
+	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
+	TF2_ChangeTeam(entity, TFTeam_Spectator);
+	TF2_ChangeTeam(owner, TFTeam_Spectator);
+}
+
+public MRESReturn DHook_ExplodePost(int entity, Handle params)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
+		return;
+	
+	//Get original team by using it's weapon
+	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
+	if (weapon <= MaxClients)
+		return;
+	
+	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+}
+
+public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handle params)
+{
+	int toucher = DHookGetParam(params, 1);
+	
+	gasManager = GetOwnerLoop(gasManager);
+	toucher = GetOwnerLoop(toucher);
+	
+	DHookSetReturn(returnVal, gasManager != toucher);
+	return MRES_Supercede;
 }
 
 public Address GameData_GetCreateRuneOffset()

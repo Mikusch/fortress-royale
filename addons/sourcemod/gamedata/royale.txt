@@ -45,6 +45,16 @@
 				"linux"		"420"
 				"windows"	"413"
 			}
+			"CBaseGrenade::Explode"
+			{
+				"linux"		"229"
+				"windows"	"228"
+			}
+			"CTFPointManager::ShouldCollide"
+			{
+				"linux"		"196"
+				"windows"	"195"
+			}
 			"TF2_CreateRune"
 			{
 				"linux"		"1288"
@@ -189,6 +199,38 @@
 					{
 						"type"	"vectorptr"
 						"flags"	"byref"
+					}
+				}
+			}
+			"CBaseGrenade::Explode"
+			{
+				"offset"	"CBaseGrenade::Explode"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pTrace"
+					{
+						"type"	"objectptr"
+					}
+					"bitsDamageType"
+					{
+						"type"	"int"
+					}
+				}
+			}
+			"CTFPointManager::ShouldCollide"
+			{
+				"offset"	"CTFPointManager::ShouldCollide"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"CBaseEntity"
+					{
+						"type"	"cbaseentity"
 					}
 				}
 			}

@@ -145,12 +145,19 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
-	if (StrEqual(classname, "tf_projectile_pipe"))
-		SDKHook(entity, SDKHook_Touch, Pipebomb_Touch);
+	if (StrEqual(classname, "tf_projectile_pipe") || StrEqual(classname, "tf_projectile_cleaver"))
+	{
+		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
+		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
+	}
+	else if (StrContains(classname, "tf_projectile_jar") == 0)
+		SDK_HookProjectile(entity);
 	else if (StrContains(classname, "tf_weapon_sniperrifle") == 0 || StrEqual(classname, "tf_weapon_knife"))
 		SDK_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
 		SDK_HookFlamethrower(entity);
+	else if (StrEqual(classname, "tf_gas_manager"))
+		SDK_HookGasManager(entity);
 }
 
 public Action Client_SetTransmit(int entity, int client)
@@ -182,18 +189,29 @@ public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmas
 	return originalResult;
 }
 
-public void Pipebomb_Touch(int entity, int other)
+public Action Projectile_Touch(int entity, int other)
 {
-	//This function have team check, change grenade pipe to enemy team
-	
-	if (other == GetEntPropEnt(entity, Prop_Send, "m_hThrower"))
+	//This function have team check, change projectile and owner to spectator to touch both teams
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner == other)
 		return;
 	
-	TFTeam team = TF2_GetEnemyTeam(other);
-	if (team <= TFTeam_Spectator)
+	TF2_ChangeTeam(entity, TFTeam_Spectator);
+	TF2_ChangeTeam(owner, TFTeam_Spectator);
+}
+
+public void Projectile_TouchPost(int entity, int other)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner == other)
 		return;
 	
-	TF2_ChangeTeam(entity, team);
+	//Get original team by using it's weapon
+	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
+	if (weapon <= MaxClients)
+		return;
+	
+	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
