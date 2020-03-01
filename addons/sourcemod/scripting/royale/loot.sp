@@ -1,26 +1,28 @@
 /**
  * Possible drops from loot crates
  */
-enum ContentType
+enum LootType
 {
-	ContentType_Weapon_Primary = (1<<0),	/**< Primary weapons */
-	ContentType_Weapon_Secondary = (1<<1),	/**< Secondary weapons */
-	ContentType_Weapon_Melee = (1<<2),		/**< Melee weapons */
-	ContentType_Weapon_Misc = (1<<3),		/**< Grappling Hook, PDA, etc. */
-	ContentType_Health = (1<<4),			/**< Health pickups */
-	ContentType_Ammo = (1<<5),				/**< Ammunition pickups */
-	ContentType_Spell = (1<<6),				/**< Halloween spells */
-	ContentType_Powerup_Crits = (1<<7),		/**< Mannpower crit powerup */
-	ContentType_Powerup_Uber = (1<<8),		/**< Mannpower uber powerup */
-	ContentType_Powerup_Rune = (1<<9)		/**< Mannpower powerups */
+	Loot_Weapon_Primary = (1<<0),	/**< Primary weapons */
+	Loot_Weapon_Secondary = (1<<1),	/**< Secondary weapons */
+	Loot_Weapon_Melee = (1<<2),		/**< Melee weapons */
+	Loot_Weapon_Misc = (1<<3),		/**< Grappling Hook, PDA, etc. */
+	Loot_Pickup_Health = (1<<4),	/**< Health pickups */
+	Loot_Pickup_Ammo = (1<<5),		/**< Ammunition pickups */
+	Loot_Pickup_Spell = (1<<6),		/**< Halloween spells */
+	Loot_Powerup_Crits = (1<<7),	/**< Mannpower crit powerup */
+	Loot_Powerup_Uber = (1<<8),		/**< Mannpower uber powerup */
+	Loot_Powerup_Rune = (1<<9)		/**< Mannpower rune powerup */
 }
 
-/** Weapons to be dropped as tf_dropped_weapon entities */
-#define CONTENT_TYPE_WEAPONS	ContentType_Weapon_Primary|ContentType_Weapon_Secondary|ContentType_Weapon_Melee|ContentType_Weapon_Misc
-/** Entities that can be picked up by walking over them */
-#define CONTENT_TYPE_PICKUPS	ContentType_Health|ContentType_Ammo|ContentType_Spell|ContentType_Powerup_Crits|ContentType_Powerup_Uber|ContentType_Powerup_Rune
 /** Everything */
-#define CONTENT_TYPE_ALL		view_as<ContentType>(0xFFFFFFFF)
+#define LOOT_ALL		view_as<LootType>(0xFFFFFFFF)
+/** Any weapon */
+#define LOOT_WEAPONS	Loot_Weapon_Primary|Loot_Weapon_Secondary|Loot_Weapon_Melee|Loot_Weapon_Misc
+/** Health, ammo and spells */
+#define LOOT_PICKUPS	Loot_Pickup_Health|Loot_Pickup_Ammo|Loot_Pickup_Spell
+/** Mannpower powerups */
+#define LOOT_POWERUPS	Loot_Powerup_Crits|Loot_Powerup_Uber|Loot_Powerup_Rune
 
 /**
  * Weapon information from configuration
@@ -60,6 +62,51 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config)
 			}
 		}
 	}
+}
+
+public LootType Loot_StringToLootType(const char str[PLATFORM_MAX_PATH])
+{
+	LootType type;
+	
+	char parts[32][PLATFORM_MAX_PATH];
+	if (ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[])) > 0)
+	{
+		for (int i = 0; i < sizeof(parts); i++)
+		{
+			TrimString(parts[i]);
+			
+			if (StrEqual(parts[i], "ALL"))
+				type |= LOOT_ALL;
+			else if (StrEqual(parts[i], "WEAPON_ALL"))
+				type |= LOOT_WEAPONS;
+			else if (StrEqual(parts[i], "PICKUP_ALL"))
+				type |= LOOT_PICKUPS;
+			else if (StrEqual(parts[i], "POWERUP_ALL"))
+				type |= LOOT_POWERUPS;
+			else if (StrEqual(parts[i], "WEAPON_PRIMARY"))
+				type |= Loot_Weapon_Primary;
+			else if (StrEqual(parts[i], "WEAPON_SECONDARY"))
+				type |= Loot_Weapon_Secondary;
+			else if (StrEqual(parts[i], "WEAPON_MELEE"))
+				type |= Loot_Weapon_Melee;
+			else if (StrEqual(parts[i], "WEAPON_MISC"))
+				type |= Loot_Weapon_Misc;
+			else if (StrEqual(parts[i], "PICKUP_HEALTH"))
+				type |= Loot_Pickup_Health;
+			else if (StrEqual(parts[i], "PICKUP_AMMO"))
+				type |= Loot_Pickup_Ammo;
+			else if (StrEqual(parts[i], "PICKUP_SPELL"))
+				type |= Loot_Pickup_Spell;
+			else if (StrEqual(parts[i], "POWERUP_CRITS"))
+				type |= Loot_Powerup_Crits;
+			else if (StrEqual(parts[i], "POWERUP_UBER"))
+				type |= Loot_Powerup_Uber;
+			else if (StrEqual(parts[i], "POWERUP_RUNE"))
+				type |= Loot_Powerup_Rune;
+		}
+	}
+	
+	return type;
 }
 
 public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
