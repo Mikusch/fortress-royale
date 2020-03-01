@@ -149,6 +149,7 @@ public void OnPluginStart()
 	ConVar_Init();
 	Event_Init();
 	SDK_Init();
+	Loot_Init();
 	
 	ConVar_Toggle(true);
 	

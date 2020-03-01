@@ -33,6 +33,8 @@ enum struct LootCrateWeapon
 	int chance;
 }
 
+static StringMap g_LootTypeMappings;
+
 public void Loot_SpawnCratesInWorld()
 {
 	for (int i = 0; i < g_CurrentLootCrateConfig.Length; i++)
@@ -64,6 +66,25 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config)
 	}
 }
 
+public void Loot_Init()
+{
+	g_LootTypeMappings = new StringMap();
+	g_LootTypeMappings.SetValue("ALL", LOOT_ALL);
+	g_LootTypeMappings.SetValue("WEAPON_ALL", LOOT_WEAPONS);
+	g_LootTypeMappings.SetValue("PICKUP_ALL", LOOT_PICKUPS);
+	g_LootTypeMappings.SetValue("POWERUP_ALL", LOOT_POWERUPS);
+	g_LootTypeMappings.SetValue("WEAPON_PRIMARY", Loot_Weapon_Primary);
+	g_LootTypeMappings.SetValue("WEAPON_SECONDARY", Loot_Weapon_Secondary);
+	g_LootTypeMappings.SetValue("WEAPON_MELEE", Loot_Weapon_Melee);
+	g_LootTypeMappings.SetValue("WEAPON_MISC", Loot_Weapon_Misc);
+	g_LootTypeMappings.SetValue("PICKUP_HEALTH", Loot_Pickup_Health);
+	g_LootTypeMappings.SetValue("PICKUP_AMMO", Loot_Pickup_Ammo);
+	g_LootTypeMappings.SetValue("PICKUP_SPELL", Loot_Pickup_Spell);
+	g_LootTypeMappings.SetValue("POWERUP_CRITS", Loot_Powerup_Crits);
+	g_LootTypeMappings.SetValue("POWERUP_UBER", Loot_Powerup_Uber);
+	g_LootTypeMappings.SetValue("POWERUP_RUNE", Loot_Powerup_Rune);
+}
+
 public LootType Loot_StringToLootType(const char str[PLATFORM_MAX_PATH])
 {
 	LootType type;
@@ -74,35 +95,9 @@ public LootType Loot_StringToLootType(const char str[PLATFORM_MAX_PATH])
 		for (int i = 0; i < sizeof(parts); i++)
 		{
 			TrimString(parts[i]);
-			
-			if (StrEqual(parts[i], "ALL"))
-				type |= LOOT_ALL;
-			else if (StrEqual(parts[i], "WEAPON_ALL"))
-				type |= LOOT_WEAPONS;
-			else if (StrEqual(parts[i], "PICKUP_ALL"))
-				type |= LOOT_PICKUPS;
-			else if (StrEqual(parts[i], "POWERUP_ALL"))
-				type |= LOOT_POWERUPS;
-			else if (StrEqual(parts[i], "WEAPON_PRIMARY"))
-				type |= Loot_Weapon_Primary;
-			else if (StrEqual(parts[i], "WEAPON_SECONDARY"))
-				type |= Loot_Weapon_Secondary;
-			else if (StrEqual(parts[i], "WEAPON_MELEE"))
-				type |= Loot_Weapon_Melee;
-			else if (StrEqual(parts[i], "WEAPON_MISC"))
-				type |= Loot_Weapon_Misc;
-			else if (StrEqual(parts[i], "PICKUP_HEALTH"))
-				type |= Loot_Pickup_Health;
-			else if (StrEqual(parts[i], "PICKUP_AMMO"))
-				type |= Loot_Pickup_Ammo;
-			else if (StrEqual(parts[i], "PICKUP_SPELL"))
-				type |= Loot_Pickup_Spell;
-			else if (StrEqual(parts[i], "POWERUP_CRITS"))
-				type |= Loot_Powerup_Crits;
-			else if (StrEqual(parts[i], "POWERUP_UBER"))
-				type |= Loot_Powerup_Uber;
-			else if (StrEqual(parts[i], "POWERUP_RUNE"))
-				type |= Loot_Powerup_Rune;
+			LootType temp;
+			g_LootTypeMappings.GetValue(parts[i], temp);
+			type |= temp;
 		}
 	}
 	
