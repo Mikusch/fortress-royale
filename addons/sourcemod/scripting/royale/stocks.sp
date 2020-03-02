@@ -109,3 +109,54 @@ stock int TF2_CreateRune(TFRuneType type, float origin[3], float angles[3] = NUL
 	
 	return -1;
 }
+
+stock int TF2_CreateAndEquipWeapon(int client, int index, const char[] classnameTemp = NULL_STRING)
+{
+	char classname[256];
+	if (classnameTemp[0] != '\0')
+	{
+		strcopy(classname, sizeof(classname), classnameTemp);
+	}
+	else
+	{
+		TF2Econ_GetItemClassName(index, classname, sizeof(classname));
+		TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	}
+	
+	int iWeapon = CreateEntityByName(classname);
+	if (IsValidEntity(iWeapon))
+	{
+		SetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex", index);
+		SetEntProp(iWeapon, Prop_Send, "m_bInitialized", 1);
+		
+		SetEntProp(iWeapon, Prop_Send, "m_iEntityQuality", 6);
+		SetEntProp(iWeapon, Prop_Send, "m_iEntityLevel", 1);
+		
+		DispatchSpawn(iWeapon);
+		SetEntProp(iWeapon, Prop_Send, "m_bValidatedAttachedEntity", true);
+		
+		if (StrContains(classname, "tf_weapon") == 0)
+		{
+			EquipPlayerWeapon(client, iWeapon);
+			
+			//Set ammo to 0, TF2 will correct this, adding ammo by current
+			int iAmmoType = GetEntProp(iWeapon, Prop_Send, "m_iPrimaryAmmoType");
+			if (iAmmoType > -1)
+				SetEntProp(client, Prop_Send, "m_iAmmo", 0, _, iAmmoType);
+		}
+		else if (StrContains(classname, "tf_wearable") == 0)
+		{
+			//SDKCall_EquipWearable(client, iWeapon);
+		}
+		else
+		{
+			RemoveEntity(iWeapon);
+			return -1;
+		}
+		
+		//Reset charge meter
+		//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
+	}
+	
+	return iWeapon;
+}

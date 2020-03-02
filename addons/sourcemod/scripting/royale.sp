@@ -2,6 +2,7 @@
 #include <sdktools>
 #include <sdkhooks>
 #include <tf2_stocks>
+#include <tf_econ_data>
 #include <dhooks>
 
 #define TF_MAXPLAYERS	32
@@ -126,6 +127,21 @@ methodmap LootCratesConfig < ArrayList
 		kv.GoBack();
 	}
 }
+
+char g_fistsClassname[][] = {
+	"",						//Unknown
+	"tf_weapon_bat",		//Scout
+	"tf_weapon_club",		//Sniper
+	"tf_weapon_shovel",		//Soldier
+	"tf_weapon_bottle",		//Demoman
+	"tf_weapon_bonesaw",	//Medic
+	"tf_weapon_fists",		//Heavy
+	"tf_weapon_fireaxe",	//Pyro	
+	"tf_weapon_knife",		//Spy
+	"tf_weapon_robot_arm"	//Engineer
+}
+
+#define INDEX_FISTS		5
 
 BattleBusConfig g_CurrentBattleBusConfig;
 LootCratesConfig g_CurrentLootCrateConfig;

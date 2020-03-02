@@ -4,7 +4,8 @@ void Event_Init()
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("arena_win_panel", Event_ArenaWinPanel);
 	HookEvent("player_spawn", Event_PlayerSpawn);
-	HookEvent("player_death", Event_PlayerDeath);
+	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
+	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -58,12 +59,32 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	}
 }
 
+public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	
+	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
+		return;
+	
+	TF2_RemoveAllWeapons(client);
+	TF2_CreateAndEquipWeapon(client, INDEX_FISTS, g_fistsClassname[TF2_GetPlayerClass(client)]);
+}
+
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	
 	if (TF2_GetClientTeam(victim) <= TFTeam_Spectator)
 		return;
+	
+	if (event.GetInt("weapon_def_index") == INDEX_FISTS)
+	{
+		//Custom fists reports it incorrectly
+		//TODO fix buildings kill aswell, those dont have 'weapon_def_index'
+		event.SetString("weapon_logclassname", "fists");
+		event.SetString("weapon", "fists");
+		event.SetInt("weaponid", TF_WEAPON_FISTS);
+	}
 	
 	RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
 }
