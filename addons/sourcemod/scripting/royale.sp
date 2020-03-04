@@ -116,7 +116,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_bottle",		//Demoman
 	"tf_weapon_bonesaw",	//Medic
 	"tf_weapon_fists",		//Heavy
-	"tf_weapon_fireaxe",	//Pyro	
+	"tf_weapon_fireaxe",	//Pyro
 	"tf_weapon_knife",		//Spy
 	"tf_weapon_robot_arm"	//Engineer
 }

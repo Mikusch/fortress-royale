@@ -21,7 +21,7 @@ stock int GetAlivePlayersCount()
 	return count;
 }
 
-stock void ModelIndexToString(int index, char[] model, int size)
+stock void ModelIndexToString(int index, const char[] model, int size)
 {
 	int table = FindStringTable("modelprecache");
 	ReadStringTable(table, index, model, size);
