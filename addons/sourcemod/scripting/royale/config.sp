@@ -98,7 +98,7 @@ void Config_Refresh()
 {
 	g_lootPrefabs.Clear();
 	
-	//Load 'maps.cfg' for all maps
+	//Load 'global.cfg' for all maps
 	char filePath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/global.cfg");
 	
