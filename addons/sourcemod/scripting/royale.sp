@@ -12,6 +12,8 @@
 
 #define MODEL_EMPTY			"models/empty.mdl"
 
+#define CONFIG_MAXCHAR		64
+
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
 
@@ -63,20 +65,22 @@ enum struct BattleBusConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_soho/bus001.mdl");
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
-		this.skin = kv.GetNum("skin");
-		kv.GetVector("center", this.center);
-		this.diameter = kv.GetFloat("diameter");
-		this.time = kv.GetFloat("time");
-		this.height = kv.GetFloat("height");
-		kv.GetVector("camera_offset", this.cameraOffset);
-		kv.GetVector("camera_angles", this.cameraAngles);
+		
+		this.skin = kv.GetNum("skin", this.skin);
+		kv.GetVector("center", this.center, this.center);
+		this.diameter = kv.GetFloat("diameter", this.diameter);
+		this.time = kv.GetFloat("time", this.time);
+		this.height = kv.GetFloat("height", this.height);
+		kv.GetVector("camera_offset", this.cameraOffset, this.cameraOffset);
+		kv.GetVector("camera_angles", this.cameraAngles, this.cameraAngles);
 	}
 }
 
 enum struct LootCrateConfig
 {
+	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
 	float origin[3];				/**< Spawn origin */
 	float angles[3];				/**< Spawn angles */
 	char model[PLATFORM_MAX_PATH];	/**< World model */
@@ -88,43 +92,19 @@ enum struct LootCrateConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetVector("origin", this.origin);
-		kv.GetVector("angles", this.angles);
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, "models/props_urban/urban_crate002.mdl");
+		kv.GetVector("origin", this.origin, this.origin);
+		kv.GetVector("angles", this.angles, this.angles);
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
-		this.skin = kv.GetNum("skin");
-		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, ")ui/itemcrate_smash_ultrarare_short.wav");
+		this.skin = kv.GetNum("skin", this.skin);
+		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, this.sound);
 		PrecacheSound(this.sound);
-		this.health = kv.GetNum("health", 125);
-		this.chance = kv.GetFloat("chance", 1.0);
+		this.health = kv.GetNum("health", this.health);
+		this.chance = kv.GetFloat("chance", this.chance);
 		
 		char contents[PLATFORM_MAX_PATH];
 		kv.GetString("contents", contents, sizeof(contents), "ALL");
 		this.contents = Loot_StringToLootType(contents);
-	}
-}
-
-methodmap LootCratesConfig < ArrayList
-{
-	public LootCratesConfig()
-	{
-		return view_as<LootCratesConfig>(new ArrayList(sizeof(LootCrateConfig)));
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				LootCrateConfig lootCrate;
-				lootCrate.ReadConfig(kv);
-				this.PushArray(lootCrate);
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
 	}
 }
 
@@ -144,7 +124,6 @@ char g_fistsClassname[][] = {
 #define INDEX_FISTS		5
 
 BattleBusConfig g_CurrentBattleBusConfig;
-LootCratesConfig g_CurrentLootCrateConfig;
 
 bool g_IsRoundActive;
 
@@ -161,6 +140,7 @@ bool g_IsRoundActive;
 
 public void OnPluginStart()
 {
+	Config_Init();
 	Console_Init();
 	ConVar_Init();
 	Event_Init();

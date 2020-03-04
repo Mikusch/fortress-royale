@@ -37,11 +37,12 @@ static StringMap g_LootTypeMappings;
 
 public void Loot_SpawnCratesInWorld()
 {
-	for (int i = 0; i < g_CurrentLootCrateConfig.Length; i++)
+	int i = 0;
+	LootCrateConfig lootCrate;
+	while (Config_GetLootCrate(i, lootCrate))
 	{
-		LootCrateConfig config;
-		g_CurrentLootCrateConfig.GetArray(i, config, sizeof(config));
-		Loot_SpawnCrateInWorld(config)
+		Loot_SpawnCrateInWorld(lootCrate);
+		i++;
 	}
 }
 
