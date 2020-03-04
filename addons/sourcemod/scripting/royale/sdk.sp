@@ -5,6 +5,9 @@ static Handle g_DHookDeflectEntity;
 static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 
+static Handle g_SDKCallCreateDroppedWeapon;
+static Handle g_SDKCallInitDroppedWeapon;
+
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
 
@@ -27,9 +30,46 @@ void SDK_Init()
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	
+	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
+	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
+	
 	g_CreateRuneOffset = gamedata.GetOffset("TF2_CreateRune");
 	
 	delete gamedata;
+}
+
+public Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::Create");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
+	
+	return call;
+}
+
+public Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::InitDroppedWeapon");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitDroppedWeapon");
+	
+	return call;
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -212,4 +252,26 @@ public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handl
 public Address GameData_GetCreateRuneOffset()
 {
 	return view_as<Address>(g_CreateRuneOffset);
+}
+
+stock int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3], const float angles[3])
+{
+	char classname[32];
+	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
+	{
+		int itemOffset = FindSendPropInfo(classname, "m_Item");
+		if (itemOffset <= -1)
+			ThrowError("Failed to find m_Item on: %s", classname);
+		
+		char model[PLATFORM_MAX_PATH];
+		int worldModelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
+		ModelIndexToString(worldModelIndex, model, sizeof(model));
+		
+		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+		if (droppedWeapon != INVALID_ENT_REFERENCE)
+			SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, false, false);
+		return droppedWeapon;
+	}
+	
+	return -1;
 }

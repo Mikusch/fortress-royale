@@ -21,6 +21,12 @@ stock int GetAlivePlayersCount()
 	return count;
 }
 
+stock void ModelIndexToString(int index, char[] model, int size)
+{
+	int table = FindStringTable("modelprecache");
+	ReadStringTable(table, index, model, size);
+}
+
 stock bool TF2_CheckTeamClientCount()
 {
 	//Count red and blu players
