@@ -1,4 +1,4 @@
-static LootCrateConfig g_lootDefault;
+static LootCrateConfig g_LootCratesDefault;
 
 methodmap LootPrefabsConfig < ArrayList
 {
@@ -15,10 +15,10 @@ methodmap LootPrefabsConfig < ArrayList
 			do
 			{
 				LootCrateConfig lootCrate;
-				lootCrate = g_lootDefault;
+				lootCrate = g_LootCratesDefault;
 				
 				//Must have a name for prefab
-				kv.GetString("name", lootCrate.namePrefab, CONFIG_MAXCHAR);
+				kv.GetString("name", lootCrate.namePrefab, sizeof(lootCrate.namePrefab));
 				if (lootCrate.namePrefab[0] == '\0')
 				{
 					LogError("Found prefab with missing 'name' key");
@@ -53,7 +53,7 @@ methodmap LootPrefabsConfig < ArrayList
 	}
 }
 
-static LootPrefabsConfig g_lootPrefabs;
+static LootPrefabsConfig g_LootPrefabs;
 
 methodmap LootCratesConfig < ArrayList
 {
@@ -72,9 +72,9 @@ methodmap LootCratesConfig < ArrayList
 				LootCrateConfig lootCrate;
 				
 				//Attempt use prefab, otherwise use default
-				kv.GetString("prefab", lootCrate.namePrefab, CONFIG_MAXCHAR);
-				if (!g_lootPrefabs.FindPrefab(lootCrate.namePrefab, lootCrate))
-					lootCrate = g_lootDefault;
+				kv.GetString("prefab", lootCrate.namePrefab, sizeof(lootCrate.namePrefab));
+				if (!g_LootPrefabs.FindPrefab(lootCrate.namePrefab, lootCrate))
+					lootCrate = g_LootCratesDefault;
 				
 				lootCrate.ReadConfig(kv);
 				this.PushArray(lootCrate);
@@ -86,17 +86,119 @@ methodmap LootCratesConfig < ArrayList
 	}
 }
 
-static LootCratesConfig g_lootCrates;
+static LootCratesConfig g_LootCrates;
+
+methodmap CallbackParams < StringMap
+{
+	public CallbackParams()
+	{
+		return view_as<CallbackParams>(new StringMap());
+	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				char key[CONFIG_MAXCHAR], value[CONFIG_MAXCHAR];
+				kv.GetString("key", key, sizeof(key));
+				kv.GetString("value", value, sizeof(value));
+				this.SetString(key, value);
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
+	
+	public bool GetBool(const char[] key, bool defValue = false)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return StrEqual(value, "true") ? true : false;
+	}
+	
+	public int GetInt(const char[] key, int defValue = 0)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return StringToInt(value);
+	}
+	
+	public float GetFloat(const char[] key, float defValue = 0.0)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return StringToFloat(value);
+	}
+}
+
+typedef LootCreateFunc = function int(CallbackParams params);
+
+enum struct LootConfig
+{
+	LootType type;
+	float chance;
+	LootCreateFunc callback;
+	CallbackParams callbackParams;
+}
+
+methodmap LootConfigs < ArrayList
+{
+	public LootConfigs()
+	{
+		return view_as<LootConfigs>(new ArrayList(sizeof(LootConfig)));
+	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				LootConfig lootConfig;
+				char type[CONFIG_MAXCHAR];
+				kv.GetString("type", type, sizeof(type));
+				lootConfig.type = Loot_StringToLootType(type);
+				
+				lootConfig.chance = kv.GetFloat("chance", 1.0);
+				
+				char callback[CONFIG_MAXCHAR];
+				kv.GetString("callback", callback, sizeof(callback));
+				lootConfig.callback = view_as<LootCreateFunc>(GetFunctionByName(null, callback));
+				
+				if (kv.JumpToKey("params", false))
+				{
+					lootConfig.callbackParams = new CallbackParams();
+					lootConfig.callbackParams.ReadConfig(kv);
+				}
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
+}
+
+static LootConfigs g_Loot;
 
 void Config_Init()
 {
-	g_lootPrefabs = new LootPrefabsConfig();
-	g_lootCrates = new LootCratesConfig();
+	g_LootPrefabs = new LootPrefabsConfig();
+	g_LootCrates = new LootCratesConfig();
+	g_Loot = new LootConfigs();
 }
 
 void Config_Refresh()
 {
-	g_lootPrefabs.Clear();
+	g_LootPrefabs.Clear();
 	
 	//Load 'global.cfg' for all maps
 	char filePath[PLATFORM_MAX_PATH];
@@ -113,15 +215,26 @@ void Config_Refresh()
 		
 		if (kv.JumpToKey("LootDefault", false))
 		{
-			g_lootDefault.ReadConfig(kv);
+			g_LootCratesDefault.ReadConfig(kv);
 			kv.GoBack();
 		}
 		
 		if (kv.JumpToKey("LootPrefabs", false))
 		{
-			g_lootPrefabs.ReadConfig(kv);
+			g_LootPrefabs.ReadConfig(kv);
 			kv.GoBack();
 		}
+	}
+	
+	//Build file path
+	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
+	
+	//Finally, read the config
+	kv = new KeyValues("LootConfig");
+	if (kv.ImportFromFile(filePath))
+	{
+		LootConfigs lootConfigs = new LootConfigs();
+		lootConfigs.ReadConfig(kv);
 	}
 	
 	//Load map specific configs
@@ -152,19 +265,19 @@ void Config_Refresh()
 		
 		if (kv.JumpToKey("LootDefault", false))
 		{
-			g_lootDefault.ReadConfig(kv);
+			g_LootCratesDefault.ReadConfig(kv);
 			kv.GoBack();
 		}
 		
 		if (kv.JumpToKey("LootPrefabs", false))
 		{
-			g_lootPrefabs.ReadConfig(kv);
+			g_LootPrefabs.ReadConfig(kv);
 			kv.GoBack();
 		}
 		
 		if (kv.JumpToKey("LootCrates", false))
 		{
-			g_lootCrates.ReadConfig(kv);
+			g_LootCrates.ReadConfig(kv);
 			kv.GoBack();
 		}
 	}
@@ -178,9 +291,9 @@ void Config_Refresh()
 
 bool Config_GetLootCrate(int pos, LootCrateConfig lootCrate)
 {
-	if (pos < 0 || pos >= g_lootCrates.Length)
+	if (pos < 0 || pos >= g_LootCrates.Length)
 		return false;
 	
-	g_lootCrates.GetArray(pos, lootCrate);
+	g_LootCrates.GetArray(pos, lootCrate);
 	return true;
 }

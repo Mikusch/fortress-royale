@@ -134,7 +134,8 @@ bool g_IsRoundActive;
 #include "royale/console.sp"
 #include "royale/convar.sp"
 #include "royale/event.sp"
-#include "royale/loot.sp"
+#include "royale/loot/loot.sp"
+#include "royale/loot/loot_callbacks.sp"
 #include "royale/sdk.sp"
 #include "royale/stocks.sp"
 

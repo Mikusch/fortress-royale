@@ -24,15 +24,6 @@ enum LootType
 /** Mannpower powerups */
 #define LOOT_POWERUPS	Loot_Powerup_Crits|Loot_Powerup_Uber|Loot_Powerup_Rune
 
-/**
- * Weapon information from configuration
- */
-enum struct LootCrateWeapon
-{
-	int defindex;
-	int chance;
-}
-
 static StringMap g_LootTypeMappings;
 
 public void Loot_SpawnCratesInWorld()
@@ -86,7 +77,7 @@ public void Loot_Init()
 	g_LootTypeMappings.SetValue("POWERUP_RUNE", Loot_Powerup_Rune);
 }
 
-public LootType Loot_StringToLootType(const char str[PLATFORM_MAX_PATH])
+public LootType Loot_StringToLootType(const char[] str)
 {
 	LootType type;
 	
