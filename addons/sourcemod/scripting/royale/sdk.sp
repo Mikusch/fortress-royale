@@ -1,3 +1,4 @@
+static Handle g_DHookForceRespawn;
 static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
@@ -24,6 +25,7 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
+	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
@@ -63,7 +65,7 @@ static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
 {
 	Handle hook = DHookCreateFromConf(gamedata, name);
 	if (!hook)
-		LogError("Failed to create detour: %s", name);
+		LogError("Failed to create virtual: %s", name);
 	
 	return hook;
 }
@@ -105,6 +107,11 @@ static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
 void SDK_HookGamerules()
 {
 	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeam);
+}
+
+void SDK_HookClient(int client)
+{
+	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
 }
 
 void SDK_HookPrimaryAttack(int weapon)
@@ -182,6 +189,14 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 		return MRES_Supercede;
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_ForceRespawnPre(int client)
+{
+	if (FRPlayer(client).PlayerState == PlayerState_Alive)
+		return MRES_Ignored;
+	
+	return MRES_Supercede;
 }
 
 public MRESReturn DHook_PrimaryAttackPre(int weapon)

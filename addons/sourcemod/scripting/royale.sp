@@ -34,6 +34,14 @@ enum TFRuneType
 	TFRune_Supernova
 }
 
+enum PlayerState
+{
+	PlayerState_Waiting,
+	PlayerState_BattleBus,
+	PlayerState_Alive,
+	PlayerState_Dead
+}
+
 enum
 {
 	LifeState_Alive = 0,
@@ -175,13 +183,16 @@ public void OnClientPutInServer(int client)
 {
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
+	SDK_HookClient(client);
+	
+	FRPlayer(client).PlayerState = PlayerState_Waiting;
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if (FRPlayer(client).InBattleBus)
+	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
 	{
-		if (buttons & IN_JUMP)
+		if (buttons & IN_ATTACK3)
 			BattleBus_EjectClient(client);
 		else
 			buttons = 0;	//Don't allow client in battle bus process any other buttons

@@ -1,4 +1,4 @@
-static bool g_ClientInBattleBus[TF_MAXPLAYERS + 1];
+static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
 
 methodmap FRPlayer
 {
@@ -7,16 +7,16 @@ methodmap FRPlayer
 		return view_as<FRPlayer>(client);
 	}
 	
-	property bool InBattleBus
+	property PlayerState PlayerState
 	{
 		public get()
 		{
-			return g_ClientInBattleBus[this];
+			return g_ClientPlayerState[this];
 		}
 		
-		public set(bool val)
+		public set(PlayerState val)
 		{
-			g_ClientInBattleBus[this] = val;
+			g_ClientPlayerState[this] = val;
 		}
 	}
 }

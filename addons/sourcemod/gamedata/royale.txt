@@ -42,6 +42,11 @@
 				"linux"		"161"
 				"windows"	"160"
 			}
+			"CTFPlayer::ForceRespawn"
+			{
+				"linux"		"330"
+				"windows"	"329"
+			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
 				"linux"		"285"
@@ -160,6 +165,13 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CTFPlayer::ForceRespawn"
+			{
+				"offset"	"CTFPlayer::ForceRespawn"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
 			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{

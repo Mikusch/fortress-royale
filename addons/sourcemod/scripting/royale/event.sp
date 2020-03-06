@@ -3,7 +3,6 @@ void Event_Init()
 	HookEvent("teamplay_round_start", Event_RoundStart);
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("arena_win_panel", Event_ArenaWinPanel);
-	HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 }
@@ -13,6 +12,23 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	//Check if there players in red and blu
 	if (TF2_CheckTeamClientCount())
 		return;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		FRPlayer(client).PlayerState = PlayerState_Waiting;
+		
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+		{
+			if (IsPlayerAlive(client))
+			{
+				SetEntProp(client, Prop_Send, "m_lifeState", LifeState_Dead);
+				TF2_ChangeClientTeam(client, TFTeam_Spectator);	// Just to make client actually dead
+			}
+			
+			//Move all non-spectators to dead team
+			TF2_ChangeClientTeam(client, TFTeam_Dead);
+		}
+	}
 	
 	BattleBus_NewPos();
 	Loot_SpawnCratesInWorld();
@@ -33,30 +49,6 @@ public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBro
 public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
 {
 	g_IsRoundActive = false;
-}
-
-public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
-{
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	
-	TFTeam team = TF2_GetClientTeam(client);
-	if (team <= TFTeam_Spectator)
-		return;
-	
-	if (g_IsRoundActive)
-	{
-		//Latespawn
-		ForcePlayerSuicide(client);
-		return;
-	}
-	
-	if (team == TFTeam_Dead)
-	{
-		SetEntProp(client, Prop_Send, "m_lifeState", LifeState_Dead);
-		TF2_ChangeClientTeam(client, TFTeam_Alive);
-		SetEntProp(client, Prop_Send, "m_lifeState", LifeState_Alive);
-		TF2_RespawnPlayer(client);
-	}
 }
 
 public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
@@ -86,6 +78,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("weaponid", TF_WEAPON_FISTS);
 	}
 	
+	FRPlayer(victim).PlayerState = PlayerState_Dead;
 	RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
 }
 

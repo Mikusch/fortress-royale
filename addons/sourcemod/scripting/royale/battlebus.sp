@@ -134,7 +134,7 @@ public Action BattleBus_EndProp(Handle timer)
 	// Battle bus has reached its destination, eject all players still here a frame later
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && FRPlayer(client).InBattleBus)
+		if (IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
 			RequestFrame(RequestFrame_EjectClient, GetClientSerial(client));
 	}
 	
@@ -147,7 +147,7 @@ void BattleBus_SpectateBus(int client)
 {
 	if (g_BattleBusCameraRef != INVALID_ENT_REFERENCE)
 	{
-		FRPlayer(client).InBattleBus = true;
+		FRPlayer(client).PlayerState = PlayerState_BattleBus;
 		SetClientViewEntity(client, g_BattleBusCameraRef);
 	}
 }
@@ -155,7 +155,7 @@ void BattleBus_SpectateBus(int client)
 public void RequestFrame_EjectClient(int serial)
 {
 	int client = GetClientFromSerial(serial);
-	if (0 < client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
+	if (0 < client <= MaxClients && IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
 		BattleBus_EjectClient(client);
 }
 
@@ -164,7 +164,9 @@ void BattleBus_EjectClient(int client)
 	if (g_BattleBusPropRef == INVALID_ENT_REFERENCE)
 		return;
 	
-	FRPlayer(client).InBattleBus = false;
+	FRPlayer(client).PlayerState = PlayerState_Alive;
+	TF2_ChangeClientTeam(client, TFTeam_Alive);
+	TF2_RespawnPlayer(client);
 	
 	SetClientViewEntity(client, client);
 	
