@@ -146,6 +146,7 @@ bool g_IsRoundActive;
 #include "royale/loot/loot_callbacks.sp"
 #include "royale/sdk.sp"
 #include "royale/stocks.sp"
+#include "royale/zone.sp"
 
 public void OnPluginStart()
 {
@@ -175,6 +176,7 @@ public void OnMapStart()
 	Config_Refresh();
 	
 	BattleBus_Precache();
+	Zone_Precache();
 	
 	SDK_HookGamerules();
 }
