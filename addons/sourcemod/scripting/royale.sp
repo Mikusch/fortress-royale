@@ -67,32 +67,6 @@ enum SolidType_t
 	SOLID_LAST,
 };
 
-enum struct BattleBusConfig
-{
-	char model[PLATFORM_MAX_PATH];
-	int skin;
-	float center[3];
-	float diameter;
-	float time;
-	float height;
-	float cameraOffset[3];
-	float cameraAngles[3];
-	
-	void ReadConfig(KeyValues kv)
-	{
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
-		PrecacheModel(this.model);
-		
-		this.skin = kv.GetNum("skin", this.skin);
-		kv.GetVector("center", this.center, this.center);
-		this.diameter = kv.GetFloat("diameter", this.diameter);
-		this.time = kv.GetFloat("time", this.time);
-		this.height = kv.GetFloat("height", this.height);
-		kv.GetVector("camera_offset", this.cameraOffset, this.cameraOffset);
-		kv.GetVector("camera_angles", this.cameraAngles, this.cameraAngles);
-	}
-}
-
 enum struct LootCrateConfig
 {
 	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
@@ -137,8 +111,6 @@ char g_fistsClassname[][] = {
 }
 
 #define INDEX_FISTS		5
-
-BattleBusConfig g_CurrentBattleBusConfig;
 
 bool g_IsRoundActive;
 

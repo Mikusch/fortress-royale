@@ -209,7 +209,7 @@ void Config_Refresh()
 	{
 		if (kv.JumpToKey("BattleBus", false))
 		{
-			g_CurrentBattleBusConfig.ReadConfig(kv);
+			BattleBus_ReadConfig(kv);
 			kv.GoBack();
 		}
 		
@@ -259,7 +259,7 @@ void Config_Refresh()
 	{
 		if (kv.JumpToKey("BattleBus", false))
 		{
-			g_CurrentBattleBusConfig.ReadConfig(kv);
+			BattleBus_ReadConfig(kv);
 			kv.GoBack();
 		}
 		

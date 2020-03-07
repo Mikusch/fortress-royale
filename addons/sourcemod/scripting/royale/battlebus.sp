@@ -1,6 +1,33 @@
+enum struct BattleBusConfig
+{
+	char model[PLATFORM_MAX_PATH];
+	int skin;
+	float center[3];
+	float diameter;
+	float time;
+	float height;
+	float cameraOffset[3];
+	float cameraAngles[3];
+	
+	void ReadConfig(KeyValues kv)
+	{
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
+		PrecacheModel(this.model);
+		
+		this.skin = kv.GetNum("skin", this.skin);
+		kv.GetVector("center", this.center, this.center);
+		this.diameter = kv.GetFloat("diameter", this.diameter);
+		this.time = kv.GetFloat("time", this.time);
+		this.height = kv.GetFloat("height", this.height);
+		kv.GetVector("camera_offset", this.cameraOffset, this.cameraOffset);
+		kv.GetVector("camera_angles", this.cameraAngles, this.cameraAngles);
+	}
+}
+
 static int g_BattleBusPropRef = INVALID_ENT_REFERENCE;
 static int g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
 static Handle g_BattleBusEndTimer;
+static BattleBusConfig g_CurrentBattleBusConfig;
 
 static char g_BattleBusMusic[][] =  {
 	")ui/cyoa_musicdrunkenpipebomb.mp3", 
@@ -22,24 +49,24 @@ static char g_BattleBusHornSounds[][] =  {
 	")ambient_mp3/mvm_warehouse/car_horn_05.mp3"
 };
 
-//Eject offsets to pick one at random
-static float g_BattleBusEjectOffset[][3] = {
-	{-128.0, -128.0, 0.0},
-	{-128.0, 0.0, 0.0},
-	{-128.0, 128.0, 0.0},
-	{0.0, -128.0, 0.0},
-	{0.0, 0.0, 0.0},
-	{0.0, 128.0, 0.0},
-	{128.0, -128.0, 0.0},
-	{128.0, 0.0, 0.0},
-	{128.0, 128.0, 0.0}
-}
-
 static char g_BattleBusClientDropSound[] = ")mvm/mvm_tele_deliver.wav";
 
-static float g_BattleBusOrigin[3];	//Bus starting origin
-static float g_BattleBusAngles[3];	//Bus starting angles
-static float g_BattleBusVel[3];		//Bus starting vel
+//Eject offsets to pick one at random
+static float g_BattleBusEjectOffset[][3] =  {
+	{ -128.0, -128.0, 0.0 }, 
+	{ -128.0, 0.0, 0.0 }, 
+	{ -128.0, 128.0, 0.0 }, 
+	{ 0.0, -128.0, 0.0 }, 
+	{ 0.0, 0.0, 0.0 }, 
+	{ 0.0, 128.0, 0.0 }, 
+	{ 128.0, -128.0, 0.0 }, 
+	{ 128.0, 0.0, 0.0 }, 
+	{ 128.0, 128.0, 0.0 }
+}
+
+static float g_BattleBusOrigin[3];		//Bus starting origin
+static float g_BattleBusAngles[3];		//Bus starting angles
+static float g_BattleBusVelocity[3];	//Bus starting velocity
 
 void BattleBus_Precache()
 {
@@ -54,6 +81,11 @@ void BattleBus_Precache()
 	}
 	
 	PrecacheSound(g_BattleBusClientDropSound);
+}
+
+void BattleBus_ReadConfig(KeyValues kv)
+{
+	g_CurrentBattleBusConfig.ReadConfig(kv);
 }
 
 void BattleBus_NewPos()
@@ -73,8 +105,8 @@ void BattleBus_NewPos()
 	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / 2.0) + g_CurrentBattleBusConfig.center[1];
 	g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.center[2];
 	
-	g_BattleBusVel[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
-	g_BattleBusVel[1] = -Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
+	g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
+	g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
 	
 	//Check if it safe to go this path with nothing in the way
 	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_SOLID, RayType_Infinite);
@@ -91,7 +123,7 @@ void BattleBus_NewPos()
 		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentBattleBusConfig.diameter)
 			BattleBus_NewPos();
 	}
-		
+	
 	delete trace;
 }
 
@@ -121,7 +153,7 @@ void BattleBus_SpawnProp()
 	AcceptEntityInput(camera, "SetParent", bus, bus);
 	
 	//Teleport bus after camera, so camera can follow where bus is teleporting
-	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVel);
+	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
 	
 	g_BattleBusEndTimer = CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndProp);
 }

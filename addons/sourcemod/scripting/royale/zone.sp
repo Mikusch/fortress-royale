@@ -29,8 +29,8 @@ void Zone_RoundStart()
 	g_ZoneDiameterMax = 4000.0;
 	g_ZoneDiameterMaxSafe = 2500.0;
 	
-	g_ZoneCentreMap = g_CurrentBattleBusConfig.center;
-	g_ZoneCentreProp = g_CurrentBattleBusConfig.center;
+	//g_ZoneCentreMap = g_CurrentBattleBusConfig.center;
+	//g_ZoneCentreProp = g_CurrentBattleBusConfig.center;
 }
 
 void Zone_RoundArenaStart()
