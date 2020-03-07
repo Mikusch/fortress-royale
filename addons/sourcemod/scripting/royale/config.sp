@@ -118,7 +118,7 @@ methodmap CallbackParams < StringMap
 		if (!this.GetString(key, value, sizeof(value)))
 			return defValue;
 		else
-			return StringToInt(value) == 0 ? false : true;
+			return view_as<bool>(StringToInt(value));
 	}
 	
 	public int GetInt(const char[] key, int defValue = 0)

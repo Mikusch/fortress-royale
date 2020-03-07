@@ -56,8 +56,10 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config, int i)
 				TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
 				HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
 				
-				g_SpawnedCrates.Set(EntIndexToEntRef(crate), 0);
-				g_SpawnedCrates.Set(i, 1);
+				int length = g_SpawnedCrates.Length;
+				g_SpawnedCrates.Resize(length + 1);
+				g_SpawnedCrates.Set(length, EntIndexToEntRef(crate), 0);
+				g_SpawnedCrates.Set(length, i, 1);
 			}
 		}
 	}
