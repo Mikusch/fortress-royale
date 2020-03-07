@@ -14,6 +14,19 @@
 
 #define CONFIG_MAXCHAR		64
 
+// m_lifeState values
+#define LIFE_ALIVE				0 // alive
+#define LIFE_DYING				1 // playing death animation or still falling off of a ledge waiting to hit ground
+#define LIFE_DEAD				2 // dead. lying still.
+#define LIFE_RESPAWNABLE		3
+#define LIFE_DISCARDBODY		4
+
+// settings for m_takedamage
+#define DAMAGE_NO				0
+#define DAMAGE_EVENTS_ONLY		1		// Call damage functions, but don't modify health
+#define DAMAGE_YES				2
+#define DAMAGE_AIM				3
+
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
 
@@ -40,12 +53,6 @@ enum PlayerState
 	PlayerState_BattleBus,
 	PlayerState_Alive,
 	PlayerState_Dead
-}
-
-enum
-{
-	LifeState_Alive = 0,
-	LifeState_Dead = 2
 }
 
 enum SolidType_t

@@ -21,7 +21,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		{
 			if (IsPlayerAlive(client))
 			{
-				SetEntProp(client, Prop_Send, "m_lifeState", LifeState_Dead);
+				SetEntProp(client, Prop_Send, "m_lifeState", LIFE_DEAD);
 				TF2_ChangeClientTeam(client, TFTeam_Spectator);	// Just to make client actually dead
 			}
 			

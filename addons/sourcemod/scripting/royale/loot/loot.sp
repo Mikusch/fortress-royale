@@ -25,6 +25,7 @@ enum LootType
 #define LOOT_POWERUPS	Loot_Powerup_Crits|Loot_Powerup_Uber|Loot_Powerup_Rune
 
 static StringMap g_LootTypeMappings;
+static ArrayList g_SpawnedCrates;
 
 public void Loot_SpawnCratesInWorld()
 {
@@ -32,12 +33,12 @@ public void Loot_SpawnCratesInWorld()
 	LootCrateConfig lootCrate;
 	while (Config_GetLootCrate(i, lootCrate))
 	{
-		Loot_SpawnCrateInWorld(lootCrate);
+		Loot_SpawnCrateInWorld(lootCrate, i);
 		i++;
 	}
 }
 
-public void Loot_SpawnCrateInWorld(LootCrateConfig config)
+public void Loot_SpawnCrateInWorld(LootCrateConfig config, int i)
 {
 	if (GetRandomFloat() <= config.chance)
 	{
@@ -51,8 +52,12 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config)
 			
 			if (DispatchSpawn(crate))
 			{
+				SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
 				TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
 				HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
+				
+				g_SpawnedCrates.Set(EntIndexToEntRef(crate), 0);
+				g_SpawnedCrates.Set(i, 1);
 			}
 		}
 	}
@@ -60,6 +65,7 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config)
 
 public void Loot_Init()
 {
+	g_SpawnedCrates = new ArrayList(2);
 	g_LootTypeMappings = new StringMap();
 	g_LootTypeMappings.SetValue("ALL", LOOT_ALL);
 	g_LootTypeMappings.SetValue("WEAPON_ALL", LOOT_WEAPONS);
@@ -98,9 +104,10 @@ public LootType Loot_StringToLootType(const char[] str)
 
 public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
 {
-	PrintToChatAll("Crate was broken!");
-	
-	// TODO: Fetch config for this crate
-	// EmitSoundToAll(config.sound, caller);
-	// TODO: Spawn loot
+	LootCrateConfig lootCrate;
+	int i = g_SpawnedCrates.Get(g_SpawnedCrates.FindValue(EntIndexToEntRef(caller), 0), 1);
+	if (Config_GetLootCrate(i, lootCrate))
+	{
+		// TODO: Spawn loot
+	}
 }
