@@ -1,8 +1,12 @@
+ConVar mp_autoteambalance;
+ConVar mp_teams_unbalance_limit;
 ConVar mp_friendlyfire;
 ConVar tf_avoidteammates;
 
 void ConVar_Init()
 {
+	mp_autoteambalance = FindConVar("mp_autoteambalance");
+	mp_teams_unbalance_limit = FindConVar("mp_teams_unbalance_limit");
 	mp_friendlyfire = FindConVar("mp_friendlyfire");
 	tf_avoidteammates = FindConVar("tf_avoidteammates");
 }
@@ -11,12 +15,20 @@ void ConVar_Toggle(bool enable)
 {
 	static bool toggled = false;
 	
+	static int autoteambalance;
+	static int teamsUnbalanceLimit;
 	static bool friendlyfire;
 	static bool avoidteammates;
 	
 	if (enable && !toggled)
 	{
 		toggled = true;
+		
+		autoteambalance = mp_autoteambalance.IntValue;
+		mp_autoteambalance.IntValue = 0;
+		
+		teamsUnbalanceLimit = mp_teams_unbalance_limit.IntValue;
+		mp_teams_unbalance_limit.IntValue = 0;
 		
 		friendlyfire = mp_friendlyfire.BoolValue;
 		mp_friendlyfire.BoolValue = true;
@@ -28,6 +40,8 @@ void ConVar_Toggle(bool enable)
 	{
 		toggled = false;
 		
+		mp_autoteambalance.IntValue = autoteambalance;
+		mp_teams_unbalance_limit.IntValue = teamsUnbalanceLimit;
 		mp_friendlyfire.BoolValue = friendlyfire;
 		tf_avoidteammates.BoolValue = avoidteammates;
 	}
