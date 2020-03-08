@@ -67,6 +67,32 @@ enum SolidType_t
 	SOLID_LAST,
 };
 
+/**
+ * Possible drops from loot crates
+ */
+enum LootType
+{
+	Loot_Weapon_Primary = (1<<0),	/**< Primary weapons */
+	Loot_Weapon_Secondary = (1<<1),	/**< Secondary weapons */
+	Loot_Weapon_Melee = (1<<2),		/**< Melee weapons */
+	Loot_Weapon_Misc = (1<<3),		/**< Grappling Hook, PDA, etc. */
+	Loot_Pickup_Health = (1<<4),	/**< Health pickups */
+	Loot_Pickup_Ammo = (1<<5),		/**< Ammunition pickups */
+	Loot_Pickup_Spell = (1<<6),		/**< Halloween spells */
+	Loot_Powerup_Crits = (1<<7),	/**< Mannpower crit powerup */
+	Loot_Powerup_Uber = (1<<8),		/**< Mannpower uber powerup */
+	Loot_Powerup_Rune = (1<<9)		/**< Mannpower rune powerup */
+}
+
+/** Everything */
+#define LOOT_ALL		view_as<LootType>(0xFFFFFFFF)
+/** Any weapon */
+#define LOOT_WEAPONS	Loot_Weapon_Primary|Loot_Weapon_Secondary|Loot_Weapon_Melee|Loot_Weapon_Misc
+/** Health, ammo and spells */
+#define LOOT_PICKUPS	Loot_Pickup_Health|Loot_Pickup_Ammo|Loot_Pickup_Spell
+/** Mannpower powerups */
+#define LOOT_POWERUPS	Loot_Powerup_Crits|Loot_Powerup_Uber|Loot_Powerup_Rune
+
 enum struct LootCrateConfig
 {
 	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
@@ -93,7 +119,20 @@ enum struct LootCrateConfig
 		
 		char contents[PLATFORM_MAX_PATH];
 		kv.GetString("contents", contents, sizeof(contents), "ALL");
-		this.contents = Loot_StringToLootType(contents);
+		this.contents = Loot_StrToLootType(contents);
+	}
+	
+	LootType GetRandomLootType()
+	{
+		ArrayList list = new ArrayList();
+		for (int i = 1; i < view_as<int>(LootType); i*=2)
+		{
+			if (view_as<int>(this.contents) & i)
+				list.Push(i);
+		}
+		int type = list.Get(GetRandomInt(0, list.Length - 1));
+		delete list;
+		return view_as<LootType>(type);
 	}
 }
 

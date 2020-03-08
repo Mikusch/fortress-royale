@@ -101,7 +101,7 @@ stock float TF2_GetPercentInvisible(int client)
 	return GetEntDataFloat(client, offset);
 }
 
-stock int TF2_CreateRune(TFRuneType type, float origin[3], float angles[3] = NULL_VECTOR)
+stock int TF2_CreateRune(TFRuneType type, const float origin[3], const float angles[3] = NULL_VECTOR)
 {
 	int rune = CreateEntityByName("item_powerup_rune");
 	if (IsValidEntity(rune))

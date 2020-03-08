@@ -140,13 +140,11 @@ methodmap CallbackParams < StringMap
 	}
 }
 
-typedef LootCreateFunc = function int(CallbackParams params);
-
 enum struct LootConfig
 {
 	LootType type;
 	float chance;
-	LootCreateFunc callback;
+	Function callback;
 	CallbackParams callbackParams;
 }
 
@@ -166,13 +164,13 @@ methodmap LootConfigs < ArrayList
 				LootConfig lootConfig;
 				char type[CONFIG_MAXCHAR];
 				kv.GetString("type", type, sizeof(type));
-				lootConfig.type = Loot_StringToLootType(type);
+				lootConfig.type = Loot_StrToLootType(type);
 				
 				lootConfig.chance = kv.GetFloat("chance", 1.0);
 				
 				char callback[CONFIG_MAXCHAR];
 				kv.GetString("callback", callback, sizeof(callback));
-				lootConfig.callback = view_as<LootCreateFunc>(GetFunctionByName(null, callback));
+				lootConfig.callback = GetFunctionByName(null, callback);
 				
 				if (kv.JumpToKey("params", false))
 				{
