@@ -84,6 +84,22 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 	int i = g_SpawnedCrates.Get(g_SpawnedCrates.FindValue(EntIndexToEntRef(caller), 0), 1);
 	if (Config_GetLootCrate(i, lootCrate))
 	{
-		
+		LootConfig loot;
+		if (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType()) > 0)
+		{
+			//Start function call to loot creation function
+			Call_StartFunction(null, loot.callback);
+			Call_PushCell(loot.callbackParams);
+			
+			int entity;
+			if (Call_Finish(entity) == SP_ERROR_NONE)
+			{
+				float origin[3], angles[3], velocity[3];
+				GetEntPropVector(caller, Prop_Data, "m_vecOrigin", origin);
+				GetEntPropVector(caller, Prop_Data, "m_angRotation", origin);
+				GetEntPropVector(caller, Prop_Data, "m_vecVelocity", velocity);
+				TeleportEntity(entity, origin, angles, velocity);
+			}
+		}
 	}
 }

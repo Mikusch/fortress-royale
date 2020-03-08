@@ -88,110 +88,11 @@ methodmap LootCratesConfig < ArrayList
 
 static LootCratesConfig g_LootCrates;
 
-methodmap CallbackParams < StringMap
-{
-	public CallbackParams()
-	{
-		return view_as<CallbackParams>(new StringMap());
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				char key[CONFIG_MAXCHAR], value[CONFIG_MAXCHAR];
-				kv.GetString("key", key, sizeof(key));
-				kv.GetString("value", value, sizeof(value));
-				this.SetString(key, value);
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
-	}
-	
-	public bool GetBool(const char[] key, bool defValue = false)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return view_as<bool>(StringToInt(value));
-	}
-	
-	public int GetInt(const char[] key, int defValue = 0)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToInt(value);
-	}
-	
-	public float GetFloat(const char[] key, float defValue = 0.0)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToFloat(value);
-	}
-}
-
-enum struct LootConfig
-{
-	LootType type;
-	float chance;
-	Function callback;
-	CallbackParams callbackParams;
-}
-
-methodmap LootConfigs < ArrayList
-{
-	public LootConfigs()
-	{
-		return view_as<LootConfigs>(new ArrayList(sizeof(LootConfig)));
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				LootConfig lootConfig;
-				char type[CONFIG_MAXCHAR];
-				kv.GetString("type", type, sizeof(type));
-				lootConfig.type = Loot_StrToLootType(type);
-				
-				lootConfig.chance = kv.GetFloat("chance", 1.0);
-				
-				char callback[CONFIG_MAXCHAR];
-				kv.GetString("callback", callback, sizeof(callback));
-				lootConfig.callback = GetFunctionByName(null, callback);
-				
-				if (kv.JumpToKey("params", false))
-				{
-					lootConfig.callbackParams = new CallbackParams();
-					lootConfig.callbackParams.ReadConfig(kv);
-				}
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
-	}
-}
-
-static LootConfigs g_Loot;
-
 void Config_Init()
 {
 	g_LootPrefabs = new LootPrefabsConfig();
 	g_LootCrates = new LootCratesConfig();
-	g_Loot = new LootConfigs();
+	g_LootTable = new LootTable();
 }
 
 void Config_Refresh()
@@ -228,11 +129,11 @@ void Config_Refresh()
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
 	
 	//Finally, read the config
-	kv = new KeyValues("LootConfig");
+	kv = new KeyValues("LootTable");
 	if (kv.ImportFromFile(filePath))
 	{
-		LootConfigs lootConfigs = new LootConfigs();
-		lootConfigs.ReadConfig(kv);
+		g_LootTable.ReadConfig(kv);
+		kv.GoBack();
 	}
 	
 	//Load map specific configs

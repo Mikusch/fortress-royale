@@ -136,6 +136,132 @@ enum struct LootCrateConfig
 	}
 }
 
+methodmap CallbackParams < StringMap
+{
+	public CallbackParams()
+	{
+		return view_as<CallbackParams>(new StringMap());
+	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				char key[CONFIG_MAXCHAR], value[CONFIG_MAXCHAR];
+				kv.GetString("key", key, sizeof(key));
+				kv.GetString("value", value, sizeof(value));
+				this.SetString(key, value);
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
+	
+	public bool GetBool(const char[] key, bool defValue = false)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return view_as<bool>(StringToInt(value));
+	}
+	
+	public int GetInt(const char[] key, int defValue = 0)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return StringToInt(value);
+	}
+	
+	public float GetFloat(const char[] key, float defValue = 0.0)
+	{
+		char value[CONFIG_MAXCHAR];
+		if (!this.GetString(key, value, sizeof(value)))
+			return defValue;
+		else
+			return StringToFloat(value);
+	}
+}
+
+enum struct LootConfig
+{
+	LootType type;
+	float chance;
+	Function callback;
+	CallbackParams callbackParams;
+}
+
+methodmap LootTable < ArrayList
+{
+	public LootTable()
+	{
+		return view_as<LootTable>(new ArrayList(sizeof(LootConfig)));
+	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				LootConfig lootConfig;
+				char type[CONFIG_MAXCHAR];
+				kv.GetString("type", type, sizeof(type));
+				lootConfig.type = Loot_StrToLootType(type);
+				lootConfig.chance = kv.GetFloat("chance", 1.0);
+				
+				char callback[CONFIG_MAXCHAR];
+				kv.GetString("callback", callback, sizeof(callback));
+				lootConfig.callback = GetFunctionByName(null, callback);
+				
+				if (kv.JumpToKey("params", false))
+				{
+					lootConfig.callbackParams = new CallbackParams();
+					lootConfig.callbackParams.ReadConfig(kv);
+				}
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
+	
+	public int GetRandomLoot(LootConfig buffer, LootType type = LOOT_ALL)
+	{
+		ArrayList list;
+		if (type == LOOT_ALL)
+		{
+			//We want to pull from entire loot table, just clone the current list
+			list = this.Clone();
+		}
+		else
+		{
+			//Filter out all loot that matches the specified type
+			list = new ArrayList();
+			for (int i = 0; i < this.Length; i++)
+			{
+				if (type & list.Get(i, 0))
+				{
+					LootConfig temp;
+					this.GetArray(i, temp, sizeof(temp));
+					list.PushArray(temp);
+				}
+			}
+		}
+		
+		int copied = list.GetArray(GetRandomInt(0, list.Length - 1), buffer, sizeof(buffer));
+		delete list;
+		return copied;
+	}
+}
+
+LootTable g_LootTable;
+
 char g_fistsClassname[][] = {
 	"",						//Unknown
 	"tf_weapon_bat",		//Scout
