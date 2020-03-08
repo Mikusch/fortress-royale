@@ -84,6 +84,8 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 	int i = g_SpawnedCrates.Get(g_SpawnedCrates.FindValue(EntIndexToEntRef(caller), 0), 1);
 	if (Config_GetLootCrate(i, lootCrate))
 	{
+		EmitSoundToAll(lootCrate.sound, caller);
+		
 		LootConfig loot;
 		if (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType()) > 0)
 		{

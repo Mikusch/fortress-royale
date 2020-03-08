@@ -101,15 +101,15 @@ stock float TF2_GetPercentInvisible(int client)
 	return GetEntDataFloat(client, offset);
 }
 
-stock int TF2_CreateRune(TFRuneType type, const float origin[3], const float angles[3] = NULL_VECTOR)
+stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, const float angles[3] = NULL_VECTOR)
 {
 	int rune = CreateEntityByName("item_powerup_rune");
 	if (IsValidEntity(rune))
 	{
 		Address address = GetEntityAddress(rune) + GameData_GetCreateRuneOffset();
 		StoreToAddress(address, view_as<int>(type), NumberType_Int8);
-		TeleportEntity(rune, origin, angles, NULL_VECTOR);
 		DispatchSpawn(rune);
+		TeleportEntity(rune, origin, angles, NULL_VECTOR);
 		return rune;
 	}
 	
