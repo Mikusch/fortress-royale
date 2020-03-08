@@ -92,7 +92,7 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 			Call_PushCell(loot.callbackParams);
 			
 			int entity;
-			if (Call_Finish(entity) == SP_ERROR_NONE)
+			if (Call_Finish(entity) == SP_ERROR_NONE && entity > MaxClients)
 			{
 				float origin[3], angles[3], velocity[3];
 				GetEntPropVector(caller, Prop_Data, "m_vecOrigin", origin);

@@ -216,14 +216,26 @@ methodmap LootTable < ArrayList
 				lootConfig.chance = kv.GetFloat("chance", 1.0);
 				
 				char callback[CONFIG_MAXCHAR];
-				kv.GetString("callback", callback, sizeof(callback));
+				if (!kv.GetString("callback", callback, sizeof(callback)))
+				{
+					LogError("Missing callback found from type '%s'", type);
+					continue;
+				}
+				
 				lootConfig.callback = GetFunctionByName(null, callback);
+				if (lootConfig.callback == INVALID_FUNCTION)
+				{
+					LogError("Unable to find function '%s' from type '%s'", callback, type);
+					continue;
+				}
 				
 				if (kv.JumpToKey("params", false))
 				{
 					lootConfig.callbackParams = new CallbackParams();
 					lootConfig.callbackParams.ReadConfig(kv);
 				}
+				
+				this.PushArray(lootConfig);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -242,10 +254,10 @@ methodmap LootTable < ArrayList
 		else
 		{
 			//Filter out all loot that matches the specified type
-			list = new ArrayList();
+			list = new ArrayList(sizeof(LootConfig));
 			for (int i = 0; i < this.Length; i++)
 			{
-				if (type & list.Get(i, 0))
+				if (type & this.Get(i, 0))
 				{
 					LootConfig temp;
 					this.GetArray(i, temp, sizeof(temp));
