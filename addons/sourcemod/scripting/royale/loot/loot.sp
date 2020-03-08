@@ -96,7 +96,7 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 			{
 				float origin[3], angles[3], velocity[3];
 				GetEntPropVector(caller, Prop_Data, "m_vecOrigin", origin);
-				GetEntPropVector(caller, Prop_Data, "m_angRotation", origin);
+				GetEntPropVector(caller, Prop_Data, "m_angRotation", angles);
 				GetEntPropVector(caller, Prop_Data, "m_vecVelocity", velocity);
 				TeleportEntity(entity, origin, angles, velocity);
 			}
