@@ -18,7 +18,7 @@ public int LootCallback_CreateSpell(CallbackParams params)
 public int LootCallback_CreateRune(CallbackParams params)
 {
 	int type;
-	if (params.GetValue("type", type))
+	if (params && params.GetValue("type", type))
 		return TF2_CreateRune(view_as<TFRuneType>(type));
 	else
 		return TF2_CreateRune(view_as<TFRuneType>(GetRandomInt(0, view_as<int>(TFRuneType))));
