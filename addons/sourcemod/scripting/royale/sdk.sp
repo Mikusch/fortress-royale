@@ -24,7 +24,6 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPlayer, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHook_PickupWeaponFromOther, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -186,19 +185,16 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hP
 
 public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Handle params)
 {
-	DHookSetReturn(returnVal, true);
-	return MRES_Supercede;
-}
-
-public MRESReturn DHook_PickupWeaponFromOther(int client, Handle returnVal, Handle params)
-{
 	int droppedWeapon = DHookGetParam(params, 1);
 	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
 	TFClassType class = TF2_GetPlayerClass(client);
 	int slot = TF2_GetItemSlot(defindex, class);
 	
 	if (slot < 0)
-		return MRES_Ignored;
+	{
+		DHookSetReturn(returnVal, false);
+		return MRES_Supercede;
+	}
 	
 	//Check if client already has weapon in given slot, remove and create dropped weapon if so
 	int weapon = TF2_GetItemInSlot(client, slot);
@@ -213,11 +209,16 @@ public MRESReturn DHook_PickupWeaponFromOther(int client, Handle returnVal, Hand
 	//Create new weapon
 	weapon = TF2_CreateWeapon(defindex, class);
 	if (weapon > MaxClients)
+	{
 		TF2_EquipWeapon(client, weapon);
+		TF2_RefillWeaponAmmo(client, weapon);
+	}
 	
-	//Delete dropped weapon and return true as it been done
+	//Delete dropped weapon
 	RemoveEntity(droppedWeapon);
-	DHookSetReturn(returnVal, true);
+	
+	//Return false so game don't handle themself weapon pickups
+	DHookSetReturn(returnVal, false);
 	return MRES_Supercede;
 }
 
