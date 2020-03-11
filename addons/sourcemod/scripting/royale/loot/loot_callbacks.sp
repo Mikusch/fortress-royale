@@ -1,6 +1,13 @@
 public int LootCallback_CreateWeapon(CallbackParams params)
 {
-	PrintToServer("CreateWeapon defindex %d", params.GetInt("defindex"));
+	int defindex;
+	if (!params.GetIntEx("defindex", defindex))
+	{
+		LogError("Weapon defindex not specified");
+		return -1;
+	}
+	
+	return -1;
 }
 
 public int LootCallback_CreateSpell(CallbackParams params)
@@ -18,7 +25,7 @@ public int LootCallback_CreateSpell(CallbackParams params)
 public int LootCallback_CreateRune(CallbackParams params)
 {
 	int type;
-	if (params && params.GetValue("type", type))
+	if (params && params.GetIntEx("type", type))
 		return TF2_CreateRune(view_as<TFRuneType>(type));
 	else
 		return TF2_CreateRune(view_as<TFRuneType>(GetRandomInt(0, view_as<int>(TFRuneType))));
