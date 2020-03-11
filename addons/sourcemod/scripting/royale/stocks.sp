@@ -21,7 +21,7 @@ stock int GetAlivePlayersCount()
 	return count;
 }
 
-stock void ModelIndexToString(int index, const char[] model, int size)
+stock void ModelIndexToString(int index, char[] model, int size)
 {
 	int table = FindStringTable("modelprecache");
 	ReadStringTable(table, index, model, size);
@@ -116,7 +116,7 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	return -1;
 }
 
-stock int TF2_CreateAndEquipWeapon(int client, int index, const char[] classnameTemp = NULL_STRING)
+stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const char[] classnameTemp = NULL_STRING)
 {
 	char classname[256];
 	if (classnameTemp[0] != '\0')
@@ -126,43 +126,105 @@ stock int TF2_CreateAndEquipWeapon(int client, int index, const char[] classname
 	else
 	{
 		TF2Econ_GetItemClassName(index, classname, sizeof(classname));
-		TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+		
+		if (class != TFClass_Unknown)
+			TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
 	}
 	
-	int iWeapon = CreateEntityByName(classname);
-	if (IsValidEntity(iWeapon))
+	int weapon = CreateEntityByName(classname);
+	if (IsValidEntity(weapon))
 	{
-		SetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex", index);
-		SetEntProp(iWeapon, Prop_Send, "m_bInitialized", 1);
+		SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", index);
+		SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
 		
-		SetEntProp(iWeapon, Prop_Send, "m_iEntityQuality", 6);
-		SetEntProp(iWeapon, Prop_Send, "m_iEntityLevel", 1);
+		SetEntProp(weapon, Prop_Send, "m_iEntityQuality", 6);
+		SetEntProp(weapon, Prop_Send, "m_iEntityLevel", 1);
 		
-		DispatchSpawn(iWeapon);
-		SetEntProp(iWeapon, Prop_Send, "m_bValidatedAttachedEntity", true);
-		
-		if (StrContains(classname, "tf_weapon") == 0)
-		{
-			EquipPlayerWeapon(client, iWeapon);
-			
-			//Set ammo to 0, TF2 will correct this, adding ammo by current
-			int iAmmoType = GetEntProp(iWeapon, Prop_Send, "m_iPrimaryAmmoType");
-			if (iAmmoType > -1)
-				SetEntProp(client, Prop_Send, "m_iAmmo", 0, _, iAmmoType);
-		}
-		else if (StrContains(classname, "tf_wearable") == 0)
-		{
-			//SDKCall_EquipWearable(client, iWeapon);
-		}
-		else
-		{
-			RemoveEntity(iWeapon);
-			return -1;
-		}
-		
-		//Reset charge meter
-		//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
+		DispatchSpawn(weapon);
 	}
 	
-	return iWeapon;
+	return weapon;
+}
+
+stock void TF2_EquipWeapon(int client, int weapon)
+{
+	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
+	
+	char classname[256];
+	GetEntityClassname(weapon, classname, sizeof(classname));
+	
+	if (StrContains(classname, "tf_weapon") == 0)
+	{
+		EquipPlayerWeapon(client, weapon);
+		
+		//Set ammo to 0, TF2 will correct this, adding ammo by current
+		int iAmmoType = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+		if (iAmmoType > -1)
+			SetEntProp(client, Prop_Send, "m_iAmmo", 0, _, iAmmoType);
+	}
+	else if (StrContains(classname, "tf_wearable") == 0)
+	{
+		//SDK_EquipWearable(client, weapon);
+	}
+	else
+	{
+		RemoveEntity(weapon);
+	}
+	
+	//Reset charge meter
+	//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
+}
+
+stock int TF2_GetItemSlot(int defindex, TFClassType class)
+{
+	int slot = TF2Econ_GetItemSlot(defindex, class);
+	if (slot >= 0)
+	{
+		// Econ reports wrong slots for Engineer and Spy
+		switch (class)
+		{
+			case TFClass_Spy:
+			{
+				switch (slot)
+				{
+					case 1: slot = WeaponSlot_Primary; // Revolver
+					case 4: slot = WeaponSlot_Secondary; // Sapper
+					case 5: slot = WeaponSlot_PDADisguise; // Disguise Kit
+					case 6: slot = WeaponSlot_InvisWatch; // Invis Watch
+				}
+			}
+			
+			case TFClass_Engineer:
+			{
+				switch (slot)
+				{
+					case 4: slot = WeaponSlot_BuilderEngie; // Toolbox
+					case 5: slot = WeaponSlot_PDABuild; // Construction PDA
+					case 6: slot = WeaponSlot_PDADestroy; // Destruction PDA
+				}
+			}
+		}
+	}
+	
+	return slot;
+}
+
+stock int TF2_GetItemInSlot(int client, int slot)
+{
+	int weapon = GetPlayerWeaponSlot(client, slot);
+	if (weapon > MaxClients)
+		return weapon;
+	
+	//If weapon not found in slot, check if it a wearable
+//	return SDK_GetEquippedWearable(client, slot);
+	return -1;
+}
+
+stock void TF2_RemoveItemInSlot(int client, int slot)
+{
+	TF2_RemoveWeaponSlot(client, slot);
+
+//	int wearable = SDK_GetEquippedWearable(client, slot);
+//	if (wearable > MaxClients)
+//		TF2_RemoveWearable(wearable);
 }

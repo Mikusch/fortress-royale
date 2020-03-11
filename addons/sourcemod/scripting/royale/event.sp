@@ -61,7 +61,10 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 		return;
 	
 	TF2_RemoveAllWeapons(client);
-	TF2_CreateAndEquipWeapon(client, INDEX_FISTS, g_fistsClassname[TF2_GetPlayerClass(client)]);
+	
+	int weapon = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
+	if (weapon > MaxClients)
+		TF2_EquipWeapon(client, weapon);
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)

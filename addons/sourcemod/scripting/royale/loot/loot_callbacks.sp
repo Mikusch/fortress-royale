@@ -7,6 +7,15 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 		return -1;
 	}
 	
+	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
+	if (weapon > MaxClients)
+	{
+		int droppedWeapon = SDK_CreateDroppedWeapon(weapon, client);
+		RemoveEntity(weapon);
+		
+		return droppedWeapon;
+	}
+	
 	return -1;
 }
 

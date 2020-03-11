@@ -27,8 +27,27 @@
 #define DAMAGE_YES				2
 #define DAMAGE_AIM				3
 
+#define INDEX_FISTS		5
+
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
+
+enum
+{
+	WeaponSlot_Primary = 0,
+	WeaponSlot_Secondary,
+	WeaponSlot_Melee,
+	WeaponSlot_PDABuild,
+	WeaponSlot_PDADisguise = 3,
+	WeaponSlot_PDADestroy,
+	WeaponSlot_InvisWatch = 4,
+	WeaponSlot_BuilderEngie,
+	WeaponSlot_Unknown1,
+	WeaponSlot_Head,
+	WeaponSlot_Misc1,
+	WeaponSlot_Action,
+	WeaponSlot_Misc2
+};
 
 //TF2 Mannpower Powerups
 enum TFRuneType
@@ -306,8 +325,6 @@ char g_fistsClassname[][] = {
 	"tf_weapon_knife",		//Spy
 	"tf_weapon_robot_arm"	//Engineer
 }
-
-#define INDEX_FISTS		5
 
 bool g_IsRoundActive;
 

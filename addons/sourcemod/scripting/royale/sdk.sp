@@ -23,6 +23,8 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeam, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPlayer, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHook_PickupWeaponFromOther, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -182,6 +184,43 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hP
 	return MRES_Ignored;
 }
 
+public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Handle params)
+{
+	DHookSetReturn(returnVal, true);
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_PickupWeaponFromOther(int client, Handle returnVal, Handle params)
+{
+	int droppedWeapon = DHookGetParam(params, 1);
+	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
+	TFClassType class = TF2_GetPlayerClass(client);
+	int slot = TF2_GetItemSlot(defindex, class);
+	
+	if (slot < 0)
+		return MRES_Ignored;
+	
+	//Check if client already has weapon in given slot, remove and create dropped weapon if so
+	int weapon = TF2_GetItemInSlot(client, slot);
+	if (weapon > MaxClients)
+	{
+		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+			SDK_CreateDroppedWeapon(weapon, client);
+		
+		TF2_RemoveItemInSlot(client, slot);
+	}
+	
+	//Create new weapon
+	weapon = TF2_CreateWeapon(defindex, class);
+	if (weapon > MaxClients)
+		TF2_EquipWeapon(client, weapon);
+	
+	//Delete dropped weapon and return true as it been done
+	RemoveEntity(droppedWeapon);
+	DHookSetReturn(returnVal, true);
+	return MRES_Supercede;
+}
+
 public MRESReturn DHook_SetWinningTeam(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
@@ -269,7 +308,7 @@ public Address GameData_GetCreateRuneOffset()
 	return view_as<Address>(g_CreateRuneOffset);
 }
 
-stock int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3], const float angles[3])
+stock int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
 	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
