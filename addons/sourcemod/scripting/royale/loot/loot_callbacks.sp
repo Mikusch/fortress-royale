@@ -1,4 +1,4 @@
-public int LootCallback_CreateWeapon(CallbackParams params)
+public int LootCallback_CreateWeapon(int client, CallbackParams params)
 {
 	int defindex;
 	if (!params.GetIntEx("defindex", defindex))
@@ -10,7 +10,7 @@ public int LootCallback_CreateWeapon(CallbackParams params)
 	return -1;
 }
 
-public int LootCallback_CreateSpell(CallbackParams params)
+public int LootCallback_CreateSpell(int client, CallbackParams params)
 {
 	int spell = CreateEntityByName("tf_spell_pickup");
 	if (spell > MaxClients)
@@ -22,7 +22,7 @@ public int LootCallback_CreateSpell(CallbackParams params)
 	return -1;
 }
 
-public int LootCallback_CreateRune(CallbackParams params)
+public int LootCallback_CreateRune(int client, CallbackParams params)
 {
 	int type;
 	if (params && params.GetIntEx("type", type))
@@ -31,7 +31,7 @@ public int LootCallback_CreateRune(CallbackParams params)
 		return TF2_CreateRune(view_as<TFRuneType>(GetRandomInt(0, view_as<int>(TFRuneType))));
 }
 
-public int LootCallback_CreateEntity(CallbackParams params)
+public int LootCallback_CreateEntity(int client, CallbackParams params)
 {
 	char classname[256];
 	params.GetString("classname", classname, sizeof(classname));

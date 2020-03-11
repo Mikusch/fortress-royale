@@ -91,6 +91,7 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 		{
 			//Start function call to loot creation function
 			Call_StartFunction(null, loot.callback);
+			Call_PushCell(activator);
 			Call_PushCell(loot.callbackParams);
 			
 			int entity;
