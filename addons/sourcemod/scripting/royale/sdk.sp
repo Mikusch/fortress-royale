@@ -6,6 +6,7 @@ static Handle g_DHookDeflectEntity;
 static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 
+static Handle g_SDKGetMaxAmmo;
 static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 
@@ -33,6 +34,7 @@ void SDK_Init()
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	
+	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	
@@ -69,6 +71,21 @@ static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
 		LogError("Failed to create virtual: %s", name);
 	
 	return hook;
+}
+
+static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetMaxAmmo");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::GetMaxAmmo");
+	
+	return call;
 }
 
 static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
@@ -309,7 +326,12 @@ public Address GameData_GetCreateRuneOffset()
 	return view_as<Address>(g_CreateRuneOffset);
 }
 
-stock int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
+int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClassType>(-1))
+{
+	return SDKCall(g_SDKGetMaxAmmo, client, ammotype, class);
+}
+
+int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
 	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))

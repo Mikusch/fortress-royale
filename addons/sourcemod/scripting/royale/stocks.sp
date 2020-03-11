@@ -154,25 +154,26 @@ stock void TF2_EquipWeapon(int client, int weapon)
 	GetEntityClassname(weapon, classname, sizeof(classname));
 	
 	if (StrContains(classname, "tf_weapon") == 0)
-	{
 		EquipPlayerWeapon(client, weapon);
-		
-		//Set ammo to 0, TF2 will correct this, adding ammo by current
-		int iAmmoType = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
-		if (iAmmoType > -1)
-			SetEntProp(client, Prop_Send, "m_iAmmo", 0, _, iAmmoType);
-	}
 	else if (StrContains(classname, "tf_wearable") == 0)
 	{
 		//SDK_EquipWearable(client, weapon);
 	}
 	else
-	{
 		RemoveEntity(weapon);
-	}
 	
 	//Reset charge meter
 	//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
+}
+
+stock int TF2_RefillWeaponAmmo(int client, int weapon)
+{
+	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+	if (ammotype > -1)
+	{
+		int maxammo = SDK_GetMaxAmmo(client, ammotype);
+		SetEntProp(client, Prop_Send, "m_iAmmo", maxammo, _, ammotype);
+	}
 }
 
 stock int TF2_GetItemSlot(int defindex, TFClassType class)
