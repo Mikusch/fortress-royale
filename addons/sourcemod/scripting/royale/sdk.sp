@@ -9,6 +9,8 @@ static Handle g_DHookShouldCollide;
 static Handle g_SDKGetMaxAmmo;
 static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
+static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
+static Handle g_SDKCallEquipWearable;
 
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
@@ -37,6 +39,8 @@ void SDK_Init()
 	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
+	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
+	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
 	
 	g_CreateRuneOffset = gamedata.GetOffset("TF2_CreateRune");
 	
@@ -118,6 +122,33 @@ static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitDroppedWeapon");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_GetEquippedWearableForLoadoutSlot(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetEquippedWearableForLoadoutSlot");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::GetEquippedWearableForLoadoutSlot");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_EquipWearable(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBasePlayer::EquipWearable");
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBasePlayer::EquipWearable");
 	
 	return call;
 }
@@ -351,4 +382,14 @@ int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = 
 	}
 	
 	return -1;
+}
+
+void SDK_EquipWearable(int client, int wearable)
+{
+	SDKCall(g_SDKCallEquipWearable, client, wearable);
+}
+
+int SDK_GetEquippedWearableForLoadoutSlot(int client, int slot)
+{
+	return SDKCall(g_SDKCallGetEquippedWearableForLoadoutSlot, client, slot);
 }

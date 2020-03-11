@@ -217,15 +217,14 @@ stock int TF2_GetItemInSlot(int client, int slot)
 		return weapon;
 	
 	//If weapon not found in slot, check if it a wearable
-//	return SDK_GetEquippedWearable(client, slot);
-	return -1;
+	return SDK_GetEquippedWearableForLoadoutSlot(client, slot);
 }
 
 stock void TF2_RemoveItemInSlot(int client, int slot)
 {
 	TF2_RemoveWeaponSlot(client, slot);
 
-//	int wearable = SDK_GetEquippedWearable(client, slot);
-//	if (wearable > MaxClients)
-//		TF2_RemoveWearable(wearable);
+	int wearable = SDK_GetEquippedWearableForLoadoutSlot(client, slot);
+	if (wearable > MaxClients)
+		TF2_RemoveWearable(client, wearable);
 }
