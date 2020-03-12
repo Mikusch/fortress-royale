@@ -78,11 +78,24 @@ stock LootType Loot_StrToLootType(const char[] str)
 	return type;
 }
 
+stock bool Loot_IsCrate(int ref)
+{
+	return g_SpawnedCrates.FindValue(ref, 0) >= 0;
+}
+
+stock bool Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
+{
+	int index = g_SpawnedCrates.FindValue(ref, 0);
+	if (index < 0)
+		return false;
+	
+	return Config_GetLootCrate(g_SpawnedCrates.Get(index, 1), lootCrate);
+}
+
 public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
 {
 	LootCrateConfig lootCrate;
-	int i = g_SpawnedCrates.Get(g_SpawnedCrates.FindValue(EntIndexToEntRef(caller), 0), 1);
-	if (Config_GetLootCrate(i, lootCrate))
+	if (Loot_GetCrateConfig(EntIndexToEntRef(caller), lootCrate))
 	{
 		EmitSoundToAll(lootCrate.sound, caller);
 		

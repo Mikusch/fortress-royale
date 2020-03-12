@@ -331,9 +331,11 @@ bool g_IsRoundActive;
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
+#include "royale/command.sp"
 #include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convar.sp"
+#include "royale/editor.sp"
 #include "royale/event.sp"
 #include "royale/loot/loot.sp"
 #include "royale/loot/loot_callbacks.sp"
@@ -343,6 +345,7 @@ bool g_IsRoundActive;
 
 public void OnPluginStart()
 {
+	Command_Init();
 	Config_Init();
 	Console_Init();
 	ConVar_Init();
