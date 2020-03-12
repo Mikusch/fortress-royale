@@ -112,6 +112,12 @@ void Config_Refresh()
 			kv.GoBack();
 		}
 		
+		if (kv.JumpToKey("Zone", false))
+		{
+			Zone_ReadConfig(kv);
+			kv.GoBack();
+		}
+		
 		if (kv.JumpToKey("LootDefault", false))
 		{
 			g_LootCratesDefault.ReadConfig(kv);
@@ -159,6 +165,12 @@ void Config_Refresh()
 		if (kv.JumpToKey("BattleBus", false))
 		{
 			BattleBus_ReadConfig(kv);
+			kv.GoBack();
+		}
+		
+		if (kv.JumpToKey("Zone", false))
+		{
+			Zone_ReadConfig(kv);
 			kv.GoBack();
 		}
 		
