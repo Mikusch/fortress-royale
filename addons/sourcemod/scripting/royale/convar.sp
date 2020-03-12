@@ -5,7 +5,8 @@ static ConVar tf_avoidteammates;
 
 void ConVar_Init()
 {
-	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max Health Multiplier (Rounded to lowest 5)", _, true, 0.0);
+	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max health multiplier (rounds to lowest 5)", _, true, 0.0);
+	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	
 	mp_autoteambalance = FindConVar("mp_autoteambalance");
 	mp_teams_unbalance_limit = FindConVar("mp_teams_unbalance_limit");

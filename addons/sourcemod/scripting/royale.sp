@@ -329,6 +329,7 @@ char g_fistsClassname[][] = {
 bool g_IsRoundActive;
 
 ConVar fr_healthmultiplier;
+ConVar fr_fistsdamagemultiplier;
 
 #include "royale/player.sp"
 
@@ -384,6 +385,7 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
+	SDKHook(client, SDKHook_OnTakeDamageAlive, Client_OnTakeDamageAlive);
 	
 	SDK_HookClient(client);
 	
@@ -457,6 +459,21 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 	//Multiply health by convar value, and round up value by 5
 	maxhealth = RoundToFloor(float(maxhealth) * multiplier / 5.0) * 5;
 	return Plugin_Changed;
+}
+
+public Action Client_OnTakeDamageAlive(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+	{
+		float multiplier = fr_fistsdamagemultiplier.FloatValue;
+		if (multiplier != 1.0)
+		{
+			damage *= multiplier;
+			return Plugin_Changed;
+		}
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action Projectile_Touch(int entity, int other)
