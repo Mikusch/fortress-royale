@@ -156,9 +156,7 @@ stock void TF2_EquipWeapon(int client, int weapon)
 	if (StrContains(classname, "tf_weapon") == 0)
 		EquipPlayerWeapon(client, weapon);
 	else if (StrContains(classname, "tf_wearable") == 0)
-	{
-		//SDK_EquipWearable(client, weapon);
-	}
+		SDK_EquipWearable(client, weapon);
 	else
 		RemoveEntity(weapon);
 	
