@@ -1,10 +1,12 @@
-ConVar mp_autoteambalance;
-ConVar mp_teams_unbalance_limit;
-ConVar mp_friendlyfire;
-ConVar tf_avoidteammates;
+static ConVar mp_autoteambalance;
+static ConVar mp_teams_unbalance_limit;
+static ConVar mp_friendlyfire;
+static ConVar tf_avoidteammates;
 
 void ConVar_Init()
 {
+	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max Health Multiplier (Rounded to lowest 5)", _, true, 0.0);
+	
 	mp_autoteambalance = FindConVar("mp_autoteambalance");
 	mp_teams_unbalance_limit = FindConVar("mp_teams_unbalance_limit");
 	mp_friendlyfire = FindConVar("mp_friendlyfire");

@@ -328,6 +328,8 @@ char g_fistsClassname[][] = {
 
 bool g_IsRoundActive;
 
+ConVar fr_healthmultiplier;
+
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
@@ -381,6 +383,8 @@ public void OnClientPutInServer(int client)
 {
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
+	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
+	
 	SDK_HookClient(client);
 	
 	FRPlayer(client).PlayerState = PlayerState_Waiting;
@@ -441,6 +445,18 @@ public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmas
 		return true;
 	
 	return originalResult;
+}
+
+public Action Client_GetMaxHealth(int client, int &maxhealth)
+{
+	float multiplier = fr_healthmultiplier.FloatValue;
+	
+	if (multiplier == 1.0)
+		return Plugin_Continue;
+	
+	//Multiply health by convar value, and round up value by 5
+	maxhealth = RoundToFloor(float(maxhealth) * multiplier / 5.0) * 5;
+	return Plugin_Changed;
 }
 
 public Action Projectile_Touch(int entity, int other)
