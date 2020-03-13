@@ -1,6 +1,6 @@
 static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
-static bool g_ClientEditor[TF_MAXPLAYERS + 1];
-static int g_ClientEditorCrate[TF_MAXPLAYERS + 1];
+static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
+static int g_ClientEditorCrateRef[TF_MAXPLAYERS + 1];
 
 methodmap FRPlayer
 {
@@ -22,29 +22,29 @@ methodmap FRPlayer
 		}
 	}
 	
-	property bool Editor
+	property EditorState EditorState
 	{
 		public get()
 		{
-			return g_ClientEditor[this];
+			return g_ClientEditorState[this];
 		}
 		
-		public set(bool val)
+		public set(EditorState val)
 		{
-			g_ClientEditor[this] = val;
+			g_ClientEditorState[this] = val;
 		}
 	}
 	
-	property int EditorCrate
+	property int EditorCrateRef
 	{
 		public get()
 		{
-			return g_ClientEditorCrate[this];
+			return g_ClientEditorCrateRef[this];
 		}
 		
 		public set(int val)
 		{
-			g_ClientEditorCrate[this] = val;
+			g_ClientEditorCrateRef[this] = val;
 		}
 	}
 }

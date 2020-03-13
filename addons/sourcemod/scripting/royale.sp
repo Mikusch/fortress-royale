@@ -68,10 +68,17 @@ enum TFRuneType
 
 enum PlayerState
 {
-	PlayerState_Waiting,
-	PlayerState_BattleBus,
-	PlayerState_Alive,
-	PlayerState_Dead
+	PlayerState_Waiting,	/**< Client is in spectator or waiting for new game */
+	PlayerState_BattleBus,	/**< Client is in Battle Bus */
+	PlayerState_Alive,		/**< Client is alive in map */
+	PlayerState_Dead		/**< Client is dead and spectating */
+}
+
+enum EditorState
+{
+	EditorState_None,		/**< Client is not using editor */
+	EditorState_View,		/**< Client is viewing props */
+	EditorState_Placing		/**< Client is creating or moving a crate */
 }
 
 enum SolidType_t
@@ -114,6 +121,7 @@ enum LootType
 
 enum struct LootCrateConfig
 {
+	bool load;						/**< Whenever if this enum struct is loaded */
 	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
 	float origin[3];				/**< Spawn origin */
 	float angles[3];				/**< Spawn angles */
@@ -126,6 +134,8 @@ enum struct LootCrateConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
+		this.load = true;
+		
 		kv.GetVector("origin", this.origin, this.origin);
 		kv.GetVector("angles", this.angles, this.angles);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
@@ -139,6 +149,19 @@ enum struct LootCrateConfig
 		char contents[PLATFORM_MAX_PATH];
 		kv.GetString("contents", contents, sizeof(contents), "ALL");
 		this.contents = Loot_StrToLootType(contents);
+	}
+	
+	void SetConfig(KeyValues kv)
+	{
+		kv.SetVector("origin", this.origin);
+		kv.SetVector("angles", this.angles);
+		kv.SetString("model", this.model);
+		kv.SetNum("skin", this.skin);
+		kv.SetString("sound", this.sound);
+		kv.SetNum("health", this.health);
+		kv.SetFloat("chance", this.chance);
+		
+		//TODO contents support
 	}
 	
 	LootType GetRandomLootType()
@@ -390,6 +413,7 @@ public void OnClientPutInServer(int client)
 	SDK_HookClient(client);
 	
 	FRPlayer(client).PlayerState = PlayerState_Waiting;
+	FRPlayer(client).EditorState = EditorState_None;
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])

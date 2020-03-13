@@ -1,7 +1,7 @@
 static StringMap g_LootTypeMap;
 static ArrayList g_SpawnedCrates;
 
-public void Loot_Init()
+void Loot_Init()
 {
 	g_SpawnedCrates = new ArrayList(2);
 	g_LootTypeMap = new StringMap();
@@ -21,20 +21,20 @@ public void Loot_Init()
 	g_LootTypeMap.SetValue("POWERUP_RUNE", Loot_Powerup_Rune);
 }
 
-public void Loot_SpawnCratesInWorld()
+void Loot_SpawnCratesInWorld()
 {
-	int i = 0;
+	int configIndex = 0;
 	LootCrateConfig lootCrate;
-	while (Config_GetLootCrate(i, lootCrate))
+	while (Config_GetLootCrate(configIndex, lootCrate))
 	{
-		Loot_SpawnCrateInWorld(lootCrate, i);
-		i++;
+		Loot_SpawnCrateInWorld(lootCrate, configIndex);
+		configIndex++;
 	}
 }
 
-public void Loot_SpawnCrateInWorld(LootCrateConfig config, int i)
+int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force = false)
 {
-	if (GetRandomFloat() <= config.chance)
+	if (force || GetRandomFloat() <= config.chance)
 	{
 		int crate = CreateEntityByName("prop_dynamic_override");
 		if (IsValidEntity(crate))
@@ -53,10 +53,14 @@ public void Loot_SpawnCrateInWorld(LootCrateConfig config, int i)
 				int length = g_SpawnedCrates.Length;
 				g_SpawnedCrates.Resize(length + 1);
 				g_SpawnedCrates.Set(length, EntIndexToEntRef(crate), 0);
-				g_SpawnedCrates.Set(length, i, 1);
+				g_SpawnedCrates.Set(length, configIndex, 1);
+				
+				return EntIndexToEntRef(crate);
 			}
 		}
 	}
+	
+	return INVALID_ENT_REFERENCE;
 }
 
 stock LootType Loot_StrToLootType(const char[] str)
@@ -83,19 +87,39 @@ stock bool Loot_IsCrate(int ref)
 	return g_SpawnedCrates.FindValue(ref, 0) >= 0;
 }
 
-stock bool Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
+stock int Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
 {
 	int index = g_SpawnedCrates.FindValue(ref, 0);
 	if (index < 0)
-		return false;
+		return -1;
 	
-	return Config_GetLootCrate(g_SpawnedCrates.Get(index, 1), lootCrate);
+	int configIndex = g_SpawnedCrates.Get(index, 1);
+	if (!Config_GetLootCrate(configIndex, lootCrate))
+		return -1;
+	
+	return configIndex;
+}
+
+stock int Loot_DeleteCrate(int ref)
+{
+	int index = g_SpawnedCrates.FindValue(ref, 0);
+	if (index >= 0)
+	{
+		RemoveEntity(ref);
+		
+		int configIndex = g_SpawnedCrates.Get(index, 1);
+		g_SpawnedCrates.Erase(index);
+		return configIndex;
+	}
+	
+	return -1;
 }
 
 public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
 {
 	LootCrateConfig lootCrate;
-	if (Loot_GetCrateConfig(EntIndexToEntRef(caller), lootCrate))
+	int configIndex = Loot_GetCrateConfig(EntIndexToEntRef(caller), lootCrate);
+	if (configIndex >= 0)
 	{
 		EmitSoundToAll(lootCrate.sound, caller);
 		
