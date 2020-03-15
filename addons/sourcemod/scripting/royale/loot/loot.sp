@@ -38,6 +38,7 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 			DispatchKeyValue(crate, "solid", "6");
 			SetEntityModel(crate, config.model);
 			SetEntProp(crate, Prop_Data, "m_nSkin", config.skin);
+			SetEntProp(crate, Prop_Data, "m_iMaxHealth", config.health);
 			SetEntProp(crate, Prop_Data, "m_iHealth", config.health);
 			
 			if (DispatchSpawn(crate))
