@@ -136,8 +136,12 @@ enum struct LootCrateConfig
 {
 	bool load;						/**< Whenever if this enum struct is loaded */
 	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
+	
+	// LootCrates
 	float origin[3];				/**< Spawn origin */
 	float angles[3];				/**< Spawn angles */
+	
+	// LootPrefabs/LootDefault
 	char model[PLATFORM_MAX_PATH];	/**< World model */
 	int skin;						/**< Model skin */
 	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
@@ -192,15 +196,9 @@ enum struct LootCrateConfig
 	
 	void SetConfig(KeyValues kv)
 	{
+		kv.SetString("prefab", this.namePrefab);
 		kv.SetVector("origin", this.origin);
 		kv.SetVector("angles", this.angles);
-		kv.SetString("model", this.model);
-		kv.SetNum("skin", this.skin);
-		kv.SetString("sound", this.sound);
-		kv.SetNum("health", this.health);
-		kv.SetFloat("chance", this.chance);
-		
-		//TODO contents support
 	}
 	
 	LootType GetRandomLootType()

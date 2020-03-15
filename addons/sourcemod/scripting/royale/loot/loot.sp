@@ -36,10 +36,7 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 		if (IsValidEntity(crate))
 		{
 			DispatchKeyValue(crate, "solid", "6");
-			SetEntityModel(crate, config.model);
-			SetEntProp(crate, Prop_Data, "m_nSkin", config.skin);
-			SetEntProp(crate, Prop_Data, "m_iMaxHealth", config.health);
-			SetEntProp(crate, Prop_Data, "m_iHealth", config.health);
+			Loot_SetCratePrefab(crate, config);
 			
 			if (DispatchSpawn(crate))
 			{
@@ -58,6 +55,14 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 	}
 	
 	return INVALID_ENT_REFERENCE;
+}
+
+void Loot_SetCratePrefab(int crate, LootCrateConfig config)
+{
+	SetEntityModel(crate, config.model);
+	SetEntProp(crate, Prop_Data, "m_nSkin", config.skin);
+	SetEntProp(crate, Prop_Data, "m_iMaxHealth", config.health);
+	SetEntProp(crate, Prop_Data, "m_iHealth", config.health);
 }
 
 stock ArrayList Loot_StrToLootTypes(const char[] str)
