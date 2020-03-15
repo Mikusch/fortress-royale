@@ -98,26 +98,39 @@ enum SolidType_t
  */
 enum LootType
 {
-	Loot_Weapon_Primary = (1<<0),	/**< Primary weapons */
-	Loot_Weapon_Secondary = (1<<1),	/**< Secondary weapons */
-	Loot_Weapon_Melee = (1<<2),		/**< Melee weapons */
-	Loot_Weapon_Misc = (1<<3),		/**< Grappling Hook, PDA, etc. */
-	Loot_Pickup_Health = (1<<4),	/**< Health pickups */
-	Loot_Pickup_Ammo = (1<<5),		/**< Ammunition pickups */
-	Loot_Pickup_Spell = (1<<6),		/**< Halloween spells */
-	Loot_Powerup_Crits = (1<<7),	/**< Mannpower crit powerup */
-	Loot_Powerup_Uber = (1<<8),		/**< Mannpower uber powerup */
-	Loot_Powerup_Rune = (1<<9)		/**< Mannpower rune powerup */
+	Loot_Weapon_Primary = 0,	/**< Primary weapons */
+	Loot_Weapon_Secondary,		/**< Secondary weapons */
+	Loot_Weapon_Melee,			/**< Melee weapons */
+	Loot_Weapon_Misc,			/**< Grappling Hook, PDA, etc. */
+	Loot_Pickup_Health,			/**< Health pickups */
+	Loot_Pickup_Ammo,			/**< Ammunition pickups */
+	Loot_Pickup_Spell,			/**< Halloween spells */
+	Loot_Powerup_Crits,			/**< Mannpower crit powerup */
+	Loot_Powerup_Uber,			/**< Mannpower uber powerup */
+	Loot_Powerup_Rune			/**< Mannpower rune powerup */
 }
 
-/** Everything */
-#define LOOT_ALL		view_as<LootType>(0xFFFFFFFF)
-/** Any weapon */
-#define LOOT_WEAPONS	Loot_Weapon_Primary|Loot_Weapon_Secondary|Loot_Weapon_Melee|Loot_Weapon_Misc
-/** Health, ammo and spells */
-#define LOOT_PICKUPS	Loot_Pickup_Health|Loot_Pickup_Ammo|Loot_Pickup_Spell
-/** Mannpower powerups */
-#define LOOT_POWERUPS	Loot_Powerup_Crits|Loot_Powerup_Uber|Loot_Powerup_Rune
+methodmap LootCrateContents < ArrayList
+{
+	public LootCrateContents()
+	{
+		return view_as<LootCrateContents>(new ArrayList(2))
+	}
+	
+	public void PushContent(LootType loot, float chance)
+	{
+		int length = this.Length;
+		this.Resize(length + 1);
+		this.Set(length, loot, 0);
+		this.Set(length, chance, 1);
+	}
+	
+	public void GetContent(int index, LootType &loot, float &chance)
+	{
+		loot = this.Get(index, 0);
+		chance = this.Get(index, 1);
+	}
+}
 
 enum struct LootCrateConfig
 {
@@ -130,7 +143,7 @@ enum struct LootCrateConfig
 	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
 	int health;						/**< Amount of damage required to open */
 	float chance;					/**< Chance for this crate to spawn at all */
-	LootType contents;				/**< Content bitflags **/
+	LootCrateContents contents;		/**< ArrayList of content bitflags (block 0) and chance (block 1) **/
 	
 	void ReadConfig(KeyValues kv)
 	{
@@ -146,9 +159,35 @@ enum struct LootCrateConfig
 		this.health = kv.GetNum("health", this.health);
 		this.chance = kv.GetFloat("chance", this.chance);
 		
-		char contents[PLATFORM_MAX_PATH];
-		kv.GetString("contents", contents, sizeof(contents), "ALL");
-		this.contents = Loot_StrToLootType(contents);
+		if (kv.JumpToKey("contents", false))
+		{
+			LootCrateContents contents = new LootCrateContents();
+			
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					char type[PLATFORM_MAX_PATH];
+					kv.GetString("type", type, sizeof(type));
+					
+					ArrayList types = Loot_StrToLootTypes(type);
+					float chance = kv.GetFloat("chance");
+					
+					for (int i = 0; i < types.Length; i++)
+					{
+						contents.PushContent(types.Get(i), chance)
+					}
+					
+					delete types;
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+				
+				this.contents = contents;
+			}
+			kv.GoBack();
+		}
+		kv.GoBack();
 	}
 	
 	void SetConfig(KeyValues kv)
@@ -166,15 +205,20 @@ enum struct LootCrateConfig
 	
 	LootType GetRandomLootType()
 	{
-		ArrayList list = new ArrayList();
-		for (int i = 1; i < view_as<int>(LootType); i*=2)
+		LootType loot;
+		float percentage;
+		
+		this.contents.Sort(Sort_Random, Sort_Integer);
+		
+		for (int i = 0; i < this.contents.Length; i++)
 		{
-			if (view_as<int>(this.contents) & i)
-				list.Push(i);
+			this.contents.GetContent(i, loot, percentage);
+			
+			if (GetRandomFloat() <= percentage)
+				return loot;
 		}
-		int type = list.Get(GetRandomInt(0, list.Length - 1));
-		delete list;
-		return view_as<LootType>(type);
+		
+		return this.GetRandomLootType();
 	}
 }
 
@@ -305,26 +349,17 @@ methodmap LootTable < ArrayList
 		kv.GoBack();
 	}
 	
-	public int GetRandomLoot(LootConfig buffer, LootType type = LOOT_ALL)
+	public int GetRandomLoot(LootConfig buffer, LootType type)
 	{
-		ArrayList list;
-		if (type == LOOT_ALL)
+		//Put all loot that matches the specified type into a new list
+		ArrayList list = new ArrayList(sizeof(LootConfig));
+		for (int i = 0; i < this.Length; i++)
 		{
-			//We want to pull from entire loot table, just clone the current list
-			list = this.Clone();
-		}
-		else
-		{
-			//Filter out all loot that matches the specified type
-			list = new ArrayList(sizeof(LootConfig));
-			for (int i = 0; i < this.Length; i++)
+			if (type == this.Get(i, 0))
 			{
-				if (type & this.Get(i, 0))
-				{
-					LootConfig temp;
-					this.GetArray(i, temp, sizeof(temp));
-					list.PushArray(temp);
-				}
+				LootConfig temp;
+				this.GetArray(i, temp, sizeof(temp));
+				list.PushArray(temp);
 			}
 		}
 		

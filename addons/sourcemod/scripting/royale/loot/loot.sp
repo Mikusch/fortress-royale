@@ -5,10 +5,6 @@ void Loot_Init()
 {
 	g_SpawnedCrates = new ArrayList(2);
 	g_LootTypeMap = new StringMap();
-	g_LootTypeMap.SetValue("ALL", LOOT_ALL);
-	g_LootTypeMap.SetValue("WEAPON_ALL", LOOT_WEAPONS);
-	g_LootTypeMap.SetValue("PICKUP_ALL", LOOT_PICKUPS);
-	g_LootTypeMap.SetValue("POWERUP_ALL", LOOT_POWERUPS);
 	g_LootTypeMap.SetValue("WEAPON_PRIMARY", Loot_Weapon_Primary);
 	g_LootTypeMap.SetValue("WEAPON_SECONDARY", Loot_Weapon_Secondary);
 	g_LootTypeMap.SetValue("WEAPON_MELEE", Loot_Weapon_Melee);
@@ -63,22 +59,27 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 	return INVALID_ENT_REFERENCE;
 }
 
-stock LootType Loot_StrToLootType(const char[] str)
+stock ArrayList Loot_StrToLootTypes(const char[] str)
 {
-	LootType type;
-	
+	ArrayList types = new ArrayList();
+
 	char parts[32][PLATFORM_MAX_PATH];
 	if (ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[])) > 0)
 	{
 		for (int i = 0; i < sizeof(parts); i++)
 		{
-			TrimString(parts[i]);
-			LootType temp;
-			g_LootTypeMap.GetValue(parts[i], temp);
-			type |= temp;
+			if (!StrEqual(parts[i], NULL_STRING))
+				types.Push(Loot_StrToLootType(parts[i]));
 		}
 	}
 	
+	return types;
+}
+
+stock LootType Loot_StrToLootType(const char[] str)
+{
+	LootType type;
+	g_LootTypeMap.GetValue(str, type);
 	return type;
 }
 
