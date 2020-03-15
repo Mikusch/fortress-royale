@@ -130,6 +130,31 @@ methodmap LootCrateContents < ArrayList
 		loot = this.Get(index, 0);
 		chance = this.Get(index, 1);
 	}
+	
+	public void ReadConfig(KeyValues kv)
+	{
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				char type[PLATFORM_MAX_PATH];
+				kv.GetString("type", type, sizeof(type));
+				
+				ArrayList types = Loot_StrToLootTypes(type);
+				float chance = kv.GetFloat("chance");
+				
+				for (int i = 0; i < types.Length; i++)
+				{
+					this.PushContent(types.Get(i), chance)
+				}
+				
+				delete types;
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+		kv.GoBack();
+	}
 }
 
 enum struct LootCrateConfig
@@ -166,30 +191,8 @@ enum struct LootCrateConfig
 		if (kv.JumpToKey("contents", false))
 		{
 			LootCrateContents contents = new LootCrateContents();
-			
-			if (kv.GotoFirstSubKey(false))
-			{
-				do
-				{
-					char type[PLATFORM_MAX_PATH];
-					kv.GetString("type", type, sizeof(type));
-					
-					ArrayList types = Loot_StrToLootTypes(type);
-					float chance = kv.GetFloat("chance");
-					
-					for (int i = 0; i < types.Length; i++)
-					{
-						contents.PushContent(types.Get(i), chance)
-					}
-					
-					delete types;
-				}
-				while (kv.GotoNextKey(false));
-				kv.GoBack();
-				
-				this.contents = contents;
-			}
-			kv.GoBack();
+			contents.ReadConfig(kv);
+			this.contents = contents;
 		}
 		kv.GoBack();
 	}
