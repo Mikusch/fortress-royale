@@ -39,6 +39,7 @@ void Editor_Display(int client)
 	{
 		menu.SetTitle("Editor Menu \n \nYou are not looking at any crates");
 		menu.AddItem("delete", "Delete this Crate", ITEMDRAW_DISABLED);
+		menu.AddItem("prefab", "Change this Crate prefab", ITEMDRAW_DISABLED);
 		menu.AddItem("move", "Move this Crate", ITEMDRAW_DISABLED);
 		menu.AddItem("create", "Create New Crate");
 	}
@@ -51,6 +52,7 @@ void Editor_Display(int client)
 		
 		menu.SetTitle("Editor Menu \n \n%s", title);
 		menu.AddItem("delete", "Delete this Crate");
+		menu.AddItem("prefab", "Change this Crate prefab");
 		
 		if (FRPlayer(client).EditorState == EditorState_View)
 		{
@@ -97,6 +99,10 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			FRPlayer(param1).EditorState = EditorState_View;
 			Editor_Display(param1);
 		}
+		else if (StrEqual(select, "prefab"))
+		{
+			Editor_DisplayPrefab(param1);
+		}
 		else if (StrEqual(select, "place"))
 		{
 			SetEntityRenderMode(crate, RENDER_NORMAL);
@@ -134,6 +140,86 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			FRPlayer(param1).EditorState = EditorState_Placing;
 			Editor_Display(param1);
 		}
+	}
+}
+
+void Editor_DisplayPrefab(int client)
+{
+	Menu menu = new Menu(Editor_MenuSelectedPrefab);
+	
+	LootCrateConfig lootCrate;
+	if (Loot_GetCrateConfig(FRPlayer(client).EditorCrateRef, lootCrate) < 0)
+		return;
+	
+	menu.SetTitle("Editor Prefabs \n \nYou are currently using %s", lootCrate.namePrefab[0] == '\0' ? "Default" : lootCrate.namePrefab);
+	
+	menu.AddItem("__default__", "Default", lootCrate.namePrefab[0] == '\0' ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+	
+	int prefabIndex;
+	LootCrateConfig lootPrefab;
+	while (Config_GetLootPrefab(prefabIndex, lootPrefab))
+	{
+		menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab, StrEqual(lootPrefab.namePrefab, lootCrate.namePrefab) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+		prefabIndex++;
+	}
+	
+	menu.ExitBackButton = true;
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+public int Editor_MenuSelectedPrefab(Menu menu, MenuAction action, int param1, int param2)
+{
+	if (action == MenuAction_Cancel)
+	{
+		if (param2 == MenuCancel_ExitBack)
+		{
+			Editor_Display(param1);
+		}
+		else if (param2 == MenuCancel_Exit)
+		{
+			if (FRPlayer(param1).EditorState == EditorState_Placing)
+				Loot_DeleteCrate(FRPlayer(param1).EditorCrateRef);
+			
+			FRPlayer(param1).EditorState = EditorState_None;
+		}
+	}
+	else if (action == MenuAction_End)
+	{
+		delete menu;
+	}
+	else if (action == MenuAction_Select)
+	{
+		char select[32];
+		menu.GetItem(param2, select, sizeof(select));
+		
+		int crate = FRPlayer(param1).EditorCrateRef;
+		
+		LootCrateConfig lootPrefab;
+		if (StrEqual(select, "__default__") || Config_FindPrefab(select, lootPrefab) >= 0)
+		{
+			if (!lootPrefab.load)
+				Config_GetDefault(lootPrefab);
+			
+			LootCrateConfig lootCrate;
+			int configIndex = Loot_GetCrateConfig(crate, lootCrate);
+			if (configIndex >= 0)
+			{
+				//Copy everything from prefab to crate, but keep origin and angles
+				float origin[3], angles[3];
+				origin = lootCrate.origin;
+				angles = lootCrate.angles;
+				
+				lootCrate = lootPrefab;
+				
+				lootCrate.origin = origin;
+				lootCrate.angles = angles;
+				
+				Loot_SetCratePrefab(crate, lootPrefab);
+				Config_SetLootCrate(configIndex, lootCrate);
+			}
+		}
+		
+		Editor_Display(param1);
 	}
 }
 

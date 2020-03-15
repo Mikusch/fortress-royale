@@ -34,7 +34,7 @@ methodmap LootPrefabsConfig < ArrayList
 		kv.GoBack();
 	}
 	
-	public bool FindPrefab(const char[] name, LootCrateConfig lootBuffer)
+	public int FindPrefab(const char[] name, LootCrateConfig lootBuffer)
 	{
 		int length = this.Length;
 		for (int i = 0; i < length; i++)
@@ -45,11 +45,11 @@ methodmap LootPrefabsConfig < ArrayList
 			if (StrEqual(lootCrate.namePrefab, name))
 			{
 				lootBuffer = lootCrate;
-				return true;
+				return i;
 			}
 		}
 		
-		return false;
+		return -1;
 	}
 }
 
@@ -73,7 +73,7 @@ methodmap LootCratesConfig < ArrayList
 				
 				//Attempt use prefab, otherwise use default
 				kv.GetString("prefab", lootCrate.namePrefab, sizeof(lootCrate.namePrefab));
-				if (!g_LootPrefabs.FindPrefab(lootCrate.namePrefab, lootCrate))
+				if (g_LootPrefabs.FindPrefab(lootCrate.namePrefab, lootCrate) < 0)
 					lootCrate = g_LootCratesDefault;
 				
 				lootCrate.ReadConfig(kv);
@@ -274,6 +274,25 @@ void Confg_GetMapFilepath(char[] filePath, int length)
 	
 	//Build file path
 	BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", tidyMapName);
+}
+
+void Config_GetDefault(LootCrateConfig lootCrate)
+{
+	lootCrate = g_LootCratesDefault;
+}
+
+bool Config_GetLootPrefab(int prefabIndex, LootCrateConfig lootPrefab)
+{
+	if (prefabIndex < 0 || prefabIndex >= g_LootPrefabs.Length)
+		return false;
+	
+	g_LootPrefabs.GetArray(prefabIndex, lootPrefab);
+	return lootPrefab.load;
+}
+
+int Config_FindPrefab(const char[] namePrefab, LootCrateConfig lootPrefab)
+{
+	return g_LootPrefabs.FindPrefab(namePrefab, lootPrefab)
 }
 
 bool Config_GetLootCrate(int configIndex, LootCrateConfig lootCrate)
