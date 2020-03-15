@@ -407,6 +407,9 @@ ConVar fr_fistsdamagemultiplier;
 
 public void OnPluginStart()
 {
+	LoadTranslations("common.phrases");
+	LoadTranslations("royale.phrases");
+	
 	Command_Init();
 	Config_Init();
 	Console_Init();

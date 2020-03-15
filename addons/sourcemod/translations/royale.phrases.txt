@@ -1,0 +1,56 @@
+"Phrases"
+{
+	"Editor_Title"
+	{
+		"en"	"Editor Menu"
+	}
+	"Editor_NotLookingAtAnyCrates"
+	{
+		"en"	"You are currently not looking at any crates"
+	}
+	"Editor_Delete"
+	{
+		"en"	"Delete this crate"
+	}
+	"Editor_EditPrefab"
+	{
+		"en"	"Change this crate's prefab"
+	}
+	"Editor_Move"
+	{
+		"en"	"Move this crate"
+	}
+	"Editor_Create"
+	{
+		"en"	"Create new crate"
+	}
+	"Editor_Place"
+	{
+		"en"	"Place this crate"
+	}
+	"Editor_Save"
+	{
+		"en" "Save to KeyValues file"
+	}
+	"Editor_Prefab"
+	{
+		"en"	"Prefab: %s"
+	}
+	"Editor_Health"
+	{
+		"en"	"Health: %d"
+	}
+	"Editor_Chance"
+	{
+		"en"	"Chance: %.2f"
+	}
+	
+	"Editor_Prefab_Title"
+	{
+		"en"	"Editor Prefabs"
+	}
+	"Editor_Prefab_CurrentCrate"
+	{
+		"en"	"You are currently using %s"
+	}
+}
