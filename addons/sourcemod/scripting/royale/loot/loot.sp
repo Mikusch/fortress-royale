@@ -35,7 +35,7 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 		int crate = CreateEntityByName("prop_dynamic_override");
 		if (IsValidEntity(crate))
 		{
-			DispatchKeyValue(crate, "solid", "6");
+			SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
 			Loot_SetCratePrefab(crate, config);
 			
 			if (DispatchSpawn(crate))
@@ -107,19 +107,14 @@ stock int Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
 	return configIndex;
 }
 
-stock int Loot_DeleteCrate(int ref)
+stock void Loot_DeleteCrate(int ref)
 {
 	int index = g_SpawnedCrates.FindValue(ref, 0);
 	if (index >= 0)
 	{
 		RemoveEntity(ref);
-		
-		int configIndex = g_SpawnedCrates.Get(index, 1);
 		g_SpawnedCrates.Erase(index);
-		return configIndex;
 	}
-	
-	return -1;
 }
 
 public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)

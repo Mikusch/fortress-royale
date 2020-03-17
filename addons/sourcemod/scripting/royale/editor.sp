@@ -80,11 +80,34 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			
 			int crate = FRPlayer(param1).EditorCrateRef;
 			
+			LootCrateConfig lootCrate;
+			int configIndex = Loot_GetCrateConfig(crate, lootCrate);
+			
 			if (StrEqual(select, "delete"))
 			{
-				int configIndex = Loot_DeleteCrate(crate);
-				if (configIndex >= 0)
-					Config_DeleteCrate(configIndex);
+				//Delete both entity crate and config
+				Loot_DeleteCrate(crate);
+				Config_DeleteCrate(configIndex);
+				
+				FRPlayer(param1).EditorState = EditorState_View;
+				Editor_Display(param1);
+			}
+			else if (StrEqual(select, "move"))
+			{
+				//Only just delete entity crate to create new below 
+				Loot_DeleteCrate(crate);
+			}
+			else if (StrEqual(select, "place"))
+			{
+				//Set origin and angles, and spawn new crate
+				GetEntPropVector(crate, Prop_Data, "m_vecOrigin", lootCrate.origin);
+				GetEntPropVector(crate, Prop_Data, "m_angRotation", lootCrate.angles);
+				Config_SetLootCrate(configIndex, lootCrate);
+				
+				Loot_DeleteCrate(crate);
+				
+				crate = Loot_SpawnCrateInWorld(lootCrate, configIndex, true);
+				FRPlayer(param1).EditorCrateRef = crate;
 				
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
@@ -93,28 +116,10 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			{
 				Editor_DisplayPrefab(param1);
 			}
-			else if (StrEqual(select, "place"))
-			{
-				SetEntityRenderMode(crate, RENDER_NORMAL);
-				SetEntityRenderColor(crate, 255, 255, 255, 255);
-				
-				LootCrateConfig lootCrate;
-				int configIndex = Loot_GetCrateConfig(crate, lootCrate);
-				
-				GetEntPropVector(crate, Prop_Data, "m_vecOrigin", lootCrate.origin);
-				GetEntPropVector(crate, Prop_Data, "m_angRotation", lootCrate.angles);
-				Config_SetLootCrate(configIndex, lootCrate);
-				
-				FRPlayer(param1).EditorState = EditorState_View;
-				Editor_Display(param1);
-			}
 			else if (StrEqual(select, "create"))
 			{
-				LootCrateConfig lootCrate;
-				int configIndex = Config_CreateDefault(lootCrate);
-				
-				crate = Loot_SpawnCrateInWorld(lootCrate, configIndex, true);
-				FRPlayer(param1).EditorCrateRef = crate;
+				//Create default in config to use to create new entity crate below
+				configIndex = Config_CreateDefault(lootCrate);
 			}
 			else if (StrEqual(select, "save"))
 			{
@@ -124,6 +129,10 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			
 			if (StrEqual(select, "move") || StrEqual(select, "create"))
 			{
+				crate = Loot_SpawnCrateInWorld(lootCrate, configIndex, true);
+				FRPlayer(param1).EditorCrateRef = crate;
+				
+				SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_NONE);
 				SetEntityRenderMode(crate, RENDER_TRANSCOLOR);
 				SetEntityRenderColor(crate, 255, 255, 255, 127);
 				
