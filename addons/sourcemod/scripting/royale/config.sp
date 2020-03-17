@@ -31,7 +31,6 @@ methodmap LootPrefabsConfig < ArrayList
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
 		}
-		kv.GoBack();
 	}
 	
 	public int FindPrefab(const char[] name, LootCrateConfig lootBuffer)
@@ -95,7 +94,7 @@ methodmap LootCratesConfig < ArrayList
 			
 			if (lootCrate.load)
 			{
-				kv.JumpToKey("lol", true);	//Just so we can create new key without jumping to existing LootCrate
+				kv.JumpToKey("322", true);	//Just so we can create new key without jumping to existing LootCrate
 				kv.SetSectionName("LootCrate");
 				lootCrate.SetConfig(kv);
 				kv.GoBack();

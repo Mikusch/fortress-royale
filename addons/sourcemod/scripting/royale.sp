@@ -153,7 +153,6 @@ methodmap LootCrateContents < ArrayList
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
 		}
-		kv.GoBack();
 	}
 }
 
@@ -193,8 +192,8 @@ enum struct LootCrateConfig
 			LootCrateContents contents = new LootCrateContents();
 			contents.ReadConfig(kv);
 			this.contents = contents;
+			kv.GoBack();
 		}
-		kv.GoBack();
 	}
 	
 	void SetConfig(KeyValues kv)
