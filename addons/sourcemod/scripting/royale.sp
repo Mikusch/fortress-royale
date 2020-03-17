@@ -389,6 +389,11 @@ bool g_IsRoundActive;
 ConVar fr_healthmultiplier;
 ConVar fr_fistsdamagemultiplier;
 
+ConVar fr_zone_startdisplay;
+ConVar fr_zone_display;
+ConVar fr_zone_shrink;
+ConVar fr_zone_nextdisplay;
+
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
