@@ -189,9 +189,9 @@ enum struct LootCrateConfig
 		
 		if (kv.JumpToKey("contents", false))
 		{
-			delete this.contents;
-			this.contents = new LootCrateContents();
-			this.contents.ReadConfig(kv);
+			LootCrateContents contents = new LootCrateContents();
+			contents.ReadConfig(kv);
+			this.contents = contents;
 			kv.GoBack();
 		}
 	}
