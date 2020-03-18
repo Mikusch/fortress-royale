@@ -297,7 +297,6 @@ methodmap CallbackParams < StringMap
 enum struct LootConfig
 {
 	LootType type;
-	float chance;
 	Function callback;
 	CallbackParams callbackParams;
 }
@@ -319,7 +318,6 @@ methodmap LootTable < ArrayList
 				char type[CONFIG_MAXCHAR];
 				kv.GetString("type", type, sizeof(type));
 				lootConfig.type = Loot_StrToLootType(type);
-				lootConfig.chance = kv.GetFloat("chance", 1.0);
 				
 				char callback[CONFIG_MAXCHAR];
 				if (!kv.GetString("callback", callback, sizeof(callback)))
