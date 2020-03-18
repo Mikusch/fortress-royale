@@ -1,11 +1,6 @@
 public int LootCallback_CreateWeapon(int client, CallbackParams params)
 {
-	int defindex;
-	if (!params.GetIntEx("defindex", defindex))
-	{
-		LogError("Weapon defindex not specified");
-		return -1;
-	}
+	int defindex = params.GetInt("defindex");
 	
 	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
 	if (weapon > MaxClients)
@@ -17,6 +12,18 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	}
 	
 	return -1;
+}
+
+public bool LootCallback_FilterWeapon(int client, CallbackParams params)
+{
+	int defindex;
+	if (!params.GetIntEx("defindex", defindex))
+	{
+		LogError("Weapon defindex not specified");
+		return false;
+	}
+	
+	return TF2Econ_GetItemSlot(defindex, TF2_GetPlayerClass(client)) >= 0;
 }
 
 public int LootCallback_CreateSpell(int client, CallbackParams params)

@@ -126,10 +126,10 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 		EmitSoundToAll(lootCrate.sound, caller);
 		
 		LootConfig loot;
-		if (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType()) > 0)
+		if (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType(), activator) > 0)
 		{
 			//Start function call to loot creation function
-			Call_StartFunction(null, loot.callback);
+			Call_StartFunction(null, loot.callback_create);
 			Call_PushCell(activator);
 			Call_PushCell(loot.callbackParams);
 			

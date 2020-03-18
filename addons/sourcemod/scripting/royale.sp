@@ -297,7 +297,8 @@ methodmap CallbackParams < StringMap
 enum struct LootConfig
 {
 	LootType type;
-	Function callback;
+	Function callback_create;
+	Function callback_filter;
 	CallbackParams callbackParams;
 }
 
@@ -320,19 +321,33 @@ methodmap LootTable < ArrayList
 				lootConfig.type = Loot_StrToLootType(type);
 				
 				char callback[CONFIG_MAXCHAR];
-				if (!kv.GetString("callback", callback, sizeof(callback)))
+				if (!kv.GetString("callback_create", callback, sizeof(callback)))
 				{
 					LogError("Missing callback found from type '%s'", type);
 					continue;
 				}
 				
-				lootConfig.callback = GetFunctionByName(null, callback);
-				if (lootConfig.callback == INVALID_FUNCTION)
+				lootConfig.callback_create = GetFunctionByName(null, callback);
+				if (lootConfig.callback_create == INVALID_FUNCTION)
 				{
 					LogError("Unable to find function '%s' from type '%s'", callback, type);
 					continue;
 				}
 				
+				if (!kv.GetString("callback_filter", callback, sizeof(callback)))
+				{
+					lootConfig.callback_filter = INVALID_FUNCTION;
+				}
+				else
+				{
+					lootConfig.callback_filter = GetFunctionByName(null, callback);
+					if (lootConfig.callback_create == INVALID_FUNCTION)
+					{
+						LogError("Unable to find function '%s' from type '%s'", callback, type);
+						continue;
+					}
+				}
+			
 				if (kv.JumpToKey("params", false))
 				{
 					lootConfig.callbackParams = new CallbackParams();
@@ -347,7 +362,7 @@ methodmap LootTable < ArrayList
 		kv.GoBack();
 	}
 	
-	public int GetRandomLoot(LootConfig buffer, LootType type)
+	public int GetRandomLoot(LootConfig buffer, LootType type, int client = 0)
 	{
 		//Put all loot that matches the specified type into a new list
 		ArrayList list = new ArrayList(sizeof(LootConfig));
@@ -355,11 +370,28 @@ methodmap LootTable < ArrayList
 		{
 			if (type == this.Get(i, 0))
 			{
-				LootConfig temp;
-				this.GetArray(i, temp, sizeof(temp));
-				list.PushArray(temp);
-			}
+				LootConfig lootConfig;
+				this.GetArray(i, lootConfig, sizeof(lootConfig));
+				
+				if (lootConfig.callback_filter == INVALID_FUNCTION)
+				{
+					//Assume all weapons can be used
+					list.PushArray(lootConfig);
+				}
+				else
+				{
+					Call_StartFunction(null, lootConfig.callback_filter);
+					Call_PushCell(client);
+					Call_PushCell(lootConfig.callbackParams);
+					
+					bool result;
+					if (Call_Finish(result) == SP_ERROR_NONE && result)
+						list.PushArray(lootConfig);			
+				}
+			}	
 		}
+		
+		//TODO do something if there nothing in list
 		
 		int copied = list.GetArray(GetRandomInt(0, list.Length - 1), buffer, sizeof(buffer));
 		delete list;
