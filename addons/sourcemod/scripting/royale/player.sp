@@ -1,4 +1,5 @@
 static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
+static bool g_ClientOutsideZone[TF_MAXPLAYERS + 1];
 static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
 static int g_ClientEditorCrateRef[TF_MAXPLAYERS + 1];
 
@@ -19,6 +20,19 @@ methodmap FRPlayer
 		public set(PlayerState val)
 		{
 			g_ClientPlayerState[this] = val;
+		}
+	}
+	
+	property bool OutsideZone
+	{
+		public get()
+		{
+			return g_ClientOutsideZone[this];
+		}
+		
+		public set(bool val)
+		{
+			g_ClientOutsideZone[this] = val;
 		}
 	}
 	

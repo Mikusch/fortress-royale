@@ -21,6 +21,8 @@ enum struct ZoneConfig
 static ZoneConfig g_ZoneConfig;
 
 static Handle g_ZoneTimer;
+static Handle g_ZoneTimerBleed;
+
 static int g_ZonePropRef = INVALID_ENT_REFERENCE;	//Zone prop model
 static float g_ZonePropcenterOld[3];	//Where the zone will start moving
 static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
@@ -28,7 +30,6 @@ static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
 static int g_ZoneShrinkLevel;		//Current shrink level, starting from ZoneConfig.numShrinks to 0
 
 static int g_ZoneSpritesLaserBeam;
-static int g_ZoneSpritesGlow;
 
 void Zone_ReadConfig(KeyValues kv)
 {
@@ -38,8 +39,7 @@ void Zone_ReadConfig(KeyValues kv)
 void Zone_Precache()
 {
 	PrecacheModel(ZONE_MODEL);
-	g_ZoneSpritesLaserBeam = PrecacheModel("materials/sprites/laserbeam.vmt", true);
-	g_ZoneSpritesGlow = PrecacheModel("materials/sprites/glow01.vmt", true);
+	g_ZoneSpritesLaserBeam = PrecacheModel("sprites/laserbeam.vmt", true);
 }
 
 void Zone_RoundStart()
@@ -79,25 +79,13 @@ void Zone_RoundStart()
 void Zone_RoundArenaStart()
 {
 	g_ZoneTimer = CreateTimer(fr_zone_startdisplay.FloatValue, Timer_StartDisplay);
-	
-	int color[4] = { 0, 255, 0, 255 };
-	TE_SetupBeamRingPoint(g_ZoneConfig.center, g_ZoneConfig.diameterMax, g_ZoneConfig.diameterMax+10.0, g_ZoneSpritesLaserBeam, g_ZoneSpritesGlow, 0, 10, 25.0, 10.0, 0.0, color, 10, 0);
-	TE_SendToAll();
-	
-	color = { 255, 0, 0, 255 };
-	TE_SetupBeamRingPoint(g_ZoneConfig.center, g_ZoneConfig.diameterSafe, g_ZoneConfig.diameterSafe+10.0, g_ZoneSpritesLaserBeam, g_ZoneSpritesGlow, 0, 10, 25.0, 10.0, 0.0, color, 10, 0);
-	TE_SendToAll();
+	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
 }
 
 public Action Timer_StartDisplay(Handle timer)
 {
 	if (g_ZoneTimer != timer)
 		return;
-	
-	g_ZoneShrinkLevel--;
-	
-	//Calculate new diameter of zone
-	float diameter = float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks) * g_ZoneConfig.diameterMax;
 	
 	//Max diameter to walk away from previous center
 	float diameterSearch = 1.0 / float(g_ZoneConfig.numShrinks) * g_ZoneConfig.diameterMax;
@@ -123,16 +111,11 @@ public Action Timer_StartDisplay(Handle timer)
 	}
 	while (!found);
 	
-	int color[4] = { 0, 0, 255, 255 };
-	TE_SetupBeamRingPoint(g_ZonePropcenterNew, diameter, diameter+10.0, g_ZoneSpritesLaserBeam, g_ZoneSpritesGlow, 0, 10, 25.0, 10.0, 0.0, color, 10, 0);
-	TE_SendToAll();
-	
 	float endPos[3];
 	endPos = g_ZonePropcenterNew;
 	endPos[2] += 6144.0;
 	
-	int laser = PrecacheModel("sprites/laserbeam.vmt");
-	TE_SetupBeamPoints(g_ZonePropcenterNew, endPos, laser, 0, 0, 0, fr_zone_display.FloatValue + fr_zone_shrink.FloatValue, 10.0, 10.0, 1, 0.0, {0, 255, 0, 255}, 15); 
+	TE_SetupBeamPoints(g_ZonePropcenterNew, endPos, g_ZoneSpritesLaserBeam, 0, 0, 0, fr_zone_display.FloatValue + fr_zone_shrink.FloatValue, 10.0, 10.0, 1, 0.0, {0, 255, 0, 255}, 15); 
 	TE_SendToAll();
 	
 	g_ZoneTimer = CreateTimer(fr_zone_display.FloatValue, Timer_StartShrink);
@@ -155,6 +138,8 @@ public Action Timer_FinishShrink(Handle timer)
 	if (g_ZoneTimer != timer)
 		return;
 	
+	g_ZoneShrinkLevel--;
+	
 	g_ZonePropcenterOld = g_ZonePropcenterNew;
 	TeleportEntity(g_ZonePropRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
 	
@@ -171,20 +156,72 @@ public void Frame_UpdateZone(int ref)
 	if (zone <= MaxClients)
 		return;
 	
-	RequestFrame(Frame_UpdateZone, ref);
+	float originZone[3];
+	float percentage;
 	
 	float gametime = GetGameTime();
-	if (g_ZoneShrinkStart < gametime - fr_zone_shrink.FloatValue)
-		return;
+	if (g_ZoneShrinkStart > gametime - fr_zone_shrink.FloatValue)
+	{
+		//We in shrinking state, update zone position and diameter
+		
+		//Progress from level X to level X+1
+		percentage = (gametime - g_ZoneShrinkStart) / fr_zone_shrink.FloatValue;
+		
+		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, originZone);	//Distance from start to end
+		ScaleVector(originZone, percentage);									//Scale by percentage
+		AddVectors(originZone, g_ZonePropcenterOld, originZone);				//Add distance to old center
+		TeleportEntity(zone, originZone, NULL_VECTOR, NULL_VECTOR);
+		
+		//Progress from 1.0 to 0.0 (starting zone to zero size)
+		percentage = (float(g_ZoneShrinkLevel) - percentage) / float(g_ZoneConfig.numShrinks);
+	}
+	else
+	{
+		//Zone is not shrinking
+		GetEntPropVector(g_ZonePropRef, Prop_Data, "m_vecOrigin", originZone);
+		percentage = float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks);
+	}
 	
-	//We in shrinking state, update zone position and diameter
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && IsPlayerAlive(client))
+		{
+			float originClient[3];
+			GetClientAbsOrigin(client, originClient);
+			originClient[2] = originZone[2];
+			
+			bool outsideZone = GetVectorDistance(originClient, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
+			
+			if (outsideZone && !TF2_IsPlayerInCondition(client, TFCond_Bleeding))
+				TF2_MakeBleed(client, client, 9999.0);	//Does no damage
+			else if (!outsideZone && FRPlayer(client).OutsideZone)
+				TF2_RemoveCondition(client, TFCond_Bleeding);
+			
+			FRPlayer(client).OutsideZone = outsideZone;
+		}
+		else if (FRPlayer(client).OutsideZone)
+		{
+			FRPlayer(client).OutsideZone = false;
+		}
+	}
 	
-	//Progress from level X to level X+1
-	float percentage = (gametime - g_ZoneShrinkStart) / fr_zone_shrink.FloatValue;
+	RequestFrame(Frame_UpdateZone, ref);
+}
+
+public Action Timer_Bleed(Handle timer)
+{
+	if (g_ZoneTimerBleed != timer)
+		return Plugin_Stop;
 	
-	float center[3];
-	SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, center);	//Distance from start to end
-	ScaleVector(center, percentage);									//Scale by percentage
-	AddVectors(center, g_ZonePropcenterOld, center);					//Add distance to old center
-	TeleportEntity(zone, center, NULL_VECTOR, NULL_VECTOR);
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && IsPlayerAlive(client) && FRPlayer(client).OutsideZone)
+		{
+			float damage = (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
+			
+			SDKHooks_TakeDamage(client, 0, client, damage, DMG_PREVENT_PHYSICS_FORCE);
+		}
+	}
+	
+	return Plugin_Continue;
 }
