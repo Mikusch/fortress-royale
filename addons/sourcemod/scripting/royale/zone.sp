@@ -1,6 +1,6 @@
 #define ZONE_MODEL			"models/br/br_zone.mdl"
 #define ZONE_DIAMETER	14500.0
-#define ZONE_DURATION	65.0
+#define ZONE_DURATION	8.33333333
 
 enum struct ZoneConfig
 {
@@ -126,7 +126,7 @@ public Action Timer_StartShrink(Handle timer)
 	if (g_ZoneTimer != timer)
 		return;
 	
-	SetVariantFloat(fr_zone_shrink.FloatValue * g_ZoneConfig.numShrinks / ZONE_DURATION);
+	SetVariantFloat(1.0 / (fr_zone_shrink.FloatValue / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
 	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
 	
 	g_ZoneShrinkStart = GetGameTime();
