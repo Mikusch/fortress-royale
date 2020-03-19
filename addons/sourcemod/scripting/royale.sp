@@ -439,6 +439,15 @@ ConVar fr_zone_nextdisplay;
 #include "royale/stocks.sp"
 #include "royale/zone.sp"
 
+public Plugin myinfo = 
+{
+	name = "Fortress Royale", 
+	author = "Mikusch, 42", 
+	description = "Team Fortress 2 Battle Royale", 
+	version = "0.1", 
+	url = "https://github.com/Mikusch/fortress-royale"
+}
+
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
