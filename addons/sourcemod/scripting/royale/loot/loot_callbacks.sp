@@ -14,7 +14,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	return -1;
 }
 
-public bool LootCallback_FilterWeapon(int client, CallbackParams params)
+public bool LootCallback_FilterWeapon(int client, CallbackParams params, LootType type)
 {
 	int defindex;
 	if (!params.GetIntEx("defindex", defindex))
@@ -23,7 +23,17 @@ public bool LootCallback_FilterWeapon(int client, CallbackParams params)
 		return false;
 	}
 	
-	return TF2Econ_GetItemSlot(defindex, TF2_GetPlayerClass(client)) >= 0;
+	int slot = TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client));
+	switch (type)
+	{
+		case Loot_Weapon_Primary: return slot == WeaponSlot_Primary;
+		case Loot_Weapon_Secondary: return slot == WeaponSlot_Secondary;
+		case Loot_Weapon_Melee: return slot == WeaponSlot_Melee;
+		case Loot_Weapon_Misc: return slot > WeaponSlot_Melee;
+	}
+	
+	LogError("Invalid type '%d' passed", type);
+	return false;
 }
 
 public int LootCallback_CreateSpell(int client, CallbackParams params)

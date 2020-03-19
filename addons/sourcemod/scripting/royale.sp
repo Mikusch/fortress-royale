@@ -383,6 +383,7 @@ methodmap LootTable < ArrayList
 					Call_StartFunction(null, lootConfig.callback_filter);
 					Call_PushCell(client);
 					Call_PushCell(lootConfig.callbackParams);
+					Call_PushCell(type);
 					
 					bool result;
 					if (Call_Finish(result) == SP_ERROR_NONE && result)
