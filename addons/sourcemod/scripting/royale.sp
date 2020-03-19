@@ -492,6 +492,7 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
 	SDKHook(client, SDKHook_OnTakeDamageAlive, Client_OnTakeDamageAlive);
+	SDKHook(client, SDKHook_PostThink, Client_PostThink);
 	
 	SDK_HookClient(client);
 	
@@ -581,6 +582,24 @@ public Action Client_OnTakeDamageAlive(int victim, int &attacker, int &inflictor
 	}
 	
 	return Plugin_Continue;
+}
+
+public void Client_PostThink(int client)
+{
+	int weapon = TF2_GetItemInSlot(client, WeaponSlot_Secondary);
+	if (weapon > MaxClients)
+	{
+		char classname[256];
+		GetEntityClassname(weapon, classname, sizeof(classname));
+		if (StrEqual(classname, "tf_weapon_medigun") && !GetEntProp(weapon, Prop_Send, "m_bChargeRelease"))
+		{
+			float charge = GetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel") + (GetGameFrameTime() / 10.0);
+			if (charge > 1.0)
+				charge = 1.0;
+			
+			SetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel", charge);
+		}
+	}
 }
 
 public Action Projectile_Touch(int entity, int other)
