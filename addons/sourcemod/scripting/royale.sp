@@ -412,9 +412,14 @@ methodmap LootTable < ArrayList
 			}	
 		}
 		
-		//TODO do something if there nothing in list
+		int length = list.Length;
+		if (length <= 0)
+		{
+			delete list;
+			return -1;
+		}
 		
-		int copied = list.GetArray(GetRandomInt(0, list.Length - 1), buffer, sizeof(buffer));
+		int copied = list.GetArray(GetRandomInt(0, length - 1), buffer, sizeof(buffer));
 		delete list;
 		return copied;
 	}
