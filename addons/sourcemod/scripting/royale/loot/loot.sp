@@ -148,6 +148,7 @@ stock bool Loot_IsClientLookingAtCrate(int client)
 	}
 	
 	int ref = EntIndexToEntRef(TR_GetEntityIndex(trace));
+	delete trace;
 	return Loot_IsCrate(ref);
 }
 
