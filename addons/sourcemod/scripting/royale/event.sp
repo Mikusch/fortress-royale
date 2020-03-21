@@ -86,8 +86,11 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("weaponid", TF_WEAPON_FISTS);
 	}
 	
-	FRPlayer(victim).PlayerState = PlayerState_Dead;
-	RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
+	if (event.GetInt("death_flags") & TF_DEATHFLAG_DEADRINGER) == 0)
+	{
+		FRPlayer(victim).PlayerState = PlayerState_Dead;
+		RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
+	}
 }
 
 public void Frame_SetClientDead(int serial)
