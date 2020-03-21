@@ -10,9 +10,9 @@ void ConVar_Init()
 	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max health multiplier (rounds to lowest 5)", _, true, 0.0);
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	
-	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "", _, true, 0.0);
-	fr_zone_display = CreateConVar("fr_zone_display", "30.0", "", _, true, 0.0);
-	fr_zone_shrink = CreateConVar("fr_zone_shrink", "30.0", "", _, true, 0.0);
+	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "60.0", "", _, true, 0.0);
+	fr_zone_display = CreateConVar("fr_zone_display", "45.0", "", _, true, 0.0);
+	fr_zone_shrink = CreateConVar("fr_zone_shrink", "60.0", "", _, true, 0.0);
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "", _, true, 0.0);
 	
 	mp_autoteambalance = FindConVar("mp_autoteambalance");
