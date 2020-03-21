@@ -2,6 +2,8 @@ void Console_Init()
 {
 	AddCommandListener(Console_JoinTeam, "jointeam");
 	AddCommandListener(Console_JoinTeam, "autoteam");
+	AddCommandListener(Console_Build, "build");
+	AddCommandListener(Console_Destroy, "destroy");
 }
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
@@ -24,5 +26,25 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 	
 	//Check if there even any red players to fix new round
 	TF2_CheckTeamClientCount();
+	return Plugin_Handled;
+}
+
+Action Console_Build(int client, const char[] command, int args)
+{
+	// Check if player owns Construction PDA
+	if (TF2_GetItemInSlot(client, WeaponSlot_PDABuild) > MaxClients)
+		return Plugin_Continue;
+	
+	// Block build by default
+	return Plugin_Handled;
+}
+
+Action Console_Destroy(int client, const char[] command, int args)
+{
+	// Check if player owns Destruction PDA
+	if (TF2_GetItemInSlot(client, WeaponSlot_PDADestroy) > MaxClients)
+		return Plugin_Continue;
+	
+	// Block destroy by default
 	return Plugin_Handled;
 }
