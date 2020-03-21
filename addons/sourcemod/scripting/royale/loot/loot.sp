@@ -50,12 +50,48 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 				g_SpawnedCrates.Set(length, EntIndexToEntRef(crate), 0);
 				g_SpawnedCrates.Set(length, configIndex, 1);
 				
+				Loot_CreateGlow(crate);
 				return EntIndexToEntRef(crate);
 			}
 		}
 	}
 	
 	return INVALID_ENT_REFERENCE;
+}
+
+void Loot_CreateGlow(int entity)
+{
+	int glow = CreateEntityByName("tf_taunt_prop");
+	if (IsValidEntity(glow) && DispatchSpawn(glow))
+	{
+		char model[PLATFORM_MAX_PATH];
+		GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
+		SetEntityModel(glow, model);
+		
+		SetEntPropEnt(glow, Prop_Data, "m_hEffectEntity", entity);
+		SetEntProp(glow, Prop_Send, "m_bGlowEnabled", 1);
+		
+		int effects = GetEntProp(glow, Prop_Send, "m_fEffects");
+		SetEntProp(glow, Prop_Send, "m_fEffects", effects | EF_BONEMERGE | EF_NOSHADOW | EF_NORECEIVESHADOW);
+		
+		SetVariantString("!activator");
+		AcceptEntityInput(glow, "SetParent", entity);
+		
+		SDKHook(glow, SDKHook_SetTransmit, Loot_SetTransmit);
+	}
+}
+
+public Action Loot_SetTransmit(int glow, int client)
+{
+	if (client > 0 && client <= MaxClients && Loot_IsClientLookingAtCrate(client))
+		return Plugin_Continue;
+	
+	return Plugin_Handled;
+}
+
+public bool Loot_FilterClient(int entity, int contentsMask, any client)
+{
+	return entity != client;
 }
 
 void Loot_SetCratePrefab(int crate, LootCrateConfig config)
@@ -69,7 +105,7 @@ void Loot_SetCratePrefab(int crate, LootCrateConfig config)
 stock ArrayList Loot_StrToLootTypes(const char[] str)
 {
 	ArrayList types = new ArrayList();
-
+	
 	char parts[32][PLATFORM_MAX_PATH];
 	if (ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[])) > 0)
 	{
@@ -93,6 +129,26 @@ stock LootType Loot_StrToLootType(const char[] str)
 stock bool Loot_IsCrate(int ref)
 {
 	return g_SpawnedCrates.FindValue(ref, 0) >= 0;
+}
+
+stock bool Loot_IsClientLookingAtCrate(int client)
+{
+	float position[3], angles[3];
+	GetClientEyePosition(client, position);
+	GetClientEyeAngles(client, angles);
+	
+	if (TR_PointOutsideWorld(position))
+		return false;
+	
+	Handle trace = TR_TraceRayFilterEx(position, angles, MASK_PLAYERSOLID, RayType_Infinite, Loot_FilterClient, client);
+	if (!TR_DidHit(trace))
+	{
+		delete trace;
+		return false;
+	}
+	
+	int ref = EntIndexToEntRef(TR_GetEntityIndex(trace));
+	return Loot_IsCrate(ref);
 }
 
 stock int Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
@@ -130,7 +186,7 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 		
 		//While loop to keep searching for loot until found valid
 		LootConfig loot;
-		while (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType(), client) <= 0) {}
+		while (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType(), client) <= 0) {  }
 		
 		//Start function call to loot creation function
 		Call_StartFunction(null, loot.callback_create);
