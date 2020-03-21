@@ -226,3 +226,29 @@ stock void TF2_RemoveItemInSlot(int client, int slot)
 	if (wearable > MaxClients)
 		TF2_RemoveWearable(client, wearable);
 }
+
+stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int displayToTeam = 0, int teamColor = 0)
+{
+	int msg = CreateEntityByName("game_text_tf");
+	if (IsValidEntity(msg))
+	{
+		DispatchKeyValue(msg, "message", message);
+		switch (displayToTeam)
+		{
+			case 2: DispatchKeyValue(msg, "display_to_team", "2");
+			case 3: DispatchKeyValue(msg, "display_to_team", "3");
+			default: DispatchKeyValue(msg, "display_to_team", "0");
+		}
+		switch (teamColor)
+		{
+			case 2: DispatchKeyValue(msg, "background", "2");
+			case 3: DispatchKeyValue(msg, "background", "3");
+			default: DispatchKeyValue(msg, "background", "0");
+		}
+		
+		DispatchKeyValue(msg, "icon", icon);
+		
+		if (DispatchSpawn(msg))
+			AcceptEntityInput(msg, "Display");
+	}
+}

@@ -1,4 +1,5 @@
 #define ZONE_MODEL			"models/br/br_zone.mdl"
+#define ZONE_SHRINK_SOUND	"MVM.Siren"
 #define ZONE_DIAMETER	14500.0
 #define ZONE_DURATION	8.33333333
 
@@ -39,6 +40,7 @@ void Zone_ReadConfig(KeyValues kv)
 void Zone_Precache()
 {
 	PrecacheModel(ZONE_MODEL);
+	PrecacheSound("mvm/ambient_mp3/mvm_siren.mp3");
 	g_ZoneSpritesLaserBeam = PrecacheModel("sprites/laserbeam.vmt", true);
 }
 
@@ -125,6 +127,11 @@ public Action Timer_StartShrink(Handle timer)
 {
 	if (g_ZoneTimer != timer)
 		return;
+	
+	EmitGameSoundToAll(ZONE_SHRINK_SOUND);
+	char message[256];
+	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
+	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 	
 	SetVariantFloat(1.0 / (fr_zone_shrink.FloatValue / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
 	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");

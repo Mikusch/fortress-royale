@@ -247,7 +247,8 @@ void BattleBus_EjectClient(int client)
 	while (!found);
 	
 	TeleportEntity(client, ejectOrigin, NULL_VECTOR, NULL_VECTOR);
-	EmitSoundToAll(g_BattleBusClientDropSound, client);
+	TF2_AddCondition(client, TFCond_TeleportedGlow, 8.0);
+	EmitSoundToAll(g_BattleBusClientDropSound, g_BattleBusPropRef);
 	
 	RequestFrame(RequestFrame_DeployParachute, GetClientSerial(client));
 }

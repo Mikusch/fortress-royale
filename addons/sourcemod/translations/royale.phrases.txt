@@ -58,4 +58,9 @@
 	{
 		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
 	}
+	
+	"Zone_ShrinkAlert"
+	{
+		"en"	"The death zone is shrinking, get moving!"
+	}
 }
