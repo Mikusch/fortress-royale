@@ -8,6 +8,7 @@ void Loot_Init()
 	g_LootTypeMap.SetValue("WEAPON_PRIMARY", Loot_Weapon_Primary);
 	g_LootTypeMap.SetValue("WEAPON_SECONDARY", Loot_Weapon_Secondary);
 	g_LootTypeMap.SetValue("WEAPON_MELEE", Loot_Weapon_Melee);
+	g_LootTypeMap.SetValue("WEAPON_PDA", Loot_Weapon_PDA);
 	g_LootTypeMap.SetValue("WEAPON_MISC", Loot_Weapon_Misc);
 	g_LootTypeMap.SetValue("PICKUP_HEALTH", Loot_Pickup_Health);
 	g_LootTypeMap.SetValue("PICKUP_AMMO", Loot_Pickup_Ammo);
