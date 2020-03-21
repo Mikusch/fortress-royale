@@ -5,7 +5,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
 	if (weapon > MaxClients)
 	{
-		int droppedWeapon = SDK_CreateDroppedWeapon(weapon, client);
+		int droppedWeapon = SDK_CreateDroppedWeapon(client, weapon);
 		RemoveEntity(weapon);
 		
 		return droppedWeapon;
@@ -34,6 +34,26 @@ public bool LootCallback_FilterWeapon(int client, CallbackParams params, LootTyp
 	
 	LogError("Invalid type '%d' passed", type);
 	return false;
+}
+
+public void LootCallback_PrecacheWeapon(CallbackParams params)
+{
+	char defindex[12];
+	if (!params.GetString("defindex", defindex, sizeof(defindex)))
+	{
+		LogError("Weapon defindex not specified");
+		return;
+	}
+	
+	char model[PLATFORM_MAX_PATH];
+	if (!params.GetString("model", model, sizeof(model)))
+	{
+		LogError("Weapon model not specified");
+		return;
+	}
+	
+	PrecacheModel(model);
+	g_PrecacheWeapon.SetString(defindex, model);
 }
 
 public int LootCallback_CreateSpell(int client, CallbackParams params)

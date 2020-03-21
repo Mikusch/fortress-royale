@@ -249,7 +249,7 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	if (weapon > MaxClients)
 	{
 		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
-			SDK_CreateDroppedWeapon(weapon, client);
+			SDK_CreateDroppedWeapon(client, weapon);
 		
 		TF2_RemoveItemInSlot(client, slot);
 	}
@@ -362,7 +362,7 @@ int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClass
 	return SDKCall(g_SDKGetMaxAmmo, client, ammotype, class);
 }
 
-int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
+int SDK_CreateDroppedWeapon(client, int fromWeapon)
 {
 	char classname[32];
 	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
@@ -371,11 +371,18 @@ int SDK_CreateDroppedWeapon(int fromWeapon, int client, const float origin[3] = 
 		if (itemOffset <= -1)
 			ThrowError("Failed to find m_Item on: %s", classname);
 		
-		char model[PLATFORM_MAX_PATH];
-		int worldModelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
-		ModelIndexToString(worldModelIndex, model, sizeof(model));
+		char defindex[12];
+		IntToString(GetEntProp(fromWeapon, Prop_Send, "m_iItemDefinitionIndex"), defindex, sizeof(defindex));
 		
-		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+		//Attempt get custom model, otherwise use default model
+		char model[PLATFORM_MAX_PATH];
+		if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
+		{
+			int worldModelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
+			ModelIndexToString(worldModelIndex, model, sizeof(model));
+		}
+		
+		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
 		if (droppedWeapon != INVALID_ENT_REFERENCE)
 			SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, false, false);
 		return droppedWeapon;

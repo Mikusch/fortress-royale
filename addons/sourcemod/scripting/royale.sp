@@ -300,6 +300,7 @@ enum struct LootConfig
 	LootType type;
 	Function callback_create;
 	Function callback_filter;
+	Function callback_precache;
 	CallbackParams callbackParams;
 }
 
@@ -322,33 +323,44 @@ methodmap LootTable < ArrayList
 				lootConfig.type = Loot_StrToLootType(type);
 				
 				char callback[CONFIG_MAXCHAR];
-				if (!kv.GetString("callback_create", callback, sizeof(callback)))
-				{
-					LogError("Missing callback found from type '%s'", type);
-					continue;
-				}
-				
+				kv.GetString("callback_create", callback, sizeof(callback), NULL_STRING);
 				lootConfig.callback_create = GetFunctionByName(null, callback);
 				if (lootConfig.callback_create == INVALID_FUNCTION)
 				{
-					LogError("Unable to find function '%s' from type '%s'", callback, type);
+					LogError("Unable to find create function '%s' from type '%s'", callback, type);
 					continue;
 				}
 				
-				if (!kv.GetString("callback_filter", callback, sizeof(callback)))
+				kv.GetString("callback_filter", callback, sizeof(callback), NULL_STRING);
+				if (callback[0] == '\0')
 				{
 					lootConfig.callback_filter = INVALID_FUNCTION;
 				}
 				else
 				{
 					lootConfig.callback_filter = GetFunctionByName(null, callback);
-					if (lootConfig.callback_create == INVALID_FUNCTION)
+					if (lootConfig.callback_filter == INVALID_FUNCTION)
 					{
-						LogError("Unable to find function '%s' from type '%s'", callback, type);
+						LogError("Unable to find filter function '%s' from type '%s'", callback, type);
 						continue;
 					}
 				}
-			
+				
+				kv.GetString("callback_precache", callback, sizeof(callback), NULL_STRING);
+				if (callback[0] == '\0')
+				{
+					lootConfig.callback_precache = INVALID_FUNCTION;
+				}
+				else
+				{
+					lootConfig.callback_precache = GetFunctionByName(null, callback);
+					if (lootConfig.callback_precache == INVALID_FUNCTION)
+					{
+						LogError("Unable to find precache function '%s' from type '%s'", callback, type);
+						continue;
+					}
+				}
+				
 				if (kv.JumpToKey("params", false))
 				{
 					lootConfig.callbackParams = new CallbackParams();
@@ -356,6 +368,13 @@ methodmap LootTable < ArrayList
 				}
 				
 				this.PushArray(lootConfig);
+				
+				if (lootConfig.callback_precache != INVALID_FUNCTION)
+				{
+					Call_StartFunction(null, lootConfig.callback_precache);
+					Call_PushCell(lootConfig.callbackParams);
+					Call_Finish();
+				}
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -418,6 +437,8 @@ char g_fistsClassname[][] = {
 
 bool g_IsRoundActive;
 
+StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
+
 ConVar fr_healthmultiplier;
 ConVar fr_fistsdamagemultiplier;
 
@@ -454,6 +475,8 @@ public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
 	LoadTranslations("royale.phrases");
+	
+	g_PrecacheWeapon = new StringMap();
 	
 	Command_Init();
 	Config_Init();

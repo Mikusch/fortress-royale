@@ -141,6 +141,7 @@ void Config_Init()
 
 void Config_Refresh()
 {
+	g_PrecacheWeapon.Clear();
 	g_LootPrefabs.Clear();
 	
 	//Load 'global.cfg' for all maps
