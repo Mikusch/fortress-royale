@@ -30,7 +30,7 @@
 	}
 	"Editor_Save"
 	{
-		"en" "Save to KeyValues file"
+		"en"	"Save to KeyValues file"
 	}
 	"Editor_Prefab"
 	{
@@ -52,5 +52,10 @@
 	"Editor_Prefab_CurrentCrate"
 	{
 		"en"	"You are currently using %s"
+	}
+	
+	"BattleBus_HowToDrop"
+	{
+		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
 	}
 }
