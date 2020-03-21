@@ -29,7 +29,8 @@ public bool LootCallback_FilterWeapon(int client, CallbackParams params, LootTyp
 		case Loot_Weapon_Primary: return slot == WeaponSlot_Primary;
 		case Loot_Weapon_Secondary: return slot == WeaponSlot_Secondary;
 		case Loot_Weapon_Melee: return slot == WeaponSlot_Melee;
-		case Loot_Weapon_Misc: return slot > WeaponSlot_Melee;
+		case Loot_Weapon_PDA: return WeaponSlot_Melee < slot < WeaponSlot_BuilderEngie;
+		case Loot_Weapon_Misc: return slot >= WeaponSlot_BuilderEngie;
 	}
 	
 	LogError("Invalid type '%d' passed", type);
