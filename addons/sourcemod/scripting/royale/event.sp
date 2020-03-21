@@ -71,12 +71,13 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	
 	if (TF2_GetClientTeam(victim) <= TFTeam_Spectator)
 		return;
 	
-	if (event.GetInt("weapon_def_index") == INDEX_FISTS)
+	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS)
 	{
 		//Custom fists reports it incorrectly
 		//TODO fix buildings kill aswell, those dont have 'weapon_def_index'
