@@ -575,6 +575,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDK_HookFlamethrower(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
 		SDK_HookGasManager(entity);
+	else if (StrEqual(classname, "tf_ammo_pack"))
+		RemoveEntity(entity);
 }
 
 public Action Client_SetTransmit(int entity, int client)
