@@ -60,8 +60,9 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	
-	//Whenever TF2_RemoveAllWeapons get changed, make sure to not remove tf_weapon_builder
-	TF2_RemoveAllWeapons(client);
+	//Make sure to not remove tf_weapon_builder
+	for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
+		TF2_RemoveItemInSlot(client, slot);
 	
 	int weapon = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
 	if (weapon > MaxClients)
