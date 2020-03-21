@@ -1,6 +1,7 @@
 static ConVar mp_autoteambalance;
 static ConVar mp_teams_unbalance_limit;
 static ConVar mp_friendlyfire;
+static ConVar tf_arena_first_blood;
 static ConVar tf_avoidteammates;
 static ConVar tf_powerup_mode;
 
@@ -17,6 +18,7 @@ void ConVar_Init()
 	mp_autoteambalance = FindConVar("mp_autoteambalance");
 	mp_teams_unbalance_limit = FindConVar("mp_teams_unbalance_limit");
 	mp_friendlyfire = FindConVar("mp_friendlyfire");
+	tf_arena_first_blood = FindConVar("tf_arena_first_blood");
 	tf_avoidteammates = FindConVar("tf_avoidteammates");
 	tf_powerup_mode = FindConVar("tf_powerup_mode");
 }
@@ -28,6 +30,7 @@ void ConVar_Toggle(bool enable)
 	static int autoteambalance;
 	static int teamsUnbalanceLimit;
 	static bool friendlyfire;
+	static bool firstblood;
 	static bool avoidteammates;
 	static bool powerupmode;
 	
@@ -44,6 +47,9 @@ void ConVar_Toggle(bool enable)
 		friendlyfire = mp_friendlyfire.BoolValue;
 		mp_friendlyfire.BoolValue = true;
 		
+		firstblood = tf_arena_first_blood.BoolValue;
+		tf_arena_first_blood.BoolValue = false;
+		
 		avoidteammates = tf_avoidteammates.BoolValue;
 		tf_avoidteammates.BoolValue = false;
 		
@@ -57,6 +63,7 @@ void ConVar_Toggle(bool enable)
 		mp_autoteambalance.IntValue = autoteambalance;
 		mp_teams_unbalance_limit.IntValue = teamsUnbalanceLimit;
 		mp_friendlyfire.BoolValue = friendlyfire;
+		tf_arena_first_blood.BoolValue = firstblood;
 		tf_avoidteammates.BoolValue = avoidteammates;
 		tf_powerup_mode.BoolValue = powerupmode;
 	}
