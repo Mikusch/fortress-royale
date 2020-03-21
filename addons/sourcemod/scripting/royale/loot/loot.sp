@@ -83,7 +83,8 @@ void Loot_CreateGlow(int entity)
 
 public Action Loot_SetTransmit(int glow, int client)
 {
-	if (client > 0 && client <= MaxClients && Loot_IsClientLookingAtCrate(client))
+	int crate = GetEntPropEnt(glow, Prop_Data, "m_hMoveParent");
+	if (client > 0 && client <= MaxClients && Loot_IsClientLookingAtCrate(crate, client))
 		return Plugin_Continue;
 	
 	return Plugin_Handled;
@@ -131,7 +132,7 @@ stock bool Loot_IsCrate(int ref)
 	return g_SpawnedCrates.FindValue(ref, 0) >= 0;
 }
 
-stock bool Loot_IsClientLookingAtCrate(int client)
+stock bool Loot_IsClientLookingAtCrate(int crate, int client)
 {
 	float position[3], angles[3];
 	GetClientEyePosition(client, position);
@@ -147,9 +148,9 @@ stock bool Loot_IsClientLookingAtCrate(int client)
 		return false;
 	}
 	
-	int ref = EntIndexToEntRef(TR_GetEntityIndex(trace));
+	int entity = TR_GetEntityIndex(trace);
 	delete trace;
-	return Loot_IsCrate(ref);
+	return Loot_IsCrate(EntIndexToEntRef(entity)) && entity == crate;
 }
 
 stock int Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
