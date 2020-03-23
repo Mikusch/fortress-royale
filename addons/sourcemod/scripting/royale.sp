@@ -12,7 +12,7 @@
 
 #define MODEL_EMPTY			"models/empty.mdl"
 
-#define CONFIG_MAXCHAR		64
+#define CONFIG_MAXCHAR		256
 
 // m_lifeState values
 #define LIFE_ALIVE				0 // alive
