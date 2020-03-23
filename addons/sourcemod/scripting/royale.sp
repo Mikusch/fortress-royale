@@ -540,7 +540,8 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
-	SDKHook(client, SDKHook_OnTakeDamageAlive, Client_OnTakeDamageAlive);
+	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
+	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
 	
 	SDK_HookClient(client);
@@ -620,8 +621,14 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 	return Plugin_Changed;
 }
 
-public Action Client_OnTakeDamageAlive(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
+	FRPlayer(victim).Team = TF2_GetTeam(victim);
+	if (0 < attacker <= MaxClients)
+	{
+		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(attacker));
+	}
+	
 	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
 		float multiplier = fr_fistsdamagemultiplier.FloatValue;
@@ -633,6 +640,11 @@ public Action Client_OnTakeDamageAlive(int victim, int &attacker, int &inflictor
 	}
 	
 	return Plugin_Continue;
+}
+
+public Action Client_OnTakeDamagePost(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	TF2_ChangeTeam(victim, FRPlayer(victim).Team);
 }
 
 public void Client_PostThink(int client)
