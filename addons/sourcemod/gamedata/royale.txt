@@ -10,11 +10,23 @@
 				"linux"		"@_ZNK11CBaseEntity10InSameTeamEPKS_"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x57\x8B\xF9\x85\xC0\x75\x2A"
 			}
+			"CObjectSentrygun::FindTarget"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CObjectSentrygun10FindTargetEv"
+				"windows"	"\x55\x8B\xEC\x81\xEC\xC8\x00\x00\x00\x56\x57\x8B\xF9"
+			}
 			"CObjectSentrygun::ValidTargetPlayer"
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CObjectSentrygun17ValidTargetPlayerEP9CTFPlayerRK6VectorS4_"
 				"windows"	"\x55\x8B\xEC\x51\x53\x8B\x5D\x08\x57\x89\x4D\xFC"
+			}
+			"CObjectSentrygun::ValidTargetObject"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CObjectSentrygun17ValidTargetObjectEP11CBaseObjectRK6VectorS4_"
+				"windows"	"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x80\xBE\xF5\x09\x00\x00\x00"
 			}
 			"CObjectDispenser::CouldHealTarget"
 			{
@@ -117,6 +129,13 @@
 					}
 				}
 			}
+			"CObjectSentrygun::FindTarget"
+			{
+				"signature"	"CObjectSentrygun::FindTarget"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+			}
 			"CObjectSentrygun::ValidTargetPlayer"
 			{
 				"signature"	"CObjectSentrygun::ValidTargetPlayer"
@@ -126,6 +145,30 @@
 				"arguments"
 				{
 					"pPlayer"
+					{
+						"type"	"cbaseentity"
+					}
+					"vecStart"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecEnd"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+				}
+			}
+			"CObjectSentrygun::ValidTargetObject"
+			{
+				"signature"	"CObjectSentrygun::ValidTargetObject"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pObject"
 					{
 						"type"	"cbaseentity"
 					}

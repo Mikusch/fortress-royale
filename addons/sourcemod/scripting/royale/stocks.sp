@@ -84,13 +84,21 @@ stock TFTeam TF2_GetEnemyTeam(int entity)
 	}
 }
 
-stock bool TF2_IsObjectFriendly(int obj, int client)
+stock bool TF2_IsObjectFriendly(int obj, int entity)
 {
-	if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == client)
-		return true;
-	
-	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_nDisguiseClass")) == TFClass_Engineer)
-		return true;
+	if (0 < entity <= MaxClients)
+	{
+		if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == entity)
+			return true;
+		
+		if (view_as<TFClassType>(GetEntProp(entity, Prop_Send, "m_nDisguiseClass")) == TFClass_Engineer)
+			return true;
+	}
+	else if (entity > MaxClients)
+	{
+		if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == GetEntPropEnt(entity, Prop_Send, "m_hBuilder"))
+			return true;
+	}
 	
 	return false;
 }

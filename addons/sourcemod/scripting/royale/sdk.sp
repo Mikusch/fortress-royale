@@ -24,7 +24,9 @@ void SDK_Init()
 		SetFailState("Could not find royale gamedata");
 	
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeam, _);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPlayer, _);
+	DHook_CreateDetour(gamedata, "CObjectSentrygun::FindTarget", DHook_FindTargetPre, DHook_FindTargetPost);
+	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTarget, _);
+	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTarget, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
 	
@@ -207,24 +209,43 @@ public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
 	return MRES_Supercede;
 }
 
-public MRESReturn DHook_ValidTargetPlayer(int sentry, Handle hReturn, Handle hParams)
+public MRESReturn DHook_FindTargetPre(int sentry, Handle returnVal)
+{
+	//Sentry can only target one team, target enemy team
+	int client = GetEntPropEnt(sentry, Prop_Send, "m_hBuilder");
+	if (client <= 0)
+		return;
+	
+	TF2_ChangeTeam(sentry, TF2_GetEnemyTeam(client));
+}
+
+public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
+{
+	int client = GetEntPropEnt(sentry, Prop_Send, "m_hBuilder");
+	if (client <= 0)
+		return;
+	
+	TF2_ChangeTeam(sentry, TF2_GetTeam(client));
+}
+
+public MRESReturn DHook_ValidTarget(int sentry, Handle returnVal, Handle hParams)
 {
 	int target = DHookGetParam(hParams, 1);
-	if (0 < target <= MaxClients && TF2_IsObjectFriendly(sentry, target))
+	if (TF2_IsObjectFriendly(sentry, target))
 	{
-		DHookSetReturn(hReturn, false);
+		DHookSetReturn(returnVal, false);
 		return MRES_Supercede;
 	}
 	
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_CouldHealTarget(int dispenser, Handle hReturn, Handle hParams)
+public MRESReturn DHook_CouldHealTarget(int dispenser, Handle returnVal, Handle hParams)
 {
 	int target = DHookGetParam(hParams, 1);
 	if (0 < target <= MaxClients)
 	{
-		DHookSetReturn(hReturn, TF2_IsObjectFriendly(dispenser, target));
+		DHookSetReturn(returnVal, TF2_IsObjectFriendly(dispenser, target));
 		return MRES_Supercede;
 	}
 	
