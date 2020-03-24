@@ -77,7 +77,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	if (TF2_GetClientTeam(victim) <= TFTeam_Spectator)
 		return;
 	
-	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS)
+	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS && attacker == event.GetInt("inflictor_entindex"))
 	{
 		//Custom fists reports it incorrectly
 		//TODO fix buildings kill aswell, those dont have 'weapon_def_index'
