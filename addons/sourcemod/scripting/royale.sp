@@ -460,7 +460,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_robot_arm"	//Engineer
 }
 
-bool g_IsRoundActive;
+//bool g_IsRoundActive;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 

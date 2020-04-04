@@ -37,7 +37,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	g_IsRoundActive = true;
+	//g_IsRoundActive = true;
 	BattleBus_SpawnProp();
 	Zone_RoundArenaStart();
 	
@@ -50,7 +50,7 @@ public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBro
 
 public Action Event_ArenaWinPanel(Event event, const char[] name, bool dontBroadcast)
 {
-	g_IsRoundActive = false;
+	//g_IsRoundActive = false;
 }
 
 public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
