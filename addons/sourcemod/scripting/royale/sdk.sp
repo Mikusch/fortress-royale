@@ -1,4 +1,5 @@
 static Handle g_DHookForceRespawn;
+static Handle g_DHookGiveNamedItem;
 static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
@@ -15,7 +16,10 @@ static Handle g_SDKCallEquipWearable;
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
 
-static int g_CreateRuneOffset;
+static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
+
+static int g_OffsetItemDefinitionIndex;
+static int g_OffsetCreateRune;
 
 void SDK_Init()
 {
@@ -32,6 +36,7 @@ void SDK_Init()
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
+	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
@@ -44,7 +49,8 @@ void SDK_Init()
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
 	
-	g_CreateRuneOffset = gamedata.GetOffset("TF2_CreateRune");
+	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
+	g_OffsetCreateRune = gamedata.GetOffset("TF2_CreateRune");
 	
 	delete gamedata;
 }
@@ -153,6 +159,30 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 		LogError("Failed to create SDKCall: CBasePlayer::EquipWearable");
 	
 	return call;
+}
+
+void SDK_HookGiveNamedItem(int client)
+{
+	if (g_DHookGiveNamedItem && !g_TF2Items)
+		g_HookIdGiveNamedItem[client] = DHookEntity(g_DHookGiveNamedItem, false, client, DHook_GiveNamedItemRemoved, DHook_GiveNamedItemPre);
+}
+
+void SDK_UnhookGiveNamedItem(int client)
+{
+	if (g_HookIdGiveNamedItem[client])
+	{
+		DHookRemoveHookID(g_HookIdGiveNamedItem[client]);
+		g_HookIdGiveNamedItem[client] = 0;	
+	}
+}
+
+bool SDK_IsGiveNamedItemActive()
+{
+	for (int client = 1; client <= MaxClients; client++)
+		if (g_HookIdGiveNamedItem[client])
+			return true;
+	
+	return false;
 }
 
 void SDK_HookGamerules()
@@ -308,6 +338,37 @@ public MRESReturn DHook_ForceRespawnPre(int client)
 	return MRES_Supercede;
 }
 
+public MRESReturn DHook_GiveNamedItemPre(int client, Handle returnVal, Handle params)
+{
+	if (DHookIsNullParam(params, 1) || DHookIsNullParam(params, 3))
+	{
+		DHookSetReturn(returnVal, 0);
+		return MRES_Override;
+	}
+	
+	char classname[256];
+	DHookGetParamString(params, 1, classname, sizeof(classname));
+	int index = DHookGetParamObjectPtrVar(params, 3, g_OffsetItemDefinitionIndex, ObjectValueType_Int) & 0xFFFF;
+	
+	if (CanKeepWeapon(classname, index))
+		return MRES_Ignored;
+	
+	DHookSetReturn(returnVal, 0);
+	return MRES_Override;
+}
+
+public void DHook_GiveNamedItemRemoved(int hookid)
+{
+	for (int iClient = 1; iClient <= MaxClients; iClient++)
+	{
+		if (g_HookIdGiveNamedItem[iClient] == hookid)
+		{
+			g_HookIdGiveNamedItem[iClient] = 0;
+			return;
+		}
+	}
+}
+
 public MRESReturn DHook_PrimaryAttackPre(int weapon)
 {
 	//This weapon may not work for teammate, set team to spectator so he can deal damage to both red and blue
@@ -375,7 +436,7 @@ public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handl
 
 public Address GameData_GetCreateRuneOffset()
 {
-	return view_as<Address>(g_CreateRuneOffset);
+	return view_as<Address>(g_OffsetCreateRune);
 }
 
 int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClassType>(-1))

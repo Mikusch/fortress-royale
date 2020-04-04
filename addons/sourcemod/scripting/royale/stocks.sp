@@ -27,6 +27,25 @@ stock void ModelIndexToString(int index, char[] model, int size)
 	ReadStringTable(table, index, model, size);
 }
 
+stock bool CanKeepWeapon(const char[] classname, int index)
+{
+	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
+	{
+		int slot = TF2_GetItemSlot(index, class);
+		
+		//Allow keep toolbox
+		if (slot == WeaponSlot_BuilderEngie && StrEqual(classname, "tf_weapon_builder"))
+			return true;
+		
+		//Don't allow weapons and action items from client loadout slots
+		if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
+			return false;
+	}
+	
+	//Allow cosmetics and toolbox
+	return true;
+}
+
 stock bool TF2_CheckTeamClientCount()
 {
 	//Count red and blu players
@@ -185,7 +204,7 @@ stock int TF2_RefillWeaponAmmo(int client, int weapon)
 stock int TF2_GetItemSlot(int defindex, TFClassType class)
 {
 	int slot = TF2Econ_GetItemSlot(defindex, class);
-	if (slot >= 0)
+	if (WeaponSlot_Primary <= slot)
 	{
 		// Econ reports wrong slots for Engineer and Spy
 		switch (class)

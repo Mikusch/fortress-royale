@@ -77,6 +77,11 @@
 				"linux"		"330"
 				"windows"	"329"
 			}
+			"CTFPlayer::GiveNamedItem"
+			{
+				"linux"		"482"
+				"windows"	"475"
+			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
 				"linux"		"285"
@@ -106,6 +111,11 @@
 			{
 				"linux"		"431"
 				"windows"	"430"
+			}
+			"CEconItemView::m_iItemDefinitionIndex"
+			{
+				"linux"		"4"
+				"windows"	"4"
 			}
 			"TF2_CreateRune"
 			{
@@ -252,6 +262,32 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"CTFPlayer::GiveNamedItem"
+			{
+				"offset"	"CTFPlayer::GiveNamedItem"
+				"hooktype"	"entity"
+				"return"	"cbaseentity"
+				"this"		"entity"
+				"arguments"
+				{
+					"pszName"
+					{
+						"type"	"charptr"
+					}
+					"iSubType"
+					{
+						"type"	"int"
+					}
+					"pItem"
+					{
+						"type"	"objectptr"
+					}
+					"b"
+					{
+						"type"	"bool"
+					}
+				}
 			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{

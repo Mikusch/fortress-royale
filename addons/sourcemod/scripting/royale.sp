@@ -5,6 +5,10 @@
 #include <tf_econ_data>
 #include <dhooks>
 
+#undef REQUIRE_EXTENSIONS
+#tryinclude <tf2items>
+#define REQUIRE_EXTENSIONS
+
 #define TF_MAXPLAYERS	32
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
@@ -460,6 +464,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_robot_arm"	//Engineer
 }
 
+bool g_TF2Items;
 //bool g_IsRoundActive;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
@@ -501,6 +506,8 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("royale.phrases");
 	
+	g_TF2Items = LibraryExists("TF2Items");
+	
 	g_PrecacheWeapon = new StringMap();
 	
 	Command_Init();
@@ -535,6 +542,32 @@ public void OnMapStart()
 	SDK_HookGamerules();
 }
 
+public void OnLibraryAdded(const char[] sName)
+{
+	if (StrEqual(sName, "TF2Items"))
+	{
+		g_TF2Items = true;
+		
+		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
+		if (SDK_IsGiveNamedItemActive())
+			SetFailState("Do not load TF2Items midgame while Randomizer is already loaded!");
+	}
+}
+
+public void OnLibraryRemoved(const char[] sName)
+{
+	if (StrEqual(sName, "TF2Items"))
+	{
+		g_TF2Items = false;
+		
+		//TF2Items unloaded with GiveNamedItem unhooked, we can now safely hook GiveNamedItem ourself
+		for (int iClient = 1; iClient <= MaxClients; iClient++)
+			if (IsClientInGame(iClient))
+				SDK_HookGiveNamedItem(iClient);
+	}
+}
+
+
 public void OnClientPutInServer(int client)
 {
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
@@ -545,9 +578,15 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
 	
 	SDK_HookClient(client);
+	SDK_HookGiveNamedItem(client);
 	
 	FRPlayer(client).PlayerState = PlayerState_Waiting;
 	FRPlayer(client).EditorState = EditorState_None;
+}
+
+public void OnClientDisconnect(int iClient)
+{
+	SDK_UnhookGiveNamedItem(iClient);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -694,4 +733,12 @@ public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
 {
 	result = TF2_IsObjectFriendly(teleporter, client);
 	return Plugin_Changed;
+}
+
+public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
+{
+	if (CanKeepWeapon(classname, index))
+		return Plugin_Continue;
+	
+	return Plugin_Handled;
 }
