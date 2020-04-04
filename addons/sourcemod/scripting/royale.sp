@@ -32,6 +32,7 @@
 #define DAMAGE_AIM				3
 
 #define INDEX_FISTS		5
+#define INDEX_SPELLBOOK	1070	// Spellbook Magazine
 
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
