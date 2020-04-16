@@ -71,7 +71,7 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 	//Create spellbook so spells can actually be created
 	int spellbook = TF2_CreateWeapon(INDEX_SPELLBOOK);
 	if (spellbook > MaxClients)
-		TF2_EquipWeapon(client, weapon);
+		TF2_EquipWeapon(client, spellbook);
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
