@@ -284,6 +284,12 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle returnVal, Handle 
 
 public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Handle params)
 {
+	if (TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	{
+		DHookSetReturn(returnVal, false);
+		return MRES_Supercede;
+	}
+	
 	int droppedWeapon = DHookGetParam(params, 1);
 	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
 	TFClassType class = TF2_GetPlayerClass(client);
@@ -300,7 +306,12 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	if (weapon > MaxClients)
 	{
 		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
-			SDK_CreateDroppedWeapon(client, weapon);
+		{
+			float origin[3], angles[3];
+			GetClientEyePosition(client, origin);
+			GetClientEyeAngles(client, angles);
+			SDK_CreateDroppedWeapon(client, weapon, origin, angles);
+		}
 		
 		TF2_RemoveItemInSlot(client, slot);
 	}
@@ -308,15 +319,12 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	//Create new weapon
 	weapon = TF2_CreateWeapon(defindex, class);
 	if (weapon > MaxClients)
-	{
 		TF2_EquipWeapon(client, weapon);
-		TF2_RefillWeaponAmmo(client, weapon);
-	}
 	
-	//Delete dropped weapon
+	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
 	
-	//Return false so game don't handle themself weapon pickups
+	//Prevent TF2 doing any extra work, we done that
 	DHookSetReturn(returnVal, false);
 	return MRES_Supercede;
 }
@@ -444,7 +452,7 @@ int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClass
 	return SDKCall(g_SDKGetMaxAmmo, client, ammotype, class);
 }
 
-int SDK_CreateDroppedWeapon(client, int fromWeapon)
+int SDK_CreateDroppedWeapon(client, int fromWeapon, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
 	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
@@ -464,7 +472,7 @@ int SDK_CreateDroppedWeapon(client, int fromWeapon)
 			ModelIndexToString(worldModelIndex, model, sizeof(model));
 		}
 		
-		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, { 0.0, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
 		if (droppedWeapon != INVALID_ENT_REFERENCE)
 			SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, false, false);
 		return droppedWeapon;
