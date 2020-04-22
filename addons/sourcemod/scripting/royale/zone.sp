@@ -1,7 +1,7 @@
-#define ZONE_MODEL			"models/br/br_zone.mdl"
+#define ZONE_MODEL			"models/br/br_zone_test.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
-#define ZONE_DIAMETER	14500.0
-#define ZONE_DURATION	8.33333333
+#define ZONE_DIAMETER	15000.0
+#define ZONE_DURATION	10.0
 
 enum struct ZoneConfig
 {
@@ -42,6 +42,15 @@ void Zone_Precache()
 	PrecacheModel(ZONE_MODEL);
 	PrecacheSound("mvm/ambient_mp3/mvm_siren.mp3");
 	g_ZoneSpritesLaserBeam = PrecacheModel("sprites/laserbeam.vmt", true);
+	
+	AddFileToDownloadsTable("materials/models/br/br_zone.vmt");
+	AddFileToDownloadsTable("materials/models/br/br_zone.vtf");
+	
+	AddFileToDownloadsTable("models/br/br_zone_test.dx80.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_test.dx90.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_test.mdl");
+	AddFileToDownloadsTable("models/br/br_zone_test.sw.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_test.vvd");
 }
 
 void Zone_RoundStart()
@@ -58,7 +67,7 @@ void Zone_RoundStart()
 		DispatchKeyValue(zone, "model", ZONE_MODEL);
 		DispatchKeyValue(zone, "disableshadows", "1");
 		
-		//SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));	//TODO remove me
+		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));
 		
 		DispatchSpawn(zone);
 		
@@ -69,8 +78,6 @@ void Zone_RoundStart()
 		
 		SetVariantFloat(0.0);
 		AcceptEntityInput(zone, "SetPlaybackRate");
-		
-		//SetEntPropFloat(zone, Prop_Send, "m_flCycle", 1.0 - (g_ZoneConfig.diameterMax / ZONE_DIAMETER));
 		
 		g_ZonePropRef = EntIndexToEntRef(zone);
 		
