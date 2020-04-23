@@ -52,6 +52,12 @@
 				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
 				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\xDC\x04\x00\x00\x00"
 			}
+			"CTFDroppedWeapon::InitPickedUpWeapon"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53\x56\x57"
+			}
 			"CTFPlayer::GetMaxAmmo"
 			{
 				"library"	"server"

@@ -10,6 +10,7 @@ static Handle g_DHookShouldCollide;
 static Handle g_SDKGetMaxAmmo;
 static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
+static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallEquipWearable;
 
@@ -46,6 +47,7 @@ void SDK_Init()
 	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
+	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
 	
@@ -130,6 +132,20 @@ static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitDroppedWeapon");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_InitPickedUpWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::InitPickedUpWeapon");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitPickedUpWeapon");
 	
 	return call;
 }
