@@ -6,8 +6,10 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	if (weapon > MaxClients)
 	{
 		int droppedWeapon = SDK_CreateDroppedWeapon(client, weapon);
-		RemoveEntity(weapon);
+		if (droppedWeapon != INVALID_ENT_REFERENCE)
+			SDK_InitDroppedWeapon(droppedWeapon, client, weapon, false);
 		
+		RemoveEntity(weapon);
 		return droppedWeapon;
 	}
 	

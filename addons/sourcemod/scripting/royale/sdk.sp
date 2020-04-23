@@ -310,7 +310,10 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
 			GetClientEyeAngles(client, angles);
-			SDK_CreateDroppedWeapon(client, weapon, origin, angles);
+			
+			int newDroppedWeapon = SDK_CreateDroppedWeapon(client, weapon, origin, angles);
+			if (newDroppedWeapon != INVALID_ENT_REFERENCE)
+				SDK_InitDroppedWeapon(newDroppedWeapon, client, weapon, true);
 		}
 		
 		TF2_RemoveItemInSlot(client, slot);
@@ -452,6 +455,11 @@ int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClass
 	return SDKCall(g_SDKGetMaxAmmo, client, ammotype, class);
 }
 
+void SDK_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool swap, bool isSuicide = false)
+{
+	SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, swap, isSuicide);
+}
+
 int SDK_CreateDroppedWeapon(client, int fromWeapon, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
@@ -468,17 +476,14 @@ int SDK_CreateDroppedWeapon(client, int fromWeapon, const float origin[3] = { 0.
 		char model[PLATFORM_MAX_PATH];
 		if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
 		{
-			int worldModelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
-			ModelIndexToString(worldModelIndex, model, sizeof(model));
+			int modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
+			ModelIndexToString(modelIndex, model, sizeof(model));
 		}
 		
-		int droppedWeapon = SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
-		if (droppedWeapon != INVALID_ENT_REFERENCE)
-			SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, false, false);
-		return droppedWeapon;
+		return SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
 	}
 	
-	return -1;
+	return INVALID_ENT_REFERENCE;
 }
 
 void SDK_EquipWearable(int client, int wearable)
