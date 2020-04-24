@@ -667,9 +667,9 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 {
 	FRPlayer(victim).Team = TF2_GetTeam(victim);
 	if (0 < attacker <= MaxClients)
-	{
 		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(attacker));
-	}
+	else
+		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(victim));
 	
 	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
