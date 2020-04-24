@@ -5,15 +5,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
 	if (weapon > MaxClients)
 	{
-		int droppedWeapon = SDK_CreateDroppedWeapon(client, weapon);
-		if (droppedWeapon != INVALID_ENT_REFERENCE)
-		{
-			//Pass non-wearable weapon just so it doesn't crash
-			if (TF2_IsWearable(weapon))
-				SDK_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), false);
-			else
-				SDK_InitDroppedWeapon(droppedWeapon, client, weapon, false);
-		}
+		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
 		
 		RemoveEntity(weapon);
 		return droppedWeapon;

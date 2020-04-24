@@ -8,7 +8,6 @@ static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 
 static Handle g_SDKGetMaxAmmo;
-static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
@@ -45,7 +44,6 @@ void SDK_Init()
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	
 	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
-	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
@@ -98,24 +96,6 @@ static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::GetMaxAmmo");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Static);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::Create");
-	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef);
-	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef);
-	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
 	
 	return call;
 }
@@ -326,16 +306,7 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
 			GetClientEyeAngles(client, angles);
-			
-			int newDroppedWeapon = SDK_CreateDroppedWeapon(client, weapon, origin, angles);
-			if (newDroppedWeapon != INVALID_ENT_REFERENCE)
-			{
-				//Pass non-wearable weapon just so it doesn't crash
-				if (TF2_IsWearable(weapon))
-					SDK_InitDroppedWeapon(newDroppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), false);
-				else
-					SDK_InitDroppedWeapon(newDroppedWeapon, client, weapon, false);
-			}
+			TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
 		}
 		
 		TF2_RemoveItemInSlot(client, slot);
@@ -495,37 +466,6 @@ void SDK_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool s
 void SDK_InitPickedUpWeapon(int droppedWeapon, int client, int fromWeapon)
 {
 	SDKCall(g_SDKCallInitPickedUpWeapon, droppedWeapon, client, fromWeapon);
-}
-
-int SDK_CreateDroppedWeapon(int client, int fromWeapon, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
-{
-	char classname[32];
-	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
-	{
-		int itemOffset = FindSendPropInfo(classname, "m_Item");
-		if (itemOffset <= -1)
-			ThrowError("Failed to find m_Item on: %s", classname);
-		
-		char defindex[12];
-		IntToString(GetEntProp(fromWeapon, Prop_Send, "m_iItemDefinitionIndex"), defindex, sizeof(defindex));
-		
-		//Attempt get custom model, otherwise use default model
-		char model[PLATFORM_MAX_PATH];
-		if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
-		{
-			int modelIndex = -1;
-			if (HasEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex"))
-				modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
-			else 
-				modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
-			
-			ModelIndexToString(modelIndex, model, sizeof(model));
-		}
-		
-		return SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
-	}
-	
-	return INVALID_ENT_REFERENCE;
 }
 
 void SDK_EquipWearable(int client, int wearable)

@@ -180,6 +180,44 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 	return weapon;
 }
 
+stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const float origin[3] = NULL_VECTOR, const float angles[3] = NULL_VECTOR)
+{
+	int index = GetEntProp(fromWeapon, Prop_Send, "m_iItemDefinitionIndex");
+	char defindex[12];
+	IntToString(index, defindex, sizeof(defindex));
+	
+	//Attempt get custom model, otherwise use default model
+	char model[PLATFORM_MAX_PATH];
+	if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
+	{
+		int modelIndex = -1;
+		if (HasEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex"))
+			modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
+		else 
+			modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
+		
+		ModelIndexToString(modelIndex, model, sizeof(model));
+	}
+	
+	//Do similar steps to CTFDroppedWeapon::Create but without deleting existing dropped weapon
+	int droppedWeapon = CreateEntityByName("tf_dropped_weapon");
+	if (droppedWeapon == INVALID_ENT_REFERENCE)
+		return INVALID_ENT_REFERENCE;
+	
+	TeleportEntity(droppedWeapon, origin, angles, NULL_VECTOR);
+	SetEntityModel(droppedWeapon, model);
+	SetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex", index);	//def index may enough instead of needing to copy whole m_Item
+	DispatchSpawn(droppedWeapon);
+	
+	//Setup ammo, energy count etc
+	if (TF2_IsWearable(fromWeapon))	//Pass non-wearable weapon just so it doesn't crash
+		SDK_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), swap);
+	else
+		SDK_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
+	
+	return droppedWeapon;
+}
+
 stock void TF2_EquipWeapon(int client, int weapon)
 {
 	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
