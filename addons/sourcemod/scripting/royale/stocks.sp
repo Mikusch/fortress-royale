@@ -236,7 +236,7 @@ stock void TF2_EquipWeapon(int client, int weapon)
 	//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
 }
 
-stock int TF2_RefillWeaponAmmo(int client, int weapon)
+stock void TF2_RefillWeaponAmmo(int client, int weapon)
 {
 	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
 	if (ammotype > -1)
@@ -244,6 +244,22 @@ stock int TF2_RefillWeaponAmmo(int client, int weapon)
 		int maxammo = SDK_GetMaxAmmo(client, ammotype);
 		SetEntProp(client, Prop_Send, "m_iAmmo", maxammo, _, ammotype);
 	}
+}
+
+stock void TF2_SetWeaponAmmo(int client, int weapon, int ammo)
+{
+	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+	if (ammotype > -1)
+		SetEntProp(client, Prop_Send, "m_iAmmo", ammo, _, ammotype);
+}
+
+stock int TF2_GetWeaponAmmo(int client, int weapon)
+{
+	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+	if (ammotype > -1)
+		return GetEntProp(client, Prop_Send, "m_iAmmo", _, ammotype);
+	
+	return -1;
 }
 
 stock int TF2_GetItemSlot(int defindex, TFClassType class)

@@ -5,7 +5,17 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
 	if (weapon > MaxClients)
 	{
+		int ammo = -1;
+		if (!TF2_IsWearable(weapon))
+		{
+			ammo = TF2_GetWeaponAmmo(client, weapon);
+			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
+		}
+		
 		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
+		
+		if (!TF2_IsWearable(weapon))
+			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
 		
 		RemoveEntity(weapon);
 		return droppedWeapon;

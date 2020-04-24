@@ -316,11 +316,15 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	weapon = TF2_CreateWeapon(defindex, class);
 	if (weapon > MaxClients)
 	{
+		TF2_EquipWeapon(client, weapon);
+		
 		//Restore ammo, energy etc from picked up weapon
 		if (!TF2_IsWearable(weapon))
 			SDK_InitPickedUpWeapon(droppedWeapon, client, weapon);
 		
-		TF2_EquipWeapon(client, weapon);
+		//If max ammo not calculated yet (-1), do it now
+		if (!TF2_IsWearable(weapon) && TF2_GetWeaponAmmo(client, weapon) < 0)
+			TF2_RefillWeaponAmmo(client, weapon);
 	}
 	
 	//Fix active weapon, incase was switched to wearable
