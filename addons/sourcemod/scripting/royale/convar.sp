@@ -3,6 +3,7 @@ static ConVar mp_teams_unbalance_limit;
 static ConVar mp_friendlyfire;
 static ConVar tf_arena_first_blood;
 static ConVar tf_avoidteammates;
+static ConVar tf_dropped_weapon_lifetime;
 static ConVar tf_powerup_mode;
 
 void ConVar_Init()
@@ -20,6 +21,7 @@ void ConVar_Init()
 	mp_friendlyfire = FindConVar("mp_friendlyfire");
 	tf_arena_first_blood = FindConVar("tf_arena_first_blood");
 	tf_avoidteammates = FindConVar("tf_avoidteammates");
+	tf_dropped_weapon_lifetime = FindConVar("tf_dropped_weapon_lifetime");
 	tf_powerup_mode = FindConVar("tf_powerup_mode");
 }
 
@@ -32,6 +34,7 @@ void ConVar_Toggle(bool enable)
 	static bool friendlyfire;
 	static bool firstblood;
 	static bool avoidteammates;
+	static float droppedweaponlifetime;
 	static bool powerupmode;
 	
 	if (enable && !toggled)
@@ -53,6 +56,9 @@ void ConVar_Toggle(bool enable)
 		avoidteammates = tf_avoidteammates.BoolValue;
 		tf_avoidteammates.BoolValue = false;
 		
+		droppedweaponlifetime = tf_dropped_weapon_lifetime.FloatValue;
+		tf_dropped_weapon_lifetime.FloatValue = 99999.0;
+		
 		powerupmode = tf_powerup_mode.BoolValue;
 		tf_powerup_mode.BoolValue = true;
 	}
@@ -65,6 +71,7 @@ void ConVar_Toggle(bool enable)
 		mp_friendlyfire.BoolValue = friendlyfire;
 		tf_arena_first_blood.BoolValue = firstblood;
 		tf_avoidteammates.BoolValue = avoidteammates;
+		tf_dropped_weapon_lifetime.FloatValue = droppedweaponlifetime;
 		tf_powerup_mode.BoolValue = powerupmode;
 	}
 }
