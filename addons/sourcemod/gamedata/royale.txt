@@ -222,7 +222,7 @@
 				"this"		"entity"
 				"arguments"
 				{
-					"target"
+					"pWeapon"
 					{
 						"type"	"cbaseentity"
 					}
@@ -285,11 +285,11 @@
 					{
 						"type"	"int"
 					}
-					"pItem"
+					"pScriptItem"
 					{
 						"type"	"objectptr"
 					}
-					"b"
+					"bForce"
 					{
 						"type"	"bool"
 					}
@@ -310,15 +310,25 @@
 				"this"		"entity"
 				"arguments"
 				{
-					"pVictim"
+					"pTarget"
 					{
 						"type"	"cbaseentity"
 					}
-					"pAttacker"
+					"pOwner"
 					{
 						"type"	"cbaseentity"
 					}
-					"vecDir"
+					"vecForward"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecCenter"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecSize"
 					{
 						"type"	"vectorptr"
 						"flags"	"byref"
@@ -333,15 +343,25 @@
 				"this"		"entity"
 				"arguments"
 				{
-					"pEntity"
+					"pTarget"
 					{
 						"type"	"cbaseentity"
 					}
-					"pAttacker"
+					"pOwner"
 					{
 						"type"	"cbaseentity"
 					}
-					"vecDir"
+					"vecForward"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecCenter"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecSize"
 					{
 						"type"	"vectorptr"
 						"flags"	"byref"
@@ -374,7 +394,7 @@
 				"this"		"entity"
 				"arguments"
 				{
-					"CBaseEntity"
+					"pEntity"
 					{
 						"type"	"cbaseentity"
 					}
