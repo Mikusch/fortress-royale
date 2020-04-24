@@ -6,6 +6,7 @@ static Handle g_DHookDeflectPlayer;
 static Handle g_DHookDeflectEntity;
 static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
+static Handle g_DHookWantsLagCompensationOnEntity;
 
 static Handle g_SDKGetMaxAmmo;
 static Handle g_SDKCallInitDroppedWeapon;
@@ -42,6 +43,7 @@ void SDK_Init()
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
+	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 	
 	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
@@ -189,6 +191,7 @@ void SDK_HookGamerules()
 void SDK_HookClient(int client)
 {
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
+	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntity);
 }
 
 void SDK_HookPrimaryAttack(int weapon)
@@ -449,6 +452,12 @@ public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handl
 	toucher = GetOwnerLoop(toucher);
 	
 	DHookSetReturn(returnVal, gasManager != toucher);
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_WantsLagCompensationOnEntity(int client, Handle returnVal)
+{
+	DHookSetReturn(returnVal, true);
 	return MRES_Supercede;
 }
 

@@ -107,6 +107,12 @@
 				"linux"		"196"
 				"windows"	"195"
 			}
+			"CTFPlayer::WantsLagCompensationOnEntity"
+			{
+				"library"	"server"
+				"linux"		"328"
+				"windows"	"327"
+			}
 			"CBasePlayer::EquipWearable"
 			{
 				"linux"		"431"
@@ -371,6 +377,28 @@
 					"CBaseEntity"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::WantsLagCompensationOnEntity"
+			{
+				"offset"	"CTFPlayer::WantsLagCompensationOnEntity"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pPlayer"
+					{
+						"type"	"cbaseentity"
+					}
+					"pCmd"
+					{
+						"type"	"objectptr"
+					}
+					"pEntityTransmitBits"
+					{
+						"type"	"objectptr"
 					}
 				}
 			}
