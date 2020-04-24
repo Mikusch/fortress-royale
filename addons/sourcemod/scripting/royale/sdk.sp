@@ -191,7 +191,7 @@ void SDK_HookGamerules()
 void SDK_HookClient(int client)
 {
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
-	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntity);
+	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
 }
 
 void SDK_HookPrimaryAttack(int weapon)
@@ -455,7 +455,7 @@ public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handl
 	return MRES_Supercede;
 }
 
-public MRESReturn DHook_WantsLagCompensationOnEntity(int client, Handle returnVal)
+public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)
 {
 	DHookSetReturn(returnVal, true);
 	return MRES_Supercede;
