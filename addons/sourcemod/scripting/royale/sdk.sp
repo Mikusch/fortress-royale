@@ -352,6 +352,10 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 		TF2_EquipWeapon(client, weapon);
 	}
 	
+	//Fix active weapon, incase was switched to wearable
+	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") <= MaxClients)
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", TF2_GetItemInSlot(client, WeaponSlot_Melee));
+	
 	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
 	
