@@ -9,6 +9,8 @@
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
 
+#pragma newdecls required
+
 #define TF_MAXPLAYERS	32
 
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1

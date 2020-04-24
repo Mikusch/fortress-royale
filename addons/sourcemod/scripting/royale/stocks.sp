@@ -122,6 +122,13 @@ stock bool TF2_IsObjectFriendly(int obj, int entity)
 	return false;
 }
 
+stock bool TF2_IsWearable(int weapon)
+{
+	char classname[256];
+	GetEntityClassname(weapon, classname, sizeof(classname));
+	return StrContains(classname, "tf_wearable") == 0;
+}
+
 stock float TF2_GetPercentInvisible(int client)
 {
 	int offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;

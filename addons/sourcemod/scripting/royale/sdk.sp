@@ -329,7 +329,13 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 			
 			int newDroppedWeapon = SDK_CreateDroppedWeapon(client, weapon, origin, angles);
 			if (newDroppedWeapon != INVALID_ENT_REFERENCE)
-				SDK_InitDroppedWeapon(newDroppedWeapon, client, weapon, true);
+			{
+				//Pass non-wearable weapon just so it doesn't crash
+				if (TF2_IsWearable(weapon))
+					SDK_InitDroppedWeapon(newDroppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), false);
+				else
+					SDK_InitDroppedWeapon(newDroppedWeapon, client, weapon, false);
+			}
 		}
 		
 		TF2_RemoveItemInSlot(client, slot);
@@ -338,7 +344,13 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	//Create new weapon
 	weapon = TF2_CreateWeapon(defindex, class);
 	if (weapon > MaxClients)
+	{
+		//Restore ammo, energy etc from picked up weapon
+		if (!TF2_IsWearable(weapon))
+			SDK_InitPickedUpWeapon(droppedWeapon, client, weapon);
+		
 		TF2_EquipWeapon(client, weapon);
+	}
 	
 	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
@@ -476,7 +488,12 @@ void SDK_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool s
 	SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, swap, isSuicide);
 }
 
-int SDK_CreateDroppedWeapon(client, int fromWeapon, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
+void SDK_InitPickedUpWeapon(int droppedWeapon, int client, int fromWeapon)
+{
+	SDKCall(g_SDKCallInitPickedUpWeapon, droppedWeapon, client, fromWeapon);
+}
+
+int SDK_CreateDroppedWeapon(int client, int fromWeapon, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
 	if (GetEntityNetClass(fromWeapon, classname, sizeof(classname)))
@@ -492,7 +509,12 @@ int SDK_CreateDroppedWeapon(client, int fromWeapon, const float origin[3] = { 0.
 		char model[PLATFORM_MAX_PATH];
 		if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
 		{
-			int modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
+			int modelIndex = -1;
+			if (HasEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex"))
+				modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
+			else 
+				modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
+			
 			ModelIndexToString(modelIndex, model, sizeof(model));
 		}
 		
