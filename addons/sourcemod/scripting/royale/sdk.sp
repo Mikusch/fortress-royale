@@ -34,6 +34,7 @@ void SDK_Init()
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTarget, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -339,6 +340,29 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 	
 	//Prevent TF2 doing any extra work, we done that
 	DHookSetReturn(returnVal, false);
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
+{
+	//Ignore feign death
+	if (DHookGetParam(params, 2))
+		return MRES_Supercede;
+	
+	float origin[3], angles[3];
+	GetClientEyePosition(client, origin);
+	GetClientEyeAngles(client, angles);
+	
+	//Drop all weapons
+	//TODO drop grapple hook aswell
+	for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
+	{
+		int weapon = TF2_GetItemInSlot(client, slot);
+		if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+			TF2_CreateDroppedWeapon(client, weapon, false, origin, angles);
+	}
+	
+	//Prevent TF2 dropping anything else
 	return MRES_Supercede;
 }
 
