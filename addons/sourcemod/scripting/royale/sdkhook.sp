@@ -6,6 +6,7 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
+	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 }
 
 void SDKHook_HookProjectile(int entity)
@@ -97,6 +98,15 @@ public void Client_PostThink(int client)
 			SetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel", charge);
 		}
 	}
+	
+	//Calls CTFPlayer::DoTauntAttack with enemy team check
+	FRPlayer(client).Team = TF2_GetTeam(client);
+	TF2_ChangeTeam(client, TFTeam_Spectator);
+}
+
+public void Client_PostThinkPost(int client)
+{
+	TF2_ChangeTeam(client, FRPlayer(client).Team);
 }
 
 public Action Projectile_Touch(int entity, int other)
