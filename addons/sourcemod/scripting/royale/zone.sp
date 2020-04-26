@@ -43,11 +43,11 @@ void Zone_Precache()
 	AddFileToDownloadsTable("materials/models/br/br_zone.vmt");
 	AddFileToDownloadsTable("materials/models/br/br_zone.vtf");
 	
-	AddFileToDownloadsTable("models/br/br_zone_test.dx80.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_test.dx90.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_test.mdl");
-	AddFileToDownloadsTable("models/br/br_zone_test.sw.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_test.vvd");
+	AddFileToDownloadsTable("models/br/br_zone_to_0.dx80.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_to_0.dx90.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_to_0.mdl");
+	AddFileToDownloadsTable("models/br/br_zone_to_0.sw.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_to_0.vvd");
 }
 
 void Zone_RoundStart()
