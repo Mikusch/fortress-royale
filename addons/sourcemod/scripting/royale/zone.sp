@@ -72,6 +72,9 @@ void Zone_RoundStart()
 		
 		DispatchSpawn(zone);
 		
+		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
+		SetEntityRenderColor(zone, 0, 0, 255, 255);
+		
 		SetVariantString("shrink");
 		AcceptEntityInput(zone, "SetAnimation");
 		
