@@ -81,9 +81,9 @@ stock bool TF2_CheckTeamClientCount()
 	return false;
 }
 
-stock void TF2_ChangeTeam(int client, TFTeam team)
+stock void TF2_ChangeTeam(int entity, TFTeam team)
 {
-	SetEntProp(client, Prop_Send, "m_iTeamNum", view_as<int>(team));
+	SetEntProp(entity, Prop_Send, "m_iTeamNum", view_as<int>(team));
 }
 
 stock TFTeam TF2_GetTeam(int entity)
@@ -211,9 +211,9 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	
 	//Setup ammo, energy count etc
 	if (TF2_IsWearable(fromWeapon))	//Pass non-wearable weapon just so it doesn't crash
-		SDK_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), swap);
+		SDKCall_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), swap);
 	else
-		SDK_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
+		SDKCall_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
 	
 	return droppedWeapon;
 }
@@ -228,7 +228,7 @@ stock void TF2_EquipWeapon(int client, int weapon)
 	if (StrContains(classname, "tf_weapon") == 0)
 		EquipPlayerWeapon(client, weapon);
 	else if (StrContains(classname, "tf_wearable") == 0)
-		SDK_EquipWearable(client, weapon);
+		SDKCall_EquipWearable(client, weapon);
 	else
 		RemoveEntity(weapon);
 	
@@ -241,7 +241,7 @@ stock void TF2_RefillWeaponAmmo(int client, int weapon)
 	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
 	if (ammotype > -1)
 	{
-		int maxammo = SDK_GetMaxAmmo(client, ammotype);
+		int maxammo = SDKCall_GetMaxAmmo(client, ammotype);
 		SetEntProp(client, Prop_Send, "m_iAmmo", maxammo, _, ammotype);
 	}
 }
@@ -303,14 +303,14 @@ stock int TF2_GetItemInSlot(int client, int slot)
 		return weapon;
 	
 	//If weapon not found in slot, check if it a wearable
-	return SDK_GetEquippedWearableForLoadoutSlot(client, slot);
+	return SDKCall_GetEquippedWearableForLoadoutSlot(client, slot);
 }
 
 stock void TF2_RemoveItemInSlot(int client, int slot)
 {
 	TF2_RemoveWeaponSlot(client, slot);
 
-	int wearable = SDK_GetEquippedWearableForLoadoutSlot(client, slot);
+	int wearable = SDKCall_GetEquippedWearableForLoadoutSlot(client, slot);
 	if (wearable > MaxClients)
 		TF2_RemoveWearable(client, wearable);
 }

@@ -8,12 +8,6 @@ static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
-static Handle g_SDKGetMaxAmmo;
-static Handle g_SDKCallInitDroppedWeapon;
-static Handle g_SDKCallInitPickedUpWeapon;
-static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
-static Handle g_SDKCallEquipWearable;
-
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
 
@@ -22,18 +16,14 @@ static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
 static int g_OffsetItemDefinitionIndex;
 static int g_OffsetCreateRune;
 
-void SDK_Init()
+void DHook_Init(GameData gamedata)
 {
-	GameData gamedata = new GameData("royale");
-	if (gamedata == null)
-		SetFailState("Could not find royale gamedata");
-	
-	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeam, _);
+	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::FindTarget", DHook_FindTargetPre, DHook_FindTargetPost);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTarget, _);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTarget, _);
-	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTarget, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeapon, _);
+	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPre, _);
+	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTargetPre, _);
+	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
@@ -46,16 +36,8 @@ void SDK_Init()
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 	
-	g_SDKGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
-	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
-	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
-	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
-	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
-	
 	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
 	g_OffsetCreateRune = gamedata.GetOffset("TF2_CreateRune");
-	
-	delete gamedata;
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -88,85 +70,13 @@ static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
 	return hook;
 }
 
-static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Player);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetMaxAmmo");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFPlayer::GetMaxAmmo");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::InitDroppedWeapon");
-	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitDroppedWeapon");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_InitPickedUpWeapon(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::InitPickedUpWeapon");
-	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitPickedUpWeapon");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_GetEquippedWearableForLoadoutSlot(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetEquippedWearableForLoadoutSlot");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFPlayer::GetEquippedWearableForLoadoutSlot");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_EquipWearable(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Player);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBasePlayer::EquipWearable");
-	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CBasePlayer::EquipWearable");
-	
-	return call;
-}
-
-void SDK_HookGiveNamedItem(int client)
+void DHook_HookGiveNamedItem(int client)
 {
 	if (g_DHookGiveNamedItem && !g_TF2Items)
 		g_HookIdGiveNamedItem[client] = DHookEntity(g_DHookGiveNamedItem, false, client, DHook_GiveNamedItemRemoved, DHook_GiveNamedItemPre);
 }
 
-void SDK_UnhookGiveNamedItem(int client)
+void DHook_UnhookGiveNamedItem(int client)
 {
 	if (g_HookIdGiveNamedItem[client])
 	{
@@ -175,7 +85,7 @@ void SDK_UnhookGiveNamedItem(int client)
 	}
 }
 
-bool SDK_IsGiveNamedItemActive()
+bool DHook_IsGiveNamedItemActive()
 {
 	for (int client = 1; client <= MaxClients; client++)
 		if (g_HookIdGiveNamedItem[client])
@@ -184,24 +94,24 @@ bool SDK_IsGiveNamedItemActive()
 	return false;
 }
 
-void SDK_HookGamerules()
+void DHook_HookGamerules()
 {
 	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeam);
 }
 
-void SDK_HookClient(int client)
+void DHook_HookClient(int client)
 {
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
 }
 
-void SDK_HookPrimaryAttack(int weapon)
+void DHook_HookPrimaryAttack(int weapon)
 {
 	DHookEntity(g_DHookPrimaryAttack, false, weapon, _, DHook_PrimaryAttackPre);
 	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
 }
 
-void SDK_HookFlamethrower(int weapon)
+void DHook_HookFlamethrower(int weapon)
 {
 	DHookEntity(g_DHookDeflectPlayer, false, weapon, _, DHook_DeflectPre);
 	DHookEntity(g_DHookDeflectPlayer, true, weapon, _, DHook_DeflectPost);
@@ -209,18 +119,18 @@ void SDK_HookFlamethrower(int weapon)
 	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
 }
 
-void SDK_HookProjectile(int projectile)
+void DHook_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
 	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
 }
 
-void SDK_HookGasManager(int gasManager)
+void DHook_HookGasManager(int gasManager)
 {
 	DHookEntity(g_DHookShouldCollide, false, gasManager, _, DHook_ShouldCollidePre);
 }
 
-public MRESReturn DHook_InSameTeam(int entity, Handle returnVal, Handle params)
+public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
 {
 	//In friendly fire we only want to return true if both entity owner is the same
 	
@@ -258,7 +168,7 @@ public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
 	TF2_ChangeTeam(sentry, TF2_GetTeam(client));
 }
 
-public MRESReturn DHook_ValidTarget(int sentry, Handle returnVal, Handle hParams)
+public MRESReturn DHook_ValidTargetPre(int sentry, Handle returnVal, Handle hParams)
 {
 	int target = DHookGetParam(hParams, 1);
 	if (TF2_IsObjectFriendly(sentry, target))
@@ -270,7 +180,7 @@ public MRESReturn DHook_ValidTarget(int sentry, Handle returnVal, Handle hParams
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_CouldHealTarget(int dispenser, Handle returnVal, Handle hParams)
+public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Handle hParams)
 {
 	int target = DHookGetParam(hParams, 1);
 	if (0 < target <= MaxClients)
@@ -282,7 +192,7 @@ public MRESReturn DHook_CouldHealTarget(int dispenser, Handle returnVal, Handle 
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Handle params)
+public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, Handle params)
 {
 	if (TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
 	{
@@ -324,7 +234,7 @@ public MRESReturn DHook_CanPickupDroppedWeapon(int client, Handle returnVal, Han
 		
 		//Restore ammo, energy etc from picked up weapon
 		if (!TF2_IsWearable(weapon))
-			SDK_InitPickedUpWeapon(droppedWeapon, client, weapon);
+			SDKCall_InitPickedUpWeapon(droppedWeapon, client, weapon);
 		
 		//If max ammo not calculated yet (-1), do it now
 		if (!TF2_IsWearable(weapon) && TF2_GetWeaponAmmo(client, weapon) < 0)
@@ -488,29 +398,4 @@ public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle retur
 public Address GameData_GetCreateRuneOffset()
 {
 	return view_as<Address>(g_OffsetCreateRune);
-}
-
-int SDK_GetMaxAmmo(int client, int ammotype, TFClassType class = view_as<TFClassType>(-1))
-{
-	return SDKCall(g_SDKGetMaxAmmo, client, ammotype, class);
-}
-
-void SDK_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool swap, bool isSuicide = false)
-{
-	SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, swap, isSuicide);
-}
-
-void SDK_InitPickedUpWeapon(int droppedWeapon, int client, int fromWeapon)
-{
-	SDKCall(g_SDKCallInitPickedUpWeapon, droppedWeapon, client, fromWeapon);
-}
-
-void SDK_EquipWearable(int client, int wearable)
-{
-	SDKCall(g_SDKCallEquipWearable, client, wearable);
-}
-
-int SDK_GetEquippedWearableForLoadoutSlot(int client, int slot)
-{
-	return SDKCall(g_SDKCallGetEquippedWearableForLoadoutSlot, client, slot);
 }

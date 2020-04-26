@@ -487,11 +487,13 @@ ConVar fr_zone_nextdisplay;
 #include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convar.sp"
+#include "royale/dhook.sp"
 #include "royale/editor.sp"
 #include "royale/event.sp"
 #include "royale/loot/loot.sp"
 #include "royale/loot/loot_callbacks.sp"
-#include "royale/sdk.sp"
+#include "royale/sdkcall.sp"
+#include "royale/sdkhook.sp"
 #include "royale/stocks.sp"
 #include "royale/zone.sp"
 
@@ -513,12 +515,20 @@ public void OnPluginStart()
 	
 	g_PrecacheWeapon = new StringMap();
 	
+	GameData gamedata = new GameData("royale");
+	if (gamedata == null)
+		SetFailState("Could not find royale gamedata");
+	
+	DHook_Init(gamedata);
+	SDKCall_Init(gamedata);
+	
+	delete gamedata;
+	
 	Command_Init();
 	Config_Init();
 	Console_Init();
 	ConVar_Init();
 	Event_Init();
-	SDK_Init();
 	Loot_Init();
 	
 	ConVar_Toggle(true);
@@ -542,7 +552,7 @@ public void OnMapStart()
 	BattleBus_Precache();
 	Zone_Precache();
 	
-	SDK_HookGamerules();
+	DHook_HookGamerules();
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -552,7 +562,7 @@ public void OnLibraryAdded(const char[] sName)
 		g_TF2Items = true;
 		
 		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
-		if (SDK_IsGiveNamedItemActive())
+		if (DHook_IsGiveNamedItemActive())
 			SetFailState("Do not load TF2Items midgame while Randomizer is already loaded!");
 	}
 }
@@ -566,22 +576,16 @@ public void OnLibraryRemoved(const char[] sName)
 		//TF2Items unloaded with GiveNamedItem unhooked, we can now safely hook GiveNamedItem ourself
 		for (int iClient = 1; iClient <= MaxClients; iClient++)
 			if (IsClientInGame(iClient))
-				SDK_HookGiveNamedItem(iClient);
+				DHook_HookGiveNamedItem(iClient);
 	}
 }
 
 
 public void OnClientPutInServer(int client)
 {
-	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
-	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
-	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
-	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
-	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
-	SDKHook(client, SDKHook_PostThink, Client_PostThink);
-	
-	SDK_HookClient(client);
-	SDK_HookGiveNamedItem(client);
+	DHook_HookClient(client);
+	DHook_HookGiveNamedItem(client);
+	SDKHook_HookClient(client);
 	
 	FRPlayer(client).PlayerState = PlayerState_Waiting;
 	FRPlayer(client).EditorState = EditorState_None;
@@ -589,7 +593,7 @@ public void OnClientPutInServer(int client)
 
 public void OnClientDisconnect(int iClient)
 {
-	SDK_UnhookGiveNamedItem(iClient);
+	DHook_UnhookGiveNamedItem(iClient);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -606,128 +610,15 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "tf_projectile_pipe") || StrEqual(classname, "tf_projectile_cleaver"))
-	{
-		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
-		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
-	}
+		SDKHook_HookProjectile(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
-		SDK_HookProjectile(entity);
+		DHook_HookProjectile(entity);
 	else if (StrContains(classname, "tf_weapon_sniperrifle") == 0 || StrEqual(classname, "tf_weapon_knife"))
-		SDK_HookPrimaryAttack(entity);
+		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
-		SDK_HookFlamethrower(entity);
+		DHook_HookFlamethrower(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
-		SDK_HookGasManager(entity);
-}
-
-public Action Client_SetTransmit(int entity, int client)
-{
-	//Don't allow teammates see invis spy
-	
-	if (entity == client
-		 || TF2_GetClientTeam(client) <= TFTeam_Spectator
-		 || TF2_IsPlayerInCondition(entity, TFCond_Bleeding)
-		 || TF2_IsPlayerInCondition(entity, TFCond_Jarated)
-		 || TF2_IsPlayerInCondition(entity, TFCond_Milked)
-		 || TF2_IsPlayerInCondition(entity, TFCond_OnFire)
-		 || TF2_IsPlayerInCondition(entity, TFCond_Gas))
-	{
-		return Plugin_Continue;
-	}
-	
-	if (TF2_GetPercentInvisible(entity) >= 1.0)
-		return Plugin_Handled;
-	
-	return Plugin_Continue;
-}
-
-public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
-{
-	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
-		return true;
-	
-	return originalResult;
-}
-
-public Action Client_GetMaxHealth(int client, int &maxhealth)
-{
-	float multiplier = fr_healthmultiplier.FloatValue;
-	
-	if (multiplier == 1.0)
-		return Plugin_Continue;
-	
-	//Multiply health by convar value, and round up value by 5
-	maxhealth = RoundToFloor(float(maxhealth) * multiplier / 5.0) * 5;
-	return Plugin_Changed;
-}
-
-public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{
-	FRPlayer(victim).Team = TF2_GetTeam(victim);
-	if (0 < attacker <= MaxClients)
-		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(attacker));
-	else
-		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(victim));
-	
-	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-	{
-		float multiplier = fr_fistsdamagemultiplier.FloatValue;
-		if (multiplier != 1.0)
-		{
-			damage *= multiplier;
-			return Plugin_Changed;
-		}
-	}
-	
-	return Plugin_Continue;
-}
-
-public Action Client_OnTakeDamagePost(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{
-	TF2_ChangeTeam(victim, FRPlayer(victim).Team);
-}
-
-public void Client_PostThink(int client)
-{
-	int weapon = TF2_GetItemInSlot(client, WeaponSlot_Secondary);
-	if (weapon > MaxClients)
-	{
-		char classname[256];
-		GetEntityClassname(weapon, classname, sizeof(classname));
-		if (StrEqual(classname, "tf_weapon_medigun") && !GetEntProp(weapon, Prop_Send, "m_bChargeRelease"))
-		{
-			float charge = GetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel") + (GetGameFrameTime() / 10.0);
-			if (charge > 1.0)
-				charge = 1.0;
-			
-			SetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel", charge);
-		}
-	}
-}
-
-public Action Projectile_Touch(int entity, int other)
-{
-	//This function have team check, change projectile and owner to spectator to touch both teams
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner == other)
-		return;
-	
-	TF2_ChangeTeam(entity, TFTeam_Spectator);
-	TF2_ChangeTeam(owner, TFTeam_Spectator);
-}
-
-public void Projectile_TouchPost(int entity, int other)
-{
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner == other)
-		return;
-	
-	//Get original team by using it's weapon
-	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
-	if (weapon <= MaxClients)
-		return;
-	
-	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+		DHook_HookGasManager(entity);
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
