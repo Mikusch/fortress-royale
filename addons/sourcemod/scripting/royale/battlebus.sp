@@ -171,8 +171,9 @@ public Action BattleBus_EndProp(Handle timer)
 	}
 	
 	// Destroy prop
-	if (g_BattleBusPropRef != INVALID_ENT_REFERENCE)
-		RemoveEntity(g_BattleBusPropRef);
+	int bus = EntRefToEntIndex(g_BattleBusPropRef);
+	if (bus != INVALID_ENT_REFERENCE)
+		RemoveEntity(bus);
 }
 
 void BattleBus_SpectateBus(int client)
@@ -194,7 +195,8 @@ public void RequestFrame_EjectClient(int serial)
 
 void BattleBus_EjectClient(int client)
 {
-	if (g_BattleBusPropRef == INVALID_ENT_REFERENCE)
+	int bus = EntRefToEntIndex(g_BattleBusPropRef);
+	if (bus == INVALID_ENT_REFERENCE)
 		return;
 	
 	FRPlayer(client).PlayerState = PlayerState_Alive;
@@ -204,7 +206,7 @@ void BattleBus_EjectClient(int client)
 	SetClientViewEntity(client, client);
 	
 	float ejectOrigin[3], busOrigin[3], clientMins[3], clientMaxs[3];
-	GetEntPropVector(g_BattleBusPropRef, Prop_Data, "m_vecAbsOrigin", busOrigin);
+	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", busOrigin);
 	GetClientMins(client, clientMins);
 	GetClientMaxs(client, clientMaxs);
 	
@@ -248,7 +250,7 @@ void BattleBus_EjectClient(int client)
 	
 	TeleportEntity(client, ejectOrigin, NULL_VECTOR, NULL_VECTOR);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 8.0);
-	EmitSoundToAll(g_BattleBusClientDropSound, g_BattleBusPropRef);
+	EmitSoundToAll(g_BattleBusClientDropSound, bus);
 	
 	RequestFrame(RequestFrame_DeployParachute, GetClientSerial(client));
 }
