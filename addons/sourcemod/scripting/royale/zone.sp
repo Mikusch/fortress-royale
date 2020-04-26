@@ -1,7 +1,7 @@
-#define ZONE_MODEL			"models/br/br_zone_test.mdl"
+#define ZONE_MODEL			"models/br/br_zone_to_0.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
 #define ZONE_DIAMETER	15000.0
-#define ZONE_DURATION	10.0
+#define ZONE_DURATION	60.0
 
 enum struct ZoneConfig
 {
