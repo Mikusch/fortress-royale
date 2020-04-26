@@ -21,6 +21,7 @@ enum struct ZoneConfig
 
 static ZoneConfig g_ZoneConfig;
 
+static ArrayList g_ZonePropGhost;
 static Handle g_ZoneTimer;
 static Handle g_ZoneTimerBleed;
 
@@ -30,8 +31,6 @@ static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
 static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
 static int g_ZoneShrinkLevel;		//Current shrink level, starting from ZoneConfig.numShrinks to 0
 
-static int g_ZoneSpritesLaserBeam;
-
 void Zone_ReadConfig(KeyValues kv)
 {
 	g_ZoneConfig.ReadConfig(kv);
@@ -39,9 +38,7 @@ void Zone_ReadConfig(KeyValues kv)
 
 void Zone_Precache()
 {
-	PrecacheModel(ZONE_MODEL);
 	PrecacheSound("mvm/ambient_mp3/mvm_siren.mp3");
-	g_ZoneSpritesLaserBeam = PrecacheModel("sprites/laserbeam.vmt", true);
 	
 	AddFileToDownloadsTable("materials/models/br/br_zone.vmt");
 	AddFileToDownloadsTable("materials/models/br/br_zone.vtf");
@@ -55,6 +52,9 @@ void Zone_Precache()
 
 void Zone_RoundStart()
 {
+	delete g_ZonePropGhost;
+	g_ZonePropGhost = new ArrayList();
+	
 	g_ZoneTimer = null;
 	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
 	g_ZonePropcenterOld = g_ZoneConfig.center;
@@ -68,10 +68,9 @@ void Zone_RoundStart()
 		DispatchKeyValue(zone, "disableshadows", "1");
 		
 		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));
+		SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
 		
 		DispatchSpawn(zone);
-		
-		SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
 		
 		SetVariantString("shrink");
 		AcceptEntityInput(zone, "SetAnimation");
@@ -83,12 +82,51 @@ void Zone_RoundStart()
 		
 		RequestFrame(Frame_UpdateZone, g_ZonePropRef);
 	}
+
+	//Create ghost zones
+	for (int i = 1; i < g_ZoneConfig.numShrinks; i++)
+	{
+		zone = CreateEntityByName("prop_dynamic");
+		if (zone > MaxClients)
+		{
+			DispatchKeyValueVector(zone, "origin", g_ZonePropcenterOld);	//Will be updated later anyway
+			DispatchKeyValue(zone, "model", ZONE_MODEL);
+			DispatchKeyValue(zone, "disableshadows", "1");
+			
+			SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));
+			SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
+			
+			DispatchSpawn(zone);
+			
+			SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
+			SetEntityRenderColor(zone, 0, 0, 0, 0);
+			
+			SetVariantString("shrink");
+			AcceptEntityInput(zone, "SetAnimation");
+			
+			SetVariantFloat((float(i) / float(g_ZoneConfig.numShrinks)) * ZONE_DURATION / 10.0);
+			AcceptEntityInput(zone, "SetPlaybackRate");
+			
+			int ref = EntIndexToEntRef(zone);
+			g_ZonePropGhost.Push(ref);
+			CreateTimer(10.0, Timer_PauseZone, ref);
+		}
+	}
 }
 
 void Zone_RoundArenaStart()
 {
 	g_ZoneTimer = CreateTimer(fr_zone_startdisplay.FloatValue, Timer_StartDisplay);
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
+}
+
+public Action Timer_PauseZone(Handle timer, int ref)
+{
+	if (IsValidEntity(ref))
+	{
+		SetVariantFloat(0.0);
+		AcceptEntityInput(ref, "SetPlaybackRate");
+	}
 }
 
 public Action Timer_StartDisplay(Handle timer)
@@ -120,12 +158,17 @@ public Action Timer_StartDisplay(Handle timer)
 	}
 	while (!found);
 	
-	float endPos[3];
-	endPos = g_ZonePropcenterNew;
-	endPos[2] += 6144.0;
-	
-	TE_SetupBeamPoints(g_ZonePropcenterNew, endPos, g_ZoneSpritesLaserBeam, 0, 0, 0, fr_zone_display.FloatValue + fr_zone_shrink.FloatValue, 10.0, 10.0, 1, 0.0, {0, 255, 0, 255}, 15); 
-	TE_SendToAll();
+	//Display ghost prop
+	if (g_ZonePropGhost.Length)
+	{
+		int ghost = g_ZonePropGhost.Get(0);
+		if (IsValidEntity(ghost))
+		{
+			TeleportEntity(ghost, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
+			SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
+			SetEntityRenderColor(ghost, 255, 255, 255, 63);
+		}
+	}
 	
 	g_ZoneTimer = CreateTimer(fr_zone_display.FloatValue, Timer_StartShrink);
 }
@@ -159,6 +202,16 @@ public Action Timer_FinishShrink(Handle timer)
 	
 	SetVariantFloat(0.0);
 	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
+	
+	//Delete ghost prop
+	if (g_ZonePropGhost.Length)
+	{
+		int ghost = g_ZonePropGhost.Get(0);
+		if (IsValidEntity(ghost))
+			RemoveEntity(ghost);
+		
+		g_ZonePropGhost.Erase(0);
+	}
 	
 	if (g_ZoneShrinkLevel > 0)
 		g_ZoneTimer = CreateTimer(fr_zone_nextdisplay.FloatValue, Timer_StartDisplay);
