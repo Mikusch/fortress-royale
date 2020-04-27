@@ -79,9 +79,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	
-	if (TF2_GetClientTeam(victim) <= TFTeam_Spectator)
-		return;
-	
 	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS && attacker == event.GetInt("inflictor_entindex"))
 	{
 		//Custom fists reports it incorrectly
