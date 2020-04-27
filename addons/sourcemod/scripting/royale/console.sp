@@ -4,6 +4,7 @@ void Console_Init()
 	AddCommandListener(Console_JoinTeam, "autoteam");
 	AddCommandListener(Console_Build, "build");
 	AddCommandListener(Console_Destroy, "destroy");
+	AddCommandListener(Console_VoiceMenu, "voicemenu");
 }
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
@@ -29,7 +30,7 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 	return Plugin_Handled;
 }
 
-Action Console_Build(int client, const char[] command, int args)
+public Action Console_Build(int client, const char[] command, int args)
 {
 	// Check if player owns Construction PDA
 	if (TF2_GetItemInSlot(client, WeaponSlot_PDABuild) > MaxClients)
@@ -39,7 +40,7 @@ Action Console_Build(int client, const char[] command, int args)
 	return Plugin_Handled;
 }
 
-Action Console_Destroy(int client, const char[] command, int args)
+public Action Console_Destroy(int client, const char[] command, int args)
 {
 	// Check if player owns Destruction PDA
 	if (TF2_GetItemInSlot(client, WeaponSlot_PDADestroy) > MaxClients)
@@ -47,4 +48,20 @@ Action Console_Destroy(int client, const char[] command, int args)
 	
 	// Block destroy by default
 	return Plugin_Handled;
+}
+
+public Action Console_VoiceMenu(int client, const char[] command, int args)
+{
+	if (!IsClientInGame(client) || !IsPlayerAlive(client) || args < 2)
+		return Plugin_Continue;
+	
+	char arg1[2];
+	char arg2[2];
+	GetCmdArg(1, arg1, sizeof(arg1));
+	GetCmdArg(2, arg2, sizeof(arg2));
+	
+	if (arg1[0] == '0' && arg2[0] == '0')
+		SDKCall_TryToPickupDroppedWeapon(client);
+	
+	return Plugin_Continue;
 }
