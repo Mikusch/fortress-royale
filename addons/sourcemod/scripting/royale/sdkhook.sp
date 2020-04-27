@@ -59,10 +59,7 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	FRPlayer(victim).Team = TF2_GetTeam(victim);
-	if (0 < attacker <= MaxClients)
-		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(attacker));
-	else
-		TF2_ChangeTeam(victim, TF2_GetEnemyTeam(victim));
+	TF2_ChangeTeam(victim, TFTeam_Spectator);
 	
 	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{

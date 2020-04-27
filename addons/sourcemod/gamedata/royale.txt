@@ -347,17 +347,7 @@
 					{
 						"type"	"cbaseentity"
 					}
-					"vecForward"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-					"vecCenter"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-					"vecSize"
+					"vecDir"
 					{
 						"type"	"vectorptr"
 						"flags"	"byref"
@@ -380,17 +370,7 @@
 					{
 						"type"	"cbaseentity"
 					}
-					"vecForward"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-					"vecCenter"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-					"vecSize"
+					"vecDir"
 					{
 						"type"	"vectorptr"
 						"flags"	"byref"
