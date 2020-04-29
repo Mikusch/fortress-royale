@@ -72,7 +72,7 @@ public Action Console_EurekaTeleport(int client, const char[] command, int args)
 	//Prevent home teleport
 	
 	//No arg teleports home by default
-	if (args == 0)
+	if (args != 1)
 		return Plugin_Handled;
 	
 	char arg[8];

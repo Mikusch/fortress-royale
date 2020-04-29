@@ -9,11 +9,12 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 		TFTeam oldTeam = TF2_GetTeam(client);
 		TF2_ChangeTeam(client, FRPlayer(client).Team);
 		TF2_ChangeTeam(weapon, FRPlayer(client).Team);
-		SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
 		
 		int ammo = -1;
 		if (!TF2_IsWearable(weapon))
 		{
+			SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
+			
 			ammo = TF2_GetWeaponAmmo(client, weapon);
 			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
 		}
