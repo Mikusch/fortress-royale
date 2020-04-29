@@ -199,7 +199,7 @@ void BattleBus_EjectClient(int client)
 	if (bus == INVALID_ENT_REFERENCE)
 		return;
 	
-	FRPlayer(client).PlayerState = PlayerState_Alive;
+	FRPlayer(client).PlayerState = PlayerState_Parachute;
 	TF2_ChangeClientTeam(client, TFTeam_Alive);
 	TF2_RespawnPlayer(client);
 	

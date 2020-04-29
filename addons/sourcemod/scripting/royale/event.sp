@@ -61,17 +61,22 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 		return;
 	
 	//Create starting fists weapon
-	int weapon = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
-	if (weapon > MaxClients)
+	int fists = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
+	if (fists > MaxClients)
 	{
-		TF2_EquipWeapon(client, weapon);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", weapon);
+		TF2_EquipWeapon(client, fists);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", fists);
 	}
 	
 	//Create spellbook so spells can actually be created
 	int spellbook = TF2_CreateWeapon(INDEX_SPELLBOOK);
 	if (spellbook > MaxClients)
 		TF2_EquipWeapon(client, spellbook);
+	
+	//Create starting parachute
+	int parachute = TF2_CreateWeapon(INDEX_BASEJUMPER, _, "tf_weapon_parachute_secondary");
+	if (parachute > MaxClients)
+		TF2_EquipWeapon(client, parachute);
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)

@@ -196,7 +196,7 @@ public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Hand
 
 public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, Handle params)
 {
-	if (TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	if (FRPlayer(client).PlayerState != PlayerState_Alive || TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
 	{
 		DHookSetReturn(returnVal, false);
 		return MRES_Supercede;
@@ -318,7 +318,7 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 
 public MRESReturn DHook_ForceRespawnPre(int client)
 {
-	if (FRPlayer(client).PlayerState == PlayerState_Alive)
+	if (FRPlayer(client).PlayerState == PlayerState_Parachute)
 		return MRES_Ignored;
 	
 	return MRES_Supercede;

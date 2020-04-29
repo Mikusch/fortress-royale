@@ -33,8 +33,9 @@
 #define DAMAGE_YES				2
 #define DAMAGE_AIM				3
 
-#define INDEX_FISTS		5
-#define INDEX_SPELLBOOK	1070	// Spellbook Magazine
+#define INDEX_FISTS			5
+#define INDEX_SPELLBOOK		1070	// Spellbook Magazine
+#define INDEX_BASEJUMPER	1101
 
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
@@ -89,6 +90,7 @@ enum PlayerState
 {
 	PlayerState_Waiting,	/**< Client is in spectator or waiting for new game */
 	PlayerState_BattleBus,	/**< Client is in Battle Bus */
+	PlayerState_Parachute,	/**< Client is alive and dropping with parachute */
 	PlayerState_Alive,		/**< Client is alive in map */
 	PlayerState_Dead		/**< Client is dead and spectating */
 }
@@ -635,6 +637,16 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHook_HookFlamethrower(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
 		DHook_HookGasManager(entity);
+}
+
+public void TF2_OnConditionRemoved(int client, TFCond condition)
+{
+	if (condition == TFCond_Parachute && FRPlayer(client).PlayerState == PlayerState_Parachute)
+	{
+		//Remove starting parachute as it no longer needed, and set state to alive
+		TF2_RemoveItemInSlot(client, WeaponSlot_Secondary);
+		FRPlayer(client).PlayerState = PlayerState_Alive;
+	}
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)

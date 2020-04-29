@@ -14,7 +14,7 @@ stock int GetAlivePlayersCount()
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && (FRPlayer(client).PlayerState == PlayerState_BattleBus || FRPlayer(client).PlayerState == PlayerState_Alive))
+		if (IsClientInGame(client) && (FRPlayer(client).PlayerState == PlayerState_BattleBus || FRPlayer(client).PlayerState == PlayerState_Parachute || FRPlayer(client).PlayerState == PlayerState_Alive))
 			count++;
 	}
 	
