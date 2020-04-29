@@ -73,6 +73,18 @@ enum TFRuneType
 	TFRune_Supernova
 }
 
+enum eEurekaTeleportTargets
+{
+	EUREKA_FIRST_TARGET = 0,
+
+	EUREKA_TELEPORT_HOME = 0,
+	EUREKA_TELEPORT_TELEPORTER_EXIT,
+
+	EUREKA_LAST_TARGET = EUREKA_TELEPORT_TELEPORTER_EXIT,
+		
+	EUREKA_NUM_TARGETS
+}
+
 enum PlayerState
 {
 	PlayerState_Waiting,	/**< Client is in spectator or waiting for new game */

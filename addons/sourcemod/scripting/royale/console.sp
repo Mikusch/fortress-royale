@@ -5,6 +5,7 @@ void Console_Init()
 	AddCommandListener(Console_Build, "build");
 	AddCommandListener(Console_Destroy, "destroy");
 	AddCommandListener(Console_VoiceMenu, "voicemenu");
+	AddCommandListener(Console_EurekaTeleport, "eureka_teleport");
 }
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
@@ -62,6 +63,22 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 	
 	if (arg1[0] == '0' && arg2[0] == '0')
 		SDKCall_TryToPickupDroppedWeapon(client);
+	
+	return Plugin_Continue;
+}
+
+public Action Console_EurekaTeleport(int client, const char[] command, int args)
+{
+	//Prevent home teleport
+	
+	//No arg teleports home by default
+	if (args == 0)
+		return Plugin_Handled;
+	
+	char arg[8];
+	GetCmdArg(1, arg, sizeof(arg));
+	if (StringToInt(arg) == view_as<int>(EUREKA_TELEPORT_HOME))
+		return Plugin_Handled;
 	
 	return Plugin_Continue;
 }
