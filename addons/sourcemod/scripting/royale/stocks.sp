@@ -165,6 +165,15 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 			TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
 	}
 	
+	bool sapper;
+	if ((StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")) && class == TFClass_Spy)
+	{
+		sapper = true;
+		
+		//tf_weapon_sapper is bad and give client crashes
+		classname = "tf_weapon_builder";
+	}
+	
 	int weapon = CreateEntityByName(classname);
 	if (IsValidEntity(weapon))
 	{
@@ -173,6 +182,12 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 		
 		SetEntProp(weapon, Prop_Send, "m_iEntityQuality", 6);
 		SetEntProp(weapon, Prop_Send, "m_iEntityLevel", 1);
+		
+		if (sapper)
+		{
+			SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
+			SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
+		}
 		
 		DispatchSpawn(weapon);
 	}
