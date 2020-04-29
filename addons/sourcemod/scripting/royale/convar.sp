@@ -4,6 +4,7 @@ static ConVar mp_friendlyfire;
 static ConVar tf_arena_first_blood;
 static ConVar tf_avoidteammates;
 static ConVar tf_dropped_weapon_lifetime;
+static ConVar tf_max_health_boost;
 static ConVar tf_powerup_mode;
 static ConVar tf_spells_enabled;
 
@@ -23,6 +24,7 @@ void ConVar_Init()
 	tf_arena_first_blood = FindConVar("tf_arena_first_blood");
 	tf_avoidteammates = FindConVar("tf_avoidteammates");
 	tf_dropped_weapon_lifetime = FindConVar("tf_dropped_weapon_lifetime");
+	tf_max_health_boost = FindConVar("tf_max_health_boost");
 	tf_powerup_mode = FindConVar("tf_powerup_mode");
 	tf_spells_enabled = FindConVar("tf_spells_enabled");
 }
@@ -37,6 +39,7 @@ void ConVar_Toggle(bool enable)
 	static bool firstblood;
 	static bool avoidteammates;
 	static float droppedweaponlifetime;
+	static float maxhealthboost;
 	static bool powerupmode;
 	static bool spellsenabled;
 	
@@ -62,6 +65,9 @@ void ConVar_Toggle(bool enable)
 		droppedweaponlifetime = tf_dropped_weapon_lifetime.FloatValue;
 		tf_dropped_weapon_lifetime.FloatValue = 99999.0;
 		
+		maxhealthboost = tf_max_health_boost.FloatValue;
+		tf_max_health_boost.FloatValue = 2.25;
+		
 		powerupmode = tf_powerup_mode.BoolValue;
 		tf_powerup_mode.BoolValue = true;
 		
@@ -78,6 +84,7 @@ void ConVar_Toggle(bool enable)
 		tf_arena_first_blood.BoolValue = firstblood;
 		tf_avoidteammates.BoolValue = avoidteammates;
 		tf_dropped_weapon_lifetime.FloatValue = droppedweaponlifetime;
+		tf_max_health_boost.FloatValue = maxhealthboost;
 		tf_powerup_mode.BoolValue = powerupmode;
 		tf_spells_enabled.BoolValue = spellsenabled;
 	}
