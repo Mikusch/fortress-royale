@@ -76,6 +76,12 @@
 				"linux"		"@_ZN9CTFPlayer12DropAmmoPackERK15CTakeDamageInfobb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x8B\xD9\x56\x33\xF6"
 			}
+			"CTFPlayerShared::PulseRageBuff"
+			{
+				"library"	"server"
+				"linux"		"@_ZN15CTFPlayerShared13PulseRageBuffENS_13ERageBuffSlotE"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x18\xD9\x05\x2A\x2A\x2A\x2A"
+			}
 		}
 		"Offsets"
 		{
@@ -260,6 +266,20 @@
 					"bDisguisedWeapon"
 					{
 						"type"	"bool"
+					}
+				}
+			}
+			"CTFPlayerShared::PulseRageBuff"
+			{
+				"signature"	"CTFPlayerShared::PulseRageBuff"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"address"
+				"arguments"
+				{
+					"eBuffSlot"
+					{
+						"type"	"int"
 					}
 				}
 			}

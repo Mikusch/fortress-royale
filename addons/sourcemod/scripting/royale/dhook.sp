@@ -10,6 +10,7 @@ static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
+static bool g_PulseRageBuffTeam;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
 
@@ -25,6 +26,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -274,6 +276,35 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 	
 	//Prevent TF2 dropping anything else
 	return MRES_Supercede;
+}
+
+public MRESReturn DHook_PulseRageBuffPre(Address playershared, Handle params)
+{
+	int client = GetClientFromPlayerShared(playershared);
+	if (!client)
+		return;
+	
+	//Some functions call this while client is already in spectator, don't do anything if so
+	if (TF2_GetTeam(client) == TFTeam_Spectator)
+		return;
+	
+	//Change team so client can't give boosts to teammate
+	FRPlayer(client).Team = TF2_GetTeam(client);
+	TF2_ChangeTeam(client, TFTeam_Spectator);
+	g_PulseRageBuffTeam = true;
+}
+
+public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
+{
+	if (!g_PulseRageBuffTeam)
+		return;
+	
+	int client = GetClientFromPlayerShared(playershared);
+	if (!client)
+		return;
+	
+	TF2_ChangeTeam(client, FRPlayer(client).Team);
+	g_PulseRageBuffTeam = false;
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)

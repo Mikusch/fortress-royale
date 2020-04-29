@@ -46,6 +46,25 @@ stock bool CanKeepWeapon(const char[] classname, int index)
 	return true;
 }
 
+stock int GetClientFromPlayerShared(Address playershared)
+{
+	static int sharedOffset = -1;
+	if (sharedOffset == -1)
+	{
+		sharedOffset = FindSendPropInfo("CTFPlayer", "m_Shared");
+		if (sharedOffset <= -1)
+			ThrowError("Failed to find CTFPlayer::m_Shared offset");
+	}
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && GetEntityAddress(client) + view_as<Address>(sharedOffset) == playershared)
+			return client;
+	}
+	
+	return 0;
+}
+
 stock bool TF2_CheckTeamClientCount()
 {
 	//Count red and blu players
