@@ -377,7 +377,10 @@ public MRESReturn DHook_DeflectPre(int weapon, Handle params)
 
 public MRESReturn DHook_SmackPre(int weapon)
 {
-	//Client is in spectator during this hook, allow repair his building
+	//Client is in spectator during this hook, allow repair and upgrade his building if not using bare hands
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		return;
+	
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		FRPlayer(client).ChangeToSpectatorBuilding();
@@ -385,6 +388,9 @@ public MRESReturn DHook_SmackPre(int weapon)
 
 public MRESReturn DHook_SmackPost(int weapon)
 {
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		return;
+	
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		FRPlayer(client).ChangeToTeamBuilding();
