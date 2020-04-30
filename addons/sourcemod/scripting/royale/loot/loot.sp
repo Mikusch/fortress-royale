@@ -36,11 +36,12 @@ int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force =
 		int crate = CreateEntityByName("prop_dynamic_override");
 		if (IsValidEntity(crate))
 		{
+			SetEntityModel(crate, MODEL_EMPTY);
 			SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
-			Loot_SetCratePrefab(crate, config);
 			
 			if (DispatchSpawn(crate))
 			{
+				Loot_SetCratePrefab(crate, config);
 				SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
 				TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
 				HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
