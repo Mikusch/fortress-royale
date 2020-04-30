@@ -632,6 +632,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDKHook_HookBuilding(entity);
 	else if (StrEqual(classname, "tf_projectile_cleaver"))
 		SDKHook_HookProjectile(entity);
+	else if (StrEqual(classname, "tf_gas_manager"))
+		SDKHook_HookGasManager(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
 		DHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))

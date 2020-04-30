@@ -20,6 +20,11 @@ void SDKHook_HookProjectile(int entity)
 	SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
 }
 
+void SDKHook_HookGasManager(int entity)
+{
+	SDKHook(entity, SDKHook_Touch, GasManager_Touch);
+}
+
 public Action Client_SetTransmit(int entity, int client)
 {
 	//Don't allow teammates see invis spy
@@ -99,7 +104,7 @@ public void Client_PostThink(int client)
 		}
 	}
 	
-	//Calls CTFPlayer::DoTauntAttack and holiday punch tickle with enemy team check
+	//This function have millions of team checks, swap team to spec to allow both red and blu to take effect
 	FRPlayer(client).ChangeToSpectator();
 }
 
@@ -140,4 +145,13 @@ public void Projectile_TouchPost(int entity, int other)
 		return;
 	
 	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+}
+
+public Action GasManager_Touch(int entity, int other)
+{
+	//Don't give gas effects to owner
+	if (GetOwnerLoop(entity) == other)
+		return Plugin_Handled;
+	
+	return Plugin_Continue;
 }
