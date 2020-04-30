@@ -76,6 +76,12 @@
 				"linux"		"@_ZN9CTFPlayer12DropAmmoPackERK15CTakeDamageInfobb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x8B\xD9\x56\x33\xF6"
 			}
+			"CTFPlayerShared::SetChargeEffect"
+			{
+				"library"	"server"
+				"linux"		"@_ZN15CTFPlayerShared15SetChargeEffectE20medigun_charge_typesbbRK16MedigunEffects_tfP9CTFPlayer"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x53\x8B\x5D\x14"
+			}
 			"CTFPlayerShared::PulseRageBuff"
 			{
 				"library"	"server"
@@ -271,6 +277,41 @@
 					"bDisguisedWeapon"
 					{
 						"type"	"bool"
+					}
+				}
+			}
+			"CTFPlayerShared::SetChargeEffect"
+			{
+				"signature"	"CTFPlayerShared::SetChargeEffect"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"address"
+				"arguments"
+				{
+					"iCharge"
+					{
+						"type"	"int"
+					}
+					"bState"
+					{
+						"type"	"bool"
+					}
+					"bInstant"
+					{
+						"type"	"bool"
+					}
+					"effects"
+					{
+						"type"	"objectptr"
+						"flags"	"byref"
+					}
+					"flWearOffTime"
+					{
+						"type"	"float"
+					}
+					"pProvider"
+					{
+						"type"	"cbaseentity"
 					}
 				}
 			}

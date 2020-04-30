@@ -26,6 +26,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
@@ -283,6 +284,15 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 	
 	//Prevent TF2 dropping anything else
 	return MRES_Supercede;
+}
+
+public MRESReturn DHook_SetChargeEffectPre(Address playershared, Handle params)
+{
+	//If pProvider is null, medic is switching weapon and losing effect, allow medic keep effect
+	if (DHookIsNullParam(params, 6))
+		return MRES_Supercede;
+	
+	return MRES_Ignored;
 }
 
 public MRESReturn DHook_PulseRageBuffPre(Address playershared, Handle params)
