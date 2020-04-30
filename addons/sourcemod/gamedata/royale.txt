@@ -115,6 +115,11 @@
 				"linux"		"420"
 				"windows"	"413"
 			}
+			"CTFWeaponBaseMelee::Smack"
+			{
+				"linux"		"469"
+				"windows"	"462"
+			}
 			"CBaseGrenade::Explode"
 			{
 				"linux"		"229"
@@ -402,6 +407,13 @@
 						"flags"	"byref"
 					}
 				}
+			}
+			"CTFWeaponBaseMelee::Smack"
+			{
+				"offset"	"CTFWeaponBaseMelee::Smack"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
 			}
 			"CBaseGrenade::Explode"
 			{

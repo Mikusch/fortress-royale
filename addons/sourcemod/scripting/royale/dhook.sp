@@ -11,7 +11,6 @@ static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_PrimaryAttackClient;
 static TFTeam g_PrimaryAttackTeam;
-static bool g_PulseRageBuffTeam;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
 
@@ -35,6 +34,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
 	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
+	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
@@ -120,6 +120,12 @@ void DHook_HookFlamethrower(int weapon)
 	DHookEntity(g_DHookDeflectPlayer, true, weapon, _, DHook_DeflectPost);
 	DHookEntity(g_DHookDeflectEntity, false, weapon, _, DHook_DeflectPre);
 	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
+}
+
+void DHook_HookWrench(int weapon)
+{
+	DHookEntity(g_DHookSmack, false, weapon, _, DHook_SmackPre);
+	DHookEntity(g_DHookSmack, true, weapon, _, DHook_SmackPost);
 }
 
 void DHook_HookProjectile(int projectile)
@@ -367,6 +373,21 @@ public MRESReturn DHook_DeflectPre(int weapon, Handle params)
 {
 	//Allow airblast teamates, change attacker team to victim/entity's enemy team
 	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetEnemyTeam(DHookGetParam(params, 1)));
+}
+
+public MRESReturn DHook_SmackPre(int weapon)
+{
+	//Client is in spectator during this hook, allow repair his building
+	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients && IsClientInGame(client))
+		FRPlayer(client).ChangeToSpectatorBuilding();
+}
+
+public MRESReturn DHook_SmackPost(int weapon)
+{
+	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients && IsClientInGame(client))
+		FRPlayer(client).ChangeToTeamBuilding();
 }
 
 public MRESReturn DHook_DeflectPost(int weapon, Handle params)

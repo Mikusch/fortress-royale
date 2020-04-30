@@ -9,6 +9,11 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 }
 
+void SDKHook_HookBuilding(int building)
+{
+	SDKHook(building, SDKHook_OnTakeDamage, Building_OnTakeDamage);
+}
+
 void SDKHook_HookProjectile(int entity)
 {
 	SDKHook(entity, SDKHook_Touch, Projectile_Touch);
@@ -102,6 +107,15 @@ public void Client_PostThink(int client)
 public void Client_PostThinkPost(int client)
 {
 	FRPlayer(client).ChangeToTeam();
+}
+
+public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	//Don't allow building take damage from owner
+	if (0 < attacker <= MaxClients && attacker == GetEntPropEnt(building, Prop_Send, "m_hBuilder"))
+		return Plugin_Stop;
+	
+	return Plugin_Continue;
 }
 
 public Action Projectile_Touch(int entity, int other)

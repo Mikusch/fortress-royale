@@ -628,7 +628,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
-	if (StrEqual(classname, "tf_projectile_pipe") || StrEqual(classname, "tf_projectile_cleaver"))
+	if (StrContains(classname, "obj_") == 0)
+		SDKHook_HookBuilding(entity);
+	else if (StrEqual(classname, "tf_projectile_pipe") || StrEqual(classname, "tf_projectile_cleaver"))
 		SDKHook_HookProjectile(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
 		DHook_HookProjectile(entity);
@@ -636,6 +638,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
 		DHook_HookFlamethrower(entity);
+	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
+		DHook_HookWrench(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
 		DHook_HookGasManager(entity);
 }
