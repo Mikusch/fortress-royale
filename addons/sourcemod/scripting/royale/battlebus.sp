@@ -252,14 +252,36 @@ void BattleBus_EjectClient(int client)
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 8.0);
 	EmitSoundToAll(g_BattleBusClientDropSound, bus);
 	
-	RequestFrame(RequestFrame_DeployParachute, GetClientSerial(client));
+	FRPlayer(client).SecToDeployParachute = fr_sectodeployparachute.IntValue;
+	PrintHintText(client, "%T", "BattleBus_SecToDeployParachute", LANG_SERVER, FRPlayer(client).SecToDeployParachute);
+	CreateTimer(1.0, Timer_SecToDeployParachute, GetClientSerial(client));
 }
 
-void RequestFrame_DeployParachute(int serial)
+public Action Timer_SecToDeployParachute(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
-	if (0 < client <= MaxClients && IsClientInGame(client) && IsPlayerAlive(client))
-		TF2_AddCondition(client, TFCond_Parachute);
+	if (0 < client <= MaxClients && IsClientInGame(client))
+	{
+		if (FRPlayer(client).PlayerState == PlayerState_Parachute && !TF2_IsPlayerInCondition(client, TFCond_Parachute))
+		{
+			FRPlayer(client).SecToDeployParachute--;
+			if (FRPlayer(client).SecToDeployParachute > 0)
+			{
+				PrintHintText(client, "%T", "BattleBus_SecToDeployParachute", LANG_SERVER, FRPlayer(client).SecToDeployParachute);
+				CreateTimer(1.0, Timer_SecToDeployParachute, serial);
+			}
+			else
+			{
+				TF2_AddCondition(client, TFCond_Parachute);
+				PrintHintText(client, "%T", "BattleBus_ParachuteDeployed", LANG_SERVER);
+			}
+		}
+		else
+		{
+			FRPlayer(client).SecToDeployParachute = 0;
+			PrintHintText(client, "%T", "BattleBus_ParachuteDeployed", LANG_SERVER);
+		}
+	}
 }
 
 public int SortCustom_Random(int[] elem1, int[] elem2, const int[][] array, Handle hndl)

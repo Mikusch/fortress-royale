@@ -58,6 +58,14 @@
 	{
 		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
 	}
+	"BattleBus_SecToDeployParachute"
+	{
+		"en"	"%d seconds to auto deploy parachute"
+	}
+	"BattleBus_ParachuteDeployed"
+	{
+		"en"	"Parachute deployed"
+	}
 	
 	"Zone_ShrinkAlert"
 	{

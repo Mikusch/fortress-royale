@@ -12,6 +12,7 @@ void ConVar_Init()
 {
 	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max health multiplier (rounds to lowest 5)", _, true, 0.0);
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
+	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "60.0", "", _, true, 0.0);
 	fr_zone_display = CreateConVar("fr_zone_display", "45.0", "", _, true, 0.0);
