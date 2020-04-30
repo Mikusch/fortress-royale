@@ -58,8 +58,7 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	FRPlayer(victim).Team = TF2_GetTeam(victim);
-	TF2_ChangeTeam(victim, TFTeam_Spectator);
+	FRPlayer(victim).ChangeToSpectator();
 	
 	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
@@ -76,7 +75,7 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 
 public Action Client_OnTakeDamagePost(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	TF2_ChangeTeam(victim, FRPlayer(victim).Team);
+	FRPlayer(victim).ChangeToTeam();
 }
 
 public void Client_PostThink(int client)
@@ -96,14 +95,13 @@ public void Client_PostThink(int client)
 		}
 	}
 	
-	//Calls CTFPlayer::DoTauntAttack with enemy team check
-	FRPlayer(client).Team = TF2_GetTeam(client);
-	TF2_ChangeTeam(client, TFTeam_Spectator);
+	//Calls CTFPlayer::DoTauntAttack and holiday punch tickle with enemy team check
+	FRPlayer(client).ChangeToSpectator();
 }
 
 public void Client_PostThinkPost(int client)
 {
-	TF2_ChangeTeam(client, FRPlayer(client).Team);
+	FRPlayer(client).ChangeToTeam();
 }
 
 public Action Projectile_Touch(int entity, int other)

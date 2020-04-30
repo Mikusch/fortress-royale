@@ -4,6 +4,7 @@ static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookDeflectPlayer;
 static Handle g_DHookDeflectEntity;
+static Handle g_DHookSmack;
 static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 static Handle g_DHookWantsLagCompensationOnEntity;
@@ -284,27 +285,17 @@ public MRESReturn DHook_PulseRageBuffPre(Address playershared, Handle params)
 	if (!client)
 		return;
 	
-	//Some functions call this while client is already in spectator, don't do anything if so
-	if (TF2_GetTeam(client) == TFTeam_Spectator)
-		return;
-	
 	//Change team so client can't give boosts to teammate
-	FRPlayer(client).Team = TF2_GetTeam(client);
-	TF2_ChangeTeam(client, TFTeam_Spectator);
-	g_PulseRageBuffTeam = true;
+	FRPlayer(client).ChangeToSpectator();
 }
 
 public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
 {
-	if (!g_PulseRageBuffTeam)
-		return;
-	
 	int client = GetClientFromPlayerShared(playershared);
 	if (!client)
 		return;
 	
-	TF2_ChangeTeam(client, FRPlayer(client).Team);
-	g_PulseRageBuffTeam = false;
+	FRPlayer(client).ChangeToTeam();
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)

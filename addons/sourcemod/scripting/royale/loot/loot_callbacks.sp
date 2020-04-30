@@ -6,9 +6,8 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	if (weapon > MaxClients)
 	{
 		//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
-		TFTeam oldTeam = TF2_GetTeam(client);
-		TF2_ChangeTeam(client, FRPlayer(client).Team);
-		TF2_ChangeTeam(weapon, FRPlayer(client).Team);
+		FRPlayer(client).ChangeToTeam();
+		TF2_ChangeTeam(weapon, TF2_GetTeam(client));
 		
 		int ammo = -1;
 		if (!TF2_IsWearable(weapon))
@@ -24,7 +23,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 		if (!TF2_IsWearable(weapon))
 			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
 		
-		TF2_ChangeTeam(client, oldTeam);
+		FRPlayer(client).ChangeToSpectator();
 		
 		RemoveEntity(weapon);
 		return droppedWeapon;
