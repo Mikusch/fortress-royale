@@ -61,7 +61,7 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 	GetCmdArg(1, arg1, sizeof(arg1));
 	GetCmdArg(2, arg2, sizeof(arg2));
 	
-	if (arg1[0] == '0' && arg2[0] == '0')
+	if (arg1[0] == '0' && arg2[0] == '0' && FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
 		SDKCall_TryToPickupDroppedWeapon(client);
 	
 	return Plugin_Continue;

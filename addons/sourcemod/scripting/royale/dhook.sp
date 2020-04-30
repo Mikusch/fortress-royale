@@ -258,6 +258,8 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
 	
+	FRPlayer(client).LastWeaponPickupTime = GetGameTime();
+	
 	//Prevent TF2 doing any extra work, we done that
 	DHookSetReturn(returnVal, false);
 	return MRES_Supercede;
