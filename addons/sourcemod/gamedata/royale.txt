@@ -117,16 +117,6 @@
 				"linux"		"285"
 				"windows"	"279"
 			}
-			"CTFWeaponBase::DeflectPlayer"
-			{
-				"linux"		"419"
-				"windows"	"412"
-			}
-			"CTFWeaponBase::DeflectEntity"
-			{
-				"linux"		"420"
-				"windows"	"413"
-			}
 			"CTFWeaponBaseMelee::Smack"
 			{
 				"linux"		"469"
@@ -136,11 +126,6 @@
 			{
 				"linux"		"229"
 				"windows"	"228"
-			}
-			"CTFPointManager::ShouldCollide"
-			{
-				"linux"		"196"
-				"windows"	"195"
 			}
 			"CTFPlayer::WantsLagCompensationOnEntity"
 			{
@@ -409,52 +394,6 @@
 				"return"	"void"
 				"this"		"entity"
 			}
-			"CTFWeaponBase::DeflectPlayer"
-			{
-				"offset"	"CTFWeaponBase::DeflectPlayer"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
-				"arguments"
-				{
-					"pTarget"
-					{
-						"type"	"cbaseentity"
-					}
-					"pOwner"
-					{
-						"type"	"cbaseentity"
-					}
-					"vecDir"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-				}
-			}
-			"CTFWeaponBase::DeflectEntity"
-			{
-				"offset"	"CTFWeaponBase::DeflectEntity"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
-				"arguments"
-				{
-					"pTarget"
-					{
-						"type"	"cbaseentity"
-					}
-					"pOwner"
-					{
-						"type"	"cbaseentity"
-					}
-					"vecDir"
-					{
-						"type"	"vectorptr"
-						"flags"	"byref"
-					}
-				}
-			}
 			"CTFWeaponBaseMelee::Smack"
 			{
 				"offset"	"CTFWeaponBaseMelee::Smack"
@@ -477,20 +416,6 @@
 					"bitsDamageType"
 					{
 						"type"	"int"
-					}
-				}
-			}
-			"CTFPointManager::ShouldCollide"
-			{
-				"offset"	"CTFPointManager::ShouldCollide"
-				"hooktype"	"entity"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pEntity"
-					{
-						"type"	"cbaseentity"
 					}
 				}
 			}

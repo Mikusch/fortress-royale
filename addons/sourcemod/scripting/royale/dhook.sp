@@ -2,11 +2,8 @@ static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
 static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
-static Handle g_DHookDeflectPlayer;
-static Handle g_DHookDeflectEntity;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
-static Handle g_DHookShouldCollide;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
@@ -30,11 +27,8 @@ void DHook_Init(GameData gamedata)
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
-	g_DHookDeflectPlayer = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectPlayer");
-	g_DHookDeflectEntity = DHook_CreateVirtual(gamedata, "CTFWeaponBase::DeflectEntity");
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
-	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CTFPointManager::ShouldCollide");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 	
 	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
@@ -112,14 +106,6 @@ void DHook_HookPrimaryAttack(int weapon)
 	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
 }
 
-void DHook_HookFlamethrower(int weapon)
-{
-	DHookEntity(g_DHookDeflectPlayer, false, weapon, _, DHook_DeflectPre);
-	DHookEntity(g_DHookDeflectPlayer, true, weapon, _, DHook_DeflectPost);
-	DHookEntity(g_DHookDeflectEntity, false, weapon, _, DHook_DeflectPre);
-	DHookEntity(g_DHookDeflectEntity, true, weapon, _, DHook_DeflectPost);
-}
-
 void DHook_HookWrench(int weapon)
 {
 	DHookEntity(g_DHookSmack, false, weapon, _, DHook_SmackPre);
@@ -130,11 +116,6 @@ void DHook_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
 	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
-}
-
-void DHook_HookGasManager(int gasManager)
-{
-	DHookEntity(g_DHookShouldCollide, false, gasManager, _, DHook_ShouldCollidePre);
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
@@ -375,12 +356,6 @@ public MRESReturn DHook_PrimaryAttackPost(int weapon)
 		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToSpectator();
 }
 
-public MRESReturn DHook_DeflectPre(int weapon, Handle params)
-{
-	//Allow airblast teamates, change attacker team to victim/entity's enemy team
-	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetEnemyTeam(DHookGetParam(params, 1)));
-}
-
 public MRESReturn DHook_SmackPre(int weapon)
 {
 	//Client is in spectator during this hook, allow repair and upgrade his building if not using bare hands
@@ -400,12 +375,6 @@ public MRESReturn DHook_SmackPost(int weapon)
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		FRPlayer(client).ChangeToTeamBuilding();
-}
-
-public MRESReturn DHook_DeflectPost(int weapon, Handle params)
-{
-	//Change attacker team back to what it was, using flamethrower weapon team
-	TF2_ChangeTeam(DHookGetParam(params, 2), TF2_GetTeam(weapon));
 }
 
 public MRESReturn DHook_ExplodePre(int entity, Handle params)
@@ -431,17 +400,6 @@ public MRESReturn DHook_ExplodePost(int entity, Handle params)
 		return;
 	
 	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
-}
-
-public MRESReturn DHook_ShouldCollidePre(int gasManager, Handle returnVal, Handle params)
-{
-	int toucher = DHookGetParam(params, 1);
-	
-	gasManager = GetOwnerLoop(gasManager);
-	toucher = GetOwnerLoop(toucher);
-	
-	DHookSetReturn(returnVal, gasManager != toucher);
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)

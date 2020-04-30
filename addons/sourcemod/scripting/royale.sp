@@ -630,18 +630,14 @@ public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrContains(classname, "obj_") == 0)
 		SDKHook_HookBuilding(entity);
-	else if (StrEqual(classname, "tf_projectile_pipe") || StrEqual(classname, "tf_projectile_cleaver"))
+	else if (StrEqual(classname, "tf_projectile_cleaver"))
 		SDKHook_HookProjectile(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
 		DHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))
 		DHook_HookPrimaryAttack(entity);
-	else if (StrEqual(classname, "tf_weapon_flamethrower"))
-		DHook_HookFlamethrower(entity);
 	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
 		DHook_HookWrench(entity);
-	else if (StrEqual(classname, "tf_gas_manager"))
-		DHook_HookGasManager(entity);
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
