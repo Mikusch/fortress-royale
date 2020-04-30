@@ -634,7 +634,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDKHook_HookProjectile(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
 		DHook_HookProjectile(entity);
-	else if (StrContains(classname, "tf_weapon_sniperrifle") == 0 || StrEqual(classname, "tf_weapon_knife"))
+	else if (StrEqual(classname, "tf_weapon_knife"))
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_flamethrower"))
 		DHook_HookFlamethrower(entity);

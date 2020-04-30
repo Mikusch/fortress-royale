@@ -9,9 +9,6 @@ static Handle g_DHookExplode;
 static Handle g_DHookShouldCollide;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
-static int g_PrimaryAttackClient;
-static TFTeam g_PrimaryAttackTeam;
-
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
 
 static int g_OffsetItemDefinitionIndex;
@@ -366,19 +363,16 @@ public void DHook_GiveNamedItemRemoved(int hookid)
 
 public MRESReturn DHook_PrimaryAttackPre(int weapon)
 {
-	//This weapon may not work for teammate, set team to spectator so he can deal damage to both red and blue
-	
-	g_PrimaryAttackClient = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	g_PrimaryAttackTeam = TF2_GetClientTeam(g_PrimaryAttackClient);
-	TF2_ChangeTeam(g_PrimaryAttackClient, TFTeam_Spectator);
+	//Client is in spectator, prevent backstab if using fists
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToTeam();
 }
 
 public MRESReturn DHook_PrimaryAttackPost(int weapon)
 {
-	//DHook bug with Pre and Post giving incorrect 'weapon' entity for post,
-	//Set team back to what it was
-	
-	TF2_ChangeTeam(g_PrimaryAttackClient, g_PrimaryAttackTeam);
+	//Client is in spectator, prevent backstab if using fists
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToSpectator();
 }
 
 public MRESReturn DHook_DeflectPre(int weapon, Handle params)
