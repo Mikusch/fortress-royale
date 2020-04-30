@@ -4,6 +4,7 @@ static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallTryToPickupDroppedWeapon;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallEquipWearable;
+static Handle g_SDKCallFindAndHealTargets;
 
 void SDKCall_Init(GameData gamedata)
 {
@@ -13,6 +14,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallTryToPickupDroppedWeapon = PrepSDKCall_TryToPickupDroppedWeapon(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 }
 
 static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
@@ -87,6 +89,19 @@ static Handle PrepSDKCall_GetEquippedWearableForLoadoutSlot(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_FindAndHealTargets(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CWeaponMedigun::FindAndHealTargets");
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CWeaponMedigun::FindAndHealTargets");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
@@ -123,6 +138,11 @@ bool SDKCall_TryToPickupDroppedWeapon(int client)
 void SDKCall_EquipWearable(int client, int wearable)
 {
 	SDKCall(g_SDKCallEquipWearable, client, wearable);
+}
+
+bool SDKCall_FindAndHealTargets(int medigun)
+{
+	return SDKCall(g_SDKCallFindAndHealTargets, medigun);
 }
 
 int SDKCall_GetEquippedWearableForLoadoutSlot(int client, int slot)

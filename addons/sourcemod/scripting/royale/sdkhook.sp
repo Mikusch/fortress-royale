@@ -90,13 +90,12 @@ public void Client_PostThink(int client)
 	{
 		char classname[256];
 		GetEntityClassname(weapon, classname, sizeof(classname));
-		if (StrEqual(classname, "tf_weapon_medigun") && !GetEntProp(weapon, Prop_Send, "m_bChargeRelease"))
+		if (StrEqual(classname, "tf_weapon_medigun"))
 		{
-			float charge = GetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel") + (GetGameFrameTime() / 10.0);
-			if (charge > 1.0)
-				charge = 1.0;
-			
-			SetEntPropFloat(weapon, Prop_Send, "m_flChargeLevel", charge);
+			//Set target to ourself so we can build uber passive
+			SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", client);
+			SDKCall_FindAndHealTargets(weapon);
+			SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", -1);
 		}
 	}
 	

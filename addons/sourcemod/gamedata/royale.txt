@@ -88,6 +88,12 @@
 				"linux"		"@_ZN15CTFPlayerShared13PulseRageBuffENS_13ERageBuffSlotE"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x18\xD9\x05\x2A\x2A\x2A\x2A"
 			}
+			"CWeaponMedigun::FindAndHealTargets"
+			{
+				"library"	"server"
+				"linux"		"@_ZN14CWeaponMedigun18FindAndHealTargetsEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8B\xF9"
+			}
 		}
 		"Offsets"
 		{
