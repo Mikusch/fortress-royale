@@ -31,7 +31,7 @@ void Loot_SpawnCratesInWorld()
 
 int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force = false)
 {
-	if (force || GetRandomFloat() <= config.chance)
+	if (force || GetRandomFloat() <= GetClientCount(true) / TF_MAXPLAYERS)
 	{
 		int crate = CreateEntityByName("prop_dynamic_override");
 		if (IsValidEntity(crate))
