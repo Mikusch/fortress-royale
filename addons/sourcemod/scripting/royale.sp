@@ -212,7 +212,6 @@ enum struct LootCrateConfig
 	int skin;						/**< Model skin */
 	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
 	int health;						/**< Amount of damage required to open */
-	float chance;					/**< Chance for this crate to spawn at all */
 	LootCrateContents contents;		/**< ArrayList of content bitflags (block 0) and chance (block 1) **/
 	
 	void ReadConfig(KeyValues kv)
@@ -227,7 +226,6 @@ enum struct LootCrateConfig
 		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, this.sound);
 		PrecacheSound(this.sound);
 		this.health = kv.GetNum("health", this.health);
-		this.chance = kv.GetFloat("chance", this.chance);
 		
 		if (kv.JumpToKey("contents", false))
 		{

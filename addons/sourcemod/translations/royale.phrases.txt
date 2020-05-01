@@ -40,10 +40,6 @@
 	{
 		"en"	"Health: %d"
 	}
-	"Editor_Chance"
-	{
-		"en"	"Chance: %.2f"
-	}
 	
 	"Editor_Prefab_Title"
 	{

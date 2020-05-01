@@ -45,11 +45,10 @@ void Editor_Display(int client)
 	}
 	else
 	{
-		menu.SetTitle("%T\n\n%T\n%T\n%T", 
+		menu.SetTitle("%T\n\n%T\n%T", 
 			"Editor_Title", LANG_SERVER, 
 			"Editor_Prefab", LANG_SERVER, lootCrate.namePrefab, 
-			"Editor_Health", LANG_SERVER, lootCrate.health, 
-			"Editor_Chance", LANG_SERVER, lootCrate.chance);
+			"Editor_Health", LANG_SERVER, lootCrate.health);
 		menu.AddItem("delete", "Editor_Delete");
 		menu.AddItem("prefab", "Editor_EditPrefab");
 		
