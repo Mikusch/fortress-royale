@@ -188,8 +188,8 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 		int client = GetOwnerLoop(activator);
 		
 		//While loop to keep searching for loot until found valid
-		LootConfig loot;
-		while (g_LootTable.GetRandomLoot(loot, lootCrate.GetRandomLootType(), client) <= 0) {  }
+		LootTable loot;
+		while (!LootTable_GetRandomLoot(loot, lootCrate.GetRandomLootType(), TF2_GetPlayerClass(client))) {  }
 		
 		//Start function call to loot creation function
 		Call_StartFunction(null, loot.callback_create);

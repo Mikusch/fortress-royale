@@ -136,7 +136,6 @@ void Config_Init()
 {
 	g_LootPrefabs = new LootPrefabsConfig();
 	g_LootCrates = new LootCratesConfig();
-	g_LootTable = new LootTable();
 }
 
 void Config_Refresh()
@@ -185,7 +184,7 @@ void Config_Refresh()
 	kv = new KeyValues("LootTable");
 	if (kv.ImportFromFile(filePath))
 	{
-		g_LootTable.ReadConfig(kv);
+		LootTable_ReadConfig(kv);
 		kv.GoBack();
 	}
 	

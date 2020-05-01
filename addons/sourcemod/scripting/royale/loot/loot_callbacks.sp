@@ -32,7 +32,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	return -1;
 }
 
-public bool LootCallback_FilterWeapon(int client, CallbackParams params, LootType type)
+public bool LootCallback_ClassWeapon(CallbackParams params, LootType type, TFClassType class)
 {
 	int defindex;
 	if (!params.GetIntEx("defindex", defindex))
@@ -41,7 +41,7 @@ public bool LootCallback_FilterWeapon(int client, CallbackParams params, LootTyp
 		return false;
 	}
 	
-	int slot = TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client));
+	int slot = TF2_GetItemSlot(defindex, class);
 	switch (type)
 	{
 		case Loot_Weapon_Primary: return slot == WeaponSlot_Primary;

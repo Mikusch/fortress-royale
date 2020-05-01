@@ -336,137 +336,14 @@ methodmap CallbackParams < StringMap
 	}
 }
 
-enum struct LootConfig
+enum struct LootTable
 {
 	LootType type;
 	Function callback_create;
-	Function callback_filter;
+	Function callback_class;
 	Function callback_precache;
 	CallbackParams callbackParams;
 }
-
-methodmap LootTable < ArrayList
-{
-	public LootTable()
-	{
-		return view_as<LootTable>(new ArrayList(sizeof(LootConfig)));
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				LootConfig lootConfig;
-				char type[CONFIG_MAXCHAR];
-				kv.GetString("type", type, sizeof(type));
-				lootConfig.type = Loot_StrToLootType(type);
-				
-				char callback[CONFIG_MAXCHAR];
-				kv.GetString("callback_create", callback, sizeof(callback), NULL_STRING);
-				lootConfig.callback_create = GetFunctionByName(null, callback);
-				if (lootConfig.callback_create == INVALID_FUNCTION)
-				{
-					LogError("Unable to find create function '%s' from type '%s'", callback, type);
-					continue;
-				}
-				
-				kv.GetString("callback_filter", callback, sizeof(callback), NULL_STRING);
-				if (callback[0] == '\0')
-				{
-					lootConfig.callback_filter = INVALID_FUNCTION;
-				}
-				else
-				{
-					lootConfig.callback_filter = GetFunctionByName(null, callback);
-					if (lootConfig.callback_filter == INVALID_FUNCTION)
-					{
-						LogError("Unable to find filter function '%s' from type '%s'", callback, type);
-						continue;
-					}
-				}
-				
-				kv.GetString("callback_precache", callback, sizeof(callback), NULL_STRING);
-				if (callback[0] == '\0')
-				{
-					lootConfig.callback_precache = INVALID_FUNCTION;
-				}
-				else
-				{
-					lootConfig.callback_precache = GetFunctionByName(null, callback);
-					if (lootConfig.callback_precache == INVALID_FUNCTION)
-					{
-						LogError("Unable to find precache function '%s' from type '%s'", callback, type);
-						continue;
-					}
-				}
-				
-				if (kv.JumpToKey("params", false))
-				{
-					lootConfig.callbackParams = new CallbackParams();
-					lootConfig.callbackParams.ReadConfig(kv);
-				}
-				
-				this.PushArray(lootConfig);
-				
-				if (lootConfig.callback_precache != INVALID_FUNCTION)
-				{
-					Call_StartFunction(null, lootConfig.callback_precache);
-					Call_PushCell(lootConfig.callbackParams);
-					Call_Finish();
-				}
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
-	}
-	
-	public int GetRandomLoot(LootConfig buffer, LootType type, int client = 0)
-	{
-		//Put all loot that matches the specified type into a new list
-		ArrayList list = new ArrayList(sizeof(LootConfig));
-		for (int i = 0; i < this.Length; i++)
-		{
-			if (type == this.Get(i, 0))
-			{
-				LootConfig lootConfig;
-				this.GetArray(i, lootConfig, sizeof(lootConfig));
-				
-				if (lootConfig.callback_filter == INVALID_FUNCTION)
-				{
-					//Assume all weapons can be used
-					list.PushArray(lootConfig);
-				}
-				else
-				{
-					Call_StartFunction(null, lootConfig.callback_filter);
-					Call_PushCell(client);
-					Call_PushCell(lootConfig.callbackParams);
-					Call_PushCell(type);
-					
-					bool result;
-					if (Call_Finish(result) == SP_ERROR_NONE && result)
-						list.PushArray(lootConfig);			
-				}
-			}	
-		}
-		
-		int length = list.Length;
-		if (length <= 0)
-		{
-			delete list;
-			return -1;
-		}
-		
-		int copied = list.GetArray(GetRandomInt(0, length - 1), buffer, sizeof(buffer));
-		delete list;
-		return copied;
-	}
-}
-
-LootTable g_LootTable;
 
 char g_fistsClassname[][] = {
 	"",						//Unknown
@@ -507,6 +384,7 @@ ConVar fr_zone_nextdisplay;
 #include "royale/event.sp"
 #include "royale/loot/loot.sp"
 #include "royale/loot/loot_callbacks.sp"
+#include "royale/loot/loot_table.sp"
 #include "royale/sdkcall.sp"
 #include "royale/sdkhook.sp"
 #include "royale/stocks.sp"
@@ -578,7 +456,7 @@ public void OnLibraryAdded(const char[] sName)
 		
 		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
 		if (DHook_IsGiveNamedItemActive())
-			SetFailState("Do not load TF2Items midgame while Randomizer is already loaded!");
+			SetFailState("Do not load TF2Items midgame while Royale is already loaded!");
 	}
 }
 
