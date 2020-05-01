@@ -265,19 +265,13 @@ stock void TF2_EquipWeapon(int client, int weapon)
 		SDKCall_EquipWearable(client, weapon);
 	else
 		RemoveEntity(weapon);
-	
-	//Reset charge meter
-	//SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", 0.0, iSlot);
 }
 
 stock void TF2_RefillWeaponAmmo(int client, int weapon)
 {
 	int ammotype = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
 	if (ammotype > -1)
-	{
-		int maxammo = SDKCall_GetMaxAmmo(client, ammotype);
-		SetEntProp(client, Prop_Send, "m_iAmmo", maxammo, _, ammotype);
-	}
+		GivePlayerAmmo(client, 9999, ammotype, true);
 }
 
 stock void TF2_SetWeaponAmmo(int client, int weapon, int ammo)

@@ -226,7 +226,11 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 		
 		//If max ammo not calculated yet (-1), do it now
 		if (!TF2_IsWearable(weapon) && TF2_GetWeaponAmmo(client, weapon) < 0)
+		{
+			TF2_SetWeaponAmmo(client, weapon, 0);
 			TF2_RefillWeaponAmmo(client, weapon);
+			SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", SDKCall_GetDefaultItemChargeMeterValue(weapon), slot);
+		}
 	}
 	
 	//Fix active weapon, incase was switched to wearable
