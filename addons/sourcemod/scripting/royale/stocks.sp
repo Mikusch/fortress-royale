@@ -8,6 +8,19 @@ stock int GetOwnerLoop(int entity)
 		return entity;
 }
 
+stock int GetPlayerCount()
+{
+	int count = 0;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			count++
+	}
+	
+	return count;
+}
+
 stock int GetAlivePlayersCount()
 {
 	int count = 0;

@@ -31,7 +31,6 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	}
 	
 	BattleBus_NewPos();
-	Loot_SpawnCratesInWorld();
 	Zone_RoundStart();
 }
 
@@ -40,6 +39,7 @@ public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBro
 	//g_IsRoundActive = true;
 	BattleBus_SpawnProp();
 	Zone_RoundArenaStart();
+	Loot_SpawnCratesInWorld();
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
