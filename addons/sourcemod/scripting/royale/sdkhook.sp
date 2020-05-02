@@ -30,7 +30,7 @@ public Action Client_SetTransmit(int entity, int client)
 	//Don't allow teammates see invis spy
 	
 	if (entity == client
-		 || TF2_GetClientTeam(client) <= TFTeam_Spectator
+		 || !IsPlayerAlive(client)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Bleeding)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Jarated)
 		 || TF2_IsPlayerInCondition(entity, TFCond_Milked)
