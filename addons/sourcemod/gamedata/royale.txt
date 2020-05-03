@@ -142,10 +142,15 @@
 				"linux"		"4"
 				"windows"	"4"
 			}
-			"TF2_CreateRune"
+			"CTFRune::m_nRuneType"
 			{
 				"linux"		"1288"
 				"windows"	"1268"
+			}
+			"CTFRune::m_nTeam"
+			{
+				"linux"		"1304"
+				"windows"	"1284"
 			}
 		}
 		"Functions"

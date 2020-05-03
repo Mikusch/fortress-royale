@@ -8,9 +8,6 @@ static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
 
-static int g_OffsetItemDefinitionIndex;
-static int g_OffsetCreateRune;
-
 void DHook_Init(GameData gamedata)
 {
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
@@ -30,9 +27,6 @@ void DHook_Init(GameData gamedata)
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
-	
-	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
-	g_OffsetCreateRune = gamedata.GetOffset("TF2_CreateRune");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -410,9 +404,4 @@ public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle retur
 {
 	DHookSetReturn(returnVal, true);
 	return MRES_Supercede;
-}
-
-public Address GameData_GetCreateRuneOffset()
-{
-	return view_as<Address>(g_OffsetCreateRune);
 }

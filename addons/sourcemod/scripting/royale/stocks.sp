@@ -172,7 +172,7 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	int rune = CreateEntityByName("item_powerup_rune");
 	if (IsValidEntity(rune))
 	{
-		Address address = GetEntityAddress(rune) + GameData_GetCreateRuneOffset();
+		Address address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneType);
 		StoreToAddress(address, view_as<int>(type), NumberType_Int8);
 		DispatchSpawn(rune);
 		TeleportEntity(rune, origin, angles, NULL_VECTOR);

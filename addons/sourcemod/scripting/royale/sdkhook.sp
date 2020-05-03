@@ -25,6 +25,11 @@ void SDKHook_HookGasManager(int entity)
 	SDKHook(entity, SDKHook_Touch, GasManager_Touch);
 }
 
+void SDKHook_HookRune(int rune)
+{
+	SDKHook(rune, SDKHook_Spawn, Rune_Spawn);
+}
+
 public Action Client_SetTransmit(int entity, int client)
 {
 	//Don't allow teammates see invis spy
@@ -161,4 +166,13 @@ public Action GasManager_Touch(int entity, int other)
 		return Plugin_Handled;
 	
 	return Plugin_Continue;
+}
+
+public Action Rune_Spawn(int rune)
+{
+	//Always set rune team to any
+	Address address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneTeam);
+	StoreToAddress(address, view_as<int>(TFTeam_Any), NumberType_Int8);
+	
+	SetEntProp(rune, Prop_Send, "m_nSkin", 0);
 }

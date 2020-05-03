@@ -37,6 +37,7 @@
 #define INDEX_SPELLBOOK		1070	// Spellbook Magazine
 #define INDEX_BASEJUMPER	1101
 
+const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
 
@@ -370,6 +371,10 @@ ConVar fr_zone_display;
 ConVar fr_zone_shrink;
 ConVar fr_zone_nextdisplay;
 
+int g_OffsetItemDefinitionIndex;
+int g_OffsetRuneType;
+int g_OffsetRuneTeam;
+
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
@@ -412,6 +417,10 @@ public void OnPluginStart()
 	
 	DHook_Init(gamedata);
 	SDKCall_Init(gamedata);
+	
+	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
+	g_OffsetRuneType = gamedata.GetOffset("CTFRune::m_nRuneType");
+	g_OffsetRuneTeam = gamedata.GetOffset("CTFRune::m_nTeam");
 	
 	delete gamedata;
 	
@@ -510,6 +519,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDKHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
 		SDKHook_HookGasManager(entity);
+	else if (StrEqual(classname, "item_powerup_rune"))
+		SDKHook_HookRune(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0)
 		DHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))
