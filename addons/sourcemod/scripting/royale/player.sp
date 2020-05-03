@@ -101,6 +101,14 @@ methodmap FRPlayer
 		}
 	}
 	
+	property TFTeam Team
+	{
+		public get()
+		{
+			return g_ClientTeam[this];
+		}
+	}
+	
 	public void ChangeToSpectator()
 	{
 		g_ClientSpectator[this]++;
