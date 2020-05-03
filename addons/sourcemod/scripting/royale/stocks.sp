@@ -243,6 +243,9 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 		else 
 			modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
 		
+		if (modelIndex < 0)
+			return INVALID_ENT_REFERENCE;
+		
 		ModelIndexToString(modelIndex, model, sizeof(model));
 	}
 	

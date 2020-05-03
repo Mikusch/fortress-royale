@@ -19,6 +19,8 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 		}
 		
 		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
+		if (droppedWeapon == INVALID_ENT_REFERENCE)
+			LogError("Unable to create dropped weapon for def index '%d'", defindex);
 		
 		if (!TF2_IsWearable(weapon))
 			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
