@@ -1,6 +1,7 @@
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
 static Handle g_DHookSetWinningTeam;
+static Handle g_DHookExplodeEffectOnTarget;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
@@ -19,8 +20,10 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
+	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost)
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
+	g_DHookExplodeEffectOnTarget = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellBats::ExplodeEffectOnTarget");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
@@ -110,6 +113,12 @@ void DHook_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
 	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
+}
+
+void DHook_HookProjectileSpellBats(int projectile)
+{
+	DHookEntity(g_DHookExplodeEffectOnTarget, false, projectile, _, DHook_ExplodeEffectOnTargetPre);
+	DHookEntity(g_DHookExplodeEffectOnTarget, false, projectile, _, DHook_ExplodeEffectOnTargetPost);
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
@@ -292,6 +301,20 @@ public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
 	FRPlayer(client).ChangeToTeam();
 }
 
+public MRESReturn DHook_FindClosestVisibleVictimPre(Handle params)
+{
+	for (int client = 1; client <= MaxClients; client++)
+		if (IsClientInGame(client))
+			FRPlayer(client).ChangeToSpectator();
+}
+
+public MRESReturn DHook_FindClosestVisibleVictimPost(Handle params)
+{
+	for (int client = 1; client <= MaxClients; client++)
+		if (IsClientInGame(client))
+			FRPlayer(client).ChangeToTeam();
+}
+
 public MRESReturn DHook_SetWinningTeam(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
@@ -387,6 +410,31 @@ public MRESReturn DHook_ExplodePre(int entity, Handle params)
 }
 
 public MRESReturn DHook_ExplodePost(int entity, Handle params)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
+		return;
+	
+	//Get original team by using it's weapon
+	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
+	if (weapon <= MaxClients)
+		return;
+	
+	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+}
+
+public MRESReturn DHook_ExplodeEffectOnTargetPre(int entity, Handle params)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
+	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
+		return;
+	
+	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
+	TF2_ChangeTeam(entity, TFTeam_Spectator);
+	TF2_ChangeTeam(owner, TFTeam_Spectator);
+}
+
+public MRESReturn DHook_ExplodeEffectOnTargetPost(int entity, Handle params)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))

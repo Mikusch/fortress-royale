@@ -88,6 +88,12 @@
 				"linux"		"@_ZN14CWeaponMedigun18FindAndHealTargetsEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8B\xF9"
 			}
+			"CWeaponMedigun::FindAndHealTargets"
+			{
+				"library"	"server"
+				"linux"		"@_ZN12CEyeballBoss24FindClosestVisibleVictimEv"
+				"windows"	"TODO"
+			}
 		}
 		"Offsets"
 		{
@@ -100,6 +106,11 @@
 			{
 				"linux"		"191"
 				"windows"	"190"
+			}
+			"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
+			{
+				"linux"		"268"
+				"windows"	"267"
 			}
 			"CTFPlayer::ForceRespawn"
 			{
@@ -329,6 +340,13 @@
 					}
 				}
 			}
+			"CEyeballBoss::FindClosestVisibleVictim"
+			{
+				"signature"	"CEyeballBoss::FindClosestVisibleVictim"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
+			}
 			"CTFGameRules::SetWinningTeam"
 			{
 				"offset"	"CTFGameRules::SetWinningTeam"
@@ -360,6 +378,28 @@
 					"bFinal"
 					{
 						"type"	"bool"
+					}
+				}
+			}
+			"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
+			{
+				"offset"	"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pThrower"
+					{
+						"type"	"cbaseentity"
+					}
+					"pTarget"
+					{
+						"type"	"cbaseentity"
+					}
+					"pBaseTarget"
+					{
+						"type"	"cbaseentity"
 					}
 				}
 			}

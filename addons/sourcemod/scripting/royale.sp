@@ -529,6 +529,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
 		DHook_HookWrench(entity);
+	else if (StrContains(classname, "tf_projectile_spell") == 0)
+		DHook_HookProjectileSpellBats(entity);
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)
