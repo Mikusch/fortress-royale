@@ -374,6 +374,7 @@ ConVar fr_zone_nextdisplay;
 int g_OffsetItemDefinitionIndex;
 int g_OffsetRuneType;
 int g_OffsetRuneTeam;
+int g_OffsetRuneShouldReposition;
 
 #include "royale/player.sp"
 
@@ -421,6 +422,7 @@ public void OnPluginStart()
 	g_OffsetItemDefinitionIndex = gamedata.GetOffset("CEconItemView::m_iItemDefinitionIndex");
 	g_OffsetRuneType = gamedata.GetOffset("CTFRune::m_nRuneType");
 	g_OffsetRuneTeam = gamedata.GetOffset("CTFRune::m_nTeam");
+	g_OffsetRuneShouldReposition = gamedata.GetOffset("CTFRune::m_bShouldReposition");
 	
 	delete gamedata;
 	

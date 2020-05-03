@@ -152,6 +152,11 @@
 				"linux"		"1304"
 				"windows"	"1284"
 			}
+			"CTFRune::m_bShouldReposition"
+			{
+				"linux"		"1308"
+				"windows"	"1288"
+			}
 		}
 		"Functions"
 		{

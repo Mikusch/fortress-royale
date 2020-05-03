@@ -175,4 +175,8 @@ public Action Rune_Spawn(int rune)
 	StoreToAddress(address, view_as<int>(TFTeam_Any), NumberType_Int8);
 	
 	SetEntProp(rune, Prop_Send, "m_nSkin", 0);
+	
+	//Never let rune despawn
+	address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneShouldReposition);
+	StoreToAddress(address, false, NumberType_Int8);
 }
