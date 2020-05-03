@@ -68,7 +68,11 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	FRPlayer(victim).ChangeToSpectator();
+	//attacker may be already in spec, change attacker team so we don't get both victim and attacker in spectator
+	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
+		FRPlayer(attacker).ChangeToSpectator();
+	else
+		FRPlayer(victim).ChangeToSpectator();
 	
 	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
@@ -83,9 +87,12 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	return Plugin_Continue;
 }
 
-public Action Client_OnTakeDamagePost(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom)
 {
-	FRPlayer(victim).ChangeToTeam();
+	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
+		FRPlayer(attacker).ChangeToTeam();
+	else
+		FRPlayer(victim).ChangeToTeam();
 }
 
 public void Client_PostThink(int client)
