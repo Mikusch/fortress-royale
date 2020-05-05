@@ -301,18 +301,24 @@ public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
 	FRPlayer(client).ChangeToTeam();
 }
 
-public MRESReturn DHook_FindClosestVisibleVictimPre(Handle params)
+public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 {
-	for (int client = 1; client <= MaxClients; client++)
-		if (IsClientInGame(client))
-			FRPlayer(client).ChangeToSpectator();
+	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	{
+		FRPlayer(owner).ChangeToSpectator();
+		TF2_ChangeTeam(eyeball, TFTeam_Spectator);
+	}
 }
 
-public MRESReturn DHook_FindClosestVisibleVictimPost(Handle params)
+public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 {
-	for (int client = 1; client <= MaxClients; client++)
-		if (IsClientInGame(client))
-			FRPlayer(client).ChangeToTeam();
+	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	{
+		FRPlayer(owner).ChangeToTeam();
+		TF2_ChangeTeam(eyeball, TF2_GetTeam(owner));
+	}
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)
@@ -425,27 +431,22 @@ public MRESReturn DHook_ExplodePost(int entity, Handle params)
 
 public MRESReturn DHook_ExplodeEffectOnTargetPre(int entity, Handle params)
 {
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
-		return;
-	
-	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
-	TF2_ChangeTeam(entity, TFTeam_Spectator);
-	TF2_ChangeTeam(owner, TFTeam_Spectator);
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	{
+		FRPlayer(owner).ChangeToSpectator();
+		TF2_ChangeTeam(entity, TFTeam_Spectator);
+	}
 }
 
 public MRESReturn DHook_ExplodeEffectOnTargetPost(int entity, Handle params)
 {
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
-		return;
-	
-	//Get original team by using it's weapon
-	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
-	if (weapon <= MaxClients)
-		return;
-	
-	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	{
+		FRPlayer(owner).ChangeToTeam();
+		TF2_ChangeTeam(entity, TF2_GetTeam(owner));
+	}
 }
 
 public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)
