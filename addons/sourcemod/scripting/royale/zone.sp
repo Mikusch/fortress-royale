@@ -40,14 +40,15 @@ void Zone_Precache()
 {
 	PrecacheSound("mvm/ambient_mp3/mvm_siren.mp3");
 	
-	AddFileToDownloadsTable("materials/models/br/br_zone.vmt");
-	AddFileToDownloadsTable("materials/models/br/br_zone.vtf");
+	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vmt");
+	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vtf");
+	AddFileToDownloadsTable("materials/models/br/invuln_gray.vtf");
 	
-	AddFileToDownloadsTable("models/br/br_zone_to_0.dx80.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_to_0.dx90.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_to_0.mdl");
-	AddFileToDownloadsTable("models/br/br_zone_to_0.sw.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_to_0.vvd");
+	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx80.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx90.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.mdl");
+	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.sw.vtx");
+	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.vvd");
 }
 
 void Zone_RoundStart()
