@@ -111,18 +111,16 @@ methodmap FRPlayer
 	
 	public void ChangeToSpectator()
 	{
-		g_ClientSpectator[this]++;
-		
-		if (g_ClientSpectator[this] == 1)
+		if (++g_ClientSpectator[this] == 1)
 		{
 			g_ClientTeam[this] = TF2_GetTeam(this.Client);
 			TF2_ChangeTeam(this.Client, TFTeam_Spectator);
 		}
 	}
 	
-	public void ChangeToSpectatorBuilding()
+	public void ChangeBuildingsToSpectator()
 	{
-		int building = MaxClients+1;
+		int building = MaxClients + 1;
 		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
 		{
 			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == this.Client)
@@ -132,17 +130,15 @@ methodmap FRPlayer
 	
 	public void ChangeToTeam()
 	{
-		g_ClientSpectator[this]--;
-		
-		if (g_ClientSpectator[this] == 0)
+		if (--g_ClientSpectator[this] == 0)
 		{
 			TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
 		}
 	}
 	
-	public void ChangeToTeamBuilding()
+	public void ChangeBuildingsToTeam()
 	{
-		int building = MaxClients+1;
+		int building = MaxClients + 1;
 		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
 		{
 			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == this.Client)

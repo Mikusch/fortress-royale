@@ -7,7 +7,7 @@ static Handle g_DHookSmack;
 static Handle g_DHookExplode;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
-static int g_HookIdGiveNamedItem[TF_MAXPLAYERS+1];
+static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 
 void DHook_Init(GameData gamedata)
 {
@@ -73,7 +73,7 @@ void DHook_UnhookGiveNamedItem(int client)
 	if (g_HookIdGiveNamedItem[client])
 	{
 		DHookRemoveHookID(g_HookIdGiveNamedItem[client]);
-		g_HookIdGiveNamedItem[client] = 0;	
+		g_HookIdGiveNamedItem[client] = 0;
 	}
 }
 
@@ -95,6 +95,7 @@ void DHook_HookClient(int client)
 {
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
+	DHookEntity(g_DHookWantsLagCompensationOnEntity, true, client, _, DHook_WantsLagCompensationOnEntityPost);
 }
 
 void DHook_HookPrimaryAttack(int weapon)
@@ -391,7 +392,7 @@ public MRESReturn DHook_SmackPre(int weapon)
 	
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (0 < client <= MaxClients && IsClientInGame(client))
-		FRPlayer(client).ChangeToSpectatorBuilding();
+		FRPlayer(client).ChangeBuildingsToSpectator();
 }
 
 public MRESReturn DHook_SmackPost(int weapon)
@@ -401,7 +402,7 @@ public MRESReturn DHook_SmackPost(int weapon)
 	
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 	if (0 < client <= MaxClients && IsClientInGame(client))
-		FRPlayer(client).ChangeToTeamBuilding();
+		FRPlayer(client).ChangeBuildingsToTeam();
 }
 
 public MRESReturn DHook_ExplodePre(int entity, Handle params)
@@ -451,6 +452,10 @@ public MRESReturn DHook_ExplodeEffectOnTargetPost(int entity, Handle params)
 
 public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)
 {
-	DHookSetReturn(returnVal, true);
-	return MRES_Supercede;
+	FRPlayer(client).ChangeToSpectator();
+}
+
+public MRESReturn DHook_WantsLagCompensationOnEntityPost(int client, Handle returnVal)
+{
+	FRPlayer(client).ChangeToTeam();
 }
