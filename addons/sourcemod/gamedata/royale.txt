@@ -70,6 +70,12 @@
 				"linux"		"@_ZN9CTFPlayer12DropAmmoPackERK15CTakeDamageInfobb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x8B\xD9\x56\x33\xF6"
 			}
+			"CTFPlayer::SaveMe"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer6SaveMeEv"
+				"windows"	"TODO"
+			}
 			"CTFPlayerShared::SetChargeEffect"
 			{
 				"library"	"server"
@@ -290,6 +296,13 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CTFPlayer::SaveMe"
+			{
+				"signature"	"CTFPlayer::SaveMe"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
 			}
 			"CTFPlayerShared::SetChargeEffect"
 			{

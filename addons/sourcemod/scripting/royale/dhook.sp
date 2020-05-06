@@ -18,6 +18,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost)
@@ -271,6 +272,12 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 	}
 	
 	//Prevent TF2 dropping anything else
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_SaveMePre(int client, Handle params)
+{
+	//Prevent showing medic bubble over this player's head
 	return MRES_Supercede;
 }
 
