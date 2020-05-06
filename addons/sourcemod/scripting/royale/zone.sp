@@ -73,7 +73,7 @@ void Zone_RoundStart()
 		DispatchSpawn(zone);
 		
 		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
-		SetEntityRenderColor(zone, 0, 0, 255, 255);
+		SetEntityRenderColor(zone, 255, 0, 0, 255);
 		
 		SetVariantString("shrink");
 		AcceptEntityInput(zone, "SetAnimation");
@@ -169,7 +169,7 @@ public Action Timer_StartDisplay(Handle timer)
 		{
 			TeleportEntity(ghost, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
 			SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
-			SetEntityRenderColor(ghost, 255, 255, 255, 63);
+			SetEntityRenderColor(ghost, 0, 0, 255, 25);
 		}
 	}
 	
