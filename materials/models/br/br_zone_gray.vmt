@@ -1,12 +1,13 @@
 "VertexLitGeneric"
 {
-	"$basetexture" "models/br/br_zone"
+	"$basetexture" "models/br/br_zone_gray"
 	"$translucent" "1"
 	"$additive" 1
 	"$nocull" 1
 //	"$alphatest" 1
 	"$bumpmap" "water/tfwater001_normal"
-	"$envmap" "effects/cubemapper"
+	"$envmap" "models/br/invuln_gray"
+
 //	"$halflambert" "1"
 	
 //	"$selfillum" "1"
