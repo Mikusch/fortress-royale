@@ -21,7 +21,8 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
-	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost)
+	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
+	DHook_CreateDetour(gamedata, "CTFSpellBook::CastSelfHeal", DHook_CastSelfHealPre, DHook_CastSelfHealPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookExplodeEffectOnTarget = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellBats::ExplodeEffectOnTarget");
@@ -327,6 +328,19 @@ public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(eyeball, TF2_GetTeam(owner));
 	}
+}
+
+public MRESReturn DHook_CastSelfHealPre(int spellbook, Handle params)
+{
+	//Make overheal spell knock other players back instead of healing them
+	int client = DHookGetParam(params, 1);
+	FRPlayer(client).ChangeToSpectator();
+}
+
+public MRESReturn DHook_CastSelfHealPost(int spellbook, Handle params)
+{
+	int client = DHookGetParam(params, 1);
+	FRPlayer(client).ChangeToTeam();
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)
