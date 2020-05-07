@@ -291,7 +291,7 @@ bool Config_GetLootPrefab(int prefabIndex, LootCrateConfig lootPrefab)
 
 int Config_FindPrefab(const char[] namePrefab, LootCrateConfig lootPrefab)
 {
-	return g_LootPrefabs.FindPrefab(namePrefab, lootPrefab)
+	return g_LootPrefabs.FindPrefab(namePrefab, lootPrefab);
 }
 
 bool Config_GetLootCrate(int configIndex, LootCrateConfig lootCrate)

@@ -62,7 +62,7 @@ static float g_BattleBusEjectOffset[][3] =  {
 	{ 128.0, -128.0, 0.0 }, 
 	{ 128.0, 0.0, 0.0 }, 
 	{ 128.0, 128.0, 0.0 }
-}
+};
 
 static float g_BattleBusOrigin[3];		//Bus starting origin
 static float g_BattleBusAngles[3];		//Bus starting angles
@@ -236,7 +236,7 @@ void BattleBus_EjectClient(int client)
 		//If still could not be found, try again but higher up
 		if (!found)
 		{
-			float searchOrigin[3]
+			float searchOrigin[3];
 			searchOrigin = ejectOrigin;
 			searchOrigin[2] += 128.0;
 			

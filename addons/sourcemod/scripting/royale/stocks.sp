@@ -15,7 +15,7 @@ stock int GetPlayerCount()
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			count++
+			count++;
 	}
 	
 	return count;

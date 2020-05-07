@@ -9,6 +9,7 @@
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
 
+#pragma semicolon 1
 #pragma newdecls required
 
 #define TF_MAXPLAYERS	32
@@ -157,7 +158,7 @@ methodmap LootCrateContents < ArrayList
 {
 	public LootCrateContents()
 	{
-		return view_as<LootCrateContents>(new ArrayList(2))
+		return view_as<LootCrateContents>(new ArrayList(2));
 	}
 	
 	public void PushContent(LootType loot, float chance)
@@ -188,7 +189,7 @@ methodmap LootCrateContents < ArrayList
 				
 				for (int i = 0; i < types.Length; i++)
 				{
-					this.PushContent(types.Get(i), chance)
+					this.PushContent(types.Get(i), chance);
 				}
 				
 				delete types;
@@ -355,7 +356,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_fireaxe",	//Pyro
 	"tf_weapon_knife",		//Spy
 	"tf_weapon_robot_arm"	//Engineer
-}
+};
 
 bool g_TF2Items;
 //bool g_IsRoundActive;

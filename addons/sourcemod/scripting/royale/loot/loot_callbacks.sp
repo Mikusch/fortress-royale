@@ -83,7 +83,7 @@ public int LootCallback_CreateSpell(int client, CallbackParams params)
 	if (spell > MaxClients)
 	{
 		SetEntProp(spell, Prop_Data, "m_nTier", params.GetInt("tier"));
-		DispatchSpawn(spell)
+		DispatchSpawn(spell);
 		return spell;
 	}
 	return -1;
@@ -105,7 +105,7 @@ public int LootCallback_CreateEntity(int client, CallbackParams params)
 	int entity = CreateEntityByName(classname);
 	if (entity > MaxClients)
 	{
-		DispatchSpawn(entity)
+		DispatchSpawn(entity);
 		return entity;
 	}
 	return -1;
