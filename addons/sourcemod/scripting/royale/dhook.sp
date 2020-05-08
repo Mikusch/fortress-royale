@@ -4,6 +4,7 @@ static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
+static Handle g_DHookTossJarThink;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
@@ -21,7 +22,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
-	DHook_CreateDetour(gamedata, "CTFSpellBook::CastSelfHeal", DHook_CastSelfHealPre, DHook_CastSelfHealPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
@@ -29,6 +29,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 }
 
@@ -114,6 +115,12 @@ void DHook_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
 	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
+}
+
+void DHook_HookSpellbook(int spellbook)
+{
+	DHookEntity(g_DHookTossJarThink, false, spellbook, _, DHook_TossJarThinkPre);
+	DHookEntity(g_DHookTossJarThink, true, spellbook, _, DHook_TossJarThinkPost);
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
@@ -322,19 +329,6 @@ public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 	}
 }
 
-public MRESReturn DHook_CastSelfHealPre(int spellbook, Handle params)
-{
-	//Make overheal spell knock other players back instead of healing them
-	int client = DHookGetParam(params, 1);
-	FRPlayer(client).ChangeToSpectator();
-}
-
-public MRESReturn DHook_CastSelfHealPost(int spellbook, Handle params)
-{
-	int client = DHookGetParam(params, 1);
-	FRPlayer(client).ChangeToTeam();
-}
-
 public MRESReturn DHook_SetWinningTeam(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
@@ -437,6 +431,21 @@ public MRESReturn DHook_ExplodePost(int entity, Handle params)
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 	}
+}
+
+public MRESReturn DHook_TossJarThinkPre(int entity, Handle params)
+{
+	//Allow self-spell only take effects to themself
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+		FRPlayer(owner).ChangeToSpectator();
+}
+
+public MRESReturn DHook_TossJarThinkPost(int entity, Handle params)
+{
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	if (0 < owner <= MaxClients && IsClientInGame(owner))
+		FRPlayer(owner).ChangeToTeam();
 }
 
 public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)

@@ -532,6 +532,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDKHook_HookMeteorShowerSpawner(entity);
 	else if (StrContains(classname, "tf_projectile_jar") == 0 || StrContains(classname, "tf_projectile_spell") == 0)
 		DHook_HookProjectile(entity);
+	else if (StrEqual(classname, "tf_weapon_spellbook"))
+		DHook_HookSpellbook(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))

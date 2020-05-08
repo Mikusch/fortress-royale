@@ -100,12 +100,6 @@
 				"linux"		"@_ZN12CEyeballBoss24FindClosestVisibleVictimEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x2C\xF3\x0F\x10\x05\x2A\x2A\x2A\x2A\x53"
 			}
-			"CTFSpellBook::CastSelfHeal"
-			{
-				"library"	"server"
-				"linux"		"@_ZN12CTFSpellBook12CastSelfHealEP9CTFPlayer"
-				"windows"	"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04\x8B\xEC\x81\xEC\x98\x01\x00\x00\x56"
-			}
 		}
 		"Offsets"
 		{
@@ -143,6 +137,11 @@
 			{
 				"linux"		"229"
 				"windows"	"228"
+			}
+			"CTFJar::TossJarThink"
+			{
+				"linux"		"490"
+				"windows"	"483"
 			}
 			"CTFPlayer::WantsLagCompensationOnEntity"
 			{
@@ -361,20 +360,6 @@
 				"return"	"void"
 				"this"		"entity"
 			}
-			"CTFSpellBook::CastSelfHeal"
-			{
-				"signature"	"CTFSpellBook::CastSelfHeal"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pPlayer"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
 			"CTFGameRules::SetWinningTeam"
 			{
 				"offset"	"CTFGameRules::SetWinningTeam"
@@ -473,6 +458,13 @@
 						"type"	"int"
 					}
 				}
+			}
+			"CTFJar::TossJarThink"
+			{
+				"offset"	"CTFJar::TossJarThink"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
 			}
 			"CTFPlayer::WantsLagCompensationOnEntity"
 			{
