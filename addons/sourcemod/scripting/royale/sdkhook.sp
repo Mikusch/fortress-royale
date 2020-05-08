@@ -84,7 +84,7 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	else
 		FRPlayer(victim).ChangeToSpectator();
 	
-	if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+	if (weapon > MaxClients && HasEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
 		float multiplier = fr_fistsdamagemultiplier.FloatValue;
 		if (multiplier != 1.0)
