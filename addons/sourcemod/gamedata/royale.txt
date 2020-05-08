@@ -119,11 +119,6 @@
 				"linux"		"191"
 				"windows"	"190"
 			}
-			"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
-			{
-				"linux"		"268"
-				"windows"	"267"
-			}
 			"CTFPlayer::ForceRespawn"
 			{
 				"linux"		"330"
@@ -411,28 +406,6 @@
 					"bFinal"
 					{
 						"type"	"bool"
-					}
-				}
-			}
-			"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
-			{
-				"offset"	"CTFProjectile_SpellBats::ExplodeEffectOnTarget"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
-				"arguments"
-				{
-					"pThrower"
-					{
-						"type"	"cbaseentity"
-					}
-					"pTarget"
-					{
-						"type"	"cbaseentity"
-					}
-					"pBaseTarget"
-					{
-						"type"	"cbaseentity"
 					}
 				}
 			}

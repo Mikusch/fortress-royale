@@ -528,14 +528,14 @@ public void OnEntityCreated(int entity, const char[] classname)
 		SDKHook_HookGasManager(entity);
 	else if (StrEqual(classname, "item_powerup_rune"))
 		SDKHook_HookRune(entity);
-	else if (StrContains(classname, "tf_projectile_jar") == 0)
+	else if (StrEqual(classname, "tf_spell_meteorshowerspawner"))
+		SDKHook_HookMeteorShowerSpawner(entity);
+	else if (StrContains(classname, "tf_projectile_jar") == 0 || StrContains(classname, "tf_projectile_spell") == 0)
 		DHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
 		DHook_HookWrench(entity);
-	else if (StrContains(classname, "tf_projectile_spell") == 0)
-		DHook_HookProjectileSpellBats(entity);
 }
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)

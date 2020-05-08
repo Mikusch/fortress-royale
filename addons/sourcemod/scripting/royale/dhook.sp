@@ -1,7 +1,6 @@
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
 static Handle g_DHookSetWinningTeam;
-static Handle g_DHookExplodeEffectOnTarget;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
@@ -25,7 +24,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFSpellBook::CastSelfHeal", DHook_CastSelfHealPre, DHook_CastSelfHealPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
-	g_DHookExplodeEffectOnTarget = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellBats::ExplodeEffectOnTarget");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
@@ -116,12 +114,6 @@ void DHook_HookProjectile(int projectile)
 {
 	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
 	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
-}
-
-void DHook_HookProjectileSpellBats(int projectile)
-{
-	DHookEntity(g_DHookExplodeEffectOnTarget, false, projectile, _, DHook_ExplodeEffectOnTargetPre);
-	DHookEntity(g_DHookExplodeEffectOnTarget, false, projectile, _, DHook_ExplodeEffectOnTargetPost);
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
@@ -428,32 +420,8 @@ public MRESReturn DHook_SmackPost(int weapon)
 
 public MRESReturn DHook_ExplodePre(int entity, Handle params)
 {
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
-		return;
-	
 	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
-	TF2_ChangeTeam(entity, TFTeam_Spectator);
-	TF2_ChangeTeam(owner, TFTeam_Spectator);
-}
-
-public MRESReturn DHook_ExplodePost(int entity, Handle params)
-{
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner <= 0 || owner > MaxClients || !IsClientInGame(owner))
-		return;
-	
-	//Get original team by using it's weapon
-	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
-	if (weapon <= MaxClients)
-		return;
-	
-	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
-}
-
-public MRESReturn DHook_ExplodeEffectOnTargetPre(int entity, Handle params)
-{
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 	{
 		FRPlayer(owner).ChangeToSpectator();
@@ -461,13 +429,13 @@ public MRESReturn DHook_ExplodeEffectOnTargetPre(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_ExplodeEffectOnTargetPost(int entity, Handle params)
+public MRESReturn DHook_ExplodePost(int entity, Handle params)
 {
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 	{
 		FRPlayer(owner).ChangeToTeam();
-		TF2_ChangeTeam(entity, TF2_GetTeam(owner));
+		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 	}
 }
 

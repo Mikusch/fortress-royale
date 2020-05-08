@@ -25,9 +25,14 @@ void SDKHook_HookGasManager(int entity)
 	SDKHook(entity, SDKHook_Touch, GasManager_Touch);
 }
 
-void SDKHook_HookRune(int rune)
+void SDKHook_HookRune(int entity)
 {
-	SDKHook(rune, SDKHook_Spawn, Rune_Spawn);
+	SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
+}
+
+void SDKHook_HookMeteorShowerSpawner(int entity)
+{
+	SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
 }
 
 public Action Client_SetTransmit(int entity, int client)
@@ -179,4 +184,11 @@ public Action Rune_Spawn(int rune)
 	//Never let rune despawn
 	address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneShouldReposition);
 	StoreToAddress(address, false, NumberType_Int8);
+}
+
+public Action MeteorShowerSpawner_Spawn(int entity)
+{
+	//Set team back to owner team, otherwise TF2 will destroy itself
+	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 }
