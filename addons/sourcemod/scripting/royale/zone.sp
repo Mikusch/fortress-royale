@@ -286,6 +286,7 @@ public void Frame_UpdateZone(int ref)
 	int obj = MaxClients + 1;
 	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
 	{
+		int objRef = EntIndexToEntRef(obj);
 		if (!GetEntProp(obj, Prop_Send, "m_bCarried"))
 		{
 			float originObj[3];
@@ -294,11 +295,11 @@ public void Frame_UpdateZone(int ref)
 			
 			bool outsideZone = GetVectorDistance(originObj, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
 			
-			FREntity(EntIndexToEntRef(obj)).OutsideZone = outsideZone;
+			FREntity(objRef).OutsideZone = outsideZone;
 		}
-		else if (FREntity(obj).OutsideZone)
+		else if (FREntity(objRef).OutsideZone)
 		{
-			FREntity(EntIndexToEntRef(obj)).OutsideZone = false;
+			FREntity(objRef).OutsideZone = false;
 		}
 	}
 	

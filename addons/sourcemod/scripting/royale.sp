@@ -540,7 +540,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
 {
-	FREntity(caller).Destroy();
+	FREntity(EntIndexToEntRef(caller)).Destroy();
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)
