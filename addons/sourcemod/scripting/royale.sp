@@ -377,6 +377,7 @@ int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
 
+#include "royale/entity.sp"
 #include "royale/player.sp"
 
 #include "royale/battlebus.sp"
@@ -517,7 +518,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrContains(classname, "obj_") == 0)
+	{
 		SDKHook_HookBuilding(entity);
+		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
+	}
 	else if (StrEqual(classname, "tf_projectile_cleaver"))
 		SDKHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_gas_manager"))
@@ -532,6 +536,11 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHook_HookWrench(entity);
 	else if (StrContains(classname, "tf_projectile_spell") == 0)
 		DHook_HookProjectileSpellBats(entity);
+}
+
+public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
+{
+	FREntity(caller).Destroy();
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)

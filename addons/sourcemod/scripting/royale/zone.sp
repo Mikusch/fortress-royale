@@ -124,6 +124,11 @@ void Zone_RoundArenaStart()
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
 }
 
+stock float Zone_GetCurrentDamage()
+{
+    return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
+}
+
 public Action Timer_PauseZone(Handle timer, int ref)
 {
 	if (IsValidEntity(ref))
@@ -253,6 +258,7 @@ public void Frame_UpdateZone(int ref)
 		percentage = float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks);
 	}
 	
+	// Mark players outside zone
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && IsPlayerAlive(client))
@@ -276,6 +282,26 @@ public void Frame_UpdateZone(int ref)
 		}
 	}
 	
+	// Mark Engineer buildings outside zone
+	int obj = MaxClients + 1;
+	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
+	{
+		if (!GetEntProp(obj, Prop_Send, "m_bCarried"))
+		{
+			float originObj[3];
+			GetEntPropVector(obj, Prop_Data, "m_vecAbsOrigin", originObj);
+			originObj[2] = originZone[2];
+			
+			bool outsideZone = GetVectorDistance(originObj, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
+			
+			FREntity(EntIndexToEntRef(obj)).OutsideZone = outsideZone;
+		}
+		else if (FREntity(obj).OutsideZone)
+		{
+			FREntity(EntIndexToEntRef(obj)).OutsideZone = false;
+		}
+	}
+	
 	RequestFrame(Frame_UpdateZone, ref);
 }
 
@@ -284,13 +310,23 @@ public Action Timer_Bleed(Handle timer)
 	if (g_ZoneTimerBleed != timer)
 		return Plugin_Stop;
 	
+	// Players
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && IsPlayerAlive(client) && FRPlayer(client).OutsideZone)
 		{
-			float damage = (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
-			
-			SDKHooks_TakeDamage(client, 0, client, damage, DMG_PREVENT_PHYSICS_FORCE);
+			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage(), DMG_PREVENT_PHYSICS_FORCE);
+		}
+	}
+	
+	// Engineer buildings
+	int obj = MaxClients + 1;
+	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
+	{
+		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && FREntity(EntIndexToEntRef(obj)).OutsideZone)
+		{
+			SetVariantInt(RoundFloat(Zone_GetCurrentDamage()));
+			AcceptEntityInput(obj, "RemoveHealth");
 		}
 	}
 	
