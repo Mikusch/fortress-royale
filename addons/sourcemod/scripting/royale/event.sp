@@ -6,6 +6,7 @@ void Event_Init()
 	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	HookEvent("player_dropobject", Event_DropObject);
+	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -17,6 +18,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		FRPlayer(client).PlayerState = PlayerState_Waiting;
+		FRPlayer(client).Killstreak = 0;
 		
 		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
 		{
@@ -82,8 +84,10 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
-	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int victim = GetClientOfUserId(event.GetInt("userid"));
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int assister = GetClientOfUserId(event.GetInt("assister"));
+	bool deadringer = !!(event.GetInt("death_flags") & TF_DEATHFLAG_DEADRINGER);
 	
 	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS && attacker == event.GetInt("inflictor_entindex"))
 	{
@@ -94,7 +98,62 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("weaponid", TF_WEAPON_FISTS);
 	}
 	
-	if (event.GetInt("death_flags") & TF_DEATHFLAG_DEADRINGER == 0)
+	event.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
+	
+	if (0 < attacker <= MaxClients && victim != attacker)
+	{
+		if (!deadringer)
+		{
+			FRPlayer(attacker).Killstreak++;
+			event.SetInt("kill_streak_total", FRPlayer(attacker).Killstreak);
+			event.SetInt("kill_streak_wep", FRPlayer(attacker).Killstreak);
+		}
+		else
+		{
+			//Dead Ringer, make killer think a killstreak is done but without actually increasing killstreak
+			event.SetInt("kill_streak_total", FRPlayer(attacker).Killstreak + 1);
+			event.SetInt("kill_streak_wep", FRPlayer(attacker).Killstreak + 1);
+		}
+	}
+	else
+	{
+		//No valid attacker, lets use that to display victim's killstreak
+		event.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
+		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
+	}
+	
+	if (0 < assister <= MaxClients)
+		event.SetInt("kill_streak_assist", FRPlayer(assister).Killstreak);
+	
+	if (0 < attacker <= MaxClients)
+	{
+		event.BroadcastDisabled = true;
+		
+		//Create event for some client to only know victim
+		Event unknown = CreateEvent("player_death", true);
+		
+		int userid = GetClientUserId(victim);
+		unknown.SetInt("userid", userid);
+		unknown.SetInt("attacker", userid);	//So we can see victim's killstreak
+		unknown.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
+		unknown.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
+		unknown.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
+		
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			if (IsClientInGame(client))
+			{
+				if (client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
+					event.FireToClient(client);		//Allow see full killfeed
+				else
+					unknown.FireToClient(client);	//Only show who victim died
+			}
+		}
+		
+		unknown.Cancel();
+	}
+	
+	if (!deadringer)
 	{
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
@@ -110,6 +169,22 @@ public Action Event_DropObject(Event event, const char[] name, bool dontBroadcas
 	{
 		TF2_ChangeTeam(building, FRPlayer(client).Team);
 		SetEntProp(building, Prop_Send, "m_nSkin", view_as<int>(FRPlayer(client).Team) - 2);
+	}
+}
+
+public Action Event_ObjectDestroyed(Event event, const char[] name, bool dontBroadcast)
+{
+	int victim = GetClientOfUserId(event.GetInt("userid"));
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int assister = GetClientOfUserId(event.GetInt("assister"));
+	
+	event.BroadcastDisabled = true;
+	
+	//Only show killfeed to clients whos part of this or spectators
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && (client == victim || client == attacker || client == assister || !IsPlayerAlive(client)))
+			event.FireToClient(client);
 	}
 }
 
