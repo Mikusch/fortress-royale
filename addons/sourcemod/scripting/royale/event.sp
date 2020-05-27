@@ -100,6 +100,9 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	
 	event.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
 	
+	if (0 < assister <= MaxClients)
+		event.SetInt("kill_streak_assist", FRPlayer(assister).Killstreak);
+	
 	if (0 < attacker <= MaxClients && victim != attacker)
 	{
 		if (!deadringer)
@@ -114,27 +117,12 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 			event.SetInt("kill_streak_total", FRPlayer(attacker).Killstreak + 1);
 			event.SetInt("kill_streak_wep", FRPlayer(attacker).Killstreak + 1);
 		}
-	}
-	else
-	{
-		//No valid attacker, lets use that to display victim's killstreak
-		event.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
-		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
-	}
-	
-	if (0 < assister <= MaxClients)
-		event.SetInt("kill_streak_assist", FRPlayer(assister).Killstreak);
-	
-	if (0 < attacker <= MaxClients)
-	{
+		
 		event.BroadcastDisabled = true;
 		
-		//Create event for some client to only know victim
+		//Create event for some clients to only show victim
 		Event unknown = CreateEvent("player_death", true);
-		
-		int userid = GetClientUserId(victim);
-		unknown.SetInt("userid", userid);
-		unknown.SetInt("attacker", userid);	//So we can see victim's killstreak
+		unknown.SetInt("userid", GetClientUserId(victim));
 		unknown.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
 		unknown.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
 		unknown.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
@@ -151,6 +139,12 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		}
 		
 		unknown.Cancel();
+	}
+	else
+	{
+		//No valid attacker, lets use that to display victim's killstreak
+		event.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
+		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
 	}
 	
 	if (!deadringer)
