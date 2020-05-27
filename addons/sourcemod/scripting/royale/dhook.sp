@@ -404,6 +404,9 @@ public MRESReturn DHook_FireProjectilePost(int weapon, Handle returnVal, Handle 
 	int client = DHookGetParam(params, 1);
 	int projectile = DHookGetReturn(returnVal);
 	TF2_ChangeTeam(projectile, FRPlayer(client).Team);
+	
+	//Set owner entity so breaking loots with projectil works
+	SetEntPropEnt(projectile, Prop_Send, "m_hOwnerEntity", weapon);
 }
 
 public MRESReturn DHook_SmackPre(int weapon)
