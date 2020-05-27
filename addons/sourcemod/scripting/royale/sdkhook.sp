@@ -177,7 +177,7 @@ public Action Rune_Spawn(int rune)
 {
 	//Always set rune team to any
 	Address address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneTeam);
-	StoreToAddress(address, view_as<int>(TFTeam_Any), NumberType_Int8);
+	StoreToAddress(address, view_as<int>(TFTeam_Any), NumberType_Int32);
 	
 	SetEntProp(rune, Prop_Send, "m_nSkin", 0);
 	
