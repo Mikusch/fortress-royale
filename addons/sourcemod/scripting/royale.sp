@@ -534,6 +534,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHook_HookProjectile(entity);
 	else if (StrEqual(classname, "tf_weapon_spellbook"))
 		DHook_HookSpellbook(entity);
+	else if (StrEqual(classname, "tf_weapon_pipebomblauncher"))
+		DHook_HookPipebomb(entity);
 	else if (StrEqual(classname, "tf_weapon_knife"))
 		DHook_HookPrimaryAttack(entity);
 	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))

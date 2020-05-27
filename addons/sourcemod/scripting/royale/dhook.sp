@@ -2,6 +2,7 @@ static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
 static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
+static Handle g_DHookFireProjectile;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
 static Handle g_DHookTossJarThink;
@@ -27,6 +28,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
+	g_DHookFireProjectile = DHook_CreateVirtual(gamedata, "CTFWeaponBaseGun::FireProjectile");
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
@@ -103,6 +105,11 @@ void DHook_HookPrimaryAttack(int weapon)
 {
 	DHookEntity(g_DHookPrimaryAttack, false, weapon, _, DHook_PrimaryAttackPre);
 	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
+}
+
+void DHook_HookPipebomb(int weapon)
+{
+	DHookEntity(g_DHookFireProjectile, true, weapon, _, DHook_FireProjectilePost);
 }
 
 void DHook_HookWrench(int weapon)
@@ -389,6 +396,14 @@ public MRESReturn DHook_PrimaryAttackPost(int weapon)
 	//Client is in spectator, prevent backstab if using fists
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToSpectator();
+}
+
+public MRESReturn DHook_FireProjectilePost(int weapon, Handle returnVal, Handle params)
+{
+	//Client may be in spectator team during this hook, change projectile team to correct team
+	int client = DHookGetParam(params, 1);
+	int projectile = DHookGetReturn(returnVal);
+	TF2_ChangeTeam(projectile, FRPlayer(client).Team);
 }
 
 public MRESReturn DHook_SmackPre(int weapon)

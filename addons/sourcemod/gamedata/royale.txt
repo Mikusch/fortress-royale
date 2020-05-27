@@ -128,6 +128,11 @@
 				"linux"		"285"
 				"windows"	"279"
 			}
+			"CTFWeaponBaseGun::FireProjectile"
+			{
+				"linux"		"469"
+				"windows"	"462"
+			}
 			"CTFWeaponBaseMelee::Smack"
 			{
 				"linux"		"469"
@@ -433,6 +438,20 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"CTFWeaponBaseGun::FireProjectile"
+			{
+				"offset"	"CTFWeaponBaseGun::FireProjectile"
+				"hooktype"	"entity"
+				"return"	"cbaseentity"
+				"this"		"entity"
+				"arguments"
+				{
+					"pPlayer"
+					{
+						"type"	"cbaseentity"
+					}
+				}
 			}
 			"CTFWeaponBaseMelee::Smack"
 			{
