@@ -11,6 +11,7 @@ void SDKHook_HookClient(int client)
 
 void SDKHook_HookBuilding(int building)
 {
+	SDKHook(building, SDKHook_SpawnPost, Building_SpawnPost);
 	SDKHook(building, SDKHook_OnTakeDamage, Building_OnTakeDamage);
 }
 
@@ -33,6 +34,12 @@ void SDKHook_HookRune(int entity)
 void SDKHook_HookMeteorShowerSpawner(int entity)
 {
 	SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
+}
+
+public void Building_SpawnPost(int building)
+{
+	//Enable collision for both teams
+	SetEntProp(building, Prop_Send, "m_CollisionGroup", TFCOLLISION_GROUP_OBJECT_SOLIDTOPLAYERMOVEMENT);
 }
 
 public Action Client_SetTransmit(int entity, int client)
