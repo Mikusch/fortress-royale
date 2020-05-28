@@ -554,29 +554,11 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+	DHook_OnEntityCreated(entity, classname);
+	SDKHook_OnEntityCreated(entity, classname);
+	
 	if (StrContains(classname, "obj_") == 0)
-	{
-		SDKHook_HookBuilding(entity);
 		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
-	}
-	else if (StrEqual(classname, "tf_projectile_cleaver"))
-		SDKHook_HookProjectile(entity);
-	else if (StrEqual(classname, "tf_gas_manager"))
-		SDKHook_HookGasManager(entity);
-	else if (StrEqual(classname, "item_powerup_rune"))
-		SDKHook_HookRune(entity);
-	else if (StrEqual(classname, "tf_spell_meteorshowerspawner"))
-		SDKHook_HookMeteorShowerSpawner(entity);
-	else if (StrContains(classname, "tf_projectile_jar") == 0 || StrContains(classname, "tf_projectile_spell") == 0)
-		DHook_HookProjectile(entity);
-	else if (StrEqual(classname, "tf_weapon_spellbook"))
-		DHook_HookSpellbook(entity);
-	else if (StrEqual(classname, "tf_weapon_pipebomblauncher"))
-		DHook_HookPipebomb(entity);
-	else if (StrEqual(classname, "tf_weapon_knife"))
-		DHook_HookPrimaryAttack(entity);
-	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
-		DHook_HookWrench(entity);
 }
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)

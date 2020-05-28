@@ -9,31 +9,30 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 }
 
-void SDKHook_HookBuilding(int building)
+void SDKHook_OnEntityCreated(int entity, const char[] classname)
 {
-	SDKHook(building, SDKHook_SpawnPost, Building_SpawnPost);
-	SDKHook(building, SDKHook_OnTakeDamage, Building_OnTakeDamage);
-}
-
-void SDKHook_HookProjectile(int entity)
-{
-	SDKHook(entity, SDKHook_Touch, Projectile_Touch);
-	SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
-}
-
-void SDKHook_HookGasManager(int entity)
-{
-	SDKHook(entity, SDKHook_Touch, GasManager_Touch);
-}
-
-void SDKHook_HookRune(int entity)
-{
-	SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
-}
-
-void SDKHook_HookMeteorShowerSpawner(int entity)
-{
-	SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
+	if (StrContains(classname, "obj_") == 0)
+	{
+		SDKHook(entity, SDKHook_SpawnPost, Building_SpawnPost);
+		SDKHook(entity, SDKHook_OnTakeDamage, Building_OnTakeDamage);
+	}
+	else if (StrEqual(classname, "tf_projectile_cleaver"))
+	{
+		SDKHook(entity, SDKHook_Touch, Cleaver_Touch);
+		SDKHook(entity, SDKHook_TouchPost, Cleaver_TouchPost);
+	}
+	else if (StrEqual(classname, "tf_gas_manager"))
+	{
+		SDKHook(entity, SDKHook_Touch, GasManager_Touch);
+	}
+	else if (StrEqual(classname, "item_powerup_rune"))
+	{
+		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
+	}
+	else if (StrEqual(classname, "tf_spell_meteorshowerspawner"))
+	{
+		SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
+	}
 }
 
 public void Building_SpawnPost(int building)
@@ -146,7 +145,7 @@ public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor,
 	return Plugin_Continue;
 }
 
-public Action Projectile_Touch(int entity, int other)
+public Action Cleaver_Touch(int entity, int other)
 {
 	//This function have team check, change projectile and owner to spectator to touch both teams
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
@@ -157,7 +156,7 @@ public Action Projectile_Touch(int entity, int other)
 	TF2_ChangeTeam(owner, TFTeam_Spectator);
 }
 
-public void Projectile_TouchPost(int entity, int other)
+public void Cleaver_TouchPost(int entity, int other)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (owner == other)

@@ -101,33 +101,32 @@ void DHook_HookClient(int client)
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, true, client, _, DHook_WantsLagCompensationOnEntityPost);
 }
 
-void DHook_HookPrimaryAttack(int weapon)
+void DHook_OnEntityCreated(int entity, const char[] classname)
 {
-	DHookEntity(g_DHookPrimaryAttack, false, weapon, _, DHook_PrimaryAttackPre);
-	DHookEntity(g_DHookPrimaryAttack, true, weapon, _, DHook_PrimaryAttackPost);
-}
-
-void DHook_HookPipebomb(int weapon)
-{
-	DHookEntity(g_DHookFireProjectile, true, weapon, _, DHook_FireProjectilePost);
-}
-
-void DHook_HookWrench(int weapon)
-{
-	DHookEntity(g_DHookSmack, false, weapon, _, DHook_SmackPre);
-	DHookEntity(g_DHookSmack, true, weapon, _, DHook_SmackPost);
-}
-
-void DHook_HookProjectile(int projectile)
-{
-	DHookEntity(g_DHookExplode, false, projectile, _, DHook_ExplodePre);
-	DHookEntity(g_DHookExplode, true, projectile, _, DHook_ExplodePost);
-}
-
-void DHook_HookSpellbook(int spellbook)
-{
-	DHookEntity(g_DHookTossJarThink, false, spellbook, _, DHook_TossJarThinkPre);
-	DHookEntity(g_DHookTossJarThink, true, spellbook, _, DHook_TossJarThinkPost);
+	if (StrContains(classname, "tf_projectile_jar") == 0 || StrContains(classname, "tf_projectile_spell") == 0)
+	{
+		DHookEntity(g_DHookExplode, false, entity, _, DHook_ExplodePre);
+		DHookEntity(g_DHookExplode, true, entity, _, DHook_ExplodePost);
+	}
+	else if (StrEqual(classname, "tf_weapon_spellbook"))
+	{
+		DHookEntity(g_DHookTossJarThink, false, entity, _, DHook_TossJarThinkPre);
+		DHookEntity(g_DHookTossJarThink, true, entity, _, DHook_TossJarThinkPost);
+	}
+	else if (StrEqual(classname, "tf_weapon_pipebomblauncher"))
+	{
+		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
+	}
+	else if (StrEqual(classname, "tf_weapon_knife"))
+	{
+		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_PrimaryAttackPre);
+		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_PrimaryAttackPost);
+	}
+	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
+	{
+		DHookEntity(g_DHookSmack, false, entity, _, DHook_SmackPre);
+		DHookEntity(g_DHookSmack, true, entity, _, DHook_SmackPost);
+	}
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
