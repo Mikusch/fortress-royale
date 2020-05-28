@@ -226,7 +226,8 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	}
 	
 	//Create new weapon
-	weapon = TF2_CreateWeapon(defindex, class);
+	int itemOffset = FindSendPropInfo("CTFDroppedWeapon", "m_Item");
+	weapon = TF2_GiveNamedItem(client, GetEntityAddress(droppedWeapon) + view_as<Address>(itemOffset));
 	if (weapon > MaxClients)
 	{
 		TF2_EquipWeapon(client, weapon);

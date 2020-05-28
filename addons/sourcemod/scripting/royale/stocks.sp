@@ -1,3 +1,5 @@
+static bool g_SkipGiveNamedItem;
+
 stock int GetOwnerLoop(int entity)
 {
 	
@@ -42,6 +44,9 @@ stock void ModelIndexToString(int index, char[] model, int size)
 
 stock bool CanKeepWeapon(const char[] classname, int index)
 {
+	if (g_SkipGiveNamedItem)
+	return true;
+	
 	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
 	{
 		int slot = TF2_GetItemSlot(index, class);
@@ -76,6 +81,38 @@ stock int GetClientFromPlayerShared(Address playershared)
 	}
 	
 	return 0;
+}
+
+stock void CopyItem(int input, int output)
+{
+	char classname[32];
+	
+	GetEntityNetClass(input, classname, sizeof(classname));
+	int offsetInput = FindSendPropInfo(classname, "m_Item");
+	if (offsetInput < 0)
+	{
+		LogError("Failed to find m_Item on: %s", classname);
+		return;
+	}
+	
+	GetEntityNetClass(output, classname, sizeof(classname));
+	int offsetOutput = FindSendPropInfo(classname, "m_Item");
+	if (offsetOutput < 0)
+	{
+		LogError("Failed to find m_Item on: %s", classname);
+		return;
+	}
+	
+	Address addressInput = GetEntityAddress(input) + view_as<Address>(offsetInput);
+	Address addressOutput = GetEntityAddress(output) + view_as<Address>(offsetOutput);
+	
+	//Below is causing crash from memory alloc, need to somehow figure out how to not have ptrs not deleted or leaked
+	
+	for (int offset = 0; offset < g_SizeofEconItemView; offset += 4)
+	{
+		int value = LoadFromAddress(addressInput + view_as<Address>(offset), NumberType_Int32);
+		StoreToAddress(addressOutput + view_as<Address>(offset), value, NumberType_Int32);
+	}
 }
 
 stock bool TF2_CheckTeamClientCount()
@@ -182,6 +219,22 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	return -1;
 }
 
+stock int TF2_GiveNamedItem(int client, Address item)
+{
+	char classname[256];
+	TF2Econ_GetItemClassName(LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16), classname, sizeof(classname));
+	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	
+	int subtype = 0;
+	if ((StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")) && TF2_GetPlayerClass(client) == TFClass_Spy)
+		subtype = view_as<int>(TFObject_Sapper);
+	
+	g_SkipGiveNamedItem = true;
+	int weapon = SDKCall_GiveNamedItem(client, classname, subtype, item);
+	g_SkipGiveNamedItem = false;
+	return weapon;
+}
+
 stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const char[] classnameTemp = NULL_STRING)
 {
 	char classname[256];
@@ -256,7 +309,7 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	
 	TeleportEntity(droppedWeapon, origin, angles, NULL_VECTOR);
 	SetEntityModel(droppedWeapon, model);
-	SetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex", index);	//def index may enough instead of needing to copy whole m_Item
+	CopyItem(fromWeapon, droppedWeapon);
 	DispatchSpawn(droppedWeapon);
 	
 	//Setup ammo, energy count etc

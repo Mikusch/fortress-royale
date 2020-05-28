@@ -396,7 +396,6 @@ char g_fistsClassname[][] = {
 };
 
 bool g_TF2Items;
-//bool g_IsRoundActive;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
@@ -413,6 +412,7 @@ int g_OffsetItemDefinitionIndex;
 int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
+int g_SizeofEconItemView;
 
 #include "royale/entity.sp"
 #include "royale/player.sp"
@@ -462,6 +462,7 @@ public void OnPluginStart()
 	g_OffsetRuneType = gamedata.GetOffset("CTFRune::m_nRuneType");
 	g_OffsetRuneTeam = gamedata.GetOffset("CTFRune::m_nTeam");
 	g_OffsetRuneShouldReposition = gamedata.GetOffset("CTFRune::m_bShouldReposition");
+	g_SizeofEconItemView = gamedata.GetOffset("sizeof(CEconItemView)");
 	
 	delete gamedata;
 	

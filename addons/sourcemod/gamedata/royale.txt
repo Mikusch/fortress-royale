@@ -58,6 +58,12 @@
 				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
 				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\xDC\x04\x00\x00\x00"
 			}
+			"CTFPlayer::GetLoadoutItem"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer14GetLoadoutItemEiib"
+				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x57\x89\x75\xFC"
+			}
 			"CTFPlayer::GetEquippedWearableForLoadoutSlot"
 			{
 				"library"	"server"
@@ -123,6 +129,12 @@
 				"linux"		"482"
 				"windows"	"475"
 			}
+			"CTFPlayer::WantsLagCompensationOnEntity"
+			{
+				"library"	"server"
+				"linux"		"328"
+				"windows"	"327"
+			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
 				"linux"		"285"
@@ -148,12 +160,6 @@
 				"linux"		"490"
 				"windows"	"483"
 			}
-			"CTFPlayer::WantsLagCompensationOnEntity"
-			{
-				"library"	"server"
-				"linux"		"328"
-				"windows"	"327"
-			}
 			"CBasePlayer::EquipWearable"
 			{
 				"linux"		"431"
@@ -178,6 +184,11 @@
 			{
 				"linux"		"1308"
 				"windows"	"1288"
+			}
+			"sizeof(CEconItemView)"
+			{
+				"linux"		"148"
+				"windows"	"148"
 			}
 		}
 		"Functions"
