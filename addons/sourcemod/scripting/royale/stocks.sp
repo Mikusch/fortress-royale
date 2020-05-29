@@ -165,44 +165,44 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	return -1;
 }
 
-stock void TF2_CheckClientWeapons(int iClient)
+stock void TF2_CheckClientWeapons(int client)
 {
 	//Weapons
-	for (int iSlot = WeaponSlot_Primary; iSlot <= WeaponSlot_BuilderEngie; iSlot++)
+	for (int slot = WeaponSlot_Primary; slot <= WeaponSlot_BuilderEngie; slot++)
 	{
-		int iWeapon = GetPlayerWeaponSlot(iClient, iSlot);
-		if (iWeapon > MaxClients)
+		int weapon = GetPlayerWeaponSlot(client, slot);
+		if (weapon > MaxClients)
 		{
-			char sClassname[256];
-			GetEntityClassname(iWeapon, sClassname, sizeof(sClassname));
-			int iIndex = GetEntProp(iWeapon, Prop_Send, "m_iItemDefinitionIndex");
-			if (TF2_OnGiveNamedItem(iClient, sClassname, iIndex) >= Plugin_Handled)
-				TF2_RemoveItemInSlot(iClient, iSlot);
+			char classname[256];
+			GetEntityClassname(weapon, classname, sizeof(classname));
+			int index = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+			if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
+				TF2_RemoveItemInSlot(client, slot);
 		}
 	}
 	
 	//Cosmetics
-	int iWearable = MaxClients+1;
-	while ((iWearable = FindEntityByClassname(iWearable, "tf_wearable*")) > MaxClients)
+	int wearable = MaxClients+1;
+	while ((wearable = FindEntityByClassname(wearable, "tf_wearable*")) > MaxClients)
 	{
-		if (GetEntPropEnt(iWearable, Prop_Send, "m_hOwnerEntity") == iClient || GetEntPropEnt(iWearable, Prop_Send, "moveparent") == iClient)
+		if (GetEntPropEnt(wearable, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(wearable, Prop_Send, "moveparent") == client)
 		{
-			char sClassname[256];
-			GetEntityClassname(iWearable, sClassname, sizeof(sClassname));
-			int iIndex = GetEntProp(iWearable, Prop_Send, "m_iItemDefinitionIndex");
-			if (TF2_OnGiveNamedItem(iClient, sClassname, iIndex) >= Plugin_Handled)
-				TF2_RemoveWearable(iClient, iWearable);
+			char classname[256];
+			GetEntityClassname(wearable, classname, sizeof(classname));
+			int index = GetEntProp(wearable, Prop_Send, "m_iItemDefinitionIndex");
+			if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
+				TF2_RemoveWearable(client, wearable);
 		}
 	}
 	
 	//MvM Canteen
-	int iPowerupBottle = MaxClients+1;
-	while ((iPowerupBottle = FindEntityByClassname(iPowerupBottle, "tf_powerup_bottle*")) > MaxClients)
+	int powerupBottle = MaxClients+1;
+	while ((powerupBottle = FindEntityByClassname(powerupBottle, "tf_powerup_bottle*")) > MaxClients)
 	{
-		if (GetEntPropEnt(iPowerupBottle, Prop_Send, "m_hOwnerEntity") == iClient || GetEntPropEnt(iPowerupBottle, Prop_Send, "moveparent") == iClient)
+		if (GetEntPropEnt(powerupBottle, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(powerupBottle, Prop_Send, "moveparent") == client)
 		{
-			if (TF2_OnGiveNamedItem(iClient, "tf_powerup_bottle", GetEntProp(iPowerupBottle, Prop_Send, "m_iItemDefinitionIndex")) >= Plugin_Handled)
-				TF2_RemoveWearable(iClient, iPowerupBottle);
+			if (TF2_OnGiveNamedItem(client, "tf_powerup_bottle", GetEntProp(powerupBottle, Prop_Send, "m_iItemDefinitionIndex")) >= Plugin_Handled)
+				TF2_RemoveWearable(client, powerupBottle);
 		}
 	}
 }
