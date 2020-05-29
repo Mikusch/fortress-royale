@@ -319,13 +319,11 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	}
 	
 	// CTFDroppedWeapon::Create deletes tf_dropped_weapon if there too many in map, pretend entity is marking for deletion so it doesnt actually get deleted
-	int count;
 	int entity = MaxClients + 1;
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
 	{
-		int iFlags = GetEntProp(entity, Prop_Data, "m_iEFlags");
-		SetEntProp(entity, Prop_Data, "m_iEFlags", iFlags|EFL_KILLME);
-		count++;
+		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		SetEntProp(entity, Prop_Data, "m_iEFlags", flags|EFL_KILLME);
 	}
 	
 	//Pass client as NULL, only used for deleting existing dropped weapon which we do not want to happen
@@ -333,9 +331,9 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
 	{
-		int iFlags = GetEntProp(entity, Prop_Data, "m_iEFlags");
-		iFlags = iFlags &= ~EFL_KILLME;
-		SetEntProp(entity, Prop_Data, "m_iEFlags", iFlags);
+		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		flags = flags &= ~EFL_KILLME;
+		SetEntProp(entity, Prop_Data, "m_iEFlags", flags);
 	}
 	
 	if (droppedWeapon == INVALID_ENT_REFERENCE)
