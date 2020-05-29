@@ -34,6 +34,12 @@
 				"linux"		"@_ZN16CObjectDispenser15CouldHealTargetEP11CBaseEntity"
 				"windows"	"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x8B\x87\x10\x01\x00\x00"
 			}
+			"CTFDroppedWeapon::Create"
+			{
+				"library"	"server"
+				"linux"		"@_ZN16CTFDroppedWeapon6CreateEP9CTFPlayerRK6VectorRK6QAnglePKcPK13CEconItemView"
+				"windows"	"\x55\x8B\xEC\x51\xA1\x2A\x2A\x2A\x2A\x80\xB8\x2A\x2A\x2A\x2A\x00\x74\x2A\x33\xC0\x8B\xE5\x5D\xC3"
+			}
 			"CTFDroppedWeapon::InitDroppedWeapon"
 			{
 				"library"	"server"
@@ -184,11 +190,6 @@
 			{
 				"linux"		"1308"
 				"windows"	"1288"
-			}
-			"sizeof(CEconItemView)"
-			{
-				"linux"		"148"
-				"windows"	"148"
 			}
 		}
 		"Functions"

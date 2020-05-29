@@ -1,3 +1,4 @@
+static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallTryToPickupDroppedWeapon;
@@ -10,6 +11,7 @@ static Handle g_SDKCallEquipWearable;
 
 void SDKCall_Init(GameData gamedata)
 {
+	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
 	g_SDKCallTryToPickupDroppedWeapon = PrepSDKCall_TryToPickupDroppedWeapon(gamedata);
@@ -19,6 +21,24 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+}
+
+static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::Create");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
+
+	return call;
 }
 
 static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
@@ -150,6 +170,11 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 	return call;
 }
 
+int SDKCall_CreateDroppedWeapon(int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 }, const char[] model, Address item)
+{
+	return SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, item);
+}
+
 void SDKCall_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool swap, bool isSuicide = false)
 {
 	SDKCall(g_SDKCallInitDroppedWeapon, droppedWeapon, client, fromWeapon, swap, isSuicide);
@@ -185,7 +210,7 @@ float SDKCall_GetDefaultItemChargeMeterValue(int weapon)
 	return SDKCall(g_SDKCallGetDefaultItemChargeMeterValue, weapon);
 }
 
-int SDKCall_GiveNamedItem(int client, const char[] classname, int subtype, Address item, bool force = false)
+int SDKCall_GiveNamedItem(int client, const char[] classname, int subtype, Address item, bool force)
 {
 	return SDKCall(g_SDKCallGiveNamedItem, client, classname, subtype, item, force);
 }

@@ -2,7 +2,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 {
 	TFClassType class = TF2_GetPlayerClass(client);
 	int defindex = params.GetInt("defindex");
-	int slot = TF2_GetItemSlot(defindex, class);
+	int slot = TF2Econ_GetItemSlot(defindex, class);
 	if (slot < WeaponSlot_Primary)
 	{
 		LogError("Unable to get slot for def index '%d' and class '%d'", defindex, class);
@@ -46,7 +46,10 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	
 	//Can't find reskin, create default weapon
 	if (weapon == -1)
+	{
 		weapon = TF2_CreateWeapon(defindex, class);
+		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client));
+	}
 	
 	if (weapon > MaxClients)
 	{
