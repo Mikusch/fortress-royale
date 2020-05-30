@@ -21,6 +21,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_Touch, Cleaver_Touch);
 		SDKHook(entity, SDKHook_TouchPost, Cleaver_TouchPost);
 	}
+	else if (StrEqual(classname, "tf_flame_manager"))
+	{
+		SDKHook(entity, SDKHook_Touch, FlameManager_Touch);
+		SDKHook(entity, SDKHook_TouchPost, FlameManager_TouchPost);
+	}
 	else if (StrEqual(classname, "tf_gas_manager"))
 	{
 		SDKHook(entity, SDKHook_Touch, GasManager_Touch);
@@ -168,6 +173,19 @@ public void Cleaver_TouchPost(int entity, int other)
 		return;
 	
 	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+}
+
+public Action FlameManager_Touch(int entity, int toucher)
+{
+	// This calls ShouldCollide with buildings team check
+	int client = GetOwnerLoop(entity);
+	FRPlayer(client).ChangeToSpectator();
+}
+
+public void FlameManager_TouchPost(int entity, int toucher)
+{
+	int client = GetOwnerLoop(entity);
+	FRPlayer(client).ChangeToTeam();
 }
 
 public Action GasManager_Touch(int entity, int other)
