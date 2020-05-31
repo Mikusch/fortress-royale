@@ -226,7 +226,8 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	}
 	
 	//Create new weapon
-	weapon = TF2_CreateWeapon(defindex, class);
+	int itemOffset = FindSendPropInfo("CTFDroppedWeapon", "m_Item");
+	weapon = TF2_GiveNamedItem(client, GetEntityAddress(droppedWeapon) + view_as<Address>(itemOffset));
 	if (weapon > MaxClients)
 	{
 		TF2_EquipWeapon(client, weapon);
@@ -357,18 +358,20 @@ public MRESReturn DHook_GiveNamedItemPre(int client, Handle returnVal, Handle pa
 	if (DHookIsNullParam(params, 1) || DHookIsNullParam(params, 3))
 	{
 		DHookSetReturn(returnVal, 0);
-		return MRES_Override;
+		return MRES_Supercede;
 	}
 	
 	char classname[256];
 	DHookGetParamString(params, 1, classname, sizeof(classname));
 	int index = DHookGetParamObjectPtrVar(params, 3, g_OffsetItemDefinitionIndex, ObjectValueType_Int) & 0xFFFF;
 	
-	if (CanKeepWeapon(classname, index))
-		return MRES_Ignored;
+	if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
+	{
+		DHookSetReturn(returnVal, 0);
+		return MRES_Supercede;
+	}
 	
-	DHookSetReturn(returnVal, 0);
-	return MRES_Override;
+	return MRES_Ignored;
 }
 
 public void DHook_GiveNamedItemRemoved(int hookid)

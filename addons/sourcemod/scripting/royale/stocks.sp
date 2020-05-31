@@ -1,3 +1,5 @@
+static bool g_SkipGiveNamedItem;
+
 stock int GetOwnerLoop(int entity)
 {
 	
@@ -38,25 +40,6 @@ stock void ModelIndexToString(int index, char[] model, int size)
 {
 	int table = FindStringTable("modelprecache");
 	ReadStringTable(table, index, model, size);
-}
-
-stock bool CanKeepWeapon(const char[] classname, int index)
-{
-	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
-	{
-		int slot = TF2_GetItemSlot(index, class);
-		
-		//Allow keep toolbox
-		if (slot == WeaponSlot_BuilderEngie && StrEqual(classname, "tf_weapon_builder"))
-			return true;
-		
-		//Don't allow weapons and action items from client loadout slots
-		if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
-			return false;
-	}
-	
-	//Allow cosmetics and toolbox
-	return true;
 }
 
 stock int GetClientFromPlayerShared(Address playershared)
@@ -182,6 +165,83 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	return -1;
 }
 
+stock void TF2_CheckClientWeapons(int client)
+{
+	//Weapons
+	for (int slot = WeaponSlot_Primary; slot <= WeaponSlot_BuilderEngie; slot++)
+	{
+		int weapon = GetPlayerWeaponSlot(client, slot);
+		if (weapon > MaxClients)
+		{
+			char classname[256];
+			GetEntityClassname(weapon, classname, sizeof(classname));
+			int index = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+			if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
+				TF2_RemoveItemInSlot(client, slot);
+		}
+	}
+	
+	//Cosmetics
+	int wearable = MaxClients+1;
+	while ((wearable = FindEntityByClassname(wearable, "tf_wearable*")) > MaxClients)
+	{
+		if (GetEntPropEnt(wearable, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(wearable, Prop_Send, "moveparent") == client)
+		{
+			char classname[256];
+			GetEntityClassname(wearable, classname, sizeof(classname));
+			int index = GetEntProp(wearable, Prop_Send, "m_iItemDefinitionIndex");
+			if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
+				TF2_RemoveWearable(client, wearable);
+		}
+	}
+	
+	//MvM Canteen
+	int powerupBottle = MaxClients+1;
+	while ((powerupBottle = FindEntityByClassname(powerupBottle, "tf_powerup_bottle*")) > MaxClients)
+	{
+		if (GetEntPropEnt(powerupBottle, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(powerupBottle, Prop_Send, "moveparent") == client)
+		{
+			if (TF2_OnGiveNamedItem(client, "tf_powerup_bottle", GetEntProp(powerupBottle, Prop_Send, "m_iItemDefinitionIndex")) >= Plugin_Handled)
+				TF2_RemoveWearable(client, powerupBottle);
+		}
+	}
+}
+
+stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
+{
+	if (g_SkipGiveNamedItem)
+		return Plugin_Continue;
+	
+	int slot = TF2_GetItemSlot(index, TF2_GetPlayerClass(client));
+	
+	//Allow keep toolbox
+	if (slot == WeaponSlot_BuilderEngie && StrEqual(classname, "tf_weapon_builder"))
+		return Plugin_Continue;
+	
+	//Don't allow weapons and action items from client loadout slots
+	if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
+		return Plugin_Handled;
+	
+	//Allow cosmetics
+	return Plugin_Continue;
+}
+
+stock int TF2_GiveNamedItem(int client, Address item)
+{
+	char classname[256];
+	TF2Econ_GetItemClassName(LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16), classname, sizeof(classname));
+	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	
+	int subtype = 0;
+	if ((StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")) && TF2_GetPlayerClass(client) == TFClass_Spy)
+		subtype = view_as<int>(TFObject_Sapper);
+	
+	g_SkipGiveNamedItem = true;
+	int weapon = SDKCall_GiveNamedItem(client, classname, subtype, item, true);
+	g_SkipGiveNamedItem = false;
+	return weapon;
+}
+
 stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const char[] classnameTemp = NULL_STRING)
 {
 	char classname[256];
@@ -227,8 +287,17 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 	return weapon;
 }
 
-stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const float origin[3] = NULL_VECTOR, const float angles[3] = NULL_VECTOR)
+stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
 {
+	char classname[32];
+	GetEntityNetClass(fromWeapon, classname, sizeof(classname));
+	int itemOffset = FindSendPropInfo(classname, "m_Item");
+	if (itemOffset <= -1)
+	{
+		LogError("Failed to find m_Item on: %s", classname);
+		return -1;
+	}
+	
 	int index = GetEntProp(fromWeapon, Prop_Send, "m_iItemDefinitionIndex");
 	char defindex[12];
 	IntToString(index, defindex, sizeof(defindex));
@@ -249,14 +318,27 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 		ModelIndexToString(modelIndex, model, sizeof(model));
 	}
 	
-	//Do similar steps to CTFDroppedWeapon::Create but without deleting existing dropped weapon
-	int droppedWeapon = CreateEntityByName("tf_dropped_weapon");
+	// CTFDroppedWeapon::Create deletes tf_dropped_weapon if there too many in map, pretend entity is marking for deletion so it doesnt actually get deleted
+	int entity = MaxClients + 1;
+	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
+	{
+		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		SetEntProp(entity, Prop_Data, "m_iEFlags", flags|EFL_KILLME);
+	}
+	
+	//Pass client as NULL, only used for deleting existing dropped weapon which we do not want to happen
+	int droppedWeapon = SDKCall_CreateDroppedWeapon(-1, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+	
+	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
+	{
+		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		flags = flags &= ~EFL_KILLME;
+		SetEntProp(entity, Prop_Data, "m_iEFlags", flags);
+	}
+	
 	if (droppedWeapon == INVALID_ENT_REFERENCE)
 		return INVALID_ENT_REFERENCE;
 	
-	TeleportEntity(droppedWeapon, origin, angles, NULL_VECTOR);
-	SetEntityModel(droppedWeapon, model);
-	SetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex", index);	//def index may enough instead of needing to copy whole m_Item
 	DispatchSpawn(droppedWeapon);
 	
 	//Setup ammo, energy count etc

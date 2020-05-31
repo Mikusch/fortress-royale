@@ -63,6 +63,8 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	
+	TF2_CheckClientWeapons(client);
+	
 	//Create starting fists weapon
 	int fists = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
 	if (fists > MaxClients)

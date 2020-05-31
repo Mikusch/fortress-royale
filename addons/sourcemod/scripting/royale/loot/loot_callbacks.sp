@@ -1,14 +1,58 @@
 public int LootCallback_CreateWeapon(int client, CallbackParams params)
 {
+	TFClassType class = TF2_GetPlayerClass(client);
 	int defindex = params.GetInt("defindex");
+	int slot = TF2Econ_GetItemSlot(defindex, class);
+	if (slot < WeaponSlot_Primary)
+	{
+		LogError("Unable to get slot for def index '%d' and class '%d'", defindex, class);
+		return -1;
+	}
 	
-	int weapon = TF2_CreateWeapon(defindex, TF2_GetPlayerClass(client));
+	//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
+	FRPlayer(client).ChangeToTeam();
+	
+	int weapon = -1;
+	int droppedWeapon = -1;
+	
+	//Find possible reskin to use
+	Address item = SDKCall_GetLoadoutItem(client, class, slot);
+	if (item)
+	{
+		int reskin = LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16);
+		if (reskin == defindex)
+		{
+			weapon = TF2_GiveNamedItem(client, item);
+		}
+		else
+		{
+			char buffer[256];
+			if (params.GetString("reskins", buffer, sizeof(buffer)))
+			{
+				int defindexbuffer;
+				char indexbuffer[32][12];
+				int count = ExplodeString(buffer, " ", indexbuffer, sizeof(indexbuffer), sizeof(indexbuffer[]));
+				for (int i = 0; i < count; i++)
+				{
+					if (StringToIntEx(indexbuffer[i], defindexbuffer) && reskin == defindexbuffer)
+					{
+						weapon = TF2_GiveNamedItem(client, item);
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	//Can't find reskin, create default weapon
+	if (weapon == -1)
+	{
+		weapon = TF2_CreateWeapon(defindex, class);
+		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client));
+	}
+	
 	if (weapon > MaxClients)
 	{
-		//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
-		FRPlayer(client).ChangeToTeam();
-		TF2_ChangeTeam(weapon, TF2_GetTeam(client));
-		
 		int ammo = -1;
 		if (!TF2_IsWearable(weapon))
 		{
@@ -18,20 +62,19 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
 		}
 		
-		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
+		droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
 		if (droppedWeapon == INVALID_ENT_REFERENCE)
 			LogError("Unable to create dropped weapon for def index '%d'", defindex);
 		
 		if (!TF2_IsWearable(weapon))
 			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
 		
-		FRPlayer(client).ChangeToSpectator();
-		
 		RemoveEntity(weapon);
-		return droppedWeapon;
 	}
 	
-	return -1;
+	FRPlayer(client).ChangeToSpectator();
+	
+	return droppedWeapon;
 }
 
 public bool LootCallback_ClassWeapon(CallbackParams params, LootType type, TFClassType class)

@@ -1,20 +1,44 @@
+static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallTryToPickupDroppedWeapon;
+static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallFindAndHealTargets;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
+static Handle g_SDKCallGiveNamedItem;
 static Handle g_SDKCallEquipWearable;
 
 void SDKCall_Init(GameData gamedata)
 {
+	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
 	g_SDKCallTryToPickupDroppedWeapon = PrepSDKCall_TryToPickupDroppedWeapon(gamedata);
+	g_SDKCallGetLoadoutItem = PrepSDKCall_GetLoadoutItem(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
+	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+}
+
+static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::Create");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
+
+	return call;
 }
 
 static Handle PrepSDKCall_InitDroppedWeapon(GameData gamedata)
@@ -60,6 +84,22 @@ static Handle PrepSDKCall_TryToPickupDroppedWeapon(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_GetLoadoutItem(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetLoadoutItem");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create call: CTFPlayer::GetLoadoutItem");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_GetEquippedWearableForLoadoutSlot(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -100,6 +140,23 @@ static Handle PrepSDKCall_GetDefaultItemChargeMeterValue(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_GiveNamedItem(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CTFPlayer::GiveNamedItem");
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create call: CTFPlayer::GiveNamedItem");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
@@ -111,6 +168,11 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 		LogError("Failed to create SDKCall: CBasePlayer::EquipWearable");
 	
 	return call;
+}
+
+int SDKCall_CreateDroppedWeapon(int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 }, const char[] model, Address item)
+{
+	return SDKCall(g_SDKCallCreateDroppedWeapon, client, origin, angles, model, item);
 }
 
 void SDKCall_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bool swap, bool isSuicide = false)
@@ -128,9 +190,14 @@ bool SDKCall_TryToPickupDroppedWeapon(int client)
 	return SDKCall(g_SDKCallTryToPickupDroppedWeapon, client);
 }
 
-void SDKCall_EquipWearable(int client, int wearable)
+Address SDKCall_GetLoadoutItem(int client, TFClassType class, int slot)
 {
-	SDKCall(g_SDKCallEquipWearable, client, wearable);
+	return SDKCall(g_SDKCallGetLoadoutItem, client, class, slot, false);
+}
+
+int SDKCall_GetEquippedWearableForLoadoutSlot(int client, int slot)
+{
+	return SDKCall(g_SDKCallGetEquippedWearableForLoadoutSlot, client, slot);
 }
 
 bool SDKCall_FindAndHealTargets(int medigun)
@@ -143,7 +210,12 @@ float SDKCall_GetDefaultItemChargeMeterValue(int weapon)
 	return SDKCall(g_SDKCallGetDefaultItemChargeMeterValue, weapon);
 }
 
-int SDKCall_GetEquippedWearableForLoadoutSlot(int client, int slot)
+int SDKCall_GiveNamedItem(int client, const char[] classname, int subtype, Address item, bool force)
 {
-	return SDKCall(g_SDKCallGetEquippedWearableForLoadoutSlot, client, slot);
+	return SDKCall(g_SDKCallGiveNamedItem, client, classname, subtype, item, force);
+}
+
+void SDKCall_EquipWearable(int client, int wearable)
+{
+	SDKCall(g_SDKCallEquipWearable, client, wearable);
 }
