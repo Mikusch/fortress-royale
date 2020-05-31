@@ -202,6 +202,15 @@ public Action EntityOutput_OnBreak(const char[] output, int caller, int activato
 			GetEntPropVector(caller, Prop_Data, "m_vecOrigin", origin);
 			GetEntPropVector(caller, Prop_Data, "m_angRotation", angles);
 			GetEntPropVector(caller, Prop_Data, "m_vecVelocity", velocity);
+			
+			//Calculate where centre of origin by boundary box
+			float mins[3], maxs[3], offset[3];
+			GetEntPropVector(caller, Prop_Data, "m_vecMins", mins);
+			GetEntPropVector(caller, Prop_Data, "m_vecMaxs", maxs);
+			AddVectors(maxs, mins, offset);
+			ScaleVector(offset, 0.5);
+			AddVectors(origin, offset, origin);
+			
 			TeleportEntity(entity, origin, angles, velocity);
 		}
 	}
