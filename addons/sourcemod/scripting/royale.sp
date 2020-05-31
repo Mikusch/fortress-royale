@@ -231,10 +231,9 @@ enum
  */
 enum LootType
 {
-	Loot_Weapon_Primary = 0,	/**< Primary weapons */
-	Loot_Weapon_Secondary,		/**< Secondary weapons */
-	Loot_Weapon_Melee,			/**< Melee weapons */
-	Loot_Weapon_PDA,			/**< PDA weapons */
+	Loot_Weapon_Common = 0,		/**< Common weapons */
+	Loot_Weapon_Uncommon,		/**< Uncommon weapons */
+	Loot_Weapon_Rare,			/**< Rare weapons */
 	Loot_Weapon_Misc,			/**< Grappling Hook, etc. */
 	Loot_Pickup_Health,			/**< Health pickups */
 	Loot_Pickup_Ammo,			/**< Ammunition pickups */

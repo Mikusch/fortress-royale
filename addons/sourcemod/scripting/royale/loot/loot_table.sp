@@ -84,7 +84,6 @@ void LootTable_ReadConfig(KeyValues kv)
 				{
 					Call_StartFunction(null, lootTable.callback_class);
 					Call_PushCell(lootTable.callbackParams);
-					Call_PushCell(lootTable.type);
 					Call_PushCell(class);
 					
 					bool result;

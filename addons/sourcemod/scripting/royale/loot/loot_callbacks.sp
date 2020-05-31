@@ -77,7 +77,7 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	return droppedWeapon;
 }
 
-public bool LootCallback_ClassWeapon(CallbackParams params, LootType type, TFClassType class)
+public bool LootCallback_ClassWeapon(CallbackParams params, TFClassType class)
 {
 	int defindex;
 	if (!params.GetIntEx("defindex", defindex))
@@ -86,18 +86,7 @@ public bool LootCallback_ClassWeapon(CallbackParams params, LootType type, TFCla
 		return false;
 	}
 	
-	int slot = TF2_GetItemSlot(defindex, class);
-	switch (type)
-	{
-		case Loot_Weapon_Primary: return slot == WeaponSlot_Primary;
-		case Loot_Weapon_Secondary: return slot == WeaponSlot_Secondary;
-		case Loot_Weapon_Melee: return slot == WeaponSlot_Melee;
-		case Loot_Weapon_PDA: return WeaponSlot_Melee < slot < WeaponSlot_BuilderEngie;
-		case Loot_Weapon_Misc: return slot >= WeaponSlot_BuilderEngie;
-	}
-	
-	LogError("Invalid type '%d' passed", type);
-	return false;
+	return TF2_GetItemSlot(defindex, class) >= WeaponSlot_Primary;
 }
 
 public void LootCallback_PrecacheWeapon(CallbackParams params)
