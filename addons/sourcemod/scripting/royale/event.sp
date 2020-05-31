@@ -152,7 +152,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	if (!deadringer)
 	{
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
-		RequestFrame(Frame_SetClientDead, GetClientSerial(victim));
+		CreateTimer(0.1, Timer_SetClientDead, GetClientSerial(victim));
 	}
 }
 
@@ -184,11 +184,9 @@ public Action Event_ObjectDestroyed(Event event, const char[] name, bool dontBro
 	}
 }
 
-public void Frame_SetClientDead(int serial)
+public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
-	if (client <= 0 || client > MaxClients || !IsClientInGame(client) || TF2_GetClientTeam(client) <= TFTeam_Spectator)
-		return;
-	
-	TF2_ChangeClientTeam(client, TFTeam_Dead);
+	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
+		TF2_ChangeTeam(client, TFTeam_Dead);
 }
