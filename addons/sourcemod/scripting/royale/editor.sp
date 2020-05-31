@@ -291,9 +291,10 @@ void Editor_FindCrate(int client)
 
 void Editor_MoveCrateToEye(int client, int crate)
 {
-	float posStart[3], posEnd[3], angles[3];
-	float mins[3] =  { -32.0, -32.0, -16.0 };
-	float maxs[3] =  { 32.0, 32.0, 48.0 };
+	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
+	
+	GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
+	GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
 	
 	GetClientEyePosition(client, posStart);
 	GetClientEyeAngles(client, angles);
