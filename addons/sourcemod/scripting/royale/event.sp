@@ -188,5 +188,5 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
-		TF2_ChangeTeam(client, TFTeam_Dead);
+		TF2_ChangeClientTeam(client, TFTeam_Dead);
 }
