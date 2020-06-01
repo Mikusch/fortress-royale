@@ -82,8 +82,8 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 	if (multiplier == 1.0)
 		return Plugin_Continue;
 	
-	//Multiply health by convar value, and round up value by 5
-	maxhealth = RoundToFloor(float(maxhealth) * multiplier / 5.0) * 5;
+	//Multiply health by convar value
+	maxhealth *= multiplier;
 	return Plugin_Changed;
 }
 

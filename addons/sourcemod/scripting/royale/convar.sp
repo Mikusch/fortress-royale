@@ -11,7 +11,7 @@ static ConVar tf_spells_enabled;
 
 void ConVar_Init()
 {
-	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "1.5", "Max health multiplier (rounds to lowest 5)", _, true, 0.0);
+	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "2.0", "Max health multiplier", _, true, 0.0);
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	
@@ -73,7 +73,7 @@ void ConVar_Toggle(bool enable)
 		tf_dropped_weapon_lifetime.FloatValue = 99999.0;
 		
 		maxhealthboost = tf_max_health_boost.FloatValue;
-		tf_max_health_boost.FloatValue = 2.25;
+		tf_max_health_boost.FloatValue = 4.0;
 		
 		powerupmode = tf_powerup_mode.BoolValue;
 		tf_powerup_mode.BoolValue = true;
