@@ -1,7 +1,8 @@
 void SDKHook_HookClient(int client)
 {
+	SDKHook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
+	
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
-	SDKHook(client, SDKHook_ShouldCollide, Client_ShouldCollide);
 	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
 	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
@@ -21,6 +22,10 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_Touch, Cleaver_Touch);
 		SDKHook(entity, SDKHook_TouchPost, Cleaver_TouchPost);
 	}
+	else if (StrEqual(classname, "tf_projectile_syringe"))
+	{
+		SDKHook(entity, SDKHook_ShouldCollide, Entity_ShouldCollide);
+	}
 	else if (StrEqual(classname, "tf_flame_manager"))
 	{
 		SDKHook(entity, SDKHook_Touch, FlameManager_Touch);
@@ -38,6 +43,14 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
 	}
+}
+
+public bool Entity_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
+{
+	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
+		return true;
+	
+	return originalResult;
 }
 
 public void Building_SpawnPost(int building)
@@ -65,14 +78,6 @@ public Action Client_SetTransmit(int entity, int client)
 		return Plugin_Handled;
 	
 	return Plugin_Continue;
-}
-
-public bool Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
-{
-	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
-		return true;
-	
-	return originalResult;
 }
 
 public Action Client_GetMaxHealth(int client, int &maxhealth)
@@ -154,25 +159,15 @@ public Action Cleaver_Touch(int entity, int other)
 {
 	//This function have team check, change projectile and owner to spectator to touch both teams
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner == other)
-		return;
-	
-	TF2_ChangeTeam(entity, TFTeam_Spectator);
-	TF2_ChangeTeam(owner, TFTeam_Spectator);
+	if (owner != other)
+		FRPlayer(owner).ChangeToSpectator();
 }
 
 public void Cleaver_TouchPost(int entity, int other)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (owner == other)
-		return;
-	
-	//Get original team by using it's weapon
-	int weapon = GetEntPropEnt(entity, Prop_Send, "m_hOriginalLauncher");
-	if (weapon <= MaxClients)
-		return;
-	
-	TF2_ChangeTeam(owner, TF2_GetTeam(weapon));
+	if (owner != other)
+		FRPlayer(owner).ChangeToTeam();
 }
 
 public Action FlameManager_Touch(int entity, int toucher)
