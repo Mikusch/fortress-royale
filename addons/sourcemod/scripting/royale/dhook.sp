@@ -19,6 +19,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
 	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
@@ -285,6 +286,20 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 public MRESReturn DHook_SaveMePre(int client, Handle params)
 {
 	//Prevent showing medic bubble over this player's head
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_RegenThinkPre(int client, Handle params)
+{
+	//Disable Medic health regen
+	if (TF2_GetPlayerClass(client) == TFClass_Medic)
+		FRPlayer(client).ChangeToUnknown();
+	return MRES_Supercede;
+}
+
+public MRESReturn DHook_RegenThinkPost(int client, Handle params)
+{
+	FRPlayer(client).ChangeToClass();
 	return MRES_Supercede;
 }
 

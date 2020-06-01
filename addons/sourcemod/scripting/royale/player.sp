@@ -8,6 +8,8 @@ static int g_ClientEditorCrateRef[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
+static TFClassType g_ClientClass[TF_MAXPLAYERS + 1];
+static int g_ClientClassUnknown[TF_MAXPLAYERS + 1];
 
 methodmap FRPlayer
 {
@@ -123,6 +125,14 @@ methodmap FRPlayer
 		}
 	}
 	
+	property TFClassType Class
+	{
+		public get()
+		{
+			return g_ClientClass[this];
+		}
+	}
+	
 	public void ChangeToSpectator()
 	{
 		if (++g_ClientSpectator[this] == 1)
@@ -157,6 +167,23 @@ methodmap FRPlayer
 		{
 			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == this.Client)
 				TF2_ChangeTeam(building, g_ClientTeam[this]);
+		}
+	}
+	
+	public void ChangeToUnknown()
+	{
+		if (++g_ClientClassUnknown[this] == 1)
+		{
+			g_ClientClass[this] = TF2_GetPlayerClass(this.Client);
+			TF2_SetPlayerClass(this.Client, TFClass_Unknown);
+		}
+	}
+	
+	public void ChangeToClass()
+	{
+		if (--g_ClientClassUnknown[this] == 0)
+		{
+			TF2_SetPlayerClass(this.Client, g_ClientClass[this]);
 		}
 	}
 }

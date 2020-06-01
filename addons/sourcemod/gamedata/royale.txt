@@ -88,6 +88,12 @@
 				"linux"		"@_ZN9CTFPlayer6SaveMeEv"
 				"windows"	"\x55\x8B\xEC\x51\x56\x8B\xF1\x8B\x06\x8B\x80\x04\x01\x00\x00\xFF\xD0\x84\xC0\x74\x2A\x8D\x86\xFC\x20\x00\x00"
 			}
+			"CTFPlayer::RegenThink"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer10RegenThinkEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x74\x57\x8B\xF9\x8B\x07"
+			}
 			"CTFPlayerShared::SetChargeEffect"
 			{
 				"library"	"server"
@@ -317,6 +323,13 @@
 			"CTFPlayer::SaveMe"
 			{
 				"signature"	"CTFPlayer::SaveMe"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
+			}
+			"CTFPlayer::RegenThink"
+			{
+				"signature"	"CTFPlayer::RegenThink"
 				"callconv"	"thiscall"
 				"return"	"void"
 				"this"		"entity"
