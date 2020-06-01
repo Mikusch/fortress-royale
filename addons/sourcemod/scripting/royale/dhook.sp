@@ -114,7 +114,7 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_DHookTossJarThink, false, entity, _, DHook_TossJarThinkPre);
 		DHookEntity(g_DHookTossJarThink, true, entity, _, DHook_TossJarThinkPost);
 	}
-	else if (StrEqual(classname, "tf_weapon_pipebomblauncher"))
+	else if (StrEqual(classname, "tf_weapon_particle_cannon") || StrEqual(classname, "tf_weapon_pipebomblauncher"))
 	{
 		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
 	}
@@ -421,8 +421,8 @@ public MRESReturn DHook_FireProjectilePost(int weapon, Handle returnVal, Handle 
 	int projectile = DHookGetReturn(returnVal);
 	TF2_ChangeTeam(projectile, FRPlayer(client).Team);
 	
-	//Set owner entity so breaking loots with projectil works
-	SetEntPropEnt(projectile, Prop_Send, "m_hOwnerEntity", weapon);
+	//Set owner entity so breaking loots with projectile works (stickybomb)
+	SetEntPropEnt(projectile, Prop_Send, "m_hOwnerEntity", client);
 }
 
 public MRESReturn DHook_SmackPre(int weapon)
