@@ -292,8 +292,7 @@ public MRESReturn DHook_SaveMePre(int client, Handle params)
 public MRESReturn DHook_RegenThinkPre(int client, Handle params)
 {
 	//Disable Medic health regen
-	if (TF2_GetPlayerClass(client) == TFClass_Medic)
-		FRPlayer(client).ChangeToUnknown();
+	FRPlayer(client).ChangeToUnknown();
 	return MRES_Supercede;
 }
 
@@ -485,6 +484,7 @@ public MRESReturn DHook_TossJarThinkPost(int entity, Handle params)
 
 public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)
 {
+	//Lag compensate teammates
 	FRPlayer(client).ChangeToSpectator();
 }
 
