@@ -523,7 +523,7 @@ public void OnPluginStart()
 	Event_Init();
 	Loot_Init();
 	
-	ConVar_Toggle(true);
+	ConVar_Enable();
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -534,7 +534,7 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
-	ConVar_Toggle(false);
+	ConVar_Disable();
 }
 
 public void OnMapStart()

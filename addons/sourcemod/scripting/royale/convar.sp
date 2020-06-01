@@ -1,13 +1,11 @@
-static ConVar mp_autoteambalance;
-static ConVar mp_teams_unbalance_limit;
-static ConVar mp_forcecamera;
-static ConVar mp_friendlyfire;
-static ConVar tf_arena_first_blood;
-static ConVar tf_avoidteammates;
-static ConVar tf_dropped_weapon_lifetime;
-static ConVar tf_max_health_boost;
-static ConVar tf_powerup_mode;
-static ConVar tf_spells_enabled;
+enum struct ConVarInfo
+{
+	ConVar convar;
+	float value;
+	float defaultValue;
+}
+
+static ArrayList ConVars;
 
 void ConVar_Init()
 {
@@ -20,80 +18,65 @@ void ConVar_Init()
 	fr_zone_shrink = CreateConVar("fr_zone_shrink", "60.0", "", _, true, 0.0);
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "", _, true, 0.0);
 	
-	mp_autoteambalance = FindConVar("mp_autoteambalance");
-	mp_teams_unbalance_limit = FindConVar("mp_teams_unbalance_limit");
-	mp_forcecamera = FindConVar("mp_forcecamera");
-	mp_friendlyfire = FindConVar("mp_friendlyfire");
-	tf_arena_first_blood = FindConVar("tf_arena_first_blood");
-	tf_avoidteammates = FindConVar("tf_avoidteammates");
-	tf_dropped_weapon_lifetime = FindConVar("tf_dropped_weapon_lifetime");
-	tf_max_health_boost = FindConVar("tf_max_health_boost");
-	tf_powerup_mode = FindConVar("tf_powerup_mode");
-	tf_spells_enabled = FindConVar("tf_spells_enabled");
+	ConVars = new ArrayList(sizeof(ConVarInfo));
+	
+	ConVar_Add("mp_autoteambalance", 0.0);
+	ConVar_Add("mp_teams_unbalance_limit", 0.0);
+	ConVar_Add("mp_forcecamera", 0.0);
+	ConVar_Add("mp_friendlyfire", 1.0);
+	ConVar_Add("tf_arena_first_blood", 0.0);
+	ConVar_Add("tf_avoidteammates", 0.0);
+	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
+	ConVar_Add("tf_max_health_boost", 4.0);
+	ConVar_Add("tf_powerup_mode", 1.0);
+	ConVar_Add("tf_spells_enabled", 1.0);
+	
 }
 
-void ConVar_Toggle(bool enable)
+void ConVar_Add(const char[] name, float value)
 {
-	static bool toggled = false;
-	
-	static int autoteambalance;
-	static int teamsUnbalanceLimit;
-	static int forcecamera;
-	static bool friendlyfire;
-	static bool firstblood;
-	static bool avoidteammates;
-	static float droppedweaponlifetime;
-	static float maxhealthboost;
-	static bool powerupmode;
-	static bool spellsenabled;
-	
-	if (enable && !toggled)
+	ConVarInfo info;
+	info.convar = FindConVar(name);
+	info.value = value;
+	ConVars.PushArray(info);
+}
+
+void ConVar_Enable()
+{
+	for (int i = 0; i < ConVars.Length; i++)
 	{
-		toggled = true;
+		ConVarInfo info;
+		ConVars.GetArray(i, info);
+		info.defaultValue = info.convar.FloatValue;
+		ConVars.SetArray(i, info);
 		
-		autoteambalance = mp_autoteambalance.IntValue;
-		mp_autoteambalance.IntValue = 0;
-		
-		teamsUnbalanceLimit = mp_teams_unbalance_limit.IntValue;
-		mp_teams_unbalance_limit.IntValue = 0;
-		
-		forcecamera = mp_forcecamera.IntValue;
-		mp_forcecamera.IntValue = 0;
-		
-		friendlyfire = mp_friendlyfire.BoolValue;
-		mp_friendlyfire.BoolValue = true;
-		
-		firstblood = tf_arena_first_blood.BoolValue;
-		tf_arena_first_blood.BoolValue = false;
-		
-		avoidteammates = tf_avoidteammates.BoolValue;
-		tf_avoidteammates.BoolValue = false;
-		
-		droppedweaponlifetime = tf_dropped_weapon_lifetime.FloatValue;
-		tf_dropped_weapon_lifetime.FloatValue = 99999.0;
-		
-		maxhealthboost = tf_max_health_boost.FloatValue;
-		tf_max_health_boost.FloatValue = 4.0;
-		
-		powerupmode = tf_powerup_mode.BoolValue;
-		tf_powerup_mode.BoolValue = true;
-		
-		spellsenabled = tf_spells_enabled.BoolValue;
-		tf_spells_enabled.BoolValue = true;
+		info.convar.SetFloat(info.value);
+		info.convar.AddChangeHook(ConVar_OnChanged);
 	}
-	else if (!enable && toggled)
+}
+
+void ConVar_Disable()
+{
+	for (int i = 0; i < ConVars.Length; i++)
 	{
-		toggled = false;
+		ConVarInfo info;
+		ConVars.GetArray(i, info);
 		
-		mp_autoteambalance.IntValue = autoteambalance;
-		mp_teams_unbalance_limit.IntValue = teamsUnbalanceLimit;
-		mp_forcecamera.IntValue = forcecamera;
-		mp_friendlyfire.BoolValue = friendlyfire;
-		tf_arena_first_blood.BoolValue = firstblood;
-		tf_avoidteammates.BoolValue = avoidteammates;
-		tf_dropped_weapon_lifetime.FloatValue = droppedweaponlifetime;
-		tf_max_health_boost.FloatValue = maxhealthboost;
-		tf_powerup_mode.BoolValue = powerupmode;
-		tf_spells_enabled.BoolValue = spellsenabled;
+		info.convar.RemoveChangeHook(ConVar_OnChanged);
+		info.convar.SetFloat(info.defaultValue);
+	}
+}
+
+void ConVar_OnChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	int index = ConVars.FindValue(convar, ConVarInfo::convar);
+	if (index != -1)
+	{
+		ConVarInfo info;
+		ConVars.GetArray(index, info);
+		float value = StringToFloat(newValue);
+		
+		if (value != info.value)
+			info.convar.SetFloat(info.value);
 	}
 }
