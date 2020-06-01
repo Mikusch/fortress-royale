@@ -293,13 +293,11 @@ public MRESReturn DHook_RegenThinkPre(int client, Handle params)
 {
 	//Disable Medic health regen
 	FRPlayer(client).ChangeToUnknown();
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_RegenThinkPost(int client, Handle params)
 {
 	FRPlayer(client).ChangeToClass();
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_SetChargeEffectPre(Address playershared, Handle params)
