@@ -83,7 +83,7 @@ public Action Client_GetMaxHealth(int client, int &maxhealth)
 		return Plugin_Continue;
 	
 	//Multiply health by convar value
-	maxhealth *= multiplier;
+	maxhealth = RoundToNearest(float(maxhealth) * multiplier);
 	return Plugin_Changed;
 }
 
