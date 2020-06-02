@@ -215,7 +215,7 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	int weapon = TF2_GetItemInSlot(client, slot);
 	if (weapon > MaxClients)
 	{
-		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+		if (TF2_ShouldDropWeapon(client, weapon))
 		{
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
@@ -275,7 +275,7 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 	for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
 	{
 		int weapon = TF2_GetItemInSlot(client, slot);
-		if (weapon > MaxClients && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+		if (weapon > MaxClients && TF2_ShouldDropWeapon(client, weapon))
 			TF2_CreateDroppedWeapon(client, weapon, false, origin, angles);
 	}
 	

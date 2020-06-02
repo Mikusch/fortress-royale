@@ -207,6 +207,27 @@ stock void TF2_CheckClientWeapons(int client)
 	}
 }
 
+stock bool TF2_ShouldDropWeapon(int client, int weapon)
+{
+	//Starting fists
+	int defindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+	if (defindex == INDEX_FISTS)
+		return false;
+	
+	if (defindex == INDEX_BASEJUMPER)
+	{
+		//Starting parachute
+		if (FRPlayer(client).PlayerState == PlayerState_Parachute)
+			return false;
+		
+		//Crash if dropping parachute while in cond
+		if (TF2_IsPlayerInCondition(client, TFCond_Parachute))
+			return false;
+	}
+	
+	return true;
+}
+
 stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 {
 	if (g_SkipGiveNamedItem)
