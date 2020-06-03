@@ -2,6 +2,7 @@ void Console_Init()
 {
 	AddCommandListener(Console_JoinTeam, "jointeam");
 	AddCommandListener(Console_JoinTeam, "autoteam");
+	AddCommandListener(Console_JoinTeam, "spectate");
 	AddCommandListener(Console_Build, "build");
 	AddCommandListener(Console_Destroy, "destroy");
 	AddCommandListener(Console_VoiceMenu, "voicemenu");
@@ -10,16 +11,25 @@ void Console_Init()
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
-	//Allow join spectator
-	if (args > 0 && StrEqual(command, "jointeam"))
+	//Force change spectator, has mannpower mode check
+	if (StrContains(command, "spectate") == 0)
+	{
+		TF2_ChangeClientTeam(client, TFTeam_Spectator);
+		return Plugin_Handled;
+	}
+	
+	if (args > 0 && StrContains(command, "jointeam") == 0)
 	{
 		char team[16];
 		GetCmdArg(1, team, sizeof(team));
-		if (StrEqual(team, "spectate"))
-			return Plugin_Continue;
+		if (StrContains(team, "spectate") == 0)
+		{
+			TF2_ChangeClientTeam(client, TFTeam_Spectator);
+			return Plugin_Handled;
+		}
 	}
 	
-	//Otherwise disallow
+	//Disallow join red or blu, whats the point of allowing it anyway
 	if (IsPlayerAlive(client))
 		return Plugin_Handled;
 	
