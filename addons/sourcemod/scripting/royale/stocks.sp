@@ -61,11 +61,11 @@ stock int GetClientFromPlayerShared(Address playershared)
 	return 0;
 }
 
-stock bool TF2_CheckTeamClientCount()
+stock bool TF2_RebalanceTeams()
 {
-	//Count red and blu players
-	int countAlive = 0;
-	int countDead = 0;
+	// This stock is used to fix "1 player needed for new round" while there >1 players in red/blu team
+	int countRed = 0;
+	int countBlu = 0;
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -73,27 +73,43 @@ stock bool TF2_CheckTeamClientCount()
 		{
 			switch (TF2_GetClientTeam(client))
 			{
-				case TFTeam_Alive: countAlive++;
-				case TFTeam_Dead: countDead++;
+				case TFTeam_Red: countRed++;
+				case TFTeam_Blue: countBlu++;
 			}
 		}
 	}
 	
-	//If there atleast 1 player in alive team, nothing need to be done,
-	// if there only 1 player total in red + blu, we cant fix it
-	if (countAlive || countAlive + countDead < 2)
+	// If there atleast 1 player in both red and blu team, round is starting properly so nothing need to be done
+	if (countRed && countBlu)
 		return false;
 	
+	// If there only 1 player total in red + blu, we cant fix it
+	if (countRed + countBlu < 2)
+		return false;
+	
+	// Switch one player to other team
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+		if (IsClientInGame(client) && TF2_GetTeam(client) > TFTeam_Spectator)
 		{
-			TF2_ChangeClientTeam(client, TFTeam_Alive);
+			TF2_ChangeClientTeam(client, TF2_GetEnemyTeam(client));
 			return true;
 		}
 	}
 	
 	return false;
+}
+
+stock void TF2_ForceRoundWin(TFTeam team)
+{
+	int roundwin = CreateEntityByName("game_round_win"); 
+	DispatchSpawn(roundwin);
+	
+	SetVariantString("force_map_reset 1");
+	AcceptEntityInput(roundwin, "AddOutput");
+	SetVariantInt(view_as<int>(team));
+	AcceptEntityInput(roundwin, "SetTeam");
+	AcceptEntityInput(roundwin, "RoundWin");
 }
 
 stock void TF2_ChangeTeam(int entity, TFTeam team)

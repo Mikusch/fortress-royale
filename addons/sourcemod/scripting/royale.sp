@@ -545,6 +545,10 @@ public void OnMapStart()
 	Zone_Precache();
 	
 	DHook_HookGamerules();
+	
+	//Rebalance teams and restart round incase of late load
+	if (TF2_RebalanceTeams())
+		TF2_ForceRoundWin(TFTeam_Unassigned);
 }
 
 public void OnLibraryAdded(const char[] sName)
