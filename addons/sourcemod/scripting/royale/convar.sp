@@ -28,9 +28,7 @@ void ConVar_Init()
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
 	ConVar_Add("tf_max_health_boost", 4.0);
-	ConVar_Add("tf_powerup_mode", 1.0);
 	ConVar_Add("tf_spells_enabled", 1.0);
-	
 }
 
 void ConVar_Add(const char[] name, float value)

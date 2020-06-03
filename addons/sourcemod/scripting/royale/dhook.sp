@@ -5,6 +5,7 @@ static Handle g_DHookPrimaryAttack;
 static Handle g_DHookFireProjectile;
 static Handle g_DHookSmack;
 static Handle g_DHookExplode;
+static Handle g_DHookGetLiveTime;
 static Handle g_DHookTossJarThink;
 static Handle g_DHookWantsLagCompensationOnEntity;
 
@@ -32,6 +33,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookFireProjectile = DHook_CreateVirtual(gamedata, "CTFWeaponBaseGun::FireProjectile");
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
 	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 }
@@ -98,6 +100,7 @@ void DHook_HookGamerules()
 void DHook_HookClient(int client)
 {
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
+	DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, true, client, _, DHook_WantsLagCompensationOnEntityPost);
 }
@@ -108,6 +111,11 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		DHookEntity(g_DHookExplode, false, entity, _, DHook_ExplodePre);
 		DHookEntity(g_DHookExplode, true, entity, _, DHook_ExplodePost);
+	}
+	else if (StrContains(classname, "tf_projectile_pipe") == 0)
+	{
+		DHookEntity(g_DHookGetLiveTime, false, entity, _, DHook_GetLiveTimePre);
+		DHookEntity(g_DHookGetLiveTime, true, entity, _, DHook_GetLiveTimePost);
 	}
 	else if (StrEqual(classname, "tf_weapon_spellbook"))
 	{
@@ -123,11 +131,12 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_PrimaryAttackPre);
 		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_PrimaryAttackPost);
 	}
-	else if (StrEqual(classname, "tf_weapon_wrench") || StrEqual(classname, "tf_weapon_robot_arm"))
-	{
-		DHookEntity(g_DHookSmack, false, entity, _, DHook_SmackPre);
-		DHookEntity(g_DHookSmack, true, entity, _, DHook_SmackPost);
-	}
+}
+
+void DHook_HookMeleeWeapon(int entity)
+{
+	DHookEntity(g_DHookSmack, false, entity, _, DHook_SmackPre);
+	DHookEntity(g_DHookSmack, true, entity, _, DHook_SmackPost);
 }
 
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
@@ -359,10 +368,19 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 
 public MRESReturn DHook_ForceRespawnPre(int client)
 {
+	//Allow RuneRegenThink to start
+	GameRules_SetProp("m_bPowerupMode", true);
+	
+	//Only allow respawn if player is in parachute mode
 	if (FRPlayer(client).PlayerState == PlayerState_Parachute)
 		return MRES_Ignored;
 	
 	return MRES_Supercede;
+}
+
+public MRESReturn DHook_ForceRespawnPost(int client)
+{
+	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public MRESReturn DHook_GiveNamedItemPre(int client, Handle returnVal, Handle params)
@@ -425,23 +443,28 @@ public MRESReturn DHook_FireProjectilePost(int weapon, Handle returnVal, Handle 
 
 public MRESReturn DHook_SmackPre(int weapon)
 {
-	//Client is in spectator during this hook, allow repair and upgrade his building if not using bare hands
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-		return;
+	//Mannpower have increased melee damage, and even bigger for knockout powerup
+	GameRules_SetProp("m_bPowerupMode", true);
 	
-	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients && IsClientInGame(client))
-		FRPlayer(client).ChangeBuildingsToSpectator();
+	//For wrench, client is in spectator during this hook so allow repair and upgrade his building if not using bare hands
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+	{
+		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+		if (0 < client <= MaxClients && IsClientInGame(client))
+			FRPlayer(client).ChangeBuildingsToSpectator();
+	}
 }
 
 public MRESReturn DHook_SmackPost(int weapon)
 {
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-		return;
+	GameRules_SetProp("m_bPowerupMode", false);
 	
-	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients && IsClientInGame(client))
-		FRPlayer(client).ChangeBuildingsToTeam();
+	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+	{
+		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+		if (0 < client <= MaxClients && IsClientInGame(client))
+			FRPlayer(client).ChangeBuildingsToTeam();
+	}
 }
 
 public MRESReturn DHook_ExplodePre(int entity, Handle params)
@@ -463,6 +486,17 @@ public MRESReturn DHook_ExplodePost(int entity, Handle params)
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 	}
+}
+
+public MRESReturn DHook_GetLiveTimePre(int entity, Handle returnVal)
+{
+	//Haste and King powerup allows sticky to detonate sooner
+	GameRules_SetProp("m_bPowerupMode", true);
+}
+
+public MRESReturn DHook_GetLiveTimePost(int entity, Handle returnVal)
+{
+	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public MRESReturn DHook_TossJarThinkPre(int entity, Handle params)

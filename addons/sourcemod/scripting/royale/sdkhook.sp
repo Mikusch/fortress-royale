@@ -16,11 +16,18 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_SpawnPost, Building_SpawnPost);
 		SDKHook(entity, SDKHook_OnTakeDamage, Building_OnTakeDamage);
+		SDKHook(entity, SDKHook_OnTakeDamagePost, Building_OnTakeDamagePost);
 	}
-	else if (StrEqual(classname, "tf_projectile_cleaver"))
+	
+	if (StrEqual(classname, "tf_projectile_cleaver"))
 	{
 		SDKHook(entity, SDKHook_Touch, Cleaver_Touch);
 		SDKHook(entity, SDKHook_TouchPost, Cleaver_TouchPost);
+	}
+	else if (StrEqual(classname, "obj_attachment_sapper"))
+	{
+		SDKHook(entity, SDKHook_Think, Sapper_Think);
+		SDKHook(entity, SDKHook_ThinkPost, Sapper_ThinkPost);
 	}
 	else if (StrEqual(classname, "tf_projectile_syringe"))
 	{
@@ -148,11 +155,19 @@ public void Client_PostThinkPost(int client)
 
 public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
+	//Several powerup change stuffs
+	GameRules_SetProp("m_bPowerupMode", true);
+	
 	//Don't allow building take damage from owner
 	if (0 < attacker <= MaxClients && attacker == GetEntPropEnt(building, Prop_Send, "m_hBuilder"))
 		return Plugin_Stop;
 	
 	return Plugin_Continue;
+}
+
+public void Building_OnTakeDamagePost(int building, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom)
+{
+	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public Action Cleaver_Touch(int entity, int other)
@@ -168,6 +183,17 @@ public void Cleaver_TouchPost(int entity, int other)
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (owner != other)
 		FRPlayer(owner).ChangeToTeam();
+}
+
+public Action Sapper_Think(int entity)
+{
+	//Vampire powerup heals owner on damaging building
+	GameRules_SetProp("m_bPowerupMode", true);
+}
+
+public void Sapper_ThinkPost(int entity)
+{
+	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public Action FlameManager_Touch(int entity, int toucher)

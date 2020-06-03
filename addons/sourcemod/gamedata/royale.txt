@@ -167,6 +167,11 @@
 				"linux"		"229"
 				"windows"	"228"
 			}
+			"CTFGrenadePipebombProjectile::GetLiveTime"
+			{
+				"linux"		"250"
+				"windows"	"249"
+			}
 			"CTFJar::TossJarThink"
 			{
 				"linux"		"490"
@@ -502,6 +507,13 @@
 						"type"	"int"
 					}
 				}
+			}
+			"CTFGrenadePipebombProjectile::GetLiveTime"
+			{
+				"offset"	"CTFGrenadePipebombProjectile::GetLiveTime"
+				"hooktype"	"entity"
+				"return"	"float"
+				"this"		"entity"
 			}
 			"CTFJar::TossJarThink"
 			{
