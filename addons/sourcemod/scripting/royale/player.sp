@@ -175,7 +175,7 @@ methodmap FRPlayer
 		if (++g_ClientClassUnknown[this] == 1)
 		{
 			g_ClientClass[this] = TF2_GetPlayerClass(this.Client);
-			TF2_SetPlayerClass(this.Client, TFClass_Unknown);
+			TF2_SetPlayerClass(this.Client, view_as<TFClassType>(-1));	// Some areas have TFClass_Unknown (0) check so -1 is done here
 		}
 	}
 	
