@@ -502,6 +502,9 @@ stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int disp
 		DispatchKeyValue(msg, "icon", icon);
 		
 		if (DispatchSpawn(msg))
+		{
 			AcceptEntityInput(msg, "Display");
+			RemoveEntity(msg);
+		}
 	}
 }

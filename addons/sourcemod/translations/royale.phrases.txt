@@ -62,6 +62,10 @@
 	{
 		"en"	"Parachute deployed"
 	}
+	"BattleBus_IncomingCrate"
+	{
+		"en"	"Incoming Mannpower loot crate!"
+	}
 	
 	"Zone_ShrinkAlert"
 	{

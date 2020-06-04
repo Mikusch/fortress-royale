@@ -1,3 +1,12 @@
+enum struct LootTable
+{
+	LootType type;
+	Function callback_create;
+	Function callback_class;
+	Function callback_precache;
+	CallbackParams callbackParams;
+}
+
 static ArrayList g_LootTable[view_as<int>(LootType)][view_as<int>(TFClassType)];
 
 void LootTable_ReadConfig(KeyValues kv)

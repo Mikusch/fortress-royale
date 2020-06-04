@@ -33,8 +33,8 @@ void Editor_Display(int client)
 {
 	Menu menu = new Menu(Editor_MenuSelected, MenuAction_Select | MenuAction_Cancel | MenuAction_End | MenuAction_DisplayItem);
 	
-	LootCrateConfig lootCrate;
-	int configIndex = Loot_GetCrateConfig(FRPlayer(client).EditorCrateRef, lootCrate);
+	LootCrate loot;
+	int configIndex = LootConfig_GetCrateByEntity(FRPlayer(client).EditorCrateRef, loot);
 	if (FRPlayer(client).EditorState == EditorState_View && configIndex < 0)
 	{
 		menu.SetTitle("%T\n\n%T", "Editor_Title", LANG_SERVER, "Editor_NotLookingAtAnyCrates", LANG_SERVER);
@@ -47,8 +47,8 @@ void Editor_Display(int client)
 	{
 		menu.SetTitle("%T\n\n%T\n%T", 
 			"Editor_Title", LANG_SERVER, 
-			"Editor_Prefab", LANG_SERVER, lootCrate.namePrefab, 
-			"Editor_Health", LANG_SERVER, lootCrate.health);
+			"Editor_Prefab", LANG_SERVER, loot.namePrefab, 
+			"Editor_Health", LANG_SERVER, loot.health);
 		menu.AddItem("delete", "Editor_Delete");
 		menu.AddItem("prefab", "Editor_EditPrefab");
 		
@@ -79,14 +79,14 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			
 			int crate = FRPlayer(param1).EditorCrateRef;
 			
-			LootCrateConfig lootCrate;
-			int configIndex = Loot_GetCrateConfig(crate, lootCrate);
+			LootCrate loot;
+			int configIndex = LootConfig_GetCrateByEntity(crate, loot);
 			
 			if (StrEqual(select, "delete"))
 			{
 				//Delete both entity crate and config
 				Loot_DeleteCrate(crate);
-				Config_DeleteCrate(configIndex);
+				LootConfig_DeleteCrateByEntity(crate);
 				
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
@@ -99,13 +99,13 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			else if (StrEqual(select, "place"))
 			{
 				//Set origin and angles, and spawn new crate
-				GetEntPropVector(crate, Prop_Data, "m_vecOrigin", lootCrate.origin);
-				GetEntPropVector(crate, Prop_Data, "m_angRotation", lootCrate.angles);
-				Config_SetLootCrate(configIndex, lootCrate);
+				GetEntPropVector(crate, Prop_Data, "m_vecOrigin", loot.origin);
+				GetEntPropVector(crate, Prop_Data, "m_angRotation", loot.angles);
+				LootConfig_SetCrate(configIndex, loot);
 				
 				Loot_DeleteCrate(crate);
 				
-				crate = Loot_SpawnCrateInWorld(lootCrate, configIndex, true);
+				crate = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 				FRPlayer(param1).EditorCrateRef = crate;
 				
 				FRPlayer(param1).EditorState = EditorState_View;
@@ -118,17 +118,19 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			else if (StrEqual(select, "create"))
 			{
 				//Create default in config to use to create new entity crate below
-				configIndex = Config_CreateDefault(lootCrate);
+				LootCrate_GetDefault(loot);
+				configIndex = LootConfig_AddCrate(loot);
 			}
 			else if (StrEqual(select, "save"))
 			{
-				Config_SaveLootCrates();
+				LootConfig_Save();
 				Editor_Display(param1);
 			}
 			
 			if (StrEqual(select, "move") || StrEqual(select, "create"))
 			{
-				crate = Loot_SpawnCrateInWorld(lootCrate, configIndex, true);
+				crate = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+				LootConfig_SetCrate(configIndex, loot);
 				FRPlayer(param1).EditorCrateRef = crate;
 				
 				SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_NONE);
@@ -170,20 +172,20 @@ void Editor_DisplayPrefab(int client)
 {
 	Menu menu = new Menu(Editor_MenuSelectedPrefab, MenuAction_Select | MenuAction_Cancel | MenuAction_End);
 	
-	LootCrateConfig lootCrate;
-	if (Loot_GetCrateConfig(FRPlayer(client).EditorCrateRef, lootCrate) < 0)
+	LootCrate loot;
+	if (LootConfig_GetCrateByEntity(FRPlayer(client).EditorCrateRef, loot) < 0)
 		return;
 	
-	menu.SetTitle("%T\n\n%T", "Editor_Prefab_Title", LANG_SERVER, "Editor_Prefab_CurrentCrate", LANG_SERVER, lootCrate.namePrefab[0] == '\0' ? "Default" : lootCrate.namePrefab);
+	menu.SetTitle("%T\n\n%T", "Editor_Prefab_Title", LANG_SERVER, "Editor_Prefab_CurrentCrate", LANG_SERVER, loot.namePrefab[0] == '\0' ? "Default" : loot.namePrefab);
 	
-	menu.AddItem("__default__", "Default", lootCrate.namePrefab[0] == '\0' ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+	menu.AddItem("__default__", "Default", loot.namePrefab[0] == '\0' ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
 	
-	int prefabIndex;
-	LootCrateConfig lootPrefab;
-	while (Config_GetLootPrefab(prefabIndex, lootPrefab))
+	int pos;
+	LootCrate lootPrefab;
+	while (LootConfig_GetPrefab(pos, lootPrefab))
 	{
-		menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab, StrEqual(lootPrefab.namePrefab, lootCrate.namePrefab) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
-		prefabIndex++;
+		menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab, StrEqual(lootPrefab.namePrefab, loot.namePrefab) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
+		pos++;
 	}
 	
 	menu.ExitBackButton = true;
@@ -201,28 +203,25 @@ public int Editor_MenuSelectedPrefab(Menu menu, MenuAction action, int param1, i
 			
 			int crate = FRPlayer(param1).EditorCrateRef;
 			
-			LootCrateConfig lootPrefab;
-			if (StrEqual(select, "__default__") || Config_FindPrefab(select, lootPrefab) >= 0)
+			LootCrate lootPrefab;
+			if (StrEqual(select, "__default__") || LootConfig_GetPrefabByName(select, lootPrefab))
 			{
-				if (!lootPrefab.load)
-					Config_GetDefault(lootPrefab);
-				
-				LootCrateConfig lootCrate;
-				int configIndex = Loot_GetCrateConfig(crate, lootCrate);
+				LootCrate loot;
+				int configIndex = LootConfig_GetCrateByEntity(crate, loot);
 				if (configIndex >= 0)
 				{
 					//Copy everything from prefab to crate, but keep origin and angles
 					float origin[3], angles[3];
-					origin = lootCrate.origin;
-					angles = lootCrate.angles;
+					origin = loot.origin;
+					angles = loot.angles;
 					
-					lootCrate = lootPrefab;
+					loot = lootPrefab;
 					
-					lootCrate.origin = origin;
-					lootCrate.angles = angles;
+					loot.origin = origin;
+					loot.angles = angles;
 					
 					Loot_SetCratePrefab(crate, lootPrefab);
-					Config_SetLootCrate(configIndex, lootCrate);
+					LootConfig_SetCrate(configIndex, loot);
 				}
 			}
 			

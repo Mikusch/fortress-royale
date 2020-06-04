@@ -1,9 +1,7 @@
 static StringMap g_LootTypeMap;
-static ArrayList g_SpawnedCrates;
 
 void Loot_Init()
 {
-	g_SpawnedCrates = new ArrayList(2);
 	g_LootTypeMap = new StringMap();
 	g_LootTypeMap.SetValue("WEAPON_COMMON", Loot_Weapon_Common);
 	g_LootTypeMap.SetValue("WEAPON_UNCOMMON", Loot_Weapon_Uncommon);
@@ -19,40 +17,51 @@ void Loot_Init()
 
 void Loot_SpawnCratesInWorld()
 {
-	int configIndex = 0;
-	LootCrateConfig lootCrate;
-	while (Config_GetLootCrate(configIndex, lootCrate))
+	int pos;
+	LootCrate loot;
+	while (LootConfig_GetCrate(pos, loot))
 	{
-		Loot_SpawnCrateInWorld(lootCrate, configIndex);
-		configIndex++;
+		if (GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
+		{
+			loot.entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+			LootConfig_SetCrate(pos, loot);
+		}
+		
+		pos++;
 	}
 }
 
-int Loot_SpawnCrateInWorld(LootCrateConfig config, int configIndex, bool force = false)
+int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics = false)
 {
-	if (force || GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
+	int crate = INVALID_ENT_REFERENCE;
+	if (physics)
+		crate = CreateEntityByName("prop_physics_override");
+	else
+		crate = CreateEntityByName("prop_dynamic_override");
+	
+	if (IsValidEntity(crate))
 	{
-		int crate = CreateEntityByName("prop_dynamic_override");
-		if (IsValidEntity(crate))
+		SetEntityModel(crate, loot.model);
+		SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
+		
+		if (physics)
 		{
-			SetEntityModel(crate, MODEL_EMPTY);
-			SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
+			DispatchKeyValueFloat(crate, "massScale", loot.mass);
+			DispatchKeyValueFloat(crate, "physdamagescale", loot.impact);
+		}
+		
+		if (DispatchSpawn(crate))
+		{
+			Loot_SetCratePrefab(crate, loot);
+			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
+			TeleportEntity(crate, loot.origin, loot.angles, NULL_VECTOR);
+			HookSingleEntityOutput(crate, "OnBreak", callback, true);
 			
-			if (DispatchSpawn(crate))
-			{
-				Loot_SetCratePrefab(crate, config);
-				SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
-				TeleportEntity(crate, config.origin, config.angles, NULL_VECTOR);
-				HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreak, true);
-				
-				int length = g_SpawnedCrates.Length;
-				g_SpawnedCrates.Resize(length + 1);
-				g_SpawnedCrates.Set(length, EntIndexToEntRef(crate), 0);
-				g_SpawnedCrates.Set(length, configIndex, 1);
-				
-				Loot_CreateGlow(crate);
-				return EntIndexToEntRef(crate);
-			}
+			if (physics)
+				AcceptEntityInput(crate, "EnableMotion");
+			
+			Loot_CreateGlow(crate);
+			return EntIndexToEntRef(crate);
 		}
 	}
 	
@@ -95,12 +104,12 @@ public bool Loot_FilterClient(int entity, int contentsMask, any client)
 	return entity != client;
 }
 
-void Loot_SetCratePrefab(int crate, LootCrateConfig config)
+void Loot_SetCratePrefab(int crate, LootCrate loot)
 {
-	SetEntityModel(crate, config.model);
-	SetEntProp(crate, Prop_Data, "m_nSkin", config.skin);
-	SetEntProp(crate, Prop_Data, "m_iMaxHealth", config.health);
-	SetEntProp(crate, Prop_Data, "m_iHealth", config.health);
+	SetEntityModel(crate, loot.model);
+	SetEntProp(crate, Prop_Data, "m_nSkin", loot.skin);
+	SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
+	SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 }
 
 stock ArrayList Loot_StrToLootTypes(const char[] str)
@@ -108,14 +117,9 @@ stock ArrayList Loot_StrToLootTypes(const char[] str)
 	ArrayList types = new ArrayList();
 	
 	char parts[32][PLATFORM_MAX_PATH];
-	if (ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[])) > 0)
-	{
-		for (int i = 0; i < sizeof(parts); i++)
-		{
-			if (!StrEqual(parts[i], NULL_STRING))
-				types.Push(Loot_StrToLootType(parts[i]));
-		}
-	}
+	int count = ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[]));
+	for (int i = 0; i < count; i++)
+		types.Push(Loot_StrToLootType(parts[i]));
 	
 	return types;
 }
@@ -127,9 +131,10 @@ stock LootType Loot_StrToLootType(const char[] str)
 	return type;
 }
 
-stock bool Loot_IsCrate(int ref)
+stock bool Loot_IsCrate(int crate)
 {
-	return g_SpawnedCrates.FindValue(ref, 0) >= 0;
+	LootCrate loot;
+	return LootConfig_GetCrateByEntity(crate, loot) >= 0;
 }
 
 stock bool Loot_IsClientLookingAtCrate(int crate, int client)
@@ -153,65 +158,67 @@ stock bool Loot_IsClientLookingAtCrate(int crate, int client)
 	return Loot_IsCrate(EntIndexToEntRef(entity)) && entity == crate;
 }
 
-stock int Loot_GetCrateConfig(int ref, LootCrateConfig lootCrate)
+stock void Loot_DeleteCrate(int crate)
 {
-	int index = g_SpawnedCrates.FindValue(ref, 0);
-	if (index < 0)
-		return -1;
-	
-	int configIndex = g_SpawnedCrates.Get(index, 1);
-	if (!Config_GetLootCrate(configIndex, lootCrate))
-		return -1;
-	
-	return configIndex;
-}
-
-stock void Loot_DeleteCrate(int ref)
-{
-	int index = g_SpawnedCrates.FindValue(ref, 0);
-	if (index >= 0)
+	LootCrate loot;
+	int pos = LootConfig_GetCrateByEntity(crate, loot);
+	if (pos >= 0)
 	{
-		RemoveEntity(ref);
-		g_SpawnedCrates.Erase(index);
+		loot.entity = INVALID_ENT_REFERENCE;
+		LootConfig_SetCrate(pos, loot);
 	}
+	
+	RemoveEntity(crate);
 }
 
-public Action EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
+public Action EntityOutput_OnBreakCrateConfig(const char[] output, int caller, int activator, float delay)
 {
-	LootCrateConfig lootCrate;
-	int configIndex = Loot_GetCrateConfig(EntIndexToEntRef(caller), lootCrate);
-	if (configIndex >= 0)
+	int crate = EntIndexToEntRef(caller);
+	
+	LootCrate loot;
+	int pos = LootConfig_GetCrateByEntity(crate, loot);
+	if (pos >= 0)
+		Loot_BreakCrate(GetOwnerLoop(activator), crate, loot);
+}
+
+public Action EntityOutput_OnBreakCrateBus(const char[] output, int caller, int activator, float delay)
+{
+	LootCrate loot;
+	LootCrate_GetBus(loot);
+	Loot_BreakCrate(GetOwnerLoop(activator), EntIndexToEntRef(caller), loot);
+}
+
+public void Loot_BreakCrate(int client, int crate, LootCrate loot)
+{
+	EmitSoundToAll(loot.sound, crate);
+	
+	//While loop to keep searching for loot until found valid
+	LootTable lootTable;
+	while (!LootTable_GetRandomLoot(lootTable, loot.GetRandomLootType(), TF2_GetPlayerClass(client))) {  }
+	
+	//Start function call to loot creation function
+	Call_StartFunction(null, lootTable.callback_create);
+	Call_PushCell(client);
+	Call_PushCell(lootTable.callbackParams);
+	
+	int entity;
+	if (Call_Finish(entity) == SP_ERROR_NONE && entity > MaxClients)
 	{
-		EmitSoundToAll(lootCrate.sound, caller);
+		float origin[3];
+		GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
 		
-		int client = GetOwnerLoop(activator);
+		//Calculate where centre of origin by boundary box
+		float mins[3], maxs[3], offset[3];
+		GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
+		GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
+		AddVectors(maxs, mins, offset);
+		ScaleVector(offset, 0.5);
+		AddVectors(origin, offset, origin);
 		
-		//While loop to keep searching for loot until found valid
-		LootTable loot;
-		while (!LootTable_GetRandomLoot(loot, lootCrate.GetRandomLootType(), TF2_GetPlayerClass(client))) {  }
-		
-		//Start function call to loot creation function
-		Call_StartFunction(null, loot.callback_create);
-		Call_PushCell(client);
-		Call_PushCell(loot.callbackParams);
-		
-		int entity;
-		if (Call_Finish(entity) == SP_ERROR_NONE && entity > MaxClients)
-		{
-			float origin[3], angles[3], velocity[3];
-			GetEntPropVector(caller, Prop_Data, "m_vecOrigin", origin);
-			GetEntPropVector(caller, Prop_Data, "m_angRotation", angles);
-			GetEntPropVector(caller, Prop_Data, "m_vecVelocity", velocity);
-			
-			//Calculate where centre of origin by boundary box
-			float mins[3], maxs[3], offset[3];
-			GetEntPropVector(caller, Prop_Data, "m_vecMins", mins);
-			GetEntPropVector(caller, Prop_Data, "m_vecMaxs", maxs);
-			AddVectors(maxs, mins, offset);
-			ScaleVector(offset, 0.5);
-			AddVectors(origin, offset, origin);
-			
-			TeleportEntity(entity, origin, angles, velocity);
-		}
+		TeleportEntity(entity, origin, NULL_VECTOR, NULL_VECTOR);
+	}
+	else
+	{
+		LogError("Unable to create entity for LootType '%d' class '%d'", lootTable.type, TF2_GetPlayerClass(client));
 	}
 }

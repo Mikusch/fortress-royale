@@ -243,197 +243,6 @@ enum LootType
 	Loot_Powerup_Rune			/**< Mannpower rune powerup */
 }
 
-methodmap LootCrateContents < ArrayList
-{
-	public LootCrateContents()
-	{
-		return view_as<LootCrateContents>(new ArrayList(2));
-	}
-	
-	public void PushContent(LootType loot, float chance)
-	{
-		int length = this.Length;
-		this.Resize(length + 1);
-		this.Set(length, loot, 0);
-		this.Set(length, chance, 1);
-	}
-	
-	public void GetContent(int index, LootType &loot, float &chance)
-	{
-		loot = this.Get(index, 0);
-		chance = this.Get(index, 1);
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				char type[PLATFORM_MAX_PATH];
-				kv.GetString("type", type, sizeof(type));
-				
-				ArrayList types = Loot_StrToLootTypes(type);
-				float chance = kv.GetFloat("chance");
-				
-				for (int i = 0; i < types.Length; i++)
-				{
-					this.PushContent(types.Get(i), chance);
-				}
-				
-				delete types;
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-	}
-}
-
-enum struct LootCrateConfig
-{
-	bool load;						/**< Whenever if this enum struct is loaded */
-	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
-	
-	// LootCrates
-	float origin[3];				/**< Spawn origin */
-	float angles[3];				/**< Spawn angles */
-	
-	// LootPrefabs/LootDefault
-	char model[PLATFORM_MAX_PATH];	/**< World model */
-	int skin;						/**< Model skin */
-	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
-	int health;						/**< Amount of damage required to open */
-	LootCrateContents contents;		/**< ArrayList of content bitflags (block 0) and chance (block 1) **/
-	
-	void ReadConfig(KeyValues kv)
-	{
-		this.load = true;
-		
-		kv.GetVector("origin", this.origin, this.origin);
-		kv.GetVector("angles", this.angles, this.angles);
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
-		PrecacheModel(this.model);
-		this.skin = kv.GetNum("skin", this.skin);
-		kv.GetString("sound", this.sound, PLATFORM_MAX_PATH, this.sound);
-		PrecacheSound(this.sound);
-		this.health = kv.GetNum("health", this.health);
-		
-		if (kv.JumpToKey("contents", false))
-		{
-			LootCrateContents contents = new LootCrateContents();
-			contents.ReadConfig(kv);
-			this.contents = contents;
-			kv.GoBack();
-		}
-	}
-	
-	void SetConfig(KeyValues kv)
-	{
-		kv.SetString("prefab", this.namePrefab);
-		kv.SetVector("origin", this.origin);
-		kv.SetVector("angles", this.angles);
-	}
-	
-	LootType GetRandomLootType()
-	{
-		LootType loot;
-		float percentage;
-		
-		this.contents.Sort(Sort_Random, Sort_Integer);
-		
-		for (int i = 0; i < this.contents.Length; i++)
-		{
-			this.contents.GetContent(i, loot, percentage);
-			
-			if (GetRandomFloat() <= percentage)
-				return loot;
-		}
-		
-		return this.GetRandomLootType();
-	}
-}
-
-methodmap CallbackParams < StringMap
-{
-	public CallbackParams()
-	{
-		return view_as<CallbackParams>(new StringMap());
-	}
-	
-	public void ReadConfig(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				char key[CONFIG_MAXCHAR], value[CONFIG_MAXCHAR];
-				kv.GetString("key", key, sizeof(key));
-				kv.GetString("value", value, sizeof(value));
-				this.SetString(key, value);
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
-	}
-	
-	public bool GetBool(const char[] key, bool defValue = false)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return view_as<bool>(StringToInt(value));
-	}
-	
-	public int GetInt(const char[] key, int defValue = 0)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToInt(value);
-	}
-	
-	public bool GetIntEx(const char[] key, int &defValue)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return false;
-		
-		defValue = StringToInt(value);
-		return true;
-	}
-	
-	public float GetFloat(const char[] key, float defValue = 0.0)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToFloat(value);
-	}
-	
-	public bool GetFloatEx(const char[] key, float &defValue)
-	{
-		char value[CONFIG_MAXCHAR];
-		if (!this.GetString(key, value, sizeof(value)))
-			return false;
-		
-		defValue = StringToFloat(value);
-		return true;
-	}
-}
-
-enum struct LootTable
-{
-	LootType type;
-	Function callback_create;
-	Function callback_class;
-	Function callback_precache;
-	CallbackParams callbackParams;
-}
-
 char g_fistsClassname[][] = {
 	"",						//Unknown
 	"tf_weapon_bat",		//Scout
@@ -468,6 +277,13 @@ int g_OffsetRuneShouldReposition;
 #include "royale/entity.sp"
 #include "royale/player.sp"
 
+#include "royale/loot/loot_crates.sp"
+#include "royale/loot/loot_config.sp"
+#include "royale/loot/loot_params.sp"
+#include "royale/loot/loot_table.sp"
+#include "royale/loot/loot_callbacks.sp"
+#include "royale/loot/loot.sp"
+
 #include "royale/battlebus.sp"
 #include "royale/command.sp"
 #include "royale/config.sp"
@@ -476,9 +292,6 @@ int g_OffsetRuneShouldReposition;
 #include "royale/dhook.sp"
 #include "royale/editor.sp"
 #include "royale/event.sp"
-#include "royale/loot/loot.sp"
-#include "royale/loot/loot_callbacks.sp"
-#include "royale/loot/loot_table.sp"
 #include "royale/sdkcall.sp"
 #include "royale/sdkhook.sp"
 #include "royale/stocks.sp"
@@ -517,11 +330,11 @@ public void OnPluginStart()
 	delete gamedata;
 	
 	Command_Init();
-	Config_Init();
 	Console_Init();
 	ConVar_Init();
 	Event_Init();
 	Loot_Init();
+	LootConfig_Init();
 	
 	ConVar_Enable();
 	

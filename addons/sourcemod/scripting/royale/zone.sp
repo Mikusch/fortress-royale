@@ -124,11 +124,6 @@ void Zone_RoundArenaStart()
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
 }
 
-stock float Zone_GetCurrentDamage()
-{
-    return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
-}
-
 public Action Timer_PauseZone(Handle timer, int ref)
 {
 	if (IsValidEntity(ref))
@@ -187,6 +182,8 @@ public Action Timer_StartShrink(Handle timer)
 	if (g_ZoneTimer != timer)
 		return;
 	
+	g_ZoneShrinkLevel--;
+	
 	EmitGameSoundToAll(ZONE_SHRINK_SOUND);
 	char message[256];
 	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
@@ -204,8 +201,6 @@ public Action Timer_FinishShrink(Handle timer)
 	if (g_ZoneTimer != timer)
 		return;
 	
-	g_ZoneShrinkLevel--;
-	
 	g_ZonePropcenterOld = g_ZonePropcenterNew;
 	TeleportEntity(g_ZonePropRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
 	
@@ -221,6 +216,9 @@ public Action Timer_FinishShrink(Handle timer)
 		
 		g_ZonePropGhost.Erase(0);
 	}
+	
+	//TODO move me
+	BattleBus_SpawnLootBus();
 	
 	if (g_ZoneShrinkLevel > 0)
 		g_ZoneTimer = CreateTimer(fr_zone_nextdisplay.FloatValue, Timer_StartDisplay);
@@ -240,7 +238,7 @@ public void Frame_UpdateZone(int ref)
 	{
 		//We in shrinking state, update zone position and diameter
 		
-		//Progress from level X to level X+1
+		//Progress from level X+1 to level X
 		percentage = (gametime - g_ZoneShrinkStart) / fr_zone_shrink.FloatValue;
 		
 		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, originZone);	//Distance from start to end
@@ -249,7 +247,7 @@ public void Frame_UpdateZone(int ref)
 		TeleportEntity(zone, originZone, NULL_VECTOR, NULL_VECTOR);
 		
 		//Progress from 1.0 to 0.0 (starting zone to zero size)
-		percentage = (float(g_ZoneShrinkLevel) - percentage) / float(g_ZoneConfig.numShrinks);
+		percentage = (float(g_ZoneShrinkLevel + 1) - percentage) / float(g_ZoneConfig.numShrinks);
 	}
 	else
 	{
@@ -332,4 +330,20 @@ public Action Timer_Bleed(Handle timer)
 	}
 	
 	return Plugin_Continue;
+}
+
+float Zone_GetCurrentDamage()
+{
+    return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
+}
+
+void Zone_GetNewCenter(float center[3])
+{
+	center = g_ZonePropcenterNew;
+}
+
+float Zone_GetNewDiameter()
+{
+	//Return diameter wherever new center zone would be at
+	return g_ZoneConfig.diameterMax * (1.0 - (float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks)));
 }

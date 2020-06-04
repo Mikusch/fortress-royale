@@ -38,7 +38,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	BattleBus_SpawnProp();
+	BattleBus_SpawnPlayerBus();
 	Zone_RoundArenaStart();
 	Loot_SpawnCratesInWorld();
 	

@@ -2,10 +2,9 @@ enum struct BattleBusConfig
 {
 	char model[PLATFORM_MAX_PATH];
 	int skin;
-	float center[3];
+	float height;
 	float diameter;
 	float time;
-	float height;
 	float cameraOffset[3];
 	float cameraAngles[3];
 	
@@ -15,10 +14,9 @@ enum struct BattleBusConfig
 		PrecacheModel(this.model);
 		
 		this.skin = kv.GetNum("skin", this.skin);
-		kv.GetVector("center", this.center, this.center);
+		this.height = kv.GetFloat("height", this.height);
 		this.diameter = kv.GetFloat("diameter", this.diameter);
 		this.time = kv.GetFloat("time", this.time);
-		this.height = kv.GetFloat("height", this.height);
 		kv.GetVector("camera_offset", this.cameraOffset, this.cameraOffset);
 		kv.GetVector("camera_angles", this.cameraAngles, this.cameraAngles);
 	}
@@ -26,7 +24,6 @@ enum struct BattleBusConfig
 
 static int g_BattleBusPropRef = INVALID_ENT_REFERENCE;
 static int g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
-static Handle g_BattleBusEndTimer;
 static BattleBusConfig g_CurrentBattleBusConfig;
 
 static char g_BattleBusMusic[][] =  {
@@ -88,10 +85,18 @@ void BattleBus_ReadConfig(KeyValues kv)
 	g_CurrentBattleBusConfig.ReadConfig(kv);
 }
 
-void BattleBus_NewPos()
+void BattleBus_NewPos(float diameter = 0.0)
 {
 	g_BattleBusPropRef = INVALID_ENT_REFERENCE;
 	g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
+	
+	//Get origin by zone's current origin
+	float origin[3];
+	Zone_GetNewCenter(origin);
+	
+	//Default diameter
+	if (diameter <= 0.0)
+		diameter = g_CurrentBattleBusConfig.diameter;
 	
 	//Create new pos to spawn bus for this round
 	float angleDirection = GetRandomFloat(0.0, 360.0);
@@ -101,12 +106,12 @@ void BattleBus_NewPos()
 	else
 		g_BattleBusAngles[1] = angleDirection + 180.0;
 	
-	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / 2.0) + g_CurrentBattleBusConfig.center[0];
-	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / 2.0) + g_CurrentBattleBusConfig.center[1];
-	g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.center[2];
+	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * diameter / 2.0) + origin[0];
+	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * diameter / 2.0) + origin[1];
+	g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.height;
 	
-	g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
-	g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * g_CurrentBattleBusConfig.diameter / g_CurrentBattleBusConfig.time;
+	g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
+	g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
 	
 	//Check if it safe to go this path with nothing in the way
 	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_SOLID, RayType_Infinite);
@@ -114,10 +119,6 @@ void BattleBus_NewPos()
 	{
 		float endPos[3];
 		TR_GetEndPosition(endPos, trace);
-		
-		//int laser = PrecacheModel("sprites/laserbeam.vmt");
-		//TE_SetupBeamPoints(g_BattleBusOrigin, endPos, laser, 0, 0, 0, 300.0, 2.0, 2.0, 1, 0.0, {0, 255, 0, 255}, 15); 
-		//TE_SendToAll();
 		
 		//Something is in the way, try agian find new path
 		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentBattleBusConfig.diameter)
@@ -127,7 +128,7 @@ void BattleBus_NewPos()
 	delete trace;
 }
 
-void BattleBus_SpawnProp()
+void BattleBus_SpawnPlayerBus()
 {
 	int bus = CreateEntityByName("tf_projectile_rocket");
 	if (bus <= MaxClients)
@@ -155,12 +156,12 @@ void BattleBus_SpawnProp()
 	//Teleport bus after camera, so camera can follow where bus is teleporting
 	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
 	
-	g_BattleBusEndTimer = CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndProp);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, g_BattleBusPropRef);
 }
 
-public Action BattleBus_EndProp(Handle timer)
+public Action BattleBus_EndPlayerBus(Handle timer, int bus)
 {
-	if (g_BattleBusEndTimer != timer)
+	if (!IsValidEntity(bus))
 		return;
 	
 	// Battle bus has reached its destination, eject all players still here a frame later
@@ -171,9 +172,7 @@ public Action BattleBus_EndProp(Handle timer)
 	}
 	
 	// Destroy prop
-	int bus = EntRefToEntIndex(g_BattleBusPropRef);
-	if (bus != INVALID_ENT_REFERENCE)
-		RemoveEntity(bus);
+	RemoveEntity(bus);
 }
 
 void BattleBus_SpectateBus(int client)
@@ -287,4 +286,52 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 public int SortCustom_Random(int[] elem1, int[] elem2, const int[][] array, Handle hndl)
 {
 	return GetRandomInt(0, 1) ? -1 : 1;
+}
+
+void BattleBus_SpawnLootBus()
+{
+	float diameter = Zone_GetNewDiameter();
+	if (diameter <= 0.0)
+		return;
+	
+	int bus = CreateEntityByName("tf_projectile_rocket");
+	if (bus <= MaxClients)
+		return;
+	
+	DispatchSpawn(bus);
+	bus = EntIndexToEntRef(bus);
+	
+	SetEntityModel(bus, g_CurrentBattleBusConfig.model);
+	SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
+	
+	BattleBus_NewPos(diameter);
+	
+	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
+	
+	char message[256];
+	Format(message, sizeof(message), "%T", "BattleBus_IncomingCrate", LANG_SERVER);
+	TF2_ShowGameMessage(message, "ico_build");
+	
+	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus);
+}
+
+public Action BattleBus_SpawnLootCrate(Handle timer, int bus)
+{
+	if (!IsValidEntity(bus))
+		return;
+	
+	LootCrate loot;
+	LootCrate_GetBus(loot);
+	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", loot.origin);
+	GetEntPropVector(bus, Prop_Data, "m_angRotation", loot.angles);
+	
+	Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateBus, true);
+}
+
+public Action BattleBus_EndLootBus(Handle timer, int bus)
+{
+	// Destroy prop
+	if (IsValidEntity(bus))
+		RemoveEntity(bus);
 }
