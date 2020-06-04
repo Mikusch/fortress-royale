@@ -14,8 +14,8 @@ void ConVar_Init()
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "60.0", "", _, true, 0.0);
-	fr_zone_display = CreateConVar("fr_zone_display", "45.0", "", _, true, 0.0);
-	fr_zone_shrink = CreateConVar("fr_zone_shrink", "60.0", "", _, true, 0.0);
+	fr_zone_display = CreateConVar("fr_zone_display", "30.0", "", _, true, 0.0);
+	fr_zone_shrink = CreateConVar("fr_zone_shrink", "40.0", "", _, true, 0.0);
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "", _, true, 0.0);
 	
 	ConVars = new ArrayList(sizeof(ConVarInfo));
