@@ -137,7 +137,10 @@ public int LootCallback_CreateEntity(int client, CallbackParams params)
 	int entity = CreateEntityByName(classname);
 	if (entity > MaxClients)
 	{
+		GameRules_SetProp("m_bPowerupMode", true);
 		DispatchSpawn(entity);
+		GameRules_SetProp("m_bPowerupMode", false);
+		
 		return entity;
 	}
 	return -1;
