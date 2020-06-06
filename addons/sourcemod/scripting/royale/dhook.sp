@@ -1,6 +1,7 @@
+static Handle g_DHookSetWinningTeam;
+static Handle g_DHookGetMaxHealth;
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
-static Handle g_DHookSetWinningTeam;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookFireProjectile;
 static Handle g_DHookSmack;
@@ -27,6 +28,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
+	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
@@ -99,6 +101,8 @@ void DHook_HookGamerules()
 
 void DHook_HookClient(int client)
 {
+	DHookEntity(g_DHookGetMaxHealth, false, client, _, DHook_GetMaxHealthPre);
+	DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
 	DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
 	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
@@ -364,6 +368,25 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 		return MRES_Supercede;
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_GetMaxHealthPre(int client, Handle returnVal)
+{
+	//Hooks may be changing client class, change class back to what it was
+	FRPlayer(client).ChangeToClass();
+}
+
+public MRESReturn DHook_GetMaxHealthPost(int client, Handle returnVal)
+{
+	FRPlayer(client).ChangeToUnknown();
+	
+	float multiplier = fr_healthmultiplier.FloatValue;
+	if (multiplier == 1.0)
+		return MRES_Ignored;
+	
+	//Multiply health by convar value
+	DHookSetReturn(returnVal, RoundToNearest(float(DHookGetReturn(returnVal)) * multiplier));
+	return MRES_Supercede;
 }
 
 public MRESReturn DHook_ForceRespawnPre(int client)

@@ -126,6 +126,11 @@
 				"linux"		"161"
 				"windows"	"160"
 			}
+			"CBaseEntity::GetMaxHealth"
+			{
+				"linux"		"118"
+				"windows"	"117"			
+			}
 			"CBaseEntity::GetDefaultItemChargeMeterValue"
 			{
 				"linux"		"191"
@@ -428,6 +433,13 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CBaseEntity::GetMaxHealth"
+			{
+				"offset"	"CBaseEntity::GetMaxHealth"
+				"hooktype"	"entity"
+				"return"	"int"
+				"this"		"entity"
 			}
 			"CTFPlayer::ForceRespawn"
 			{

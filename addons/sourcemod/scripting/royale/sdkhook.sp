@@ -3,7 +3,6 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
 	
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
-	SDKHook(client, SDKHook_GetMaxHealth, Client_GetMaxHealth);
 	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
@@ -85,18 +84,6 @@ public Action Client_SetTransmit(int entity, int client)
 		return Plugin_Handled;
 	
 	return Plugin_Continue;
-}
-
-public Action Client_GetMaxHealth(int client, int &maxhealth)
-{
-	float multiplier = fr_healthmultiplier.FloatValue;
-	
-	if (multiplier == 1.0)
-		return Plugin_Continue;
-	
-	//Multiply health by convar value
-	maxhealth = RoundToNearest(float(maxhealth) * multiplier);
-	return Plugin_Changed;
 }
 
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
