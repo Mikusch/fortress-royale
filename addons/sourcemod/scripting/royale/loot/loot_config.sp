@@ -94,7 +94,7 @@ methodmap LootConfig < ArrayList
 			this.GetArray(configIndex, loot);
 			
 			kv.JumpToKey("322", true);	//Just so we can create new key without jumping to existing Loot
-			kv.SetSectionName("Loot");
+			kv.SetSectionName("LootCrate");
 			loot.SetConfig(kv);
 			kv.GoBack();
 		}
@@ -153,10 +153,10 @@ void LootConfig_Save()
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
-		kv.JumpToKey("Loots", true);
+		kv.JumpToKey("LootCrates", true);
 		
 		//Delete all Loot in config and create new one
-		while (kv.DeleteKey("Loot")) {}
+		while (kv.DeleteKey("LootCrate")) {}
 		
 		g_LootConfig.SetConfig(kv);
 		kv.GoBack();
