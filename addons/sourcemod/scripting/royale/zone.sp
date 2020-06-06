@@ -59,6 +59,7 @@ void Zone_RoundStart()
 	g_ZoneTimer = null;
 	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
 	g_ZonePropcenterOld = g_ZoneConfig.center;
+	g_ZonePropcenterNew = g_ZoneConfig.center;
 	g_ZoneShrinkStart = 0.0;
 	
 	int zone = CreateEntityByName("prop_dynamic");
