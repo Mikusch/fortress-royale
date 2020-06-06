@@ -85,8 +85,8 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			if (StrEqual(select, "delete"))
 			{
 				//Delete both entity crate and config
-				Loot_DeleteCrate(crate);
 				LootConfig_DeleteCrateByEntity(crate);
+				Loot_DeleteCrate(crate);
 				
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
