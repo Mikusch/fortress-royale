@@ -61,6 +61,23 @@ stock int GetClientFromPlayerShared(Address playershared)
 	return 0;
 }
 
+stock bool IsEntityStuck(int entity)
+{
+	float mins[3], maxs[3], origin[3];
+	
+	GetEntPropVector(entity, Prop_Send, "m_vecMins", mins);
+	GetEntPropVector(entity, Prop_Send, "m_vecMaxs", maxs);
+	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
+	
+	TR_TraceHullFilter(origin, origin, mins, maxs, MASK_SOLID, Trace_DontHitEntity, entity);
+	return TR_DidHit();
+}
+
+public bool Trace_DontHitEntity(int entity, int mask, any data)
+{
+	return entity != data;
+}
+
 stock bool TF2_RebalanceTeams()
 {
 	// This stock is used to fix "1 player needed for new round" while there >1 players in red/blu team
