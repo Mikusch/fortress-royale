@@ -164,11 +164,11 @@ public Action BattleBus_EndPlayerBus(Handle timer, int bus)
 	if (!IsValidEntity(bus))
 		return;
 	
-	// Battle bus has reached its destination, eject all players still here a frame later
+	// Battle bus has reached its destination, eject all players still here
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
-			RequestFrame(RequestFrame_EjectClient, GetClientSerial(client));
+			BattleBus_EjectClient(client);
 	}
 	
 	// Destroy prop
@@ -183,13 +183,6 @@ void BattleBus_SpectateBus(int client)
 		SetClientViewEntity(client, g_BattleBusCameraRef);
 		PrintHintText(client, "%T", "BattleBus_HowToDrop", LANG_SERVER);
 	}
-}
-
-public void RequestFrame_EjectClient(int serial)
-{
-	int client = GetClientFromSerial(serial);
-	if (0 < client <= MaxClients && IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
-		BattleBus_EjectClient(client);
 }
 
 void BattleBus_EjectClient(int client)

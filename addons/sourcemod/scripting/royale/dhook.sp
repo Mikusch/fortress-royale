@@ -372,10 +372,15 @@ public MRESReturn DHook_ForceRespawnPre(int client)
 	GameRules_SetProp("m_bPowerupMode", true);
 	
 	//Only allow respawn if player is in parachute mode
-	if (FRPlayer(client).PlayerState == PlayerState_Parachute)
-		return MRES_Ignored;
+	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
+		return MRES_Supercede;
 	
-	return MRES_Supercede;
+	//If player havent selected a class, pick random class for em
+	//this is so that player can actually spawn into map, otherwise nothing happens
+	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_iDesiredPlayerClass")) == TFClass_Unknown)
+		SetEntProp(client, Prop_Send, "m_iDesiredPlayerClass", GetRandomInt(view_as<int>(TFClass_Scout), view_as<int>(TFClass_Engineer)));
+	
+	return MRES_Ignored;
 }
 
 public MRESReturn DHook_ForceRespawnPost(int client)
