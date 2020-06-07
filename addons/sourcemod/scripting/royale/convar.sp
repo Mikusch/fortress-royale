@@ -13,10 +13,14 @@ void ConVar_Init()
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	
-	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "60.0", "", _, true, 0.0);
-	fr_zone_display = CreateConVar("fr_zone_display", "30.0", "", _, true, 0.0);
-	fr_zone_shrink = CreateConVar("fr_zone_shrink", "40.0", "", _, true, 0.0);
-	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "", _, true, 0.0);
+	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "Seconds from round start to start zone display", _, true, 0.0);
+	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1.0", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
+	fr_zone_display = CreateConVar("fr_zone_display", "15.0", "Seconds to display next zone before shrink", _, true, 0.0);
+	fr_zone_display_player = CreateConVar("fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
+	fr_zone_shrink = CreateConVar("fr_zone_shrink", "20.0", "Seconds to shrink zone to next level", _, true, 0.0);
+	fr_zone_shrink_player = CreateConVar("fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
+	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "Seconds after shrink to display next zone", _, true, 0.0);
+	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0.0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "", _, true, 0.0);
 	
 	ConVars = new ArrayList(sizeof(ConVarInfo));

@@ -121,7 +121,7 @@ void Zone_RoundStart()
 
 void Zone_RoundArenaStart()
 {
-	g_ZoneTimer = CreateTimer(fr_zone_startdisplay.FloatValue, Timer_StartDisplay);
+	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay);
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
 }
 
@@ -175,7 +175,7 @@ public Action Timer_StartDisplay(Handle timer)
 		}
 	}
 	
-	g_ZoneTimer = CreateTimer(fr_zone_display.FloatValue, Timer_StartShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink);
 }
 
 public Action Timer_StartShrink(Handle timer)
@@ -190,11 +190,12 @@ public Action Timer_StartShrink(Handle timer)
 	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 	
-	SetVariantFloat(1.0 / (fr_zone_shrink.FloatValue / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
+	float duration = Zone_GetShrinkDuration();
+	SetVariantFloat(1.0 / (duration / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
 	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
 	
 	g_ZoneShrinkStart = GetGameTime();
-	g_ZoneTimer = CreateTimer(fr_zone_shrink.FloatValue, Timer_FinishShrink);
+	g_ZoneTimer = CreateTimer(duration, Timer_FinishShrink);
 }
 
 public Action Timer_FinishShrink(Handle timer)
@@ -222,7 +223,7 @@ public Action Timer_FinishShrink(Handle timer)
 	BattleBus_SpawnLootBus();
 	
 	if (g_ZoneShrinkLevel > 0)
-		g_ZoneTimer = CreateTimer(fr_zone_nextdisplay.FloatValue, Timer_StartDisplay);
+		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay);
 }
 
 public void Frame_UpdateZone(int ref)
@@ -235,12 +236,13 @@ public void Frame_UpdateZone(int ref)
 	float percentage;
 	
 	float gametime = GetGameTime();
-	if (g_ZoneShrinkStart > gametime - fr_zone_shrink.FloatValue)
+	float duration = Zone_GetShrinkDuration();
+	if (g_ZoneShrinkStart > gametime - duration)
 	{
 		//We in shrinking state, update zone position and diameter
 		
 		//Progress from level X+1 to level X
-		percentage = (gametime - g_ZoneShrinkStart) / fr_zone_shrink.FloatValue;
+		percentage = (gametime - g_ZoneShrinkStart) / duration;
 		
 		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, originZone);	//Distance from start to end
 		ScaleVector(originZone, percentage);									//Scale by percentage
@@ -358,4 +360,24 @@ float Zone_GetNewDiameter()
 {
 	//Return diameter wherever new center zone would be at
 	return g_ZoneConfig.diameterMax * (float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks));
+}
+
+float Zone_GetStartDisplayDuration()
+{
+	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(g_PlayerCount));
+}
+
+float Zone_GetDisplayDuration()
+{
+	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(g_PlayerCount));
+}
+
+float Zone_GetShrinkDuration()
+{
+	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(g_PlayerCount));
+}
+
+float Zone_GetNextDisplayDuration()
+{
+	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(g_PlayerCount));
 }

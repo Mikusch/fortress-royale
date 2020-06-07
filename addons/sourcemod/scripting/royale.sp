@@ -257,6 +257,7 @@ char g_fistsClassname[][] = {
 };
 
 bool g_TF2Items;
+int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
@@ -265,9 +266,13 @@ ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
 
 ConVar fr_zone_startdisplay;
+ConVar fr_zone_startdisplay_player;
 ConVar fr_zone_display;
+ConVar fr_zone_display_player;
 ConVar fr_zone_shrink;
+ConVar fr_zone_shrink_player;
 ConVar fr_zone_nextdisplay;
+ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damagemultiplier;
 
 int g_OffsetItemDefinitionIndex;

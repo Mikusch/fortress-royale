@@ -39,14 +39,17 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	BattleBus_SpawnPlayerBus();
-	Zone_RoundArenaStart();
-	Loot_SpawnCratesInWorld();
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
 			BattleBus_SpectateBus(client);
 	}
+	
+	g_PlayerCount = GetAlivePlayersCount();
+	
+	Zone_RoundArenaStart();
+	Loot_SpawnCratesInWorld();
 }
 
 public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
