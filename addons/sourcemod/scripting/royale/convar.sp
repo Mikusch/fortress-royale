@@ -17,6 +17,7 @@ void ConVar_Init()
 	fr_zone_display = CreateConVar("fr_zone_display", "30.0", "", _, true, 0.0);
 	fr_zone_shrink = CreateConVar("fr_zone_shrink", "40.0", "", _, true, 0.0);
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "", _, true, 0.0);
+	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "", _, true, 0.0);
 	
 	ConVars = new ArrayList(sizeof(ConVarInfo));
 	

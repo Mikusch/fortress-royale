@@ -268,6 +268,7 @@ ConVar fr_zone_startdisplay;
 ConVar fr_zone_display;
 ConVar fr_zone_shrink;
 ConVar fr_zone_nextdisplay;
+ConVar fr_zone_damagemultiplier;
 
 int g_OffsetItemDefinitionIndex;
 int g_OffsetRuneType;

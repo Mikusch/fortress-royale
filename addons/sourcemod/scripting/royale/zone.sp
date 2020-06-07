@@ -324,7 +324,7 @@ public Action Timer_Bleed(Handle timer)
 		if (IsClientInGame(client) && IsPlayerAlive(client) && FRPlayer(client).OutsideZone)
 		{
 			FRPlayer(client).ZoneDamageTicks++;
-			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * FRPlayer(client).ZoneDamageTicks * 0.25, DMG_PREVENT_PHYSICS_FORCE);
+			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * FRPlayer(client).ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
 		}
 	}
 	
@@ -336,7 +336,7 @@ public Action Timer_Bleed(Handle timer)
 		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && FREntity(objRef).OutsideZone)
 		{
 			FREntity(objRef).ZoneDamageTicks++;
-			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(FREntity(objRef).ZoneDamageTicks) * 0.25));
+			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(FREntity(objRef).ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
 			AcceptEntityInput(obj, "RemoveHealth");
 		}
 	}
