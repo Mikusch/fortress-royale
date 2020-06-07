@@ -187,13 +187,15 @@ public Action FlameManager_Touch(int entity, int toucher)
 {
 	// This calls ShouldCollide with buildings team check
 	int client = GetOwnerLoop(entity);
-	FRPlayer(client).ChangeToSpectator();
+	if (0 < client <= MaxClients)
+		FRPlayer(client).ChangeToSpectator();
 }
 
 public void FlameManager_TouchPost(int entity, int toucher)
 {
 	int client = GetOwnerLoop(entity);
-	FRPlayer(client).ChangeToTeam();
+	if (0 < client <= MaxClients)
+		FRPlayer(client).ChangeToTeam();
 }
 
 public Action GasManager_Touch(int entity, int other)
