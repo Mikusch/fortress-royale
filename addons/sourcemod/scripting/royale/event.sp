@@ -145,7 +145,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	if (!deadringer)
 	{
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
-		CreateTimer(0.1, Timer_SetClientDead, GetClientSerial(victim));
+		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
 	}
 }
 
