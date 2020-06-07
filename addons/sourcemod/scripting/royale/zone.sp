@@ -346,5 +346,5 @@ void Zone_GetNewCenter(float center[3])
 float Zone_GetNewDiameter()
 {
 	//Return diameter wherever new center zone would be at
-	return g_ZoneConfig.diameterMax * (1.0 - (float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks)));
+	return g_ZoneConfig.diameterMax * (float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks));
 }
