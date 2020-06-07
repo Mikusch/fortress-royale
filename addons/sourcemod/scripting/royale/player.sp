@@ -5,6 +5,7 @@ static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
 static bool g_ClientOutsideZone[TF_MAXPLAYERS + 1];
 static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
 static int g_ClientEditorCrateRef[TF_MAXPLAYERS + 1];
+static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
@@ -114,6 +115,19 @@ methodmap FRPlayer
 		public set(int val)
 		{
 			g_ClientEditorCrateRef[this] = val;
+		}
+	}
+	
+	property int ZoneDamageTicks
+	{
+		public get()
+		{
+			return g_ClientZoneDamageTicks[this];
+		}
+		
+		public set(int val)
+		{
+			g_ClientZoneDamageTicks[this] = val;
 		}
 	}
 	

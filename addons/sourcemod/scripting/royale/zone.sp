@@ -269,9 +269,14 @@ public void Frame_UpdateZone(int ref)
 			bool outsideZone = GetVectorDistance(originClient, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
 			
 			if (outsideZone && !TF2_IsPlayerInCondition(client, TFCond_Bleeding))
+			{
 				TF2_MakeBleed(client, client, 9999.0);	//Does no damage
+			}
 			else if (!outsideZone && FRPlayer(client).OutsideZone)
+			{
 				TF2_RemoveCondition(client, TFCond_Bleeding);
+				FRPlayer(client).ZoneDamageTicks = 0;
+			}
 			
 			FRPlayer(client).OutsideZone = outsideZone;
 		}
@@ -294,6 +299,9 @@ public void Frame_UpdateZone(int ref)
 			
 			bool outsideZone = GetVectorDistance(originObj, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
 			
+			if (!outsideZone && FREntity(objRef).OutsideZone)
+				FREntity(objRef).ZoneDamageTicks++;
+			
 			FREntity(objRef).OutsideZone = outsideZone;
 		}
 		else if (FREntity(objRef).OutsideZone)
@@ -315,7 +323,8 @@ public Action Timer_Bleed(Handle timer)
 	{
 		if (IsClientInGame(client) && IsPlayerAlive(client) && FRPlayer(client).OutsideZone)
 		{
-			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage(), DMG_PREVENT_PHYSICS_FORCE);
+			FRPlayer(client).ZoneDamageTicks++;
+			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * FRPlayer(client).ZoneDamageTicks * 0.25, DMG_PREVENT_PHYSICS_FORCE);
 		}
 	}
 	
@@ -323,9 +332,11 @@ public Action Timer_Bleed(Handle timer)
 	int obj = MaxClients + 1;
 	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
 	{
-		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && FREntity(EntIndexToEntRef(obj)).OutsideZone)
+		int objRef = EntIndexToEntRef(obj);
+		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && FREntity(objRef).OutsideZone)
 		{
-			SetVariantInt(RoundFloat(Zone_GetCurrentDamage()));
+			FREntity(objRef).ZoneDamageTicks++;
+			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(FREntity(objRef).ZoneDamageTicks) * 0.25));
 			AcceptEntityInput(obj, "RemoveHealth");
 		}
 	}

@@ -1,7 +1,8 @@
 enum
 {
 	Prop_EntRef = 0, 
-	Prop_OutsideZone, 
+	Prop_OutsideZone,
+	Prop_ZoneDamageTicks,
 	
 	MAX_PROP_TYPES
 }
@@ -65,6 +66,19 @@ methodmap FREntity
 		public set(bool val)
 		{
 			g_Properties.Set(this.FindAttributeListIndex(), val, Prop_OutsideZone);
+		}
+	}
+	
+	property bool ZoneDamageTicks
+	{
+		public get()
+		{
+			return g_Properties.Get(this.FindAttributeListIndex(), Prop_ZoneDamageTicks);
+		}
+		
+		public set(bool val)
+		{
+			g_Properties.Set(this.FindAttributeListIndex(), val, Prop_ZoneDamageTicks);
 		}
 	}
 	
