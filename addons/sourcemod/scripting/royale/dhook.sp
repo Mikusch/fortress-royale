@@ -8,9 +8,9 @@ static Handle g_DHookSmack;
 static Handle g_DHookExplode;
 static Handle g_DHookGetLiveTime;
 static Handle g_DHookTossJarThink;
-static Handle g_DHookWantsLagCompensationOnEntity;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
+static int g_StartLagCompensationClient;
 
 void DHook_Init(GameData gamedata)
 {
@@ -26,6 +26,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
+	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
@@ -37,7 +38,6 @@ void DHook_Init(GameData gamedata)
 	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
-	g_DHookWantsLagCompensationOnEntity = DHook_CreateVirtual(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -105,8 +105,6 @@ void DHook_HookClient(int client)
 	DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
 	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
 	DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
-	DHookEntity(g_DHookWantsLagCompensationOnEntity, false, client, _, DHook_WantsLagCompensationOnEntityPre);
-	DHookEntity(g_DHookWantsLagCompensationOnEntity, true, client, _, DHook_WantsLagCompensationOnEntityPost);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
@@ -361,6 +359,22 @@ public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 	}
 }
 
+public MRESReturn DHook_StartLagCompensationPre(Address manager, Handle params)
+{
+	g_StartLagCompensationClient = DHookGetParam(params, 1);
+	
+	//Lag compensate teammates
+	// CTFPlayer::WantsLagCompensationOnEntity virtual hook could've been done instead,
+	// but expensive as it called to each clients while this detour only calls once
+	FRPlayer(g_StartLagCompensationClient).ChangeToSpectator();
+}
+
+public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
+{
+	//DHook bug with post hook returning incorrect client address
+	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
+}
+
 public MRESReturn DHook_SetWinningTeam(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
@@ -540,15 +554,4 @@ public MRESReturn DHook_TossJarThinkPost(int entity, Handle params)
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 		FRPlayer(owner).ChangeToTeam();
-}
-
-public MRESReturn DHook_WantsLagCompensationOnEntityPre(int client, Handle returnVal)
-{
-	//Lag compensate teammates
-	FRPlayer(client).ChangeToSpectator();
-}
-
-public MRESReturn DHook_WantsLagCompensationOnEntityPost(int client, Handle returnVal)
-{
-	FRPlayer(client).ChangeToTeam();
 }

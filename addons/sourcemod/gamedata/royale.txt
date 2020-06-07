@@ -118,6 +118,12 @@
 				"linux"		"@_ZN12CEyeballBoss24FindClosestVisibleVictimEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x2C\xF3\x0F\x10\x05\x2A\x2A\x2A\x2A\x53"
 			}
+			"CLagCompensationManager::StartLagCompensation"
+			{
+				"library"	"server"
+				"linux"		"@_ZN23CLagCompensationManager20StartLagCompensationEP11CBasePlayerP8CUserCmd"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x57\x8B\xF9\x89\x7D\xE8"
+			}
 		}
 		"Offsets"
 		{
@@ -145,12 +151,6 @@
 			{
 				"linux"		"482"
 				"windows"	"475"
-			}
-			"CTFPlayer::WantsLagCompensationOnEntity"
-			{
-				"library"	"server"
-				"linux"		"328"
-				"windows"	"327"
 			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
@@ -400,6 +400,24 @@
 				"return"	"void"
 				"this"		"entity"
 			}
+			"CLagCompensationManager::StartLagCompensation"
+			{
+				"signature"	"CLagCompensationManager::StartLagCompensation"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"address"
+				"arguments"
+				{
+					"player"
+					{
+						"type"	"cbaseentity"
+					}
+					"cmd"
+					{
+						"type"	"objectptr"
+					}
+				}
+			}
 			"CTFGameRules::SetWinningTeam"
 			{
 				"offset"	"CTFGameRules::SetWinningTeam"
@@ -533,28 +551,6 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
-			}
-			"CTFPlayer::WantsLagCompensationOnEntity"
-			{
-				"offset"	"CTFPlayer::WantsLagCompensationOnEntity"
-				"hooktype"	"entity"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pPlayer"
-					{
-						"type"	"cbaseentity"
-					}
-					"pCmd"
-					{
-						"type"	"objectptr"
-					}
-					"pEntityTransmitBits"
-					{
-						"type"	"objectptr"
-					}
-				}
 			}
 		}
 	}
