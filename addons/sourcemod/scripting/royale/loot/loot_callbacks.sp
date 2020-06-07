@@ -1,4 +1,4 @@
-public int LootCallback_CreateWeapon(int client, CallbackParams params)
+public void LootCallback_CreateWeapon(int client, CallbackParams params, const float origin[3])
 {
 	TFClassType class = TF2_GetPlayerClass(client);
 	int defindex = params.GetInt("defindex");
@@ -6,14 +6,13 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 	if (slot < WeaponSlot_Primary)
 	{
 		LogError("Unable to get slot for def index '%d' and class '%d'", defindex, class);
-		return -1;
+		return;
 	}
 	
 	//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
 	FRPlayer(client).ChangeToTeam();
 	
 	int weapon = -1;
-	int droppedWeapon = -1;
 	
 	//Find possible reskin to use
 	Address item = SDKCall_GetLoadoutItem(client, class, slot);
@@ -62,19 +61,18 @@ public int LootCallback_CreateWeapon(int client, CallbackParams params)
 			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
 		}
 		
-		droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false);
+		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false, origin);
 		if (droppedWeapon == INVALID_ENT_REFERENCE)
 			LogError("Unable to create dropped weapon for def index '%d'", defindex);
 		
 		if (!TF2_IsWearable(weapon))
 			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
 		
+		TeleportEntity(droppedWeapon, NULL_VECTOR, NULL_VECTOR, view_as<float>({ 0.0, 0.0, 0.0 }) );
 		RemoveEntity(weapon);
 	}
 	
 	FRPlayer(client).ChangeToSpectator();
-	
-	return droppedWeapon;
 }
 
 public bool LootCallback_ClassWeapon(CallbackParams params, TFClassType class)
@@ -109,39 +107,37 @@ public void LootCallback_PrecacheWeapon(CallbackParams params)
 	g_PrecacheWeapon.SetString(defindex, model);
 }
 
-public int LootCallback_CreateSpell(int client, CallbackParams params)
+public void LootCallback_CreateSpell(int client, CallbackParams params, const float origin[3])
 {
 	int spell = CreateEntityByName("tf_spell_pickup");
 	if (spell > MaxClients)
 	{
 		SetEntProp(spell, Prop_Data, "m_nTier", params.GetInt("tier"));
+		TeleportEntity(spell, origin, NULL_VECTOR, NULL_VECTOR);
 		DispatchSpawn(spell);
-		return spell;
 	}
-	return -1;
 }
 
-public int LootCallback_CreateRune(int client, CallbackParams params)
+public void LootCallback_CreateRune(int client, CallbackParams params, const float origin[3])
 {
 	int type;
 	if (params && params.GetIntEx("type", type))
-		return TF2_CreateRune(view_as<TFRuneType>(type));
+		TF2_CreateRune(view_as<TFRuneType>(type), origin);
 	else
-		return TF2_CreateRune(view_as<TFRuneType>(GetRandomInt(0, view_as<int>(TFRuneType))));
+		TF2_CreateRune(view_as<TFRuneType>(GetRandomInt(0, view_as<int>(TFRuneType))), origin);
 }
 
-public int LootCallback_CreateEntity(int client, CallbackParams params)
+public void LootCallback_CreateEntity(int client, CallbackParams params, const float origin[3])
 {
 	char classname[256];
 	params.GetString("classname", classname, sizeof(classname));
 	int entity = CreateEntityByName(classname);
 	if (entity > MaxClients)
 	{
+		TeleportEntity(entity, origin, NULL_VECTOR, NULL_VECTOR);
+		
 		GameRules_SetProp("m_bPowerupMode", true);
 		DispatchSpawn(entity);
 		GameRules_SetProp("m_bPowerupMode", false);
-		
-		return entity;
 	}
-	return -1;
 }

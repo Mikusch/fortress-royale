@@ -64,13 +64,73 @@ stock int GetClientFromPlayerShared(Address playershared)
 stock bool IsEntityStuck(int entity)
 {
 	float mins[3], maxs[3], origin[3];
-	
 	GetEntPropVector(entity, Prop_Send, "m_vecMins", mins);
 	GetEntPropVector(entity, Prop_Send, "m_vecMaxs", maxs);
 	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
 	
 	TR_TraceHullFilter(origin, origin, mins, maxs, MASK_SOLID, Trace_DontHitEntity, entity);
 	return TR_DidHit();
+}
+
+stock bool UnstuckEntity(int entity)
+{
+	if (!IsEntityStuck(entity))
+		return true;
+	
+	float mins[3], maxs[3], origin[3];
+	GetEntPropVector(entity, Prop_Send, "m_vecMins", mins);
+	GetEntPropVector(entity, Prop_Send, "m_vecMaxs", maxs);
+	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
+	
+	float oldOrigin[3];
+	oldOrigin = origin;
+	
+	do
+	{
+		float test[3];
+		float direction[3];
+		for (int x = -1; x <= 1; x+= 2)
+		{
+			test[0] = origin[0] + (x == -1 ? mins[0] : maxs[0]);
+			
+			for (int y = -1; y <= 1; y+= 2)
+			{
+				test[1] = origin[1] + (y == -1 ? mins[1] : maxs[1]);
+				
+				for (int z = -1; z <= 1; z+= 2)
+				{
+					test[2] = origin[2] + (z == -1 ? mins[2] : maxs[2]);
+					
+					if (TR_GetPointContents(test) & MASK_SOLID)
+					{
+						direction[0] -= float(x);
+						direction[1] -= float(y);
+						direction[2] -= float(z);
+					}
+				}
+			}
+		}
+		
+		if (!direction[0] && !direction[1] && !direction[2])
+		{
+			//Should be unstuck now
+			return true;
+		}
+		
+		float newOrigin[3];
+		AddVectors(origin, direction, newOrigin);
+		
+		//Teleporting in infinite loop, escape
+		if (oldOrigin[0] == newOrigin[0] && oldOrigin[1] == newOrigin[1] && oldOrigin[2] == newOrigin[2])
+			return false;
+		
+		oldOrigin = origin;
+		origin = newOrigin;
+		TeleportEntity(entity, origin, NULL_VECTOR, NULL_VECTOR);
+	}
+	while (IsEntityStuck(entity));
+	
+	return true;
 }
 
 public bool Trace_DontHitEntity(int entity, int mask, any data)
@@ -190,8 +250,8 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	{
 		Address address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneType);
 		StoreToAddress(address, view_as<int>(type), NumberType_Int8);
-		DispatchSpawn(rune);
 		TeleportEntity(rune, origin, angles, NULL_VECTOR);
+		DispatchSpawn(rune);
 		return rune;
 	}
 	
@@ -341,7 +401,7 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 	return weapon;
 }
 
-stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 })
+stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const float origin[3], const float angles[3] = { 0.0, 0.0, 0.0 })
 {
 	char classname[32];
 	GetEntityNetClass(fromWeapon, classname, sizeof(classname));
@@ -400,6 +460,13 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 		SDKCall_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), swap);
 	else
 		SDKCall_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
+	
+	if (!UnstuckEntity(droppedWeapon))
+	{
+		LogError("Unable to unstuck dropped weapon at origin '%.0f %.0f %.0f'", droppedWeapon, origin[0], origin[1], origin[2]);
+		RemoveEntity(droppedWeapon);
+		return INVALID_ENT_REFERENCE;
+	}
 	
 	return droppedWeapon;
 }

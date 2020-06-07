@@ -204,29 +204,23 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	LootTable lootTable;
 	while (!LootTable_GetRandomLoot(lootTable, loot.GetRandomLootType(), class)) {  }
 	
+	float origin[3];
+	GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
+	
+	//Calculate where centre of origin by boundary box
+	float mins[3], maxs[3], offset[3];
+	GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
+	GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
+	AddVectors(maxs, mins, offset);
+	ScaleVector(offset, 0.5);
+	AddVectors(origin, offset, origin);
+	
 	//Start function call to loot creation function
 	Call_StartFunction(null, lootTable.callback_create);
 	Call_PushCell(client);
 	Call_PushCell(lootTable.callbackParams);
+	Call_PushArray(origin, sizeof(origin));
 	
-	int entity;
-	if (Call_Finish(entity) == SP_ERROR_NONE && entity > MaxClients)
-	{
-		float origin[3];
-		GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
-		
-		//Calculate where centre of origin by boundary box
-		float mins[3], maxs[3], offset[3];
-		GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
-		GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
-		AddVectors(maxs, mins, offset);
-		ScaleVector(offset, 0.5);
-		AddVectors(origin, offset, origin);
-		
-		TeleportEntity(entity, origin, NULL_VECTOR, NULL_VECTOR);
-	}
-	else
-	{
-		LogError("Unable to create entity for LootType '%d' class '%d'", lootTable.type, class);
-	}
+	if (Call_Finish() != SP_ERROR_NONE)
+		LogError("Unable to call function for LootType '%d' class '%d'", lootTable.type, class);
 }
