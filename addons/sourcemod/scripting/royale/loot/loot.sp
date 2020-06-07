@@ -212,9 +212,6 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	int entity;
 	if (Call_Finish(entity) == SP_ERROR_NONE && entity > MaxClients)
 	{
-		if (IsEntityStuck(crate))
-			LogError("Entity crate at origin '%.0f %.0f %.0f' is stuck inside world or entity, possible crash incoming", loot.origin[0], loot.origin[1], loot.origin[2]);
-		
 		float origin[3];
 		GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
 		
