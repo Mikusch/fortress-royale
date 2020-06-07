@@ -196,9 +196,13 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 {
 	EmitSoundToAll(loot.sound, crate);
 	
+	TFClassType class = TFClass_Unknown;
+	if (0 < client <= MaxClients && IsClientInGame(client))
+		class = TF2_GetPlayerClass(client);
+	
 	//While loop to keep searching for loot until found valid
 	LootTable lootTable;
-	while (!LootTable_GetRandomLoot(lootTable, loot.GetRandomLootType(), TF2_GetPlayerClass(client))) {  }
+	while (!LootTable_GetRandomLoot(lootTable, loot.GetRandomLootType(), class)) {  }
 	
 	//Start function call to loot creation function
 	Call_StartFunction(null, lootTable.callback_create);
@@ -226,6 +230,6 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	}
 	else
 	{
-		LogError("Unable to create entity for LootType '%d' class '%d'", lootTable.type, TF2_GetPlayerClass(client));
+		LogError("Unable to create entity for LootType '%d' class '%d'", lootTable.type, class);
 	}
 }
