@@ -61,6 +61,17 @@ stock int GetClientFromPlayerShared(Address playershared)
 	return 0;
 }
 
+stock void AnglesToVelocity(const float angles[3], float velocity[3], float speed = 1.0)
+{
+	velocity[0] = Cosine(DegToRad(angles[1]));
+	velocity[1] = Sine(DegToRad(angles[1]));
+	velocity[2] = Sine(DegToRad(angles[0])) * -1.0;
+	
+	NormalizeVector(velocity, velocity);
+	
+	ScaleVector(velocity, speed);
+}
+
 stock bool IsEntityStuck(int entity)
 {
 	float mins[3], maxs[3], origin[3];
@@ -130,6 +141,35 @@ stock bool UnstuckEntity(int entity)
 	}
 	while (IsEntityStuck(entity));
 	
+	return true;
+}
+
+stock bool MoveEntityToClientEye(int entity, int client)
+{
+	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
+	
+	GetEntPropVector(entity, Prop_Data, "m_vecMins", mins);
+	GetEntPropVector(entity, Prop_Data, "m_vecMaxs", maxs);
+	
+	GetClientEyePosition(client, posStart);
+	GetClientEyeAngles(client, angles);
+	
+	if (TR_PointOutsideWorld(posStart))
+		return false;
+	
+	//Get end position for hull
+	Handle trace = TR_TraceRayFilterEx(posStart, angles, MASK_PLAYERSOLID, RayType_Infinite, Trace_DontHitEntity, client);
+	TR_GetEndPosition(posEnd, trace);
+	delete trace;
+	
+	//Get new end position
+	trace = TR_TraceHullFilterEx(posStart, posEnd, mins, maxs, MASK_PLAYERSOLID, Trace_DontHitEntity, client);
+	TR_GetEndPosition(posEnd, trace);
+	delete trace;
+	
+	//Don't want entity angle consider up/down eye
+	angles[0] = 0.0;
+	TeleportEntity(entity, posEnd, angles, NULL_VECTOR);
 	return true;
 }
 

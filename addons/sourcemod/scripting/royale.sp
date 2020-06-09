@@ -290,6 +290,8 @@ int g_OffsetRuneShouldReposition;
 #include "royale/loot/loot_callbacks.sp"
 #include "royale/loot/loot.sp"
 
+#include "royale/vehicles/vehicles.sp"
+
 #include "royale/battlebus.sp"
 #include "royale/command.sp"
 #include "royale/config.sp"
@@ -341,6 +343,7 @@ public void OnPluginStart()
 	Event_Init();
 	Loot_Init();
 	LootConfig_Init();
+	Vehicles_Init();
 	
 	ConVar_Enable();
 	
@@ -433,6 +436,11 @@ public void OnEntityCreated(int entity, const char[] classname)
 	
 	if (StrContains(classname, "obj_") == 0)
 		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
+}
+
+public void OnEntityDestroyed(int entity)
+{
+	Vehicles_OnEntityDestroyed(entity);
 }
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)

@@ -24,7 +24,7 @@ void Editor_ClientThink(int client)
 		}
 		case EditorState_Placing:
 		{
-			Editor_MoveCrateToEye(client, FRPlayer(client).EditorCrateRef);
+			MoveEntityToClientEye(FRPlayer(client).EditorCrateRef, client);
 		}
 	}
 }
@@ -263,7 +263,7 @@ void Editor_FindCrate(int client)
 		return;
 	
 	//Create simple trace
-	Handle trace = TR_TraceRayFilterEx(posStart, angles, MASK_PLAYERSOLID, RayType_Infinite, Editor_FilterClient, client);
+	Handle trace = TR_TraceRayFilterEx(posStart, angles, MASK_PLAYERSOLID, RayType_Infinite, Trace_DontHitEntity, client);
 	if (!TR_DidHit(trace))
 	{
 		delete trace;
@@ -286,39 +286,6 @@ void Editor_FindCrate(int client)
 	float mins[3] =  { -48.0, -48.0, -48.0 };
 	float maxs[3] =  { 48.0, 48.0, 48.0 };
 	TR_EnumerateEntitiesHull(posStart, posEnd, mins, maxs, PARTITION_NON_STATIC_EDICTS, Editor_EnumeratorCrate, client);
-}
-
-void Editor_MoveCrateToEye(int client, int crate)
-{
-	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
-	
-	GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
-	GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
-	
-	GetClientEyePosition(client, posStart);
-	GetClientEyeAngles(client, angles);
-	
-	if (TR_PointOutsideWorld(posStart))
-		return;
-	
-	//Get end position for hull
-	Handle trace = TR_TraceRayFilterEx(posStart, angles, MASK_PLAYERSOLID, RayType_Infinite, Editor_FilterClient, client);
-	TR_GetEndPosition(posEnd, trace);
-	delete trace;
-	
-	//Get new end position
-	trace = TR_TraceHullFilterEx(posStart, posEnd, mins, maxs, MASK_PLAYERSOLID, Editor_FilterClient, client);
-	TR_GetEndPosition(posEnd, trace);
-	delete trace;
-	
-	//Don't want crate angle consider up/down eye
-	angles[0] = 0.0;
-	TeleportEntity(crate, posEnd, angles, NULL_VECTOR);
-}
-
-public bool Editor_FilterClient(int entity, int contentsMask, any client)
-{
-	return entity != client;
 }
 
 public bool Editor_EnumeratorCrate(int entity, int client)

@@ -103,11 +103,6 @@ public Action Loot_SetTransmit(int glow, int client)
 	return Plugin_Handled;
 }
 
-public bool Loot_FilterClient(int entity, int contentsMask, any client)
-{
-	return entity != client;
-}
-
 void Loot_SetCratePrefab(int crate, LootCrate loot)
 {
 	SetEntityModel(crate, loot.model);
@@ -150,7 +145,7 @@ stock bool Loot_IsClientLookingAtCrate(int crate, int client)
 	if (TR_PointOutsideWorld(position))
 		return false;
 	
-	Handle trace = TR_TraceRayFilterEx(position, angles, MASK_PLAYERSOLID, RayType_Infinite, Loot_FilterClient, client);
+	Handle trace = TR_TraceRayFilterEx(position, angles, MASK_PLAYERSOLID, RayType_Infinite, Trace_DontHitEntity, client);
 	if (!TR_DidHit(trace))
 	{
 		delete trace;
