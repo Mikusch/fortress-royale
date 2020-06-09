@@ -280,6 +280,7 @@ int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
 
+#include "royale/config.sp"
 #include "royale/entity.sp"
 #include "royale/player.sp"
 
@@ -291,10 +292,10 @@ int g_OffsetRuneShouldReposition;
 #include "royale/loot/loot.sp"
 
 #include "royale/vehicles/vehicles.sp"
+#include "royale/vehicles/vehicles_config.sp"
 
 #include "royale/battlebus.sp"
 #include "royale/command.sp"
-#include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convar.sp"
 #include "royale/dhook.sp"
@@ -344,6 +345,7 @@ public void OnPluginStart()
 	Loot_Init();
 	LootConfig_Init();
 	Vehicles_Init();
+	VehiclesConfig_Init();
 	
 	ConVar_Enable();
 	

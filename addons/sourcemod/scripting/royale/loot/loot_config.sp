@@ -42,7 +42,7 @@ methodmap LootPrefabs < ArrayList
 			LootCrate Loot;
 			this.GetArray(i, Loot);
 			
-			if (StrEqual(Loot.namePrefab, name))
+			if (StrEqual(Loot.namePrefab, name, false))
 			{
 				lootBuffer = Loot;
 				return true;

@@ -2,6 +2,7 @@ void Config_Refresh()
 {
 	g_PrecacheWeapon.Clear();
 	LootConfig_Clear();
+	VehiclesConfig_Clear();
 	
 	//Load 'global.cfg' for all maps
 	char filePath[PLATFORM_MAX_PATH];
@@ -27,23 +28,30 @@ void Config_Refresh()
 	
 	delete kv;
 	
-	//Build file path
+	//Build filepath for list of loot tables
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
 	
-	//Finally, read the config
+	//Read the config
 	kv = new KeyValues("LootTable");
 	if (kv.ImportFromFile(filePath))
-	{
 		LootTable_ReadConfig(kv);
-		kv.GoBack();
-	}
+	
+	delete kv;
+	
+	//Build filepath for vehicles
+	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/vehicles.cfg");
+	
+	//Read the config
+	kv = new KeyValues("Vehicles");
+	if (kv.ImportFromFile(filePath))
+		VehiclesConfig_ReadConfig(kv);
 	
 	delete kv;
 	
 	//Load map specific configs
 	Confg_GetMapFilepath(filePath, sizeof(filePath));
 	
-	//Finally, read the config
+	//Read the config
 	kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
@@ -60,6 +68,7 @@ void Config_Refresh()
 		}
 		
 		LootConfig_ReadConfig(kv);
+		VehiclesConfig_ReadConfig(kv);
 	}
 	else
 	{

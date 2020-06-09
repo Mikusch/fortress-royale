@@ -1,5 +1,36 @@
 "Phrases"
 {
+	"BattleBus_HowToDrop"
+	{
+		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
+	}
+	"BattleBus_SecToDeployParachute"
+	{
+		"en"	"%d seconds to auto deploy parachute"
+	}
+	"BattleBus_ParachuteDeployed"
+	{
+		"en"	"Parachute deployed"
+	}
+	"BattleBus_IncomingCrate"
+	{
+		"en"	"Incoming Mannpower loot crate!"
+	}
+	
+	"Command_NotInGame"
+	{
+		"en"	"This Command can only be used ingame"
+	}
+	"Command_VehicleUsage"
+	{
+		"en"		"Usage: sm_vehicle [config name]"
+	}
+	"Command_VehicleCantFindName"
+	{
+		"#format"	"{1:s}"
+		"en"		"Unable to find vehicle name '{1}'"
+	}
+	
 	"Editor_Title"
 	{
 		"en"	"Editor Menu"
@@ -48,23 +79,6 @@
 	"Editor_Prefab_CurrentCrate"
 	{
 		"en"	"You are currently using %s"
-	}
-	
-	"BattleBus_HowToDrop"
-	{
-		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
-	}
-	"BattleBus_SecToDeployParachute"
-	{
-		"en"	"%d seconds to auto deploy parachute"
-	}
-	"BattleBus_ParachuteDeployed"
-	{
-		"en"	"Parachute deployed"
-	}
-	"BattleBus_IncomingCrate"
-	{
-		"en"	"Incoming Mannpower loot crate!"
 	}
 	
 	"Zone_ShrinkAlert"

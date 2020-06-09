@@ -1,24 +1,48 @@
-//TODO move defines to config
-#define VEHICLE_ROTATE_SPEED	8.0
-#define VEHICLE_ROTATE_MAX		50.0
-#define VEHICLE_SPEED_FORWARD	30.0
-#define VEHICLE_SPEED_BACKWARD	25.0
-#define VEHICLE_SPEED_MAX		400.0
-
 enum struct Vehicle
 {
-	int entity;	//Entity ref
-	int client; //Client riding on this vehicle
+	int entity;	/**< Entity ref */
+	int client; /**< Client riding on this vehicle */
+	
+	char name[CONFIG_MAXCHAR];	/**< Name of vehicle */
+	char model[PLATFORM_MAX_PATH];	/**< Entity model */
+	float offset_player[3];	/**< Offset from entity to teleport player */
+	float mass;				/**< Entity mass */
+	float impact;			/**< Entity damage impact force */
+	
+	float rotate_speed;		/**< Rotation speed */
+	float rotate_max; 		/**< Max rotation speed */
+	
+	float speed_forward;	/**< Forward speed */
+	float speed_backward;	/**< Backward speed */
+	float speed_max;		/**< Max speed */
+	
+	void ReadConfig(KeyValues kv)
+	{
+		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
+		PrecacheModel(this.model);
+		
+		kv.GetVector("offset_player", this.offset_player, this.offset_player);
+		this.mass = kv.GetFloat("mass", this.mass);
+		this.impact = kv.GetFloat("impact", this.impact);
+		
+		this.rotate_speed = kv.GetFloat("rotate_speed", this.rotate_speed);
+		this.rotate_max = kv.GetFloat("rotate_max", this.rotate_max);
+	
+		this.speed_forward = kv.GetFloat("speed_forward", this.speed_forward);
+		this.speed_backward = kv.GetFloat("speed_backward", this.speed_backward);
+		this.speed_max = kv.GetFloat("speed_max", this.speed_max);
+	}
 }
 
-static ArrayList g_Vehicles;
+static ArrayList g_VehiclesEntity;
 
 void Vehicles_Init()
 {
-	g_Vehicles = new ArrayList(sizeof(Vehicle));
+	g_VehiclesEntity = new ArrayList(sizeof(Vehicle));
 }
 
-void Vehicles_Create(int client)
+void Vehicles_Create(Vehicle vehicle, int client)
 {
 	float position[3], angles[3];
 	GetClientEyePosition(client, position);
@@ -31,12 +55,9 @@ void Vehicles_Create(int client)
 	if (!IsValidEntity(entity))
 		return;
 	
-	//TODO config for model
-	PrecacheModel("models/props_vehicles/pickup03.mdl");
-	SetEntityModel(entity, "models/props_vehicles/pickup03.mdl");
-	
-	DispatchKeyValueFloat(entity, "massScale", 10.0);
-	DispatchKeyValueFloat(entity, "physdamagescale", 1.0);
+	SetEntityModel(entity, vehicle.model);
+	DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
+	DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
 	
 	SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
 	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
@@ -50,9 +71,8 @@ void Vehicles_Create(int client)
 	AcceptEntityInput(entity, "EnableMotion");
 	SDKHook(entity, SDKHook_Touch, Vehicles_Touch);
 	
-	Vehicle vehicle;
 	vehicle.entity = EntIndexToEntRef(entity);
-	g_Vehicles.PushArray(vehicle);
+	g_VehiclesEntity.PushArray(vehicle);
 }
 
 void Vehicles_OnEntityDestroyed(int entity)
@@ -97,12 +117,11 @@ public Action Vehicles_Touch(int entity, int client)
 	SetVariantString("!activator");
 	AcceptEntityInput(client, "SetParent", entity, entity);
 	
-	float offset[3], angles[3];
-	offset = view_as<float>({ 24.0, 12.0, 40.0 });
+	float angles[3];
 	GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
 	
 	//After client is parented, origin is now the offset of prop
-	TeleportEntity(client, offset, angles, NULL_VECTOR);
+	TeleportEntity(client, vehicle.offset_player, angles, NULL_VECTOR);
 }
 
 public Action Vehicles_PreThink(int client)
@@ -131,26 +150,26 @@ public Action Vehicles_PreThink(int client)
 		angVelocity[0] -= angles[2] * 0.5;	//side
 		angVelocity[1] -= angles[0] * 0.5;	//front
 		
-		if (buttons & IN_MOVELEFT && angVelocity[2] < VEHICLE_ROTATE_MAX)
+		if (buttons & IN_MOVELEFT && angVelocity[2] < vehicle.rotate_max)
 		{
-			angVelocity[2] += VEHICLE_ROTATE_SPEED;
-			if (angVelocity[2] > VEHICLE_ROTATE_MAX)
-				angVelocity[2] = VEHICLE_ROTATE_MAX;
+			angVelocity[2] += vehicle.rotate_speed;
+			if (angVelocity[2] > vehicle.rotate_max)
+				angVelocity[2] = vehicle.rotate_max;
 		}
 		
-		if (buttons & IN_MOVERIGHT && angVelocity[2] > -VEHICLE_ROTATE_MAX)
+		if (buttons & IN_MOVERIGHT && angVelocity[2] > -vehicle.rotate_max)
 		{
-			angVelocity[2] -= VEHICLE_ROTATE_SPEED;
-			if (angVelocity[2] < -VEHICLE_ROTATE_MAX)
-				angVelocity[2] = -VEHICLE_ROTATE_MAX;
+			angVelocity[2] -= vehicle.rotate_speed;
+			if (angVelocity[2] < -vehicle.rotate_max)
+				angVelocity[2] = -vehicle.rotate_max;
 		}
 		
 		float fwd;
 		if (buttons & IN_FORWARD)
-			fwd += VEHICLE_SPEED_FORWARD;
+			fwd += vehicle.speed_forward;
 		
 		if (buttons & IN_BACK)
-			fwd -= VEHICLE_SPEED_BACKWARD;
+			fwd -= vehicle.speed_backward;
 		
 		if (fwd)
 		{
@@ -159,15 +178,15 @@ public Action Vehicles_PreThink(int client)
 			
 			for (int vec = 0; vec < 3; vec++)
 			{
-				if (-VEHICLE_SPEED_MAX < velocity[vec] < VEHICLE_SPEED_MAX)
+				if (-vehicle.speed_max < velocity[vec] < vehicle.speed_max)
 				{
 					velocity[vec] += buffer[vec];
 					
-					if (velocity[vec] < -VEHICLE_SPEED_MAX)
-						velocity[vec] = -VEHICLE_SPEED_MAX;
+					if (velocity[vec] < -vehicle.speed_max)
+						velocity[vec] = -vehicle.speed_max;
 					
-					if (velocity[vec] > VEHICLE_SPEED_MAX)
-						velocity[vec] = VEHICLE_SPEED_MAX;
+					if (velocity[vec] > vehicle.speed_max)
+						velocity[vec] = vehicle.speed_max;
 				}
 			}
 		}
@@ -182,31 +201,31 @@ public Action Vehicles_PreThink(int client)
 
 bool Vehicles_GetByEntity(int entity, Vehicle vehicle)
 {
-	int pos = g_Vehicles.FindValue(entity, Vehicle::entity);
+	int pos = g_VehiclesEntity.FindValue(entity, Vehicle::entity);
 	if (pos == -1)
 		return false;
 	
-	g_Vehicles.GetArray(pos, vehicle);
+	g_VehiclesEntity.GetArray(pos, vehicle);
 	return true;
 }
 
 bool Vehicles_GetByClient(int client, Vehicle vehicle)
 {
-	int pos = g_Vehicles.FindValue(client, Vehicle::client);
+	int pos = g_VehiclesEntity.FindValue(client, Vehicle::client);
 	if (pos == -1)
 		return false;
 	
-	g_Vehicles.GetArray(pos, vehicle);
+	g_VehiclesEntity.GetArray(pos, vehicle);
 	return true;
 }
 
 void Vehicles_SetByEntity(Vehicle vehicle)
 {
-	int pos = g_Vehicles.FindValue(vehicle.entity, Vehicle::entity);
+	int pos = g_VehiclesEntity.FindValue(vehicle.entity, Vehicle::entity);
 	if (pos == -1)
 		return;
 	
-	g_Vehicles.SetArray(pos, vehicle);
+	g_VehiclesEntity.SetArray(pos, vehicle);
 }
 
 void Vehicles_RemoveByClient(int client)
@@ -214,9 +233,9 @@ void Vehicles_RemoveByClient(int client)
 	int pos;
 	do
 	{
-		pos = g_Vehicles.FindValue(client, Vehicle::client);
+		pos = g_VehiclesEntity.FindValue(client, Vehicle::client);
 		if (pos >= 0)
-			g_Vehicles.Erase(pos);
+			g_VehiclesEntity.Erase(pos);
 	}
 	while (pos >= 0);
 }
