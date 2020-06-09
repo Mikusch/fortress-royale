@@ -1,5 +1,24 @@
 static bool g_SkipGiveNamedItem;
 
+stock int GetClientPointVisible(int client, float distance)
+{
+	float origin[3], angles[3], end[3];
+	GetClientEyePosition(client, origin);
+	GetClientEyeAngles(client, angles);
+	
+	Handle trace = TR_TraceRayFilterEx(origin, angles, MASK_ALL, RayType_Infinite, Trace_DontHitEntity, client);
+	TR_GetEndPosition(end, trace);
+	
+	int val = -1;
+	int entity = TR_GetEntityIndex(trace);
+	
+	if (TR_DidHit(trace) && entity != client && GetVectorDistance(origin, end) < distance)
+		val = entity;
+	
+	delete trace;
+	return val;
+}
+
 stock int GetOwnerLoop(int entity)
 {
 	

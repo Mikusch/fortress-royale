@@ -1,3 +1,5 @@
+#define VEHICLE_ENTER_RANGE 150.0
+
 enum struct Vehicle
 {
 	int entity;	/**< Entity ref */
@@ -69,7 +71,6 @@ void Vehicles_Create(Vehicle vehicle, int client)
 	}
 	
 	AcceptEntityInput(entity, "EnableMotion");
-	SDKHook(entity, SDKHook_Touch, Vehicles_Touch);
 	
 	vehicle.entity = EntIndexToEntRef(entity);
 	g_VehiclesEntity.PushArray(vehicle);
@@ -88,7 +89,7 @@ void Vehicles_OnEntityDestroyed(int entity)
 	}
 }
 
-public Action Vehicles_Touch(int entity, int client)
+void Vehicles_EnterVehicle(int entity, int client)
 {
 	if (client <= 0 || client > MaxClients)
 		return;
@@ -103,6 +104,8 @@ public Action Vehicles_Touch(int entity, int client)
 	if (0 < vehicle.client <= MaxClients && IsClientInGame(vehicle.client) && IsPlayerAlive(vehicle.client))
 		return;
 	
+	FRPlayer(client).LastVehicleEnterTime = GetGameTime();
+	
 	//Set client to ride this vehicle
 	vehicle.client = client;
 	Vehicles_SetByEntity(vehicle);
@@ -111,7 +114,7 @@ public Action Vehicles_Touch(int entity, int client)
 	//Force client duck and dont move
 	SetEntProp(client, Prop_Send, "m_bDucking", true);
 	SetEntProp(client, Prop_Send, "m_bDucked", true);
-	SetEntityFlags(client, GetEntityFlags(client)|FL_DUCKING);
+	SetEntityFlags(client, GetEntityFlags(client) | FL_DUCKING);
 	SetEntityMoveType(client, MOVETYPE_NONE);
 	
 	SetVariantString("!activator");
@@ -122,6 +125,26 @@ public Action Vehicles_Touch(int entity, int client)
 	
 	//After client is parented, origin is now the offset of prop
 	TeleportEntity(client, vehicle.offset_player, angles, NULL_VECTOR);
+}
+
+void Vehicles_ExitVehicle(int client)
+{
+	AcceptEntityInput(client, "ClearParent");
+	SDKUnhook(client, SDKHook_PreThink, Vehicles_PreThink);
+	SetEntityMoveType(client, MOVETYPE_WALK);
+	
+	Vehicle vehicle;
+	if (Vehicles_GetByClient(client, vehicle))
+	{
+		vehicle.client = -1;
+		Vehicles_SetByEntity(vehicle);
+	}
+	
+	//TODO: Exit offset, if blocked teleport player to first free location
+	float origin[3];
+	GetClientAbsOrigin(client, origin);
+	origin[2] += 150.0;
+	TeleportEntity(client, origin, NULL_VECTOR, NULL_VECTOR);
 }
 
 public Action Vehicles_PreThink(int client)
@@ -197,6 +220,13 @@ public Action Vehicles_PreThink(int client)
 	{
 		AcceptEntityInput(client, "ClearParent");
 	}
+}
+
+void Vehicles_TryToEnterVehicle(int client)
+{
+	int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
+	if (entity != -1)
+		Vehicles_EnterVehicle(entity, client);
 }
 
 bool Vehicles_GetByEntity(int entity, Vehicle vehicle)

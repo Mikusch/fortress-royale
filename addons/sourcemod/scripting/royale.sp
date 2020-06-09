@@ -425,9 +425,17 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		else
 			buttons = 0;	//Don't allow client in battle bus process any other buttons
 	}
-	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2) && FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
+	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
 	{
-		SDKCall_TryToPickupDroppedWeapon(client);
+		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
+			SDKCall_TryToPickupDroppedWeapon(client);
+		
+		//Entering and exiting vehicles
+		Vehicle vehicle;
+		if (Vehicles_GetByClient(client, vehicle) && FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
+			Vehicles_ExitVehicle(client);
+		else
+			Vehicles_TryToEnterVehicle(client);
 	}
 }
 

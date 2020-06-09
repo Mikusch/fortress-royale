@@ -1,6 +1,7 @@
 static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
 static int g_ClientSecToDeployParachute[TF_MAXPLAYERS + 1];
 static float g_ClientLastWeaponPickupTime[TF_MAXPLAYERS + 1];
+static float g_ClientLastVehicleEnterTime[TF_MAXPLAYERS + 1];
 static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
 static bool g_ClientOutsideZone[TF_MAXPLAYERS + 1];
 static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
@@ -63,6 +64,19 @@ methodmap FRPlayer
 		public set(float val)
 		{
 			g_ClientLastWeaponPickupTime[this] = val;
+		}
+	}
+	
+	property float LastVehicleEnterTime
+	{
+		public get()
+		{
+			return g_ClientLastVehicleEnterTime[this];
+		}
+		
+		public set(float val)
+		{
+			g_ClientLastVehicleEnterTime[this] = val;
 		}
 	}
 	
