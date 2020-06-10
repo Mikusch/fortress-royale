@@ -1,5 +1,25 @@
 static bool g_SkipGiveNamedItem;
 
+stock int min(int a, int b)
+{
+	return a < b ? a : b;
+}
+
+stock int max(int a, int b)
+{
+	return a > b ? a : b;
+}
+
+stock float fMin(float a, float b)
+{
+	return a < b ? a : b;
+}
+
+stock float fMax(float a, float b)
+{
+	return a > b ? a : b;
+}
+
 stock int GetClientPointVisible(int client, float distance)
 {
 	float origin[3], angles[3], end[3];
@@ -163,7 +183,7 @@ stock bool UnstuckEntity(int entity)
 	return true;
 }
 
-stock bool MoveEntityToClientEye(int entity, int client)
+stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERSOLID)
 {
 	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
 	
@@ -177,12 +197,12 @@ stock bool MoveEntityToClientEye(int entity, int client)
 		return false;
 	
 	//Get end position for hull
-	Handle trace = TR_TraceRayFilterEx(posStart, angles, MASK_PLAYERSOLID, RayType_Infinite, Trace_DontHitEntity, client);
+	Handle trace = TR_TraceRayFilterEx(posStart, angles, mask, RayType_Infinite, Trace_DontHitEntity, client);
 	TR_GetEndPosition(posEnd, trace);
 	delete trace;
 	
 	//Get new end position
-	trace = TR_TraceHullFilterEx(posStart, posEnd, mins, maxs, MASK_PLAYERSOLID, Trace_DontHitEntity, client);
+	trace = TR_TraceHullFilterEx(posStart, posEnd, mins, maxs, mask, Trace_DontHitEntity, client);
 	TR_GetEndPosition(posEnd, trace);
 	delete trace;
 	
