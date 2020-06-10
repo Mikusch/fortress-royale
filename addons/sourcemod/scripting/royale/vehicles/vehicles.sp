@@ -111,6 +111,8 @@ void Vehicles_EnterVehicle(int entity, int client)
 	Vehicles_SetByEntity(vehicle);
 	SDKHook(client, SDKHook_PreThink, Vehicles_PreThink);
 	
+	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
+	
 	//Force client duck and dont move
 	SetEntProp(client, Prop_Send, "m_bDucking", true);
 	SetEntProp(client, Prop_Send, "m_bDucked", true);
@@ -136,6 +138,8 @@ void Vehicles_ExitVehicle(int client)
 	Vehicle vehicle;
 	if (Vehicles_GetByClient(client, vehicle))
 	{
+		SDKUnhook(vehicle.entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
+		
 		vehicle.client = -1;
 		Vehicles_SetByEntity(vehicle);
 	}
@@ -220,6 +224,14 @@ public Action Vehicles_PreThink(int client)
 	{
 		AcceptEntityInput(client, "ClearParent");
 	}
+}
+
+public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	//Driver receives 1/4 of damage done to vehicle
+	Vehicle vehicle;
+	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle) && 0 < vehicle.client <= MaxClients && IsPlayerAlive(vehicle.client) && attacker != vehicle.client)
+		SDKHooks_TakeDamage(vehicle.client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
 }
 
 void Vehicles_TryToEnterVehicle(int client)
