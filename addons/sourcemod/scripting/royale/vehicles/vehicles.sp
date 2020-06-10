@@ -151,12 +151,8 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 		SetVariantString("!activator");
 		AcceptEntityInput(vehicle.client, "SetParent", entity, entity);
 		
-		float angles[3];
-		GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
-		AddVectors(angles, vehicle.offset_angles, angles);
-		
-		//After client is parented, origin is now the offset of prop
-		TeleportEntity(vehicle.client, vehicle.offset_player, angles, NULL_VECTOR);
+		//After client is parented, origin and angles is now the offset of prop
+		TeleportEntity(vehicle.client, vehicle.offset_player, vehicle.offset_angles, NULL_VECTOR);
 	}
 }
 
