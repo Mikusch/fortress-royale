@@ -17,9 +17,20 @@ enum struct Vehicle
 	float rotate_speed;		/**< Rotation speed */
 	float rotate_max; 		/**< Max rotation speed */
 	
-	float speed_forward;	/**< Forward speed */
-	float speed_backward;	/**< Backward speed */
-	float speed_max;		/**< Max speed */
+	float land_forward_speed;	/**< Forward speed while on land */
+	float land_forward_max;		/**< Max forward speed  while on land */
+	float land_backward_speed;	/**< Backward speed while on land */
+	float land_backward_max;	/**< Max backward speed while on land */
+	float land_height;			/**< Max land height to have max land effects */
+	
+	float water_forward_speed;	/**< Forward speed while on water */
+	float water_forward_max;	/**< Max forward speed  while on water */
+	float water_backward_speed;	/**< Backward speed while on water */
+	float water_backward_max;	/**< Max backward speed while on water */
+	float water_height;			/**< Max water height to have max water effects */
+	
+	float water_float_speed;	/**< If in water, speed vel to raise up to highest water level */
+	float water_float_height;	/**< Max water height to have water float effects */
 	
 	float flight_upward;	/**< Flight upward speed */
 	float flight_downward;	/**< Flight downward speed */
@@ -33,7 +44,7 @@ enum struct Vehicle
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
-		kv.GetVector("offset_angles", this.offset_player, this.offset_player);
+		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
 		kv.GetVector("offset_player", this.offset_player, this.offset_player);
 		this.mass = kv.GetFloat("mass", this.mass);
 		this.impact = kv.GetFloat("impact", this.impact);
@@ -41,9 +52,20 @@ enum struct Vehicle
 		this.rotate_speed = kv.GetFloat("rotate_speed", this.rotate_speed);
 		this.rotate_max = kv.GetFloat("rotate_max", this.rotate_max);
 		
-		this.speed_forward = kv.GetFloat("speed_forward", this.speed_forward);
-		this.speed_backward = kv.GetFloat("speed_backward", this.speed_backward);
-		this.speed_max = kv.GetFloat("speed_max", this.speed_max);
+		this.land_forward_speed = kv.GetFloat("land_forward_speed", this.land_forward_speed);
+		this.land_forward_max = kv.GetFloat("land_forward_max", this.land_forward_max);
+		this.land_backward_speed = kv.GetFloat("land_backward_speed", this.land_backward_speed);
+		this.land_backward_max = kv.GetFloat("land_backward_max", this.land_backward_max);
+		this.land_height = kv.GetFloat("land_height", this.land_height);
+		
+		this.water_forward_speed = kv.GetFloat("water_forward_speed", this.water_forward_speed);
+		this.water_forward_max = kv.GetFloat("water_forward_max", this.water_forward_max);
+		this.water_backward_speed = kv.GetFloat("water_backward_speed", this.water_backward_speed);
+		this.water_backward_max = kv.GetFloat("water_backward_max", this.water_backward_max);
+		this.water_height = kv.GetFloat("water_height", this.water_height);
+		
+		this.water_float_speed = kv.GetFloat("water_float_speed", this.water_float_speed);
+		this.water_float_height = kv.GetFloat("water_float_height", this.water_float_height);
 		
 		this.flight_upward = kv.GetFloat("flight_upward", this.flight_upward);
 		this.flight_downward = kv.GetFloat("flight_downward", this.flight_downward);
@@ -210,6 +232,9 @@ public Action Vehicles_PreThink(int client)
 		angVelocity[0] -= angles[2] * 0.5;	//side
 		angVelocity[1] -= angles[0] * 0.5;	//front
 		
+		if (vehicle.flight)	//Dont consider upward/downward angles for helicopter
+			angles[0] = 0.0;
+		
 		AddVectors(angles, vehicle.offset_angles, angles);
 		
 		//Reduce velocity and angVelocity down to not have entity act like riding on ice
@@ -217,31 +242,42 @@ public Action Vehicles_PreThink(int client)
 		ScaleVector(angVelocity, 0.95);
 		
 		if (buttons & IN_MOVELEFT)
-			angVelocity[2] = fMax(angVelocity[2] + vehicle.rotate_speed, vehicle.rotate_speed);
+			angVelocity[2] = fMin(angVelocity[2] + vehicle.rotate_speed, vehicle.rotate_max);
 		
 		if (buttons & IN_MOVERIGHT)
-			angVelocity[2] = fMin(angVelocity[2] - vehicle.rotate_speed, -vehicle.rotate_speed);
+			angVelocity[2] = fMax(angVelocity[2] - vehicle.rotate_speed, -vehicle.rotate_max);
 		
-		float fwd;
-		if (buttons & IN_FORWARD)
-			fwd += vehicle.speed_forward;
+		float water = 0.0;	// Percentage the vehicle is in water
+		float height;
+		if (GetWaterHeightFromEntity(vehicle.entity, height) && height > -vehicle.land_height)
+			water = fMin(height + vehicle.land_height, vehicle.land_height + vehicle.water_height) / (vehicle.land_height + vehicle.water_height);
 		
-		if (buttons & IN_BACK)
-			fwd -= vehicle.speed_backward;
-		
-		if (fwd)
+		if ((buttons & IN_FORWARD && !(buttons & IN_BACK)) || (buttons & IN_BACK && !(buttons & IN_FORWARD)))
 		{
-			if (vehicle.flight)	//Dont consider upward/downward angles for helicopter
-				angles[0] = 0.0;
+			float speed, max;
 			
-			float buffer[3];
-			AnglesToVelocity(angles, buffer, fwd);
-			AddVectors(velocity, buffer, velocity);
+			if (buttons & IN_FORWARD)
+			{
+				speed = ((1.0 - water) * vehicle.land_forward_speed) + (water * vehicle.water_forward_speed);
+				max = ((1.0 - water) * vehicle.land_forward_max) + (water * vehicle.water_forward_max);
+			}
+			else if (buttons & IN_BACK)
+			{
+				speed = -((1.0 - water) * vehicle.land_backward_speed) - (water * vehicle.water_backward_speed);
+				max = ((1.0 - water) * vehicle.land_backward_max) + (water * vehicle.water_backward_max);
+			}
 			
-			float speed = GetVectorLength(velocity);
-			if (speed > vehicle.speed_max)
-				ScaleVector(velocity, vehicle.speed_max / speed);
+			float direction[3];
+			AnglesToVelocity(angles, direction, speed);
+			AddVectors(velocity, direction, velocity);
+			
+			speed = GetVectorLength(velocity);
+			if (speed > max)
+				ScaleVector(velocity, max / speed);
 		}
+		
+		if (water > 0.0 && vehicle.water_float_height > 0.0)	//TODO always run this, even when player not on vehicle
+			velocity[2] += fMin(height, vehicle.water_float_height) / vehicle.water_float_height * vehicle.water_float_speed;
 		
 		if (buttons & IN_JUMP && vehicle.flight_upward > 0.0)
 		{

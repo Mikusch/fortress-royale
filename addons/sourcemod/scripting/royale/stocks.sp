@@ -20,25 +20,6 @@ stock float fMax(float a, float b)
 	return a > b ? a : b;
 }
 
-stock int GetClientPointVisible(int client, float distance)
-{
-	float origin[3], angles[3], end[3];
-	GetClientEyePosition(client, origin);
-	GetClientEyeAngles(client, angles);
-	
-	Handle trace = TR_TraceRayFilterEx(origin, angles, MASK_ALL, RayType_Infinite, Trace_DontHitEntity, client);
-	TR_GetEndPosition(end, trace);
-	
-	int val = -1;
-	int entity = TR_GetEntityIndex(trace);
-	
-	if (TR_DidHit(trace) && entity != client && GetVectorDistance(origin, end) < distance)
-		val = entity;
-	
-	delete trace;
-	return val;
-}
-
 stock int GetOwnerLoop(int entity)
 {
 	
@@ -183,6 +164,59 @@ stock bool UnstuckEntity(int entity)
 	return true;
 }
 
+stock int GetClientPointVisible(int client, float distance)
+{
+	float origin[3], angles[3], end[3];
+	GetClientEyePosition(client, origin);
+	GetClientEyeAngles(client, angles);
+	
+	Handle trace = TR_TraceRayFilterEx(origin, angles, MASK_SOLID, RayType_Infinite, Trace_DontHitEntity, client);
+	TR_GetEndPosition(end, trace);
+	
+	int val = -1;
+	int entity = TR_GetEntityIndex(trace);
+	
+	if (TR_DidHit(trace) && entity != client && GetVectorDistance(origin, end) < distance)
+		val = entity;
+	
+	delete trace;
+	return val;
+}
+
+stock bool GetWaterHeightFromEntity(int entity, float &height)
+{
+	float origin[3], angles[3], end[3];
+	GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
+	
+	//Get highest point from above entity
+	angles = view_as<float>({ -90.0, 0.0, 0.0 });
+	Handle trace = TR_TraceRayFilterEx(origin, angles, MASK_SOLID, RayType_Infinite, Trace_OnlyHitWorld);
+	if (!TR_DidHit(trace))
+	{
+		delete trace;
+		return false;
+	}
+	
+	TR_GetEndPosition(end, trace);
+	delete trace;
+	
+	//Use point to find highest water point below
+	angles = view_as<float>({ 90.0, 0.0, 0.0 });
+	trace = TR_TraceRayEx(end, angles, MASK_WATER, RayType_Infinite);
+	if (!TR_DidHit(trace))
+	{
+		delete trace;
+		return false;
+	}
+	
+	TR_GetEndPosition(end, trace);
+	delete trace;
+	
+	//Calculate distance between highest water point to entity
+	height = end[2] - origin[2];
+	return true;
+}
+
 stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERSOLID)
 {
 	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
@@ -215,6 +249,11 @@ stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERS
 public bool Trace_DontHitEntity(int entity, int mask, any data)
 {
 	return entity != data;
+}
+
+public bool Trace_OnlyHitWorld(int entity, int mask)
+{
+	return entity == 0;	// 0 as worldspawn
 }
 
 stock bool TF2_RebalanceTeams()
