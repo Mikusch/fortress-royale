@@ -1,18 +1,34 @@
 #define VEHICLE_ENTER_RANGE 150.0
 
+enum struct VehicleSeat
+{
+	int client;			/**< Client occupying this seat */
+	
+	bool isDriverSeat;		/**< Is this the driver seat? */
+	float offset_player[3];	/**< Offset from entity to teleport player */
+	float offset_angles[3];	/**< Angle offset from entity to teleport player */
+	
+	void ReadConfig(KeyValues kv)
+	{
+		this.client = -1;
+		this.isDriverSeat = view_as<bool>(kv.GetNum("driver", this.isDriverSeat));
+		kv.GetVector("offset_player", this.offset_player, this.offset_player);
+		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
+	}
+}
+
 enum struct Vehicle
 {
 	int entity;			/**< Entity ref */
-	int client; 		/**< Client riding on this vehicle */
 	bool flight;		/**< Is the vehicle in flight? */
 	float tilt[3]; 		/**< How much flight tilt is vehicle currently in */
-	
-	char name[CONFIG_MAXCHAR];	/**< Name of vehicle */
+	ArrayList seats;	/**< Seats this vehicle has */
+		
+	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Entity model */
-	float offset_angles[3];	/**< Entity angles offset */
-	float offset_player[3];	/**< Offset from entity to teleport player */
-	float mass;				/**< Entity mass */
-	float impact;			/**< Entity damage impact force */
+	float offset_angles[3];			
+	float mass;						/**< Entity mass */
+	float impact;					/**< Entity damage impact force */
 	
 	float rotate_speed;		/**< Rotation speed */
 	float rotate_max; 		/**< Max rotation speed */
@@ -40,12 +56,28 @@ enum struct Vehicle
 	
 	void ReadConfig(KeyValues kv)
 	{
+		if (kv.JumpToKey("seats", false))
+		{
+			this.seats = new ArrayList(sizeof(VehicleSeat));
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					VehicleSeat seat;
+					seat.ReadConfig(kv);
+					this.seats.PushArray(seat);
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+			}
+			kv.GoBack();
+		}
+		
 		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
 		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
-		kv.GetVector("offset_player", this.offset_player, this.offset_player);
 		this.mass = kv.GetFloat("mass", this.mass);
 		this.impact = kv.GetFloat("impact", this.impact);
 		
@@ -72,6 +104,47 @@ enum struct Vehicle
 		
 		this.tilt_speed = kv.GetFloat("tilt_speed", this.tilt_speed);
 		this.tilt_max = kv.GetFloat("tilt_max", this.tilt_max);
+	}
+	
+	int GetDriver()
+	{
+		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);
+		VehicleSeat seat;
+		if (index != -1 && this.seats.GetArray(index, seat, sizeof(seat)) > 0)
+			return seat.client;
+		else
+			return -1;
+	}
+	
+	bool ReserveFreeSeat(int client, VehicleSeat seat)
+	{
+		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);	//Check the driver seat first
+		if (index != -1 && this.seats.GetArray(index, seat, sizeof(seat)) > 0 && seat.client == -1)	//Check if the driver seat is free
+		{
+			this.seats.Set(index, client, VehicleSeat::client);
+			return true;
+		}
+		
+		//Driver seat is missing or occupied, check all passenger seats
+		for (int i = 0; i < this.seats.Length; i++)
+		{
+			VehicleSeat temp;
+			if (this.seats.GetArray(i, temp, sizeof(temp)) > 0 && !temp.isDriverSeat && temp.client == -1)	//Check if a passenger seat is free
+			{
+				this.seats.Set(i, client, VehicleSeat::client);
+				return true;
+			}
+		}
+		
+		//No free seats in this vehicle
+		return false;
+	}
+	
+	void LeaveSeat(int client)
+	{
+		int index = this.seats.FindValue(client, VehicleSeat::client);
+		if (index != -1)	//Seat exists
+			this.seats.Set(index, -1, VehicleSeat::client);
 	}
 }
 
@@ -125,10 +198,17 @@ void Vehicles_OnEntityDestroyed(int entity)
 	Vehicle vehicle;
 	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle))
 	{
-		if (0 < vehicle.client <= MaxClients && IsClientInGame(vehicle.client) && IsPlayerAlive(vehicle.client))
+		for (int i = 0; i < vehicle.seats.Length; i++)
 		{
-			AcceptEntityInput(vehicle.client, "ClearParent");
-			Vehicles_RemoveByClient(vehicle.client);
+			VehicleSeat seat;
+			if (vehicle.seats.GetArray(i, seat, sizeof(seat)) > 0)
+			{
+				if (0 < seat.client <= MaxClients && IsClientInGame(seat.client) && IsPlayerAlive(seat.client))
+				{
+					AcceptEntityInput(seat.client, "ClearParent");
+					vehicle.seats.Set(i, -1, VehicleSeat::client);
+				}
+			}
 		}
 	}
 }
@@ -141,7 +221,7 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 	if (!Vehicles_GetByEntity(entity, vehicle))
 		return;
 	
-	if (0 < vehicle.client <= MaxClients && IsClientInGame(vehicle.client) && IsPlayerAlive(vehicle.client))
+	if (vehicle.GetDriver() != -1)
 	{
 		//Someone already taken this vehicle
 		if (vehicle.flight)
@@ -156,25 +236,33 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 			}
 		}
 	}
-	else if (0 < toucher <= MaxClients)
+	
+	if (0 < toucher <= MaxClients)
 	{
-		//Set client to ride this vehicle
-		vehicle.client = toucher;
-		Vehicles_SetByEntity(vehicle);
-		SDKHook(vehicle.client, SDKHook_PreThink, Vehicles_PreThink);
-		FRPlayer(vehicle.client).LastVehicleEnterTime = GetGameTime();
-		
-		//Force client duck and dont move
-		SetEntProp(vehicle.client, Prop_Send, "m_bDucking", true);
-		SetEntProp(vehicle.client, Prop_Send, "m_bDucked", true);
-		SetEntityFlags(vehicle.client, GetEntityFlags(vehicle.client)|FL_DUCKING);
-		SetEntityMoveType(vehicle.client, MOVETYPE_NONE);
-		
-		SetVariantString("!activator");
-		AcceptEntityInput(vehicle.client, "SetParent", entity, entity);
-		
-		//After client is parented, origin and angles is now the offset of prop
-		TeleportEntity(vehicle.client, vehicle.offset_player, vehicle.offset_angles, NULL_VECTOR);
+		VehicleSeat seat;
+		if (vehicle.ReserveFreeSeat(toucher, seat))
+		{
+			Vehicles_SetByEntity(vehicle);
+			FRPlayer(seat.client).LastVehicleEnterTime = GetGameTime();
+			
+			if (seat.isDriverSeat)
+			{
+				//Set client to ride this vehicle
+				SDKHook(seat.client, SDKHook_PreThink, Vehicles_PreThink);
+				
+				//Force client duck and dont move
+				SetEntProp(seat.client, Prop_Send, "m_bDucking", true);
+				SetEntProp(seat.client, Prop_Send, "m_bDucked", true);
+				SetEntityFlags(seat.client, GetEntityFlags(seat.client)|FL_DUCKING);
+				SetEntityMoveType(seat.client, MOVETYPE_NONE);
+			}
+			
+			SetVariantString("!activator");
+			AcceptEntityInput(seat.client, "SetParent", entity, entity);
+			
+			//After client is parented, origin and angles is now the offset of prop
+			TeleportEntity(seat.client, seat.offset_player, seat.offset_angles, NULL_VECTOR);
+		}
 	}
 }
 
@@ -186,10 +274,7 @@ void Vehicles_ExitVehicle(int client)
 	
 	Vehicle vehicle;
 	if (Vehicles_GetByClient(client, vehicle))
-	{
-		vehicle.client = -1;
-		Vehicles_SetByEntity(vehicle);
-	}
+		vehicle.LeaveSeat(client);
 	
 	//TODO: Exit offset, if blocked teleport player to first free location
 	float origin[3];
@@ -203,7 +288,7 @@ public Action Vehicles_PreThink(int client)
 	Vehicle vehicle;
 	if (!Vehicles_GetByClient(client, vehicle) || !IsValidEntity(vehicle.entity))
 	{
-		Vehicles_RemoveByClient(client);
+		//Vehicles_RemoveByClient(client); TODO: Replace with seat stuff
 		SDKUnhook(client, SDKHook_PreThink, Vehicles_PreThink);
 		return;
 	}
@@ -314,8 +399,22 @@ public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, f
 {
 	//Driver receives 1/4 of damage done to vehicle
 	Vehicle vehicle;
-	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle) && 0 < vehicle.client <= MaxClients && IsPlayerAlive(vehicle.client) && attacker != vehicle.client)
-		SDKHooks_TakeDamage(vehicle.client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
+	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle))
+	{
+		int index = vehicle.seats.FindValue(attacker, VehicleSeat::client);
+		if (index != -1)
+		{
+			for (int i = 0; i < vehicle.seats.Length; i++)
+			{
+				VehicleSeat seat;
+				if (vehicle.seats.GetArray(i, seat, sizeof(seat)) > 0)
+				{
+					if (seat.client != -1)
+						SDKHooks_TakeDamage(seat.client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
+				}
+			}
+		}
+	}
 }
 
 void Vehicles_TryToEnterVehicle(int client)
@@ -337,12 +436,13 @@ bool Vehicles_GetByEntity(int entity, Vehicle vehicle)
 
 bool Vehicles_GetByClient(int client, Vehicle vehicle)
 {
-	int pos = g_VehiclesEntity.FindValue(client, Vehicle::client);
-	if (pos == -1)
-		return false;
+	for (int i = 0; i < g_VehiclesEntity.Length; i++)
+	{
+		if (g_VehiclesEntity.GetArray(i, vehicle, sizeof(vehicle)) > 0)
+			return vehicle.seats.FindValue(client, VehicleSeat::client) != -1;
+	}
 	
-	g_VehiclesEntity.GetArray(pos, vehicle);
-	return true;
+	return false;
 }
 
 void Vehicles_SetByEntity(Vehicle vehicle)
@@ -364,4 +464,18 @@ void Vehicles_RemoveByClient(int client)
 			g_VehiclesEntity.Erase(pos);
 	}
 	while (pos >= 0);
+}
+
+bool Vehicles_GetSeatByClient(int client, VehicleSeat seat)
+{
+	for (int i = 0; i < g_VehiclesEntity.Length; i++)
+	{
+		Vehicle vehicle;
+		if (g_VehiclesEntity.GetArray(i, vehicle, sizeof(vehicle)) > 0)
+		{
+			int index = vehicle.seats.FindValue(client, VehicleSeat::client);
+			VehicleSeat seat;
+			return index != -1 && vehicle.seats.GetArray(index, seat, sizeof(seat)) > 0;
+		}
+	}
 }
