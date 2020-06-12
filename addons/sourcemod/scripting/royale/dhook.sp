@@ -1,4 +1,5 @@
 static Handle g_DHookSetWinningTeam;
+static Handle g_DHookBHavePlayers;
 static Handle g_DHookGetMaxHealth;
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
@@ -30,6 +31,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTeamplayRoundBasedRules::SetInWaitingForPlayers", DHook_SetInWaitingForPlayersPre, DHook_SetInWaitingForPlayersPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
+	g_DHookBHavePlayers = DHook_CreateVirtual(gamedata, "CTFGameRules::BHavePlayers");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
@@ -98,6 +100,7 @@ bool DHook_IsGiveNamedItemActive()
 void DHook_HookGamerules()
 {
 	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeam);
+	DHookGamerules(g_DHookBHavePlayers, false, _, DHook_BHavePlayers);
 }
 
 void DHook_HookClient(int client)
@@ -376,12 +379,13 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
 	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
 }
 
-public MRESReturn DHook_SetInWaitingForPlayersPre(int gamerules)
+public MRESReturn DHook_SetInWaitingForPlayersPre()
 {
+	//Waiting for players is disabled for arena
 	GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
 }
 
-public MRESReturn DHook_SetInWaitingForPlayersPost(int gamerules)
+public MRESReturn DHook_SetInWaitingForPlayersPost()
 {
 	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
 }
@@ -393,6 +397,13 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 		return MRES_Supercede;
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_BHavePlayers(Handle returnVal)
+{
+	//Waiting for players period never ends if there are no alive players
+	DHookSetReturn(returnVal, true);
+	return MRES_Supercede;
 }
 
 public MRESReturn DHook_GetMaxHealthPre(int client, Handle returnVal)

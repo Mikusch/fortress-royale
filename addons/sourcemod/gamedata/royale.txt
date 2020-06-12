@@ -138,6 +138,11 @@
 				"linux"		"161"
 				"windows"	"160"
 			}
+			"CTFGameRules::BHavePlayers"
+			{
+				"linux"		"225"
+				"windows"	"223"
+			}
 			"CBaseEntity::GetMaxHealth"
 			{
 				"linux"		"118"
@@ -429,7 +434,7 @@
 				"signature"	"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
 				"callconv"	"thiscall"
 				"return"	"void"
-				"this"		"entity"
+				"this"		"ignore"
 				"arguments"
 				{
 					"bWaitingForPlayers"
@@ -471,6 +476,13 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CTFGameRules::BHavePlayers"
+			{
+				"offset"	"CTFGameRules::BHavePlayers"
+				"hooktype"	"gamerules"
+				"return"	"bool"
+				"this"		"ignore"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{
