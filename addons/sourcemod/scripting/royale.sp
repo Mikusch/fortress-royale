@@ -411,9 +411,10 @@ public void OnClientPutInServer(int client)
 	FRPlayer(client).EditorState = EditorState_None;
 }
 
-public void OnClientDisconnect(int iClient)
+public void OnClientDisconnect(int client)
 {
-	DHook_UnhookGiveNamedItem(iClient);
+	DHook_UnhookGiveNamedItem(client);
+	Vehicles_ExitVehicle(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -431,12 +432,20 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			SDKCall_TryToPickupDroppedWeapon(client);
 		
 		//Entering and exiting vehicles
-		Vehicle vehicle;
-		if (Vehicles_GetByClient(client, vehicle) && FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
-			Vehicles_ExitVehicle(client);
-		else
-			Vehicles_TryToEnterVehicle(client);
+		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
+		{
+			Vehicle vehicle;
+			if (Vehicles_GetByClient(client, vehicle))
+				Vehicles_ExitVehicle(client);
+			else
+				Vehicles_TryToEnterVehicle(client);
+		}
 	}
+}
+
+public void OnGameFrame()
+{
+	Vehicles_OnGameFrame();
 }
 
 public void OnEntityCreated(int entity, const char[] classname)

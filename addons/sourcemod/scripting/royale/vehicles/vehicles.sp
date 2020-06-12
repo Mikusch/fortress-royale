@@ -11,7 +11,7 @@ enum struct VehicleSeat
 	void ReadConfig(KeyValues kv)
 	{
 		this.client = -1;
-		this.isDriverSeat = view_as<bool>(kv.GetNum("driver", this.isDriverSeat));
+		this.isDriverSeat = !!kv.GetNum("driver", this.isDriverSeat);
 		kv.GetVector("offset_player", this.offset_player, this.offset_player);
 		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
 	}
@@ -106,6 +106,30 @@ enum struct Vehicle
 		this.tilt_max = kv.GetFloat("tilt_max", this.tilt_max);
 	}
 	
+	void Create(int entity)
+	{
+		this.entity = entity;
+		this.seats = this.seats.Clone();
+	}
+	
+	bool GetClients(int &client)
+	{
+		do
+		{
+			client++;
+			int index = this.seats.FindValue(client, VehicleSeat::client);
+			if (index != -1)
+				return true;
+		}
+		while (client <= MaxClients);
+		return false;
+	}
+	
+	bool HasClient(int client)
+	{
+		return this.seats.FindValue(client, VehicleSeat::client) != -1;
+	}
+	
 	int GetDriver()
 	{
 		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);
@@ -121,17 +145,18 @@ enum struct Vehicle
 		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);	//Check the driver seat first
 		if (index != -1 && this.seats.GetArray(index, seat, sizeof(seat)) > 0 && seat.client == -1)	//Check if the driver seat is free
 		{
-			this.seats.Set(index, client, VehicleSeat::client);
+			seat.client = client;
+			this.seats.SetArray(index, seat);
 			return true;
 		}
 		
 		//Driver seat is missing or occupied, check all passenger seats
 		for (int i = 0; i < this.seats.Length; i++)
 		{
-			VehicleSeat temp;
-			if (this.seats.GetArray(i, temp, sizeof(temp)) > 0 && !temp.isDriverSeat && temp.client == -1)	//Check if a passenger seat is free
+			if (this.seats.GetArray(i, seat, sizeof(seat)) > 0 && !seat.isDriverSeat && seat.client == -1)	//Check if a passenger seat is free
 			{
-				this.seats.Set(i, client, VehicleSeat::client);
+				seat.client = client;
+				this.seats.SetArray(i, seat);
 				return true;
 			}
 		}
@@ -144,7 +169,12 @@ enum struct Vehicle
 	{
 		int index = this.seats.FindValue(client, VehicleSeat::client);
 		if (index != -1)	//Seat exists
-			this.seats.Set(index, -1, VehicleSeat::client);
+			this.seats.Set(index, -1, VehicleSeat::client);	//TODO change back to -1
+	}
+	
+	void Delete()
+	{
+		delete this.seats;
 	}
 }
 
@@ -189,27 +219,22 @@ void Vehicles_Create(Vehicle vehicle, int client)
 	
 	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 	
-	vehicle.entity = EntIndexToEntRef(entity);
+	vehicle.Create(EntIndexToEntRef(entity));
 	g_VehiclesEntity.PushArray(vehicle);
 }
 
 void Vehicles_OnEntityDestroyed(int entity)
 {
+	int ref = EntIndexToEntRef(entity);
+	
 	Vehicle vehicle;
-	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle))
+	if (Vehicles_GetByEntity(ref, vehicle))
 	{
-		for (int i = 0; i < vehicle.seats.Length; i++)
-		{
-			VehicleSeat seat;
-			if (vehicle.seats.GetArray(i, seat, sizeof(seat)) > 0)
-			{
-				if (0 < seat.client <= MaxClients && IsClientInGame(seat.client) && IsPlayerAlive(seat.client))
-				{
-					AcceptEntityInput(seat.client, "ClearParent");
-					vehicle.seats.Set(i, -1, VehicleSeat::client);
-				}
-			}
-		}
+		int client;
+		while (vehicle.GetClients(client))
+			AcceptEntityInput(client, "ClearParent");
+		
+		Vehicles_RemoveByEntity(ref);
 	}
 }
 
@@ -242,20 +267,13 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 		VehicleSeat seat;
 		if (vehicle.ReserveFreeSeat(toucher, seat))
 		{
-			Vehicles_SetByEntity(vehicle);
 			FRPlayer(seat.client).LastVehicleEnterTime = GetGameTime();
 			
-			if (seat.isDriverSeat)
-			{
-				//Set client to ride this vehicle
-				SDKHook(seat.client, SDKHook_PreThink, Vehicles_PreThink);
-				
-				//Force client duck and dont move
-				SetEntProp(seat.client, Prop_Send, "m_bDucking", true);
-				SetEntProp(seat.client, Prop_Send, "m_bDucked", true);
-				SetEntityFlags(seat.client, GetEntityFlags(seat.client)|FL_DUCKING);
-				SetEntityMoveType(seat.client, MOVETYPE_NONE);
-			}
+			//Force client duck and dont move
+			SetEntProp(seat.client, Prop_Send, "m_bDucking", true);
+			SetEntProp(seat.client, Prop_Send, "m_bDucked", true);
+			SetEntityFlags(seat.client, GetEntityFlags(seat.client)|FL_DUCKING);
+			SetEntityMoveType(seat.client, MOVETYPE_NONE);
 			
 			SetVariantString("!activator");
 			AcceptEntityInput(seat.client, "SetParent", entity, entity);
@@ -269,7 +287,6 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 void Vehicles_ExitVehicle(int client)
 {
 	AcceptEntityInput(client, "ClearParent");
-	SDKUnhook(client, SDKHook_PreThink, Vehicles_PreThink);
 	SetEntityMoveType(client, MOVETYPE_WALK);
 	
 	Vehicle vehicle;
@@ -283,17 +300,21 @@ void Vehicles_ExitVehicle(int client)
 	TeleportEntity(client, origin, NULL_VECTOR, NULL_VECTOR);
 }
 
-public Action Vehicles_PreThink(int client)
+void Vehicles_OnGameFrame()
 {
-	Vehicle vehicle;
-	if (!Vehicles_GetByClient(client, vehicle) || !IsValidEntity(vehicle.entity))
+	int length = g_VehiclesEntity.Length;
+	for (int i = 0; i < length; i++)
 	{
-		//Vehicles_RemoveByClient(client); TODO: Replace with seat stuff
-		SDKUnhook(client, SDKHook_PreThink, Vehicles_PreThink);
-		return;
+		Vehicle vehicle;
+		g_VehiclesEntity.GetArray(i, vehicle);
+		Vehicles_UpdateMovement(vehicle);
 	}
-	
-	if (IsPlayerAlive(client))
+}
+
+public Action Vehicles_UpdateMovement(Vehicle vehicle)
+{
+	int client = vehicle.GetDriver();
+	if (client != -1)
 	{
 		int buttons = GetClientButtons(client);
 		
@@ -389,31 +410,17 @@ public Action Vehicles_PreThink(int client)
 		
 		SDKCall_SetVelocity(vehicle.entity, velocity, angVelocity);
 	}
-	else
-	{
-		AcceptEntityInput(client, "ClearParent");
-	}
 }
 
 public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	//Driver receives 1/4 of damage done to vehicle
 	Vehicle vehicle;
-	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle))
+	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle) && !vehicle.HasClient(attacker))
 	{
-		int index = vehicle.seats.FindValue(attacker, VehicleSeat::client);
-		if (index != -1)
-		{
-			for (int i = 0; i < vehicle.seats.Length; i++)
-			{
-				VehicleSeat seat;
-				if (vehicle.seats.GetArray(i, seat, sizeof(seat)) > 0)
-				{
-					if (seat.client != -1)
-						SDKHooks_TakeDamage(seat.client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
-				}
-			}
-		}
+		int client;
+		while (vehicle.GetClients(client))
+			SDKHooks_TakeDamage(client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
 	}
 }
 
@@ -434,12 +441,25 @@ bool Vehicles_GetByEntity(int entity, Vehicle vehicle)
 	return true;
 }
 
+void Vehicles_RemoveByEntity(int entity)
+{
+	int pos = g_VehiclesEntity.FindValue(entity, Vehicle::entity);
+	if (pos >= 0)
+	{
+		Vehicle vehicle;
+		g_VehiclesEntity.GetArray(pos, vehicle);
+		vehicle.Delete();
+		g_VehiclesEntity.Erase(pos);
+	}
+}
+
 bool Vehicles_GetByClient(int client, Vehicle vehicle)
 {
 	for (int i = 0; i < g_VehiclesEntity.Length; i++)
 	{
-		if (g_VehiclesEntity.GetArray(i, vehicle, sizeof(vehicle)) > 0)
-			return vehicle.seats.FindValue(client, VehicleSeat::client) != -1;
+		g_VehiclesEntity.GetArray(i, vehicle, sizeof(vehicle));
+		if (vehicle.HasClient(client))
+			return true;
 	}
 	
 	return false;
@@ -452,30 +472,4 @@ void Vehicles_SetByEntity(Vehicle vehicle)
 		return;
 	
 	g_VehiclesEntity.SetArray(pos, vehicle);
-}
-
-void Vehicles_RemoveByClient(int client)
-{
-	int pos;
-	do
-	{
-		pos = g_VehiclesEntity.FindValue(client, Vehicle::client);
-		if (pos >= 0)
-			g_VehiclesEntity.Erase(pos);
-	}
-	while (pos >= 0);
-}
-
-bool Vehicles_GetSeatByClient(int client, VehicleSeat seat)
-{
-	for (int i = 0; i < g_VehiclesEntity.Length; i++)
-	{
-		Vehicle vehicle;
-		if (g_VehiclesEntity.GetArray(i, vehicle, sizeof(vehicle)) > 0)
-		{
-			int index = vehicle.seats.FindValue(client, VehicleSeat::client);
-			VehicleSeat seat;
-			return index != -1 && vehicle.seats.GetArray(index, seat, sizeof(seat)) > 0;
-		}
-	}
 }

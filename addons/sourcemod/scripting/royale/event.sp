@@ -147,6 +147,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	
 	if (!deadringer)
 	{
+		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
 	}

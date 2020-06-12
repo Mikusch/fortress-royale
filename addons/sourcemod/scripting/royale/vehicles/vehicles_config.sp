@@ -7,6 +7,14 @@ void VehiclesConfig_Init()
 
 void VehiclesConfig_Clear()
 {
+	int length = g_VehiclesConfig.Length;
+	for (int i = 0; i < length; i++)
+	{
+		Vehicle vehicle;
+		g_VehiclesConfig.GetArray(i, vehicle);
+		vehicle.Delete();
+	}
+	
 	g_VehiclesConfig.Clear();
 }
 
