@@ -27,6 +27,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
+	DHook_CreateDetour(gamedata, "CTeamplayRoundBasedRules::SetInWaitingForPlayers", DHook_SetInWaitingForPlayersPre, DHook_SetInWaitingForPlayersPost);
 	
 	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
@@ -373,6 +374,16 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
 {
 	//DHook bug with post hook returning incorrect client address
 	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
+}
+
+public MRESReturn DHook_SetInWaitingForPlayersPre(int gamerules)
+{
+	GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
+}
+
+public MRESReturn DHook_SetInWaitingForPlayersPost(int gamerules)
+{
+	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
 }
 
 public MRESReturn DHook_SetWinningTeam(Handle params)
