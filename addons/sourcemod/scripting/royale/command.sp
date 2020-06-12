@@ -40,6 +40,6 @@ public Action Command_Vehicle(int client, int args)
 		return Plugin_Handled;
 	}
 	
-	Vehicles_Create(vehicle, client);
+	Vehicles_CreateEntityAtCrosshair(vehicle, client);
 	return Plugin_Handled;
 }

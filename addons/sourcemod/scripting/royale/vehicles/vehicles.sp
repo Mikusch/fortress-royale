@@ -23,10 +23,12 @@ enum struct Vehicle
 	bool flight;		/**< Is the vehicle in flight? */
 	float tilt[3]; 		/**< How much flight tilt is vehicle currently in */
 	ArrayList seats;	/**< Seats this vehicle has */
-		
+	
 	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Entity model */
-	float offset_angles[3];			
+	float origin[3];				/**< Positon to spawn entity in world */
+	float angles[3];				/**< Angles to spawn entity in world */
+	float offset_angles[3];			/**< Angles offset when manually spawned by player */
 	float mass;						/**< Entity mass */
 	float impact;					/**< Entity damage impact force */
 	
@@ -77,6 +79,8 @@ enum struct Vehicle
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
+		kv.GetVector("origin", this.origin, this.origin);
+		kv.GetVector("angles", this.angles, this.angles);
 		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
 		this.mass = kv.GetFloat("mass", this.mass);
 		this.impact = kv.GetFloat("impact", this.impact);
@@ -185,42 +189,53 @@ void Vehicles_Init()
 	g_VehiclesEntity = new ArrayList(sizeof(Vehicle));
 }
 
-void Vehicles_Create(Vehicle vehicle, int client)
+int Vehicles_CreateEntity(Vehicle vehicle)
 {
-	float position[3];
-	GetClientEyePosition(client, position);
-	if (TR_PointOutsideWorld(position))
-		return;
-	
 	int entity = CreateEntityByName("prop_physics_override");
-	if (!IsValidEntity(entity))
-		return;
-	
-	SetEntityModel(entity, vehicle.model);
-	DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
-	DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
-	
-	SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
-	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
-	
-	if (!DispatchSpawn(entity) || !MoveEntityToClientEye(entity, client, MASK_SOLID|MASK_WATER))
+	if (IsValidEntity(entity))
 	{
-		RemoveEntity(entity);
-		return;
+		SetEntityModel(entity, vehicle.model);
+		DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
+		DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
+		
+		SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
+		SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
+		
+		if (DispatchSpawn(entity))
+		{
+			TeleportEntity(entity, vehicle.origin, vehicle.angles, NULL_VECTOR);
+			AcceptEntityInput(entity, "EnableMotion");
+			SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
+			
+			vehicle.Create(EntIndexToEntRef(entity));
+			g_VehiclesEntity.PushArray(vehicle);
+			
+			return entity;
+		}
 	}
 	
-	//Rotate entity from angles offset
-	float angles[3];
-	GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
-	SubtractVectors(angles, vehicle.offset_angles, angles);
-	TeleportEntity(entity, NULL_VECTOR, angles, NULL_VECTOR);
-	
-	AcceptEntityInput(entity, "EnableMotion");
-	
-	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
-	
-	vehicle.Create(EntIndexToEntRef(entity));
-	g_VehiclesEntity.PushArray(vehicle);
+	return -1;
+}
+
+void Vehicles_CreateEntityAtCrosshair(Vehicle vehicle, int client)
+{
+	int entity = Vehicles_CreateEntity(vehicle);
+	if (entity != -1)
+	{
+		float position[3];
+		GetClientEyePosition(client, position);
+		if (TR_PointOutsideWorld(position) || !MoveEntityToClientEye(entity, client, MASK_SOLID | MASK_WATER))
+		{
+			RemoveEntity(entity);
+			return;
+		}
+		
+		//Rotate entity from angles offset
+		float angles[3];
+		GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
+		SubtractVectors(angles, vehicle.offset_angles, angles);
+		TeleportEntity(entity, NULL_VECTOR, angles, NULL_VECTOR);
+	}
 }
 
 void Vehicles_OnEntityDestroyed(int entity)

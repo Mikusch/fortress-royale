@@ -24,6 +24,8 @@ void Config_Refresh()
 		}
 		
 		LootConfig_ReadConfig(kv);
+		
+		VehiclesConfig_ReadConfig(kv);
 	}
 	
 	delete kv;
