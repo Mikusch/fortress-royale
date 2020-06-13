@@ -124,21 +124,15 @@
 				"linux"		"@_ZN23CLagCompensationManager20StartLagCompensationEP11CBasePlayerP8CUserCmd"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x57\x8B\xF9\x89\x7D\xE8"
 			}
-			"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
-			{
-				"library"	"server"
-				"linux"		"@_ZN24CTeamplayRoundBasedRules22SetInWaitingForPlayersEb"
-				//"windows"	"TODO"
-			}
 		}
 		"Offsets"
 		{
-			"CTFGameRules::SetWinningTeam"
+			"CTeamplayRoundBasedRules::SetWinningTeam"
 			{
 				"linux"		"161"
 				"windows"	"160"
 			}
-			"CTFGameRules::BHavePlayers"
+			"CTeamplayRoundBasedRules::BHavePlayers"
 			{
 				"linux"		"225"
 				"windows"	"223"
@@ -443,9 +437,9 @@
 					}
 				}
 			}
-			"CTFGameRules::SetWinningTeam"
+			"CTeamplayRoundBasedRules::SetWinningTeam"
 			{
-				"offset"	"CTFGameRules::SetWinningTeam"
+				"offset"	"CTeamplayRoundBasedRules::SetWinningTeam"
 				"hooktype"	"gamerules"
 				"return"	"void"
 				"this"		"ignore"
@@ -477,9 +471,9 @@
 					}
 				}
 			}
-			"CTFGameRules::BHavePlayers"
+			"CTeamplayRoundBasedRules::BHavePlayers"
 			{
-				"offset"	"CTFGameRules::BHavePlayers"
+				"offset"	"CTeamplayRoundBasedRules::BHavePlayers"
 				"hooktype"	"gamerules"
 				"return"	"bool"
 				"this"		"ignore"

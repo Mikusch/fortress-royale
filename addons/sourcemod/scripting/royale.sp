@@ -272,6 +272,7 @@ char g_fistsClassname[][] = {
 };
 
 bool g_TF2Items;
+bool g_WaitingForPlayers;
 int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
@@ -373,16 +374,19 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
+	if (GameRules_GetRoundState() == RoundState_Pregame)
+	{
+		//Enable waiting for players
+		g_WaitingForPlayers = true;
+		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
+	}
+	
 	Config_Refresh();
 	
 	BattleBus_Precache();
 	Zone_Precache();
 	
 	DHook_HookGamerules();
-	
-	//Rebalance teams and restart round incase of late load
-	if (TF2_RebalanceTeams())
-		TF2_ForceRoundWin(TFTeam_Unassigned);
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -409,7 +413,6 @@ public void OnLibraryRemoved(const char[] sName)
 				DHook_HookGiveNamedItem(iClient);
 	}
 }
-
 
 public void OnClientPutInServer(int client)
 {
@@ -453,6 +456,20 @@ public void OnEntityCreated(int entity, const char[] classname)
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
 {
 	FREntity(EntIndexToEntRef(caller)).Destroy();
+}
+
+public void TF2_OnWaitingForPlayersStart()
+{
+	//Set game type back to arena after waiting for players calculations is done
+	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
+	
+	//Set m_bInWaitingForPlayers to true so TF2 ignore arena's playercount rules
+	GameRules_SetProp("m_bInWaitingForPlayers", true);
+}
+
+public void TF2_OnWaitingForPlayersEnd()
+{
+	g_WaitingForPlayers = false;
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)

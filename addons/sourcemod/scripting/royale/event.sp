@@ -10,9 +10,11 @@ void Event_Init()
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	//Check if there players in red and blu
-	if (TF2_RebalanceTeams())
-		return;
+	if (!g_WaitingForPlayers)
+	{
+		//Set back to false from TF2_OnWaitingForPlayersStart
+		GameRules_SetProp("m_bInWaitingForPlayers", false);
+	}
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{

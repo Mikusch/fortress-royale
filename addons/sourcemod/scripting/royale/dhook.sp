@@ -28,10 +28,9 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
-	DHook_CreateDetour(gamedata, "CTeamplayRoundBasedRules::SetInWaitingForPlayers", DHook_SetInWaitingForPlayersPre, DHook_SetInWaitingForPlayersPost);
 	
-	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTFGameRules::SetWinningTeam");
-	g_DHookBHavePlayers = DHook_CreateVirtual(gamedata, "CTFGameRules::BHavePlayers");
+	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::SetWinningTeam");
+	g_DHookBHavePlayers = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::BHavePlayers");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
@@ -99,8 +98,8 @@ bool DHook_IsGiveNamedItemActive()
 
 void DHook_HookGamerules()
 {
-	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeam);
-	DHookGamerules(g_DHookBHavePlayers, false, _, DHook_BHavePlayers);
+	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeamPre);
+	DHookGamerules(g_DHookBHavePlayers, false, _, DHook_BHavePlayersPre);
 }
 
 void DHook_HookClient(int client)
@@ -379,18 +378,7 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
 	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
 }
 
-public MRESReturn DHook_SetInWaitingForPlayersPre()
-{
-	//Waiting for players is disabled for arena
-	GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
-}
-
-public MRESReturn DHook_SetInWaitingForPlayersPost()
-{
-	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
-}
-
-public MRESReturn DHook_SetWinningTeam(Handle params)
+public MRESReturn DHook_SetWinningTeamPre(Handle params)
 {
 	//Prevent round win if atleast 2 players alive
 	if (GetAlivePlayersCount() >= 2)
@@ -399,10 +387,10 @@ public MRESReturn DHook_SetWinningTeam(Handle params)
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_BHavePlayers(Handle returnVal)
+public MRESReturn DHook_BHavePlayersPre(Handle returnVal)
 {
 	//Waiting for players period never ends if there are no alive players
-	DHookSetReturn(returnVal, true);
+	DHookSetReturn(returnVal, GetPlayerCount() >= 2);
 	return MRES_Supercede;
 }
 
