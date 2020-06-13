@@ -127,10 +127,15 @@
 		}
 		"Offsets"
 		{
-			"CTFGameRules::SetWinningTeam"
+			"CTeamplayRoundBasedRules::SetWinningTeam"
 			{
 				"linux"		"161"
 				"windows"	"160"
+			}
+			"CTeamplayRoundBasedRules::BHavePlayers"
+			{
+				"linux"		"225"
+				"windows"	"223"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{
@@ -428,9 +433,23 @@
 					}
 				}
 			}
-			"CTFGameRules::SetWinningTeam"
+			"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
 			{
-				"offset"	"CTFGameRules::SetWinningTeam"
+				"signature"	"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"ignore"
+				"arguments"
+				{
+					"bWaitingForPlayers"
+					{
+						"type"	"bool"
+					}
+				}
+			}
+			"CTeamplayRoundBasedRules::SetWinningTeam"
+			{
+				"offset"	"CTeamplayRoundBasedRules::SetWinningTeam"
 				"hooktype"	"gamerules"
 				"return"	"void"
 				"this"		"ignore"
@@ -461,6 +480,13 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CTeamplayRoundBasedRules::BHavePlayers"
+			{
+				"offset"	"CTeamplayRoundBasedRules::BHavePlayers"
+				"hooktype"	"gamerules"
+				"return"	"bool"
+				"this"		"ignore"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{

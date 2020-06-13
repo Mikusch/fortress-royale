@@ -256,57 +256,6 @@ public bool Trace_OnlyHitWorld(int entity, int mask)
 	return entity == 0;	// 0 as worldspawn
 }
 
-stock bool TF2_RebalanceTeams()
-{
-	// This stock is used to fix "1 player needed for new round" while there >1 players in red/blu team
-	int countRed = 0;
-	int countBlu = 0;
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-		{
-			switch (TF2_GetClientTeam(client))
-			{
-				case TFTeam_Red: countRed++;
-				case TFTeam_Blue: countBlu++;
-			}
-		}
-	}
-	
-	// If there atleast 1 player in both red and blu team, round is starting properly so nothing need to be done
-	if (countRed && countBlu)
-		return false;
-	
-	// If there only 1 player total in red + blu, we cant fix it
-	if (countRed + countBlu < 2)
-		return false;
-	
-	// Switch one player to other team
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && TF2_GetTeam(client) > TFTeam_Spectator)
-		{
-			TF2_ChangeClientTeam(client, TF2_GetEnemyTeam(client));
-			return true;
-		}
-	}
-	
-	return false;
-}
-
-stock void TF2_ForceRoundWin(TFTeam team)
-{
-	int roundwin = CreateEntityByName("game_round_win"); 
-	DispatchSpawn(roundwin);
-	
-	SetVariantString("force_map_reset 1");
-	AcceptEntityInput(roundwin, "AddOutput");
-	SetVariantInt(view_as<int>(team));
-	AcceptEntityInput(roundwin, "SetTeam");
-	AcceptEntityInput(roundwin, "RoundWin");
-}
-
 stock void TF2_ChangeTeam(int entity, TFTeam team)
 {
 	SetEntProp(entity, Prop_Send, "m_iTeamNum", view_as<int>(team));
