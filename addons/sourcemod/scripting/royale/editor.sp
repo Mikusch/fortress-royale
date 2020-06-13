@@ -34,8 +34,8 @@ void Editor_Display(int client)
 	Menu menu = new Menu(Editor_MenuSelected, MenuAction_Select | MenuAction_Cancel | MenuAction_End | MenuAction_DisplayItem);
 	
 	LootCrate loot;
-	int configIndex = LootConfig_GetCrateByEntity(FRPlayer(client).EditorCrateRef, loot);
-	if (FRPlayer(client).EditorState == EditorState_View && configIndex < 0)
+	LootConfig_GetCrateByEntity(FRPlayer(client).EditorCrateRef, loot);
+	if (FRPlayer(client).EditorState == EditorState_View && FRPlayer(client).EditorCrateRef == INVALID_ENT_REFERENCE)
 	{
 		menu.SetTitle("%T\n\n%T", "Editor_Title", LANG_SERVER, "Editor_NotLookingAtAnyCrates", LANG_SERVER);
 		menu.AddItem("delete", "Editor_Delete", ITEMDRAW_DISABLED);
@@ -77,16 +77,14 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			char select[32];
 			menu.GetItem(param2, select, sizeof(select));
 			
-			int crate = FRPlayer(param1).EditorCrateRef;
-			
 			LootCrate loot;
-			int configIndex = LootConfig_GetCrateByEntity(crate, loot);
+			int configIndex = LootConfig_GetCrateByEntity(FRPlayer(param1).EditorCrateRef, loot);
 			
 			if (StrEqual(select, "delete"))
 			{
 				//Delete both entity crate and config
-				LootConfig_DeleteCrateByEntity(crate);
-				Loot_DeleteCrate(crate);
+				LootConfig_DeleteCrateByEntity(loot.entity);
+				Loot_DeleteCrate(loot.entity);
 				
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
@@ -94,20 +92,19 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			else if (StrEqual(select, "move"))
 			{
 				//Only just delete entity crate to create new below 
-				Loot_DeleteCrate(crate);
+				Loot_DeleteCrate(loot.entity);
 			}
 			else if (StrEqual(select, "place"))
 			{
 				//Set origin and angles, and spawn new crate
-				GetEntPropVector(crate, Prop_Data, "m_vecOrigin", loot.origin);
-				GetEntPropVector(crate, Prop_Data, "m_angRotation", loot.angles);
+				GetEntPropVector(loot.entity, Prop_Data, "m_vecOrigin", loot.origin);
+				GetEntPropVector(loot.entity, Prop_Data, "m_angRotation", loot.angles);
+				
+				Loot_DeleteCrate(loot.entity);
+				loot.entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 				LootConfig_SetCrate(configIndex, loot);
 				
-				Loot_DeleteCrate(crate);
-				
-				crate = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
-				FRPlayer(param1).EditorCrateRef = crate;
-				
+				FRPlayer(param1).EditorCrateRef = loot.entity;
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
 			}
@@ -129,13 +126,13 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			
 			if (StrEqual(select, "move") || StrEqual(select, "create"))
 			{
-				crate = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+				loot.entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 				LootConfig_SetCrate(configIndex, loot);
-				FRPlayer(param1).EditorCrateRef = crate;
+				FRPlayer(param1).EditorCrateRef = loot.entity;
 				
-				SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_NONE);
-				SetEntityRenderMode(crate, RENDER_TRANSCOLOR);
-				SetEntityRenderColor(crate, 255, 255, 255, 127);
+				SetEntProp(loot.entity, Prop_Send, "m_nSolidType", SOLID_NONE);
+				SetEntityRenderMode(loot.entity, RENDER_TRANSCOLOR);
+				SetEntityRenderColor(loot.entity, 255, 255, 255, 127);
 				
 				FRPlayer(param1).EditorState = EditorState_Placing;
 				Editor_Display(param1);
