@@ -81,6 +81,15 @@
 		"en"	"You are currently using %s"
 	}
 	
+	"Vehicle_FuelDisplay"
+	{
+		"en"	"Fuel: %d%"
+	}
+	"Vehicle_OutOfFuel"
+	{
+		"en"	"Out of Fuel"
+	}
+	
 	"Zone_ShrinkAlert"
 	{
 		"en"	"The death zone is shrinking, get moving!"

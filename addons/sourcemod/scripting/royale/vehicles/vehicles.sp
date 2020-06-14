@@ -479,12 +479,12 @@ public void Vehicles_UpdateHUD(Vehicle vehicle)
 			if (vehicle.fuel > 0)
 			{
 				SetHudTextParams(-1.0, 0.9, 0.1, 255, 255, 255, 255);
-				ShowSyncHudText(client, vehicle.fuelHudSync, "Fuel: %d%", RoundFloat(vehicle.fuel / vehicle.fuel_max * 100));
+				ShowSyncHudText(client, vehicle.fuelHudSync, "%t", "Vehicle_FuelDisplay", LANG_SERVER, RoundToCeil(vehicle.fuel / vehicle.fuel_max * 100));
 			}
 			else
 			{
 				SetHudTextParams(-1.0, 0.9, 0.1, 255, 0, 0, 255);
-				ShowSyncHudText(client, vehicle.fuelHudSync, "Out of Fuel");
+				ShowSyncHudText(client, vehicle.fuelHudSync, "%t", "Vehicle_OutOfFuel", LANG_SERVER);
 			}
 		}
 	}
