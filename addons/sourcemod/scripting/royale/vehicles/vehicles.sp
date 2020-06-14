@@ -20,9 +20,13 @@ enum struct VehicleSeat
 enum struct Vehicle
 {
 	int entity;			/**< Entity ref */
+	float fuel;			/**< Current fuel in tank */
 	bool flight;		/**< Is the vehicle in flight? */
 	float tilt[3]; 		/**< How much flight tilt is vehicle currently in */
 	ArrayList seats;	/**< Seats this vehicle has */
+	
+	Handle speedoHudSync;	/**< Speedometer HUD synchronizer */
+	Handle fuelHudSync;		/**< Fuel meter HUD synchronizer */
 	
 	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Entity model */
@@ -31,6 +35,9 @@ enum struct Vehicle
 	float offset_angles[3];			/**< Angles offset when manually spawned by player */
 	float mass;						/**< Entity mass */
 	float impact;					/**< Entity damage impact force */
+	
+	float fuel_max;			/**< Fuel capacity */
+	float fuel_consumption;	/**< Fuel consumption per movement frame */
 	
 	float rotate_speed;		/**< Rotation speed */
 	float rotate_max; 		/**< Max rotation speed */
@@ -85,6 +92,9 @@ enum struct Vehicle
 		this.mass = kv.GetFloat("mass", this.mass);
 		this.impact = kv.GetFloat("impact", this.impact);
 		
+		this.fuel_max = kv.GetFloat("fuel_max", this.fuel_max);
+		this.fuel_consumption = kv.GetFloat("fuel_consumption", this.fuel_consumption);
+		
 		this.rotate_speed = kv.GetFloat("rotate_speed", this.rotate_speed);
 		this.rotate_max = kv.GetFloat("rotate_max", this.rotate_max);
 		
@@ -114,6 +124,9 @@ enum struct Vehicle
 	{
 		this.entity = entity;
 		this.seats = this.seats.Clone();
+		this.fuel = this.fuel_max;
+		this.speedoHudSync = CreateHudSynchronizer();
+		this.fuelHudSync = CreateHudSynchronizer();
 	}
 	
 	bool GetClients(int &client)
@@ -179,6 +192,8 @@ enum struct Vehicle
 	void Delete()
 	{
 		delete this.seats;
+		delete this.speedoHudSync;
+		delete this.fuelHudSync;
 	}
 }
 
@@ -322,11 +337,18 @@ void Vehicles_OnGameFrame()
 	{
 		Vehicle vehicle;
 		g_VehiclesEntity.GetArray(i, vehicle);
-		Vehicles_UpdateMovement(vehicle);
+		
+		if (vehicle.fuel_max > 0 && vehicle.fuel > 0)
+			Vehicles_UpdateFuel(vehicle);
+			
+		if (vehicle.fuel_max <= 0 || vehicle.fuel > 0)
+			Vehicles_UpdateMovement(vehicle);
+		
+		Vehicles_UpdateHUD(vehicle);
 	}
 }
 
-public Action Vehicles_UpdateMovement(Vehicle vehicle)
+public void Vehicles_UpdateMovement(Vehicle vehicle)
 {
 	int client = vehicle.GetDriver();
 	if (client != -1)
@@ -397,7 +419,7 @@ public Action Vehicles_UpdateMovement(Vehicle vehicle)
 				ScaleVector(velocity, max / speed);
 		}
 		
-		if (water > 0.0 && vehicle.water_float_height > 0.0)	//TODO always run this, even when player not on vehicle
+		if (water > 0.0 && vehicle.water_float_height > 0.0)
 			velocity[2] += fMin(height, vehicle.water_float_height) / vehicle.water_float_height * vehicle.water_float_speed;
 		
 		if (buttons & IN_JUMP && vehicle.flight_upward > 0.0)
@@ -424,6 +446,47 @@ public Action Vehicles_UpdateMovement(Vehicle vehicle)
 		}
 		
 		SDKCall_SetVelocity(vehicle.entity, velocity, angVelocity);
+	}
+}
+
+public void Vehicles_UpdateFuel(Vehicle vehicle)
+{
+	int client = vehicle.GetDriver();
+	if (client != -1)
+	{
+		int buttons = GetClientButtons(client);
+		if (vehicle.flight || (buttons & IN_FORWARD || buttons & IN_BACK || buttons & IN_MOVELEFT || buttons & IN_MOVERIGHT))
+		{
+			vehicle.fuel -= vehicle.fuel_consumption;
+			Vehicles_SetByEntity(vehicle);
+		}
+	}
+}
+
+public void Vehicles_UpdateHUD(Vehicle vehicle)
+{
+	int client = vehicle.GetDriver();
+	if (client != -1)	//Only the driver gets information on the HUD
+	{
+		float velocity[3], angVelocity[3];
+		SDKCall_GetVelocity(vehicle.entity, velocity, angVelocity);
+		
+		SetHudTextParams(-1.0, 0.85, 0.1, 255, 255, 255, 255);
+		ShowSyncHudText(client, vehicle.speedoHudSync, "%d km/h", RoundFloat(GetVectorLength(velocity) * 1.905 * 60 * 60 / 100000));	//1 HU = 1.905 cm
+		
+		if (vehicle.fuel_max > 0)
+		{
+			if (vehicle.fuel > 0)
+			{
+				SetHudTextParams(-1.0, 0.9, 0.1, 255, 255, 255, 255);
+				ShowSyncHudText(client, vehicle.fuelHudSync, "Fuel: %d%", RoundFloat(vehicle.fuel / vehicle.fuel_max * 100));
+			}
+			else
+			{
+				SetHudTextParams(-1.0, 0.9, 0.1, 255, 0, 0, 255);
+				ShowSyncHudText(client, vehicle.fuelHudSync, "Out of Fuel");
+			}
+		}
 	}
 }
 
