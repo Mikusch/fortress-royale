@@ -35,29 +35,33 @@
 	{
 		"en"	"Editor Menu"
 	}
-	"Editor_NotLookingAtAnyCrates"
+	"Editor_NotLookingAtAny"
 	{
-		"en"	"You are currently not looking at any crates"
+		"en"	"You are currently not looking at any crates or vehicles"
 	}
 	"Editor_Delete"
 	{
-		"en"	"Delete this crate"
+		"en"	"Delete this item"
 	}
 	"Editor_EditPrefab"
 	{
-		"en"	"Change this crate's prefab"
+		"en"	"Change this item's prefab"
 	}
 	"Editor_Move"
 	{
-		"en"	"Move this crate"
+		"en"	"Move this item"
 	}
-	"Editor_Create"
+	"Editor_CreateCrate"
 	{
 		"en"	"Create new crate"
 	}
+	"Editor_CreateVehicle"
+	{
+		"en"	"Create new vehicle"
+	}
 	"Editor_Place"
 	{
-		"en"	"Place this crate"
+		"en"	"Place this item"
 	}
 	"Editor_Save"
 	{
@@ -76,7 +80,7 @@
 	{
 		"en"	"Editor Prefabs"
 	}
-	"Editor_Prefab_CurrentCrate"
+	"Editor_Prefab_Current"
 	{
 		"en"	"You are currently using %s"
 	}

@@ -145,26 +145,9 @@ void LootConfig_ReadConfig(KeyValues kv)
 	}
 }
 
-void LootConfig_Save()
+void LootConfig_SetConfig(KeyValues kv)
 {
-	char filePath[PLATFORM_MAX_PATH];
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
-	
-	KeyValues kv = new KeyValues("MapConfig");
-	if (kv.ImportFromFile(filePath))
-	{
-		kv.JumpToKey("LootCrates", true);
-		
-		//Delete all Loot in config and create new one
-		while (kv.DeleteKey("LootCrate")) {}
-		
-		g_LootConfig.SetConfig(kv);
-		kv.GoBack();
-		
-		kv.ExportToFile(filePath);
-	}
-	
-	delete kv;
+	g_LootConfig.SetConfig(kv);
 }
 
 int LootConfig_AddCrate(LootCrate loot)

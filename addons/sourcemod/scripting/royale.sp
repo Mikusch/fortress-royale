@@ -477,6 +477,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void OnEntityDestroyed(int entity)
 {
+	Loot_OnEntityDestroyed(entity);
 	Vehicles_OnEntityDestroyed(entity);
 }
 

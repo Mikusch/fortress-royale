@@ -157,17 +157,17 @@ stock bool Loot_IsClientLookingAtCrate(int crate, int client)
 	return Loot_IsCrate(EntIndexToEntRef(entity)) && entity == crate;
 }
 
-stock void Loot_DeleteCrate(int crate)
+void Loot_OnEntityDestroyed(int entity)
 {
+	int ref = EntIndexToEntRef(entity);
+	
 	LootCrate loot;
-	int pos = LootConfig_GetCrateByEntity(crate, loot);
+	int pos = LootConfig_GetCrateByEntity(ref, loot);
 	if (pos >= 0)
 	{
 		loot.entity = INVALID_ENT_REFERENCE;
 		LootConfig_SetCrate(pos, loot);
 	}
-	
-	RemoveEntity(crate);
 }
 
 public Action EntityOutput_OnBreakCrateConfig(const char[] output, int caller, int activator, float delay)

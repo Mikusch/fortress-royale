@@ -19,6 +19,7 @@ enum struct VehicleSeat
 
 enum struct Vehicle
 {
+	/**< Entity */
 	int entity;			/**< Entity ref */
 	float fuel;			/**< Current fuel in tank */
 	bool flight;		/**< Is the vehicle in flight? */
@@ -28,19 +29,18 @@ enum struct Vehicle
 	Handle speedoHudSync;	/**< Speedometer HUD synchronizer */
 	Handle fuelHudSync;		/**< Fuel meter HUD synchronizer */
 	
+	/**< Config prefab */
 	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Entity model */
-	float origin[3];				/**< Positon to spawn entity in world */
-	float angles[3];				/**< Angles to spawn entity in world */
 	float offset_angles[3];			/**< Angles offset when manually spawned by player */
 	float mass;						/**< Entity mass */
 	float impact;					/**< Entity damage impact force */
 	
-	float fuel_max;			/**< Fuel capacity */
-	float fuel_consumption;	/**< Fuel consumption per movement frame */
+	float fuel_max;					/**< Fuel capacity */
+	float fuel_consumption;			/**< Fuel consumption per movement frame */
 	
-	float rotate_speed;		/**< Rotation speed */
-	float rotate_max; 		/**< Max rotation speed */
+	float rotate_speed;			/**< Rotation speed */
+	float rotate_max; 			/**< Max rotation speed */
 	
 	float land_forward_speed;	/**< Forward speed while on land */
 	float land_forward_max;		/**< Max forward speed  while on land */
@@ -57,11 +57,15 @@ enum struct Vehicle
 	float water_float_speed;	/**< If in water, speed vel to raise up to highest water level */
 	float water_float_height;	/**< Max water height to have water float effects */
 	
-	float flight_upward;	/**< Flight upward speed */
-	float flight_downward;	/**< Flight downward speed */
+	float flight_upward;		/**< Flight upward speed */
+	float flight_downward;		/**< Flight downward speed */
 	
-	float tilt_speed;		/**< Flight tilt, all directions */
-	float tilt_max;			/**< Max tilt speed */
+	float tilt_speed;			/**< Flight tilt, all directions */
+	float tilt_max;				/**< Max tilt speed */
+	
+	/**< Config map */
+	float origin[3];			/**< Positon to spawn entity in world */
+	float angles[3];			/**< Angles to spawn entity in world */
 	
 	void ReadConfig(KeyValues kv)
 	{
@@ -225,7 +229,7 @@ int Vehicles_CreateEntity(Vehicle vehicle)
 			vehicle.Create(EntIndexToEntRef(entity));
 			g_VehiclesEntity.PushArray(vehicle);
 			
-			return entity;
+			return EntIndexToEntRef(entity);
 		}
 	}
 	
@@ -507,6 +511,11 @@ void Vehicles_TryToEnterVehicle(int client)
 	int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
 	if (entity != -1)
 		Vehicles_EnterVehicle(entity, client);
+}
+
+bool Vehicles_IsVehicle(int entity)
+{
+	return g_VehiclesEntity.FindValue(entity, Vehicle::entity) >= 0;
 }
 
 bool Vehicles_GetByEntity(int entity, Vehicle vehicle)

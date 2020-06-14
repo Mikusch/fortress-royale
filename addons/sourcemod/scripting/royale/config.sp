@@ -80,6 +80,28 @@ void Config_Refresh()
 	delete kv;
 }
 
+void Config_Save()
+{
+	char filePath[PLATFORM_MAX_PATH];
+	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	
+	KeyValues kv = new KeyValues("MapConfig");
+	if (kv.ImportFromFile(filePath))
+	{
+		kv.JumpToKey("LootCrates", true);
+		
+		//Delete all Loot in config and create new one
+		while (kv.DeleteKey("LootCrate")) {}
+		
+		LootConfig_SetConfig(kv);
+		kv.GoBack();
+		
+		kv.ExportToFile(filePath);
+	}
+	
+	delete kv;
+}
+
 void Confg_GetMapFilepath(char[] filePath, int length)
 {
 	char mapName[PLATFORM_MAX_PATH];
