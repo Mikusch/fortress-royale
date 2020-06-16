@@ -69,9 +69,10 @@ enum struct Vehicle
 	
 	void ReadConfig(KeyValues kv)
 	{
+		this.seats = new ArrayList(sizeof(VehicleSeat));
+		
 		if (kv.JumpToKey("seats", false))
 		{
-			this.seats = new ArrayList(sizeof(VehicleSeat));
 			if (kv.GotoFirstSubKey(false))
 			{
 				do
@@ -122,6 +123,14 @@ enum struct Vehicle
 		
 		this.tilt_speed = kv.GetFloat("tilt_speed", this.tilt_speed);
 		this.tilt_max = kv.GetFloat("tilt_max", this.tilt_max);
+	}
+	
+	void SetConfig(KeyValues kv)
+	{
+		//We only care prefab, origin and angles to save to "Vehicles" section, for now
+		kv.SetString("prefab", this.name);
+		kv.SetVector("origin", this.origin);
+		kv.SetVector("angles", this.angles);
 	}
 	
 	void Create(int entity)
@@ -254,6 +263,20 @@ void Vehicles_CreateEntityAtCrosshair(Vehicle vehicle, int client)
 		GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
 		SubtractVectors(angles, vehicle.offset_angles, angles);
 		TeleportEntity(entity, NULL_VECTOR, angles, NULL_VECTOR);
+	}
+}
+
+void Vehicles_SpawnVehiclesInWorld()
+{
+	int pos;
+	Vehicle config, vehicle;
+	while (VehiclesConfig_GetVehicle(pos, config))
+	{
+		vehicle = config;
+		
+		config.entity = Vehicles_CreateEntity(vehicle);
+		VehiclesConfig_SetVehicle(pos, config);
+		pos++;
 	}
 }
 

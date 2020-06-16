@@ -5,6 +5,7 @@ static float g_ClientLastVehicleEnterTime[TF_MAXPLAYERS + 1];
 static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
 static bool g_ClientOutsideZone[TF_MAXPLAYERS + 1];
 static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
+static EditorItem g_ClientEditorItem[TF_MAXPLAYERS + 1];
 static int g_ClientEditorItemRef[TF_MAXPLAYERS + 1];
 static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
 
@@ -116,6 +117,19 @@ methodmap FRPlayer
 		public set(EditorState val)
 		{
 			g_ClientEditorState[this] = val;
+		}
+	}
+	
+	property EditorItem EditorItem
+	{
+		public get()
+		{
+			return g_ClientEditorItem[this];
+		}
+		
+		public set(EditorItem val)
+		{
+			g_ClientEditorItem[this] = val;
 		}
 	}
 	

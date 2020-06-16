@@ -43,10 +43,6 @@
 	{
 		"en"	"Delete this item"
 	}
-	"Editor_EditPrefab"
-	{
-		"en"	"Change this item's prefab"
-	}
 	"Editor_Move"
 	{
 		"en"	"Move this item"
@@ -71,18 +67,10 @@
 	{
 		"en"	"Prefab: %s"
 	}
-	"Editor_Health"
-	{
-		"en"	"Health: %d"
-	}
 	
 	"Editor_Prefab_Title"
 	{
 		"en"	"Editor Prefabs"
-	}
-	"Editor_Prefab_Current"
-	{
-		"en"	"You are currently using %s"
 	}
 	
 	"Vehicle_FuelDisplay"

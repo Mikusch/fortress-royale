@@ -104,6 +104,13 @@ enum EditorState
 	EditorState_Placing		/**< Client is creating or moving a crate */
 }
 
+enum EditorItem
+{
+	EditorItem_None,
+	EditorItem_Crate,
+	EditorItem_Vehicle
+}
+
 enum SolidType_t
 {
 	SOLID_NONE			= 0,	// no solid model
@@ -477,8 +484,11 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void OnEntityDestroyed(int entity)
 {
-	Loot_OnEntityDestroyed(entity);
-	Vehicles_OnEntityDestroyed(entity);
+	if (0 < entity < 2048)
+	{
+		Loot_OnEntityDestroyed(entity);
+		Vehicles_OnEntityDestroyed(entity);
+	}
 }
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)

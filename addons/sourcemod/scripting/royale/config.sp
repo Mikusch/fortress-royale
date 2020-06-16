@@ -40,16 +40,6 @@ void Config_Refresh()
 	
 	delete kv;
 	
-	//Build filepath for vehicles
-	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/vehicles.cfg");
-	
-	//Read the config
-	kv = new KeyValues("Vehicles");
-	if (kv.ImportFromFile(filePath))
-		VehiclesConfig_ReadConfig(kv);
-	
-	delete kv;
-	
 	//Load map specific configs
 	Confg_GetMapFilepath(filePath, sizeof(filePath));
 	
@@ -86,18 +76,20 @@ void Config_Save()
 	Confg_GetMapFilepath(filePath, sizeof(filePath));
 	
 	KeyValues kv = new KeyValues("MapConfig");
-	if (kv.ImportFromFile(filePath))
-	{
-		kv.JumpToKey("LootCrates", true);
-		
-		//Delete all Loot in config and create new one
-		while (kv.DeleteKey("LootCrate")) {}
-		
-		LootConfig_SetConfig(kv);
-		kv.GoBack();
-		
-		kv.ExportToFile(filePath);
-	}
+	kv.ImportFromFile(filePath);
+	
+	//Delete all Loot and Vehicle in config and create new one
+	kv.JumpToKey("LootCrates", true);
+	while (kv.DeleteKey("LootCrate")) {}
+	LootConfig_SetConfig(kv);
+	kv.GoBack();
+	
+	kv.JumpToKey("Vehicles", true);
+	while (kv.DeleteKey("Vehicle")) {}
+	VehiclesConfig_SetConfig(kv);
+	kv.GoBack();
+	
+	kv.ExportToFile(filePath);
 	
 	delete kv;
 }

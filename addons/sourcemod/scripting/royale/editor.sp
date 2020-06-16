@@ -1,10 +1,3 @@
-enum EditorItem
-{
-	EditorItem_None,
-	EditorItem_Crate,
-	EditorItem_Vehicle
-}
-
 void Editor_Start(int client)
 {
 	FRPlayer(client).EditorState = EditorState_View;
@@ -31,7 +24,8 @@ void Editor_ClientThink(int client)
 		}
 		case EditorState_Placing:
 		{
-			MoveEntityToClientEye(FRPlayer(client).EditorItemRef, client);
+			int mask = FRPlayer(client).EditorItem == EditorItem_Vehicle ? MASK_PLAYERSOLID|MASK_WATER : MASK_PLAYERSOLID;
+			MoveEntityToClientEye(FRPlayer(client).EditorItemRef, client, mask);
 		}
 	}
 }
@@ -40,25 +34,23 @@ void Editor_Display(int client)
 {
 	Menu menu = new Menu(Editor_MenuSelected, MenuAction_Select | MenuAction_Cancel | MenuAction_End | MenuAction_DisplayItem);
 	
-	LootCrate loot;
-	LootConfig_GetCrateByEntity(FRPlayer(client).EditorItemRef, loot);
 	if (FRPlayer(client).EditorState == EditorState_View && FRPlayer(client).EditorItemRef == INVALID_ENT_REFERENCE)
 	{
 		menu.SetTitle("%T\n\n%T", "Editor_Title", LANG_SERVER, "Editor_NotLookingAtAny", LANG_SERVER);
 		menu.AddItem("delete", "Editor_Delete", ITEMDRAW_DISABLED);
-		menu.AddItem("prefab", "Editor_EditPrefab", ITEMDRAW_DISABLED);
 		menu.AddItem("move", "Editor_Move", ITEMDRAW_DISABLED);
 		menu.AddItem("crate", "Editor_CreateCrate");
 		menu.AddItem("vehicle", "Editor_CreateVehicle");
 	}
 	else
 	{
-		menu.SetTitle("%T\n\n%T\n%T", 
+		char name[CONFIG_MAXCHAR];
+		Editor_GetItemPrefab(FRPlayer(client).EditorItemRef, name, sizeof(name));
+		
+		menu.SetTitle("%T\n\n%T", 
 			"Editor_Title", LANG_SERVER, 
-			"Editor_Prefab", LANG_SERVER, loot.namePrefab, 
-			"Editor_Health", LANG_SERVER, loot.health);
+			"Editor_Prefab", LANG_SERVER, name);
 		menu.AddItem("delete", "Editor_Delete");
-		menu.AddItem("prefab", "Editor_EditPrefab");
 		
 		if (FRPlayer(client).EditorState == EditorState_View)
 		{
@@ -87,6 +79,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			char select[32];
 			menu.GetItem(param2, select, sizeof(select));
 			
+			FRPlayer(param1).EditorItem = EditorItem_None;
 			int entity = FRPlayer(param1).EditorItemRef;
 			EditorItem itemType = Editor_GetItemType(entity);
 			
@@ -95,24 +88,14 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 				//Delete both entity item and config
 				switch (itemType)
 				{
-					case EditorItem_Crate:
-					{
-						LootConfig_DeleteCrateByEntity(entity);
-					}
-					case EditorItem_Vehicle:
-					{
-						//TODO remove in config aswell
-					}
+					case EditorItem_Crate: LootConfig_DeleteCrateByEntity(entity);
+					case EditorItem_Vehicle: VehiclesConfig_DeleteByEntity(entity);
 				}
 				
 				RemoveEntity(entity);
 				
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
-			}
-			else if (StrEqual(select, "prefab"))
-			{
-				Editor_DisplayPrefab(param1);
 			}
 			else if (StrEqual(select, "save"))
 			{
@@ -121,21 +104,21 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			}
 			else if (StrEqual(select, "place"))
 			{
-				//Use ghost entity to get origin and angles to set, and spawn new crate
+				//Use ghost entity to get origin and angles to set, and spawn new item
+				int ghost = entity;
 				float origin[3], angles[3];
-				GetEntPropVector(entity, Prop_Data, "m_vecOrigin", origin);
-				GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
+				GetEntPropVector(ghost, Prop_Data, "m_vecOrigin", origin);
+				GetEntPropVector(ghost, Prop_Data, "m_angRotation", angles);
 				
 				switch (itemType)
 				{
 					case EditorItem_Crate:
 					{
 						LootCrate loot;
-						int configIndex = LootConfig_GetCrateByEntity(entity, loot);
+						int configIndex = LootConfig_GetCrateByEntity(ghost, loot);
 						loot.origin = origin;
 						loot.angles = angles;
 						
-						RemoveEntity(entity);
 						entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 						
 						loot.entity = entity;
@@ -144,101 +127,55 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 					case EditorItem_Vehicle:
 					{
 						Vehicle vehicle;
-						Vehicles_GetByEntity(entity, vehicle);
+						Vehicles_GetByEntity(ghost, vehicle);
 						vehicle.origin = origin;
 						vehicle.angles = angles;
 						
-						RemoveEntity(entity);
 						entity = Vehicles_CreateEntity(vehicle);
 						
-						//TODO set config
+						vehicle.entity = entity;
+						VehiclesConfig_AddVehicle(vehicle);
 					}
 				}
+				
+				//Delete ghost entity after actual entity created
+				RemoveEntity(ghost);
 				
 				FRPlayer(param1).EditorItemRef = entity;
 				FRPlayer(param1).EditorState = EditorState_View;
 				Editor_Display(param1);
 			}
-			else if (StrEqual(select, "move") || StrEqual(select, "crate") || StrEqual(select, "vehicle"))
+			else if (StrEqual(select, "move"))
 			{
-				//Create ghost entity
-				int ghost = INVALID_ENT_REFERENCE;
-				bool move = StrEqual(select, "move");
+				//Create ghost entity by current prefab name
 				
-				if (StrEqual(select, "crate"))
-					itemType = EditorItem_Crate;
-				else if (StrEqual(select, "vehicle"))
-					itemType = EditorItem_Vehicle;
+				char name[CONFIG_MAXCHAR];
+				Editor_GetItemPrefab(entity, name, sizeof(name));
+				LootConfig_DeleteCrateByEntity(entity);	//Should have EditorItem_Crate check but meh
 				
-				switch (itemType)
-				{
-					case EditorItem_Crate:
-					{
-						LootCrate loot;
-						int configIndex;
-						
-						if (move)
-						{
-							//Copy crate from target and delete
-							configIndex = LootConfig_GetCrateByEntity(entity, loot);
-						}
-						else
-						{
-							//Create new crate
-							LootCrate_GetDefault(loot);
-							configIndex = LootConfig_AddCrate(loot);
-						}
-						
-						//Create new crate
-						ghost = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
-						loot.entity = ghost;
-						LootConfig_SetCrate(configIndex, loot);
-					}
-					case EditorItem_Vehicle:
-					{
-						Vehicle vehicle;
-						//int configIndex;
-						
-						if (move)
-						{
-							//Copy vehicle from target and delete
-							Vehicles_GetByEntity(entity, vehicle);
-						}
-						else
-						{
-							//Create new vehicle
-							//TODO
-						}
-						
-						//Create new vehicle
-						ghost = Vehicles_CreateEntity(vehicle);
-					}
-				}
-				
-				if (IsValidEntity(entity))	//Delete old entity after ghost is created
-					RemoveEntity(entity);
-				
-				SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
-				SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
-				SetEntityRenderColor(ghost, 255, 255, 255, 127);
-				
-				FRPlayer(param1).EditorItemRef = ghost;
+				FRPlayer(param1).EditorItemRef = Editor_CreateGhostEntity(itemType, name);
 				FRPlayer(param1).EditorState = EditorState_Placing;
+				FRPlayer(param1).EditorItem = itemType;
 				Editor_Display(param1);
+				
+				//Delete old entity after ghost is created
+				RemoveEntity(entity);
+			}
+			else if (StrEqual(select, "crate"))
+			{
+				FRPlayer(param1).EditorItem = EditorItem_Crate;
+				Editor_DisplayPrefab(param1, EditorItem_Crate);
+			}
+			else if (StrEqual(select, "vehicle"))
+			{
+				FRPlayer(param1).EditorItem = EditorItem_Vehicle;
+				Editor_DisplayPrefab(param1, EditorItem_Vehicle);
 			}
 		}
 		case MenuAction_Cancel:
 		{
 			if (param2 == MenuCancel_Exit)
-			{
-				if (FRPlayer(param1).EditorState == EditorState_Placing)
-				{
-					RemoveEntity(FRPlayer(param1).EditorItemRef);
-					FRPlayer(param1).EditorItemRef = INVALID_ENT_REFERENCE;
-				}
-				
 				FRPlayer(param1).EditorState = EditorState_None;
-			}
 		}
 		case MenuAction_End:
 		{
@@ -257,24 +194,34 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 	return 0;
 }
 
-void Editor_DisplayPrefab(int client)
+void Editor_DisplayPrefab(int client, EditorItem itemType)
 {
 	Menu menu = new Menu(Editor_MenuSelectedPrefab, MenuAction_Select | MenuAction_Cancel | MenuAction_End);
+	menu.SetTitle("%T", "Editor_Prefab_Title", LANG_SERVER);
+	menu.AddItem("__default__", "Default");
 	
-	LootCrate loot;
-	if (LootConfig_GetCrateByEntity(FRPlayer(client).EditorItemRef, loot) < 0)
-		return;
-	
-	menu.SetTitle("%T\n\n%T", "Editor_Prefab_Title", LANG_SERVER, "Editor_Prefab_Current", LANG_SERVER, loot.namePrefab[0] == '\0' ? "Default" : loot.namePrefab);
-	
-	menu.AddItem("__default__", "Default", loot.namePrefab[0] == '\0' ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
-	
-	int pos;
-	LootCrate lootPrefab;
-	while (LootConfig_GetPrefab(pos, lootPrefab))
+	switch (itemType)
 	{
-		menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab, StrEqual(lootPrefab.namePrefab, loot.namePrefab) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT);
-		pos++;
+		case EditorItem_Crate:
+		{
+			int pos;
+			LootCrate lootPrefab;
+			while (LootConfig_GetPrefab(pos, lootPrefab))
+			{
+				menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab);
+				pos++;
+			}
+		}
+		case EditorItem_Vehicle:
+		{
+			int pos;
+			Vehicle vehicle;
+			while (VehiclesConfig_GetPrefab(pos, vehicle))
+			{
+				menu.AddItem(vehicle.name, vehicle.name);
+				pos++;
+			}
+		}
 	}
 	
 	menu.ExitBackButton = true;
@@ -290,30 +237,8 @@ public int Editor_MenuSelectedPrefab(Menu menu, MenuAction action, int param1, i
 			char select[32];
 			menu.GetItem(param2, select, sizeof(select));
 			
-			int crate = FRPlayer(param1).EditorItemRef;
-			
-			LootCrate lootPrefab;
-			if (StrEqual(select, "__default__") || LootConfig_GetPrefabByName(select, lootPrefab))
-			{
-				LootCrate loot;
-				int configIndex = LootConfig_GetCrateByEntity(crate, loot);
-				if (configIndex >= 0)
-				{
-					//Copy everything from prefab to crate, but keep origin and angles
-					float origin[3], angles[3];
-					origin = loot.origin;
-					angles = loot.angles;
-					
-					loot = lootPrefab;
-					
-					loot.origin = origin;
-					loot.angles = angles;
-					
-					Loot_SetCratePrefab(crate, lootPrefab);
-					LootConfig_SetCrate(configIndex, loot);
-				}
-			}
-			
+			FRPlayer(param1).EditorItemRef = Editor_CreateGhostEntity(FRPlayer(param1).EditorItem, select);
+			FRPlayer(param1).EditorState = EditorState_Placing;
 			Editor_Display(param1);
 		}
 		case MenuAction_Cancel:
@@ -338,6 +263,45 @@ public int Editor_MenuSelectedPrefab(Menu menu, MenuAction action, int param1, i
 			delete menu;
 		}
 	}
+}
+
+int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
+{
+	int ghost = INVALID_ENT_REFERENCE;
+	
+	switch (itemType)
+	{
+		case EditorItem_Crate:
+		{
+			LootCrate loot;
+			if (!prefab[0] || StrEqual(prefab, "__default__"))
+				LootCrate_GetDefault(loot);
+			else
+				LootConfig_GetPrefabByName(prefab, loot);
+			
+			//Create new crate
+			ghost = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+			loot.entity = ghost;
+			LootConfig_AddCrate(loot);
+		}
+		case EditorItem_Vehicle:
+		{
+			Vehicle vehicle;
+			if (!prefab[0] || StrEqual(prefab, "__default__"))
+				VehiclesConfig_GetDefault(vehicle);
+			else
+				VehiclesConfig_GetByName(prefab, vehicle);
+			
+			//Create new vehicle
+			ghost = Vehicles_CreateEntity(vehicle);
+		}
+	}
+	
+	SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
+	SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
+	SetEntityRenderColor(ghost, 255, 255, 255, 127);
+	
+	return ghost;
 }
 
 void Editor_FindItem(int client)
@@ -395,4 +359,24 @@ EditorItem Editor_GetItemType(int entity)
 		return EditorItem_Vehicle;
 	else
 		return EditorItem_None;
+}
+
+void Editor_GetItemPrefab(int entity, char[] name, int length)
+{
+	switch (Editor_GetItemType(entity))
+	{
+		case EditorItem_Crate:
+		{
+			//Copy crate from target and delete
+			LootCrate loot;
+			LootConfig_GetCrateByEntity(entity, loot);
+			strcopy(name, length, loot.namePrefab);
+		}
+		case EditorItem_Vehicle:
+		{
+			Vehicle vehicle;
+			Vehicles_GetByEntity(entity, vehicle);
+			strcopy(name, length, vehicle.name);
+		}
+	}
 }

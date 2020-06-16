@@ -36,6 +36,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
+	Vehicles_SpawnVehiclesInWorld();
 }
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
