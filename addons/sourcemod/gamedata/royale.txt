@@ -154,8 +154,8 @@
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
-				"linux"		"482"
-				"windows"	"475"
+				"linux"		"483"
+				"windows"	"476"
 			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
