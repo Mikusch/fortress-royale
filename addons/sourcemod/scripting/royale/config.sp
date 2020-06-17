@@ -7,7 +7,25 @@ void Config_Refresh()
 	//Load 'global.cfg' for all maps
 	char filePath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/global.cfg");
+	Config_ReadMapConfig(filePath);
 	
+	//Load map specific config
+	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	Config_ReadMapConfig(filePath);
+	
+	//Build filepath for list of loot tables
+	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
+	
+	//Read the config
+	KeyValues kv = new KeyValues("LootTable");
+	if (kv.ImportFromFile(filePath))
+		LootTable_ReadConfig(kv);
+	
+	delete kv;
+}
+
+void Config_ReadMapConfig(const char[] filePath)
+{
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
@@ -23,39 +41,19 @@ void Config_Refresh()
 			kv.GoBack();
 		}
 		
-		LootConfig_ReadConfig(kv);
-		
-		VehiclesConfig_ReadConfig(kv);
-	}
-	
-	delete kv;
-	
-	//Build filepath for list of loot tables
-	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
-	
-	//Read the config
-	kv = new KeyValues("LootTable");
-	if (kv.ImportFromFile(filePath))
-		LootTable_ReadConfig(kv);
-	
-	delete kv;
-	
-	//Load map specific configs
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
-	
-	//Read the config
-	kv = new KeyValues("MapConfig");
-	if (kv.ImportFromFile(filePath))
-	{
-		if (kv.JumpToKey("BattleBus", false))
+		if (kv.JumpToKey("DownloadsTable", false))
 		{
-			BattleBus_ReadConfig(kv);
-			kv.GoBack();
-		}
-		
-		if (kv.JumpToKey("Zone", false))
-		{
-			Zone_ReadConfig(kv);
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					char download[PLATFORM_MAX_PATH];
+					kv.GetString(NULL_STRING, download, sizeof(download));
+					AddFileToDownloadsTable(download);
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+			}
 			kv.GoBack();
 		}
 		
