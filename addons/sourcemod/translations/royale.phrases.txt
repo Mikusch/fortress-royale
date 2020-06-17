@@ -73,10 +73,6 @@
 		"en"	"Editor Prefabs"
 	}
 	
-	"Vehicle_FuelDisplay"
-	{
-		"en"	"Fuel: %d%"
-	}
 	"Vehicle_OutOfFuel"
 	{
 		"en"	"Out of Fuel"
