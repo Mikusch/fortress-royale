@@ -69,7 +69,7 @@ void Zone_RoundStart()
 		DispatchKeyValue(zone, "model", ZONE_MODEL);
 		DispatchKeyValue(zone, "disableshadows", "1");
 		
-		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));
+		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", g_ZoneConfig.diameterMax / ZONE_DIAMETER);
 		SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
 		
 		DispatchSpawn(zone);
@@ -98,7 +98,7 @@ void Zone_RoundStart()
 			DispatchKeyValue(zone, "model", ZONE_MODEL);
 			DispatchKeyValue(zone, "disableshadows", "1");
 			
-			SetEntPropFloat(zone, Prop_Send, "m_flModelScale", SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER));
+			SetEntPropFloat(zone, Prop_Send, "m_flModelScale", g_ZoneConfig.diameterMax / ZONE_DIAMETER);
 			SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
 			
 			DispatchSpawn(zone);
