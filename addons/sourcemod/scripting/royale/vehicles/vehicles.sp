@@ -505,16 +505,18 @@ public void Vehicles_UpdateHUD(Vehicle vehicle)
 		{
 			if (vehicle.fuel > 0)
 			{
+				float ratio = vehicle.fuel / vehicle.fuel_max;
+				
 				char meter[64];
 				for (int i = 0; i < 100; i += 5)
 				{
-					if (vehicle.fuel / vehicle.fuel_max * 100 >= i)
+					if (ratio * 100 >= i)
 						StrCat(meter, sizeof(meter), "|");
 					else
 						StrCat(meter, sizeof(meter), "  ");
 				}
 				
-				SetHudTextParams(-1.0, 0.9, 0.1, RoundFloat(255 - (vehicle.fuel / vehicle.fuel_max) * 255), RoundFloat((vehicle.fuel / vehicle.fuel_max) * 255), 0, 255);
+				SetHudTextParams(-1.0, 0.9, 0.1, 255 - RoundFloat(ratio * 255), RoundFloat(ratio * 255), 0, 255);
 				ShowSyncHudText(client, vehicle.fuelHudSync, "E %s F", meter);
 			}
 			else
