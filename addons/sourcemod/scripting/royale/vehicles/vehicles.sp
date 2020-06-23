@@ -69,10 +69,9 @@ enum struct Vehicle
 	
 	void ReadConfig(KeyValues kv)
 	{
-		this.seats = new ArrayList(sizeof(VehicleSeat));
-		
 		if (kv.JumpToKey("seats", false))
 		{
+			this.seats = new ArrayList(sizeof(VehicleSeat));
 			if (kv.GotoFirstSubKey(false))
 			{
 				do
@@ -136,14 +135,19 @@ enum struct Vehicle
 	void Create(int entity)
 	{
 		this.entity = entity;
-		this.seats = this.seats.Clone();
 		this.fuel = this.fuel_max;
 		this.speedoHudSync = CreateHudSynchronizer();
 		this.fuelHudSync = CreateHudSynchronizer();
+		
+		if (this.seats)
+			this.seats = this.seats.Clone();
 	}
 	
 	bool GetClients(int &client)
 	{
+		if (!this.seats)
+			return false;
+		
 		do
 		{
 			client++;
@@ -157,11 +161,14 @@ enum struct Vehicle
 	
 	bool HasClient(int client)
 	{
-		return this.seats.FindValue(client, VehicleSeat::client) != -1;
+		return this.seats && this.seats.FindValue(client, VehicleSeat::client) != -1;
 	}
 	
 	int GetDriver()
 	{
+		if (!this.seats)
+			return -1;
+		
 		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);
 		VehicleSeat seat;
 		if (index != -1 && this.seats.GetArray(index, seat, sizeof(seat)) > 0)
@@ -172,6 +179,9 @@ enum struct Vehicle
 	
 	bool ReserveFreeSeat(int client, VehicleSeat seat)
 	{
+		if (!this.seats)
+			return false;
+		
 		int index = this.seats.FindValue(true, VehicleSeat::isDriverSeat);	//Check the driver seat first
 		if (index != -1 && this.seats.GetArray(index, seat, sizeof(seat)) > 0 && seat.client == -1)	//Check if the driver seat is free
 		{

@@ -37,8 +37,6 @@ void VehiclesConfig_Clear()
 
 void VehiclesConfig_ReadConfig(KeyValues kv)
 {
-	PrintToServer("VehiclesConfig_ReadConfig %x", kv);
-	
 	if (kv.JumpToKey("VehicleDefault", false))
 	{
 		g_VehiclesDefault.ReadConfig(kv);
@@ -65,8 +63,6 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 	
 	if (kv.JumpToKey("Vehicles", false))
 	{
-		PrintToServer("jumped to Vehicles");
-		
 		//Read through every Vehicles
 		if (kv.GotoFirstSubKey(false))
 		{
@@ -78,8 +74,6 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 				kv.GetString("prefab", vehicle.name, sizeof(vehicle.name));
 				if (!VehiclesConfig_GetByName(vehicle.name, vehicle))
 					vehicle = g_VehiclesDefault;
-				
-				PrintToServer("found (%s)", vehicle.name);
 				
 				vehicle.ReadConfig(kv);
 				g_VehiclesConfig.PushArray(vehicle);
