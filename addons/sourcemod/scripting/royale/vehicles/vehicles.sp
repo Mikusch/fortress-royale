@@ -85,6 +85,10 @@ enum struct Vehicle
 			}
 			kv.GoBack();
 		}
+		else if (this.seats)
+		{
+			this.seats = this.seats.Clone();
+		}
 		
 		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
