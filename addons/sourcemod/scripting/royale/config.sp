@@ -2,11 +2,30 @@ void Config_Refresh()
 {
 	g_PrecacheWeapon.Clear();
 	LootConfig_Clear();
+	VehiclesConfig_Clear();
 	
 	//Load 'global.cfg' for all maps
 	char filePath[PLATFORM_MAX_PATH];
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/global.cfg");
+	Config_ReadMapConfig(filePath);
 	
+	//Load map specific config
+	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	Config_ReadMapConfig(filePath);
+	
+	//Build filepath for list of loot tables
+	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
+	
+	//Read the config
+	KeyValues kv = new KeyValues("LootTable");
+	if (kv.ImportFromFile(filePath))
+		LootTable_ReadConfig(kv);
+	
+	delete kv;
+}
+
+void Config_ReadMapConfig(const char[] filePath)
+{
 	KeyValues kv = new KeyValues("MapConfig");
 	if (kv.ImportFromFile(filePath))
 	{
@@ -22,49 +41,53 @@ void Config_Refresh()
 			kv.GoBack();
 		}
 		
-		LootConfig_ReadConfig(kv);
-	}
-	
-	delete kv;
-	
-	//Build file path
-	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
-	
-	//Finally, read the config
-	kv = new KeyValues("LootTable");
-	if (kv.ImportFromFile(filePath))
-	{
-		LootTable_ReadConfig(kv);
-		kv.GoBack();
-	}
-	
-	delete kv;
-	
-	//Load map specific configs
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
-	
-	//Finally, read the config
-	kv = new KeyValues("MapConfig");
-	if (kv.ImportFromFile(filePath))
-	{
-		if (kv.JumpToKey("BattleBus", false))
+		if (kv.JumpToKey("DownloadsTable", false))
 		{
-			BattleBus_ReadConfig(kv);
-			kv.GoBack();
-		}
-		
-		if (kv.JumpToKey("Zone", false))
-		{
-			Zone_ReadConfig(kv);
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					char download[PLATFORM_MAX_PATH];
+					kv.GetString(NULL_STRING, download, sizeof(download));
+					AddFileToDownloadsTable(download);
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+			}
 			kv.GoBack();
 		}
 		
 		LootConfig_ReadConfig(kv);
+		VehiclesConfig_ReadConfig(kv);
 	}
 	else
 	{
 		LogError("Configuration file for map could not be found at '%s'", filePath);
 	}
+	
+	delete kv;
+}
+
+void Config_Save()
+{
+	char filePath[PLATFORM_MAX_PATH];
+	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	
+	KeyValues kv = new KeyValues("MapConfig");
+	kv.ImportFromFile(filePath);
+	
+	//Delete all Loot and Vehicle in config and create new one
+	kv.JumpToKey("LootCrates", true);
+	while (kv.DeleteKey("LootCrate")) {}
+	LootConfig_SetConfig(kv);
+	kv.GoBack();
+	
+	kv.JumpToKey("Vehicles", true);
+	while (kv.DeleteKey("Vehicle")) {}
+	VehiclesConfig_SetConfig(kv);
+	kv.GoBack();
+	
+	kv.ExportToFile(filePath);
 	
 	delete kv;
 }

@@ -1,55 +1,5 @@
 "Phrases"
 {
-	"Editor_Title"
-	{
-		"en"	"Editor Menu"
-	}
-	"Editor_NotLookingAtAnyCrates"
-	{
-		"en"	"You are currently not looking at any crates"
-	}
-	"Editor_Delete"
-	{
-		"en"	"Delete this crate"
-	}
-	"Editor_EditPrefab"
-	{
-		"en"	"Change this crate's prefab"
-	}
-	"Editor_Move"
-	{
-		"en"	"Move this crate"
-	}
-	"Editor_Create"
-	{
-		"en"	"Create new crate"
-	}
-	"Editor_Place"
-	{
-		"en"	"Place this crate"
-	}
-	"Editor_Save"
-	{
-		"en"	"Save to KeyValues file"
-	}
-	"Editor_Prefab"
-	{
-		"en"	"Prefab: %s"
-	}
-	"Editor_Health"
-	{
-		"en"	"Health: %d"
-	}
-	
-	"Editor_Prefab_Title"
-	{
-		"en"	"Editor Prefabs"
-	}
-	"Editor_Prefab_CurrentCrate"
-	{
-		"en"	"You are currently using %s"
-	}
-	
 	"BattleBus_HowToDrop"
 	{
 		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
@@ -65,6 +15,67 @@
 	"BattleBus_IncomingCrate"
 	{
 		"en"	"Incoming Mannpower loot crate!"
+	}
+	
+	"Command_NotInGame"
+	{
+		"en"	"This Command can only be used ingame"
+	}
+	"Command_VehicleUsage"
+	{
+		"en"		"Usage: sm_vehicle [config name]"
+	}
+	"Command_VehicleCantFindName"
+	{
+		"#format"	"{1:s}"
+		"en"		"Unable to find vehicle name '{1}'"
+	}
+	
+	"Editor_Title"
+	{
+		"en"	"Editor Menu"
+	}
+	"Editor_NotLookingAtAny"
+	{
+		"en"	"You are currently not looking at any crates or vehicles"
+	}
+	"Editor_Delete"
+	{
+		"en"	"Delete this item"
+	}
+	"Editor_Move"
+	{
+		"en"	"Move this item"
+	}
+	"Editor_CreateCrate"
+	{
+		"en"	"Create new crate"
+	}
+	"Editor_CreateVehicle"
+	{
+		"en"	"Create new vehicle"
+	}
+	"Editor_Place"
+	{
+		"en"	"Place this item"
+	}
+	"Editor_Save"
+	{
+		"en"	"Save to KeyValues file"
+	}
+	"Editor_Prefab"
+	{
+		"en"	"Prefab: %s"
+	}
+	
+	"Editor_Prefab_Title"
+	{
+		"en"	"Editor Prefabs"
+	}
+	
+	"Vehicle_OutOfFuel"
+	{
+		"en"	"Out of Fuel"
 	}
 	
 	"Zone_ShrinkAlert"

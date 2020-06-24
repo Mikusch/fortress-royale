@@ -104,6 +104,13 @@ enum EditorState
 	EditorState_Placing		/**< Client is creating or moving a crate */
 }
 
+enum EditorItem
+{
+	EditorItem_None,
+	EditorItem_Crate,
+	EditorItem_Vehicle
+}
+
 enum SolidType_t
 {
 	SOLID_NONE			= 0,	// no solid model
@@ -296,6 +303,7 @@ int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
 
+#include "royale/config.sp"
 #include "royale/entity.sp"
 #include "royale/player.sp"
 
@@ -306,9 +314,11 @@ int g_OffsetRuneShouldReposition;
 #include "royale/loot/loot_callbacks.sp"
 #include "royale/loot/loot.sp"
 
+#include "royale/vehicles/vehicles.sp"
+#include "royale/vehicles/vehicles_config.sp"
+
 #include "royale/battlebus.sp"
 #include "royale/command.sp"
-#include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convar.sp"
 #include "royale/dhook.sp"
@@ -357,6 +367,8 @@ public void OnPluginStart()
 	Event_Init();
 	Loot_Init();
 	LootConfig_Init();
+	Vehicles_Init();
+	VehiclesConfig_Init();
 	
 	ConVar_Enable();
 	
@@ -424,9 +436,10 @@ public void OnClientPutInServer(int client)
 	FRPlayer(client).EditorState = EditorState_None;
 }
 
-public void OnClientDisconnect(int iClient)
+public void OnClientDisconnect(int client)
 {
-	DHook_UnhookGiveNamedItem(iClient);
+	DHook_UnhookGiveNamedItem(client);
+	Vehicles_ExitVehicle(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
@@ -438,10 +451,26 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		else
 			buttons = 0;	//Don't allow client in battle bus process any other buttons
 	}
-	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2) && FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
+	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
 	{
-		SDKCall_TryToPickupDroppedWeapon(client);
+		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
+			SDKCall_TryToPickupDroppedWeapon(client);
+		
+		//Entering and exiting vehicles
+		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
+		{
+			Vehicle vehicle;
+			if (Vehicles_GetByClient(client, vehicle))
+				Vehicles_ExitVehicle(client);
+			else
+				Vehicles_TryToEnterVehicle(client);
+		}
 	}
+}
+
+public void OnGameFrame()
+{
+	Vehicles_OnGameFrame();
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -451,6 +480,15 @@ public void OnEntityCreated(int entity, const char[] classname)
 	
 	if (StrContains(classname, "obj_") == 0)
 		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
+}
+
+public void OnEntityDestroyed(int entity)
+{
+	if (0 < entity < 2048)
+	{
+		Loot_OnEntityDestroyed(entity);
+		Vehicles_OnEntityDestroyed(entity);
+	}
 }
 
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)

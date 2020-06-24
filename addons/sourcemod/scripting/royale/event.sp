@@ -36,6 +36,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
+	Vehicles_SpawnVehiclesInWorld();
 }
 
 public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -149,6 +150,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	
 	if (!deadringer)
 	{
+		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
 	}

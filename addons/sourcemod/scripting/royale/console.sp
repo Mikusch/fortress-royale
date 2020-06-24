@@ -69,8 +69,21 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 	GetCmdArg(1, arg1, sizeof(arg1));
 	GetCmdArg(2, arg2, sizeof(arg2));
 	
-	if (arg1[0] == '0' && arg2[0] == '0' && FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
-		SDKCall_TryToPickupDroppedWeapon(client);
+	if (arg1[0] == '0' && arg2[0] == '0')
+	{
+		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
+			SDKCall_TryToPickupDroppedWeapon(client);
+		
+		//Entering and exiting vehicles
+		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
+		{
+			Vehicle vehicle;
+			if (Vehicles_GetByClient(client, vehicle))
+				Vehicles_ExitVehicle(client);
+			else
+				Vehicles_TryToEnterVehicle(client);
+		}
+	}
 	
 	return Plugin_Continue;
 }
