@@ -434,7 +434,14 @@ public void Vehicles_UpdateMovement(Vehicle vehicle)
 		float water = 0.0;	// Percentage the vehicle is in water
 		float height;
 		if (GetWaterHeightFromEntity(vehicle.entity, height) && height > -vehicle.land_height)
-			water = fMin(height + vehicle.land_height, vehicle.land_height + vehicle.water_height) / (vehicle.land_height + vehicle.water_height);
+		{
+			//Vehicle is inside water, calculate height of water from vehicle
+			float maxHeight = vehicle.land_height + vehicle.water_height;
+			if (maxHeight > 0.0)
+				water = fMin(height + vehicle.land_height, maxHeight) / maxHeight;
+			else
+				water = 1.0;
+		}
 		
 		if ((buttons & IN_FORWARD && !(buttons & IN_BACK)) || (buttons & IN_BACK && !(buttons & IN_FORWARD)))
 		{
