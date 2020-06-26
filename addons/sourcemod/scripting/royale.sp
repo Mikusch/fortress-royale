@@ -530,3 +530,19 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, 
 {
 	return TF2_OnGiveNamedItem(client, classname, index);
 }
+
+public Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
+{
+	BattleBus_SpawnPlayerBus();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			BattleBus_SpectateBus(client);
+	}
+	
+	g_PlayerCount = GetAlivePlayersCount();
+	
+	Zone_RoundArenaStart();
+	Loot_SpawnCratesInWorld();
+}

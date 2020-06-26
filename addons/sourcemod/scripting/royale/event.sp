@@ -53,28 +53,13 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
 	Vehicles_SpawnVehiclesInWorld();
-}
-
-public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
-{
-	BattleBus_SpawnPlayerBus();
 	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			BattleBus_SpectateBus(client);
-	}
-	
-	g_PlayerCount = GetAlivePlayersCount();
-	
-	Zone_RoundArenaStart();
-	Loot_SpawnCratesInWorld();
+	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	
