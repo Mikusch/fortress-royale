@@ -382,11 +382,18 @@ public void OnPluginStart()
 public void OnPluginEnd()
 {
 	ConVar_Disable();
+	
+	//Restore arena and remove waiting for players if needed
+	if (g_WaitingForPlayers)
+	{
+		GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
+		GameRules_SetProp("m_bInWaitingForPlayers", false);
+	}
 }
 
 public void OnMapStart()
 {
-	if (GameRules_GetRoundState() == RoundState_Pregame)
+	if (GameRules_GetRoundState() == RoundState_Pregame && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) == TF_GAMETYPE_ARENA)
 	{
 		//Enable waiting for players
 		g_WaitingForPlayers = true;
@@ -471,6 +478,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 public void OnGameFrame()
 {
 	Vehicles_OnGameFrame();
+	
+	//Make sure other plugins is not overriding gamerules prop
+	if (g_WaitingForPlayers && !GameRules_GetProp("m_bInWaitingForPlayers") && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) != TF_GAMETYPE_UNDEFINED)
+		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
