@@ -415,12 +415,12 @@ public MRESReturn DHook_GetMaxHealthPost(int client, Handle returnVal)
 
 public MRESReturn DHook_ForceRespawnPre(int client)
 {
-	//Allow RuneRegenThink to start
-	GameRules_SetProp("m_bPowerupMode", true);
-	
 	//Only allow respawn if player is in parachute mode
 	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
 		return MRES_Supercede;
+	
+	//Allow RuneRegenThink to start
+	GameRules_SetProp("m_bPowerupMode", true);
 	
 	//If player havent selected a class, pick random class for em
 	//this is so that player can actually spawn into map, otherwise nothing happens
