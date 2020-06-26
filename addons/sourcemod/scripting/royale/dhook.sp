@@ -1,7 +1,4 @@
-static Handle g_DHookSetWinningTeam;
-static Handle g_DHookBHavePlayers;
 static Handle g_DHookGetMaxHealth;
-static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookFireProjectile;
@@ -31,10 +28,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
-	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::SetWinningTeam");
-	g_DHookBHavePlayers = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::BHavePlayers");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
-	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookFireProjectile = DHook_CreateVirtual(gamedata, "CTFWeaponBaseGun::FireProjectile");
@@ -101,18 +95,10 @@ bool DHook_IsGiveNamedItemActive()
 	return false;
 }
 
-void DHook_HookGamerules()
-{
-	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeamPre);
-	DHookGamerules(g_DHookBHavePlayers, false, _, DHook_BHavePlayersPre);
-}
-
 void DHook_HookClient(int client)
 {
 	DHookEntity(g_DHookGetMaxHealth, false, client, _, DHook_GetMaxHealthPre);
 	DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
-	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
-	DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
@@ -407,22 +393,6 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
 	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
 }
 
-public MRESReturn DHook_SetWinningTeamPre(Handle params)
-{
-	//Prevent round win if atleast 2 players alive
-	if (GetAlivePlayersCount() >= 2)
-		return MRES_Supercede;
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_BHavePlayersPre(Handle returnVal)
-{
-	//Waiting for players period never ends if there are no alive players
-	DHookSetReturn(returnVal, GetPlayerCount() >= 2);
-	return MRES_Supercede;
-}
-
 public MRESReturn DHook_GetMaxHealthPre(int client, Handle returnVal)
 {
 	//Hooks may be changing client class, change class back to what it was
@@ -444,28 +414,6 @@ public MRESReturn DHook_GetMaxHealthPost(int client, Handle returnVal)
 	//Multiply health by convar value
 	DHookSetReturn(returnVal, RoundToNearest(float(DHookGetReturn(returnVal)) * multiplier));
 	return MRES_Supercede;
-}
-
-public MRESReturn DHook_ForceRespawnPre(int client)
-{
-	//Only allow respawn if player is in parachute mode
-	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
-		return MRES_Supercede;
-	
-	//Allow RuneRegenThink to start
-	GameRules_SetProp("m_bPowerupMode", true);
-	
-	//If player havent selected a class, pick random class for em
-	//this is so that player can actually spawn into map, otherwise nothing happens
-	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_iDesiredPlayerClass")) == TFClass_Unknown)
-		SetEntProp(client, Prop_Send, "m_iDesiredPlayerClass", GetRandomInt(view_as<int>(TFClass_Scout), view_as<int>(TFClass_Engineer)));
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_ForceRespawnPost(int client)
-{
-	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public MRESReturn DHook_GiveNamedItemPre(int client, Handle returnVal, Handle params)

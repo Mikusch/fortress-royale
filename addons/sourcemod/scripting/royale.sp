@@ -233,21 +233,6 @@ enum
 	TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS,
 };
 
-enum ETFGameType
-{
-	TF_GAMETYPE_UNDEFINED = 0,
-	TF_GAMETYPE_CTF,
-	TF_GAMETYPE_CP,
-	TF_GAMETYPE_ESCORT,
-	TF_GAMETYPE_ARENA,
-	TF_GAMETYPE_MVM,
-	TF_GAMETYPE_RD,
-	TF_GAMETYPE_PASSTIME,
-	TF_GAMETYPE_PD,
-	
-	TF_GAMETYPE_COUNT
-};
-
 /**
  * Possible drops from loot crates
  */
@@ -297,7 +282,6 @@ TFCond g_runeConds[] = {
 };
 
 bool g_TF2Items;
-bool g_WaitingForPlayers;
 bool g_AllowDroppedWeapon;
 int g_PlayerCount;
 
@@ -402,30 +386,15 @@ public void OnPluginStart()
 public void OnPluginEnd()
 {
 	ConVar_Disable();
-	
-	//Restore arena and remove waiting for players if needed
-	if (g_WaitingForPlayers)
-	{
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
-		GameRules_SetProp("m_bInWaitingForPlayers", false);
-	}
 }
 
 public void OnMapStart()
 {
-	if (GameRules_GetRoundState() == RoundState_Pregame && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) == TF_GAMETYPE_ARENA)
-	{
-		//Enable waiting for players
-		g_WaitingForPlayers = true;
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
-	}
-	
 	Config_Refresh();
 	
 	BattleBus_Precache();
 	Zone_Precache();
 	
-	DHook_HookGamerules();
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -499,10 +468,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 public void OnGameFrame()
 {
 	Vehicles_OnGameFrame();
-	
-	//Make sure other plugins is not overriding gamerules prop
-	if (g_WaitingForPlayers && !GameRules_GetProp("m_bInWaitingForPlayers") && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) != TF_GAMETYPE_UNDEFINED)
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -528,20 +493,6 @@ public void OnEntityDestroyed(int entity)
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
 {
 	FREntity(EntIndexToEntRef(caller)).Destroy();
-}
-
-public void TF2_OnWaitingForPlayersStart()
-{
-	//Set game type back to arena after waiting for players calculations is done
-	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
-	
-	//Set m_bInWaitingForPlayers to true so TF2 ignore arena's playercount rules
-	GameRules_SetProp("m_bInWaitingForPlayers", true);
-}
-
-public void TF2_OnWaitingForPlayersEnd()
-{
-	g_WaitingForPlayers = false;
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)

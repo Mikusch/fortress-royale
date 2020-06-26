@@ -28,12 +28,6 @@ public Action Event_Broadcast_Audio(Event event, const char[] name, bool dontBro
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	if (!g_WaitingForPlayers)
-	{
-		//Set back to false from TF2_OnWaitingForPlayersStart
-		GameRules_SetProp("m_bInWaitingForPlayers", false);
-	}
-	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		//Clear round win music
