@@ -196,13 +196,9 @@ void BattleBus_EjectClient(int client)
 	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_iDesiredPlayerClass")) == TFClass_Unknown)
 		SetEntProp(client, Prop_Send, "m_iDesiredPlayerClass", GetRandomInt(view_as<int>(TFClass_Scout), view_as<int>(TFClass_Engineer)));
 	
+	//Respawn into alive team, removing ghost
 	FRPlayer(client).PlayerState = PlayerState_Parachute;
-	TF2_ChangeClientTeam(client, TFTeam_Alive);
-	
-	//Allow RuneRegenThink to start
-	GameRules_SetProp("m_bPowerupMode", true);
-	TF2_RespawnPlayer(client);
-	GameRules_SetProp("m_bPowerupMode", false);
+	FRPlayer(client).ChangeTeam(TFTeam_Alive, true, false);
 	
 	SetClientViewEntity(client, client);
 	

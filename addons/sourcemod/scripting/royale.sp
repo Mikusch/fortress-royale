@@ -88,6 +88,15 @@ enum eEurekaTeleportTargets
 	EUREKA_NUM_TARGETS
 }
 
+enum FRRoundState
+{
+	FRRoundState_Waiting,
+	FRRoundState_NeedPlayers,
+	FRRoundState_Setup,
+	FRRoundState_Active,
+	FRRoundState_End,
+}
+
 enum PlayerState
 {
 	PlayerState_Waiting,	/**< Client is in spectator or waiting for new game */
@@ -283,6 +292,7 @@ TFCond g_runeConds[] = {
 
 bool g_TF2Items;
 bool g_AllowDroppedWeapon;
+FRRoundState g_RoundState;
 int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
@@ -390,6 +400,11 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
+	if (GameRules_GetRoundState() == RoundState_Preround)
+		g_RoundState = FRRoundState_Waiting;
+	else
+		g_RoundState = FRRoundState_NeedPlayers;
+	
 	Config_Refresh();
 	
 	BattleBus_Precache();
@@ -468,6 +483,12 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 public void OnGameFrame()
 {
 	Vehicles_OnGameFrame();
+	
+	switch (g_RoundState)
+	{
+		case FRRoundState_NeedPlayers: TryToStartRound();
+		case FRRoundState_Active: TryToEndRound();
+	}
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -531,8 +552,28 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, 
 	return TF2_OnGiveNamedItem(client, classname, index);
 }
 
+bool TryToStartRound()
+{
+	//Need 2 players
+	if (GetPlayerCount() < 2)
+		return false;
+	
+	//Start round
+	g_RoundState = FRRoundState_Setup;
+	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+	return true;
+}
+
 public Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
 {
+	RemoveEntity(caller);
+	
+	// how
+	if (g_RoundState != FRRoundState_Setup)
+		return;
+	
+	g_RoundState = FRRoundState_Active;
+	
 	BattleBus_SpawnPlayerBus();
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -545,4 +586,34 @@ public Action EntOutput_SetupFinished(const char[] output, int caller, int activ
 	
 	Zone_RoundArenaStart();
 	Loot_SpawnCratesInWorld();
+}
+
+void TryToEndRound()
+{
+	int winner;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && FRPlayer(client).IsAlive())
+		{
+			if (winner)	//More than 1 player alive
+				return;
+			
+			winner = client;
+		}
+	}
+	
+	//Round ended
+	g_RoundState = FRRoundState_End;
+	
+	if (!winner)	//Nobody alive? wew
+	{
+		TF2_ForceRoundWin(TFTeam_Spectator);
+		PrintToChatAll("%T", "RoundState_NoWinner", LANG_SERVER);
+	}
+	else
+	{
+		TF2_ForceRoundWin(TFTeam_Alive);
+		PrintToChatAll("%T", "RoundState_Winner", LANG_SERVER, winner);
+	}
 }

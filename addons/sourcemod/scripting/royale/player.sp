@@ -189,6 +189,32 @@ methodmap FRPlayer
 		}
 	}
 	
+	public bool IsAlive()
+	{
+		return g_ClientPlayerState[this] == PlayerState_BattleBus || g_ClientPlayerState[this] == PlayerState_Parachute || g_ClientPlayerState[this] == PlayerState_Alive;
+	}
+	
+	public void ChangeTeam(TFTeam team, bool respawn = false, bool ghost = true)
+	{
+		if (TF2_IsPlayerInCondition(this.Client, TFCond_HalloweenGhostMode))
+			TF2_RemoveCondition(this.Client, TFCond_HalloweenGhostMode);
+		
+		SetEntProp(this.Client, Prop_Send, "m_lifeState", LIFE_DEAD);
+		TF2_ChangeClientTeam(this.Client, team);
+		SetEntProp(this.Client, Prop_Send, "m_lifeState", LIFE_ALIVE);
+		
+		if (respawn)
+		{
+			//Allow RuneRegenThink to start
+			GameRules_SetProp("m_bPowerupMode", true);
+			TF2_RespawnPlayer(this.Client);
+			GameRules_SetProp("m_bPowerupMode", false);
+		}
+		
+		if (ghost)
+			TF2_AddCondition(this.Client, TFCond_HalloweenGhostMode, TFCondDuration_Infinite);
+	}
+	
 	public void ChangeToSpectator()
 	{
 		if (++g_ClientSpectator[this] == 1)

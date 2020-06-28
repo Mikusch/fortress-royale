@@ -54,7 +54,7 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
 	Vehicles_SpawnVehiclesInWorld();
 	
-	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+	g_RoundState = FRRoundState_NeedPlayers;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -240,5 +240,5 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
-		TF2_ChangeClientTeam(client, TFTeam_Dead);
+		FRPlayer(client).ChangeTeam(TFTeam_Dead);
 }

@@ -789,11 +789,23 @@ stock void TF2_CreateSetupTimer(int duration, EntityOutput callback)
 	DispatchSpawn(timer);
 	HookSingleEntityOutput(timer, "OnSetupFinished", callback);
 	
+	AcceptEntityInput(timer, "Enable");
 	AcceptEntityInput(timer, "Resume");
-	CreateTimer(float(duration), Timer_RemoveEntity, EntIndexToEntRef(timer));
 	
 	Event event = CreateEvent("teamplay_update_timer");
 	event.Fire();
+}
+
+stock void TF2_ForceRoundWin(TFTeam team)
+{
+	int roundwin = CreateEntityByName("game_round_win"); 
+	DispatchSpawn(roundwin);
+
+	SetVariantString("force_map_reset 1");
+	AcceptEntityInput(roundwin, "AddOutput");
+	SetVariantInt(view_as<int>(team));
+	AcceptEntityInput(roundwin, "SetTeam");
+	AcceptEntityInput(roundwin, "RoundWin");
 }
 
 stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int displayToTeam = 0, int teamColor = 0)

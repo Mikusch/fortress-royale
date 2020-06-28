@@ -69,10 +69,19 @@
 		"#format"	"{1:s}"
 		"en"		"Prefab: {1}"
 	}
-	
 	"Editor_Prefab_Title"
 	{
 		"en"		"Editor Prefabs"
+	}
+	
+	"RoundState_NoWinner"
+	{
+		"en"	"Nobody won this round!"
+	}
+	
+	"RoundState_Winner"
+	{
+		"en"	"%N won this round!"
 	}
 	
 	"Vehicle_OutOfFuel"
