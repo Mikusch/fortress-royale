@@ -306,7 +306,10 @@ stock bool TF2_IsWearable(int weapon)
 
 stock float TF2_GetPercentInvisible(int client)
 {
-	int offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
+	static int offset = -1;
+	if (offset == -1)
+		offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
+	
 	return GetEntDataFloat(client, offset);
 }
 
