@@ -9,7 +9,17 @@ static ArrayList ConVars;
 
 void ConVar_Init()
 {
-	fr_healthmultiplier = CreateConVar("fr_healthmultiplier", "2.0", "Max health multiplier", _, true, 0.0);
+	//tag mismatch haha
+	fr_healthmultiplier[1] = CreateConVar("fr_healthmultiplier_scout", "2.0", "Max health multiplier for Scout", _, true, 0.0);
+	fr_healthmultiplier[2] = CreateConVar("fr_healthmultiplier_sniper", "2.4", "Max health multiplier for Sniper", _, true, 0.0);
+	fr_healthmultiplier[3] = CreateConVar("fr_healthmultiplier_soldier", "2.0", "Max health multiplier for Soldier", _, true, 0.0);
+	fr_healthmultiplier[4] = CreateConVar("fr_healthmultiplier_demoman", "2.0", "Max health multiplier for Demoman", _, true, 0.0);
+	fr_healthmultiplier[5] = CreateConVar("fr_healthmultiplier_medic", "1.6667", "Max health multiplier for Medic", _, true, 0.0);
+	fr_healthmultiplier[6] = CreateConVar("fr_healthmultiplier_heavy", "1.5", "Max health multiplier for Heavy", _, true, 0.0);
+	fr_healthmultiplier[7] = CreateConVar("fr_healthmultiplier_pyro", "2.0", "Max health multiplier for Pyro", _, true, 0.0);
+	fr_healthmultiplier[8] = CreateConVar("fr_healthmultiplier_spy", "2.8", "Max health multiplier for Spy", _, true, 0.0);
+	fr_healthmultiplier[9] = CreateConVar("fr_healthmultiplier_engineer", "2.4", "Max health multiplier for Engineer", _, true, 0.0);
+	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	
