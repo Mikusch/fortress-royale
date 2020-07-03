@@ -1,5 +1,6 @@
 static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
 static int g_ClientSecToDeployParachute[TF_MAXPLAYERS + 1];
+static int g_ClientVisibleCond[TF_MAXPLAYERS + 1];
 static float g_ClientLastWeaponPickupTime[TF_MAXPLAYERS + 1];
 static float g_ClientLastVehicleEnterTime[TF_MAXPLAYERS + 1];
 static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
@@ -52,6 +53,19 @@ methodmap FRPlayer
 		public set(int val)
 		{
 			g_ClientSecToDeployParachute[this] = val;
+		}
+	}
+	
+	property int VisibleCond
+	{
+		public get()
+		{
+			return g_ClientVisibleCond[this];
+		}
+		
+		public set(int val)
+		{
+			g_ClientVisibleCond[this] = val;
 		}
 	}
 	

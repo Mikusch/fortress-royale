@@ -278,6 +278,14 @@ char g_fistsClassname[][] = {
 	"tf_weapon_robot_arm"	//Engineer
 };
 
+TFCond g_visibleConds[] = {
+	TFCond_Bleeding,
+	TFCond_Jarated,
+	TFCond_Milked,
+	TFCond_OnFire,
+	TFCond_Gas,
+};
+
 bool g_TF2Items;
 bool g_WaitingForPlayers;
 int g_PlayerCount;
@@ -441,6 +449,7 @@ public void OnClientPutInServer(int client)
 	
 	FRPlayer(client).PlayerState = PlayerState_Waiting;
 	FRPlayer(client).EditorState = EditorState_None;
+	FRPlayer(client).VisibleCond = 0;
 }
 
 public void OnClientDisconnect(int client)
@@ -526,6 +535,10 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	//Dont give uber on spawn from mannpower
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
+	
+	for (int i = 0; i < sizeof(g_visibleConds); i++)
+		if (condition == g_visibleConds[i])
+			FRPlayer(client).VisibleCond++;
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
@@ -536,6 +549,10 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 		TF2_RemoveItemInSlot(client, WeaponSlot_Secondary);
 		FRPlayer(client).PlayerState = PlayerState_Alive;
 	}
+	
+	for (int i = 0; i < sizeof(g_visibleConds); i++)
+		if (condition == g_visibleConds[i])
+			FRPlayer(client).VisibleCond--;
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
