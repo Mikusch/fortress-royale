@@ -495,7 +495,7 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	if (itemOffset <= -1)
 	{
 		LogError("Failed to find m_Item on: %s", classname);
-		return -1;
+		return INVALID_ENT_REFERENCE;
 	}
 	
 	int index = GetEntProp(fromWeapon, Prop_Send, "m_iItemDefinitionIndex");
@@ -506,14 +506,17 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	char model[PLATFORM_MAX_PATH];
 	if (!g_PrecacheWeapon.GetString(defindex, model, sizeof(model)))
 	{
-		int modelIndex = -1;
+		int modelIndex;
 		if (HasEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex"))
 			modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_iWorldModelIndex");
 		else 
 			modelIndex = GetEntProp(fromWeapon, Prop_Send, "m_nModelIndex");
 		
-		if (modelIndex < 0)
+		if (modelIndex <= 0)
+		{
+			LogError("Unable to find model for dropped weapon with def index '%d'", index);
 			return INVALID_ENT_REFERENCE;
+		}
 		
 		ModelIndexToString(modelIndex, model, sizeof(model));
 	}
