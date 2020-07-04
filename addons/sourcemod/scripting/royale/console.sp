@@ -133,20 +133,17 @@ public Action Console_DropItem(int client, const char[] command, int args)
 	if (!found)	//No valid weapons to drop
 		return Plugin_Continue;
 	
-	TFClassType class = TF2_GetPlayerClass(client);
-	int slot = TF2_GetItemSlot(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), class);
-	
 	float origin[3], angles[3];
 	GetClientEyePosition(client, origin);
 	GetClientEyeAngles(client, angles);
-	TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
 	
-	TF2_RemoveItemInSlot(client, slot);
+	TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
+	TF2_RemoveItem(client, weapon);
 	
 	int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
 	if (melee == -1)	//Dropped melee weapon, give fists back
 	{
-		melee = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[class]);
+		melee = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
 		if (melee != -1)
 			TF2_EquipWeapon(client, melee);
 	}

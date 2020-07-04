@@ -304,11 +304,11 @@ stock bool TF2_IsWearable(int weapon)
 	return StrContains(classname, "tf_wearable") == 0;
 }
 
-stock void TF2_SwitchActiveWeapon(int iClient, int iWeapon)
+stock void TF2_SwitchActiveWeapon(int client, int weapon)
 {
-	char sClassname[256];
-	GetEntityClassname(iWeapon, sClassname, sizeof(sClassname));
-	FakeClientCommand(iClient, "use %s", sClassname);
+	char classname[256];
+	GetEntityClassname(weapon, classname, sizeof(classname));
+	FakeClientCommand(client, "use %s", classname);
 }
 
 stock float TF2_GetPercentInvisible(int client)
@@ -392,6 +392,15 @@ stock bool TF2_ShouldDropWeapon(int client, int weapon)
 		
 		//Crash if dropping parachute while in cond
 		if (TF2_IsPlayerInCondition(client, TFCond_Parachute))
+			return false;
+	}
+	
+	//Toolbox
+	if (TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client)) == WeaponSlot_BuilderEngie)
+	{
+		char classname[256];
+		GetEntityClassname(weapon, classname, sizeof(classname));
+		if (StrEqual(classname, "tf_weapon_builder"))
 			return false;
 	}
 	
@@ -622,6 +631,46 @@ stock int TF2_GetItemSlot(int defindex, TFClassType class)
 	return slot;
 }
 
+stock bool TF2_GetItem(int client, int &weapon, int &pos)
+{
+	//Could be looped through client slots, but would cause issues with >1 weapons in same slot
+	
+	static int maxWeapons;
+	if (!maxWeapons)
+		maxWeapons = GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons");
+	
+	//Loop though all weapons (non-wearables)
+	while (pos < maxWeapons)
+	{
+		weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", pos);
+		pos++;
+		
+		if (weapon > MaxClients)
+			return true;
+		
+		//Reset weapon for wearable loop below
+		if (pos == maxWeapons)
+			weapon = MaxClients+1;
+	}
+	
+	//Loop through all weapon wearables (don't allow cosmetics)
+	while ((weapon = FindEntityByClassname(weapon, "tf_wearable*")) > MaxClients)
+	{
+		if (GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(weapon, Prop_Send, "moveparent") == client)
+		{
+			int defIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+			for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
+			{
+				int slot = TF2_GetItemSlot(defIndex, class);
+				if (0 <= slot <= WeaponSlot_BuilderEngie)
+					return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
 stock int TF2_GetItemInSlot(int client, int slot)
 {
 	int weapon = GetPlayerWeaponSlot(client, slot);
@@ -630,6 +679,29 @@ stock int TF2_GetItemInSlot(int client, int slot)
 	
 	//If weapon not found in slot, check if it a wearable
 	return SDKCall_GetEquippedWearableForLoadoutSlot(client, slot);
+}
+
+stock void TF2_RemoveItem(int client, int weapon)
+{
+	if (TF2_IsWearable(weapon))
+	{
+		//If wearable, just simply use TF2_RemoveWearable
+		TF2_RemoveWearable(client, weapon);
+		return;
+	}
+	
+	//Below similar to TF2_RemoveWeaponSlot, but only removes 1 weapon instead of all weapons in 1 slot
+	
+	int iExtraWearable = GetEntPropEnt(weapon, Prop_Send, "m_hExtraWearable");
+	if (iExtraWearable != -1)
+		TF2_RemoveWearable(client, iExtraWearable);
+	
+	iExtraWearable = GetEntPropEnt(weapon, Prop_Send, "m_hExtraWearableViewModel");
+	if (iExtraWearable != -1)
+		TF2_RemoveWearable(client, iExtraWearable);
+	
+	RemovePlayerItem(client, weapon);
+	RemoveEntity(weapon);
 }
 
 stock void TF2_RemoveItemInSlot(int client, int slot)

@@ -237,7 +237,7 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 			TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
 		}
 		
-		TF2_RemoveItemInSlot(client, slot);
+		TF2_RemoveItem(client, weapon);
 	}
 	
 	//Create new weapon
@@ -262,7 +262,7 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	
 	//Fix active weapon, incase was switched to wearable
 	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") <= MaxClients)
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", TF2_GetItemInSlot(client, WeaponSlot_Melee));
+		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
 	
 	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
@@ -285,11 +285,10 @@ public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
 	GetClientEyeAngles(client, angles);
 	
 	//Drop all weapons
-	//TODO drop grapple hook aswell
-	for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
+	int weapon, pos;
+	while (TF2_GetItem(client, weapon, pos))
 	{
-		int weapon = TF2_GetItemInSlot(client, slot);
-		if (weapon > MaxClients && TF2_ShouldDropWeapon(client, weapon))
+		if (TF2_ShouldDropWeapon(client, weapon))
 			TF2_CreateDroppedWeapon(client, weapon, false, origin, angles);
 	}
 	
