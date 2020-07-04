@@ -91,6 +91,9 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 
 public Action Console_DropItem(int client, const char[] command, int args)
 {
+	if (!IsPlayerAlive(client))
+		return Plugin_Continue;
+	
 	//Drop weapon, if player dont have rune to drop instead
 	for (int i = 0; i < sizeof(g_runeConds); i++)
 		if (TF2_IsPlayerInCondition(client, g_runeConds[i]))

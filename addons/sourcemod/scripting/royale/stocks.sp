@@ -379,9 +379,9 @@ stock void TF2_CheckClientWeapons(int client)
 
 stock bool TF2_ShouldDropWeapon(int client, int weapon)
 {
-	//Starting fists
+	//Starting fists and spellbook
 	int defindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-	if (defindex == INDEX_FISTS)
+	if (defindex == INDEX_FISTS || defindex == INDEX_SPELLBOOK)
 		return false;
 	
 	if (defindex == INDEX_BASEJUMPER)
