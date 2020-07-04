@@ -7,6 +7,8 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
+	SDKHook(client, SDKHook_Touch, Client_Touch);
+	SDKHook(client, SDKHook_TouchPost, Client_TouchPost);
 }
 
 void SDKHook_OnEntityCreated(int entity, const char[] classname)
@@ -130,6 +132,24 @@ public void Client_PostThink(int client)
 public void Client_PostThinkPost(int client)
 {
 	FRPlayer(client).ChangeToTeam();
+}
+
+public Action Client_Touch(int client, int toucher)
+{
+	if (0 < toucher <= MaxClients)
+	{
+		FRPlayer(client).ChangeToSpectator();	//Has team check to start plague powerup
+		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_DEAD);	//Use alive player check to not plague ourself
+	}
+}
+
+public void Client_TouchPost(int client, int toucher)
+{
+	if (0 < toucher <= MaxClients)
+	{
+		FRPlayer(client).ChangeToTeam();
+		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_ALIVE);
+	}
 }
 
 public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
