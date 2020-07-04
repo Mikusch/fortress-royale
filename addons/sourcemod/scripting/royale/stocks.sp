@@ -304,6 +304,13 @@ stock bool TF2_IsWearable(int weapon)
 	return StrContains(classname, "tf_wearable") == 0;
 }
 
+stock void TF2_SwitchActiveWeapon(int iClient, int iWeapon)
+{
+	char sClassname[256];
+	GetEntityClassname(iWeapon, sClassname, sizeof(sClassname));
+	FakeClientCommand(iClient, "use %s", sClassname);
+}
+
 stock float TF2_GetPercentInvisible(int client)
 {
 	static int offset = -1;

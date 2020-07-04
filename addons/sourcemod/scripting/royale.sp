@@ -286,6 +286,21 @@ TFCond g_visibleConds[] = {
 	TFCond_Gas,
 };
 
+TFCond g_runeConds[] = {
+	TFCond_RuneStrength,
+	TFCond_RuneHaste,
+	TFCond_RuneRegen,
+	TFCond_RuneResist,
+	TFCond_RuneVampire,
+	TFCond_RuneWarlock,
+	TFCond_RunePrecision,
+	TFCond_RuneAgility,
+	TFCond_RuneKnockout,
+	TFCond_KingRune,
+	TFCond_PlagueRune,
+	TFCond_SupernovaRune,
+};
+
 bool g_TF2Items;
 bool g_WaitingForPlayers;
 int g_PlayerCount;
