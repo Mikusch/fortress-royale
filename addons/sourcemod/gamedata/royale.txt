@@ -177,6 +177,11 @@
 				"linux"		"229"
 				"windows"	"228"
 			}
+			"CTFProjectile_SpellFireball::Explode"
+			{
+				"linux"		"243"
+				"windows"	"240"
+			}
 			"CTFGrenadePipebombProjectile::GetLiveTime"
 			{
 				"linux"		"250"
@@ -571,6 +576,20 @@
 					"bitsDamageType"
 					{
 						"type"	"int"
+					}
+				}
+			}
+			"CTFProjectile_SpellFireball::Explode"
+			{
+				"offset"	"CTFProjectile_SpellFireball::Explode"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pTrace"
+					{
+						"type"	"objectptr"
 					}
 				}
 			}

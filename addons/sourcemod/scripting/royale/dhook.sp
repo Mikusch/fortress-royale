@@ -6,7 +6,8 @@ static Handle g_DHookGiveNamedItem;
 static Handle g_DHookPrimaryAttack;
 static Handle g_DHookFireProjectile;
 static Handle g_DHookSmack;
-static Handle g_DHookExplode;
+static Handle g_DHookGrenadeExplode;
+static Handle g_DHookFireballExplode;
 static Handle g_DHookGetLiveTime;
 static Handle g_DHookTossJarThink;
 
@@ -37,7 +38,8 @@ void DHook_Init(GameData gamedata)
 	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
 	g_DHookFireProjectile = DHook_CreateVirtual(gamedata, "CTFWeaponBaseGun::FireProjectile");
 	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
-	g_DHookExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
 }
@@ -112,10 +114,15 @@ void DHook_HookClient(int client)
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
 {
-	if (StrContains(classname, "tf_projectile_jar") == 0 || StrContains(classname, "tf_projectile_spell") == 0)
+	if (StrContains(classname, "tf_projectile_jar") == 0 || StrEqual(classname, "tf_projectile_spellbats"))
 	{
-		DHookEntity(g_DHookExplode, false, entity, _, DHook_ExplodePre);
-		DHookEntity(g_DHookExplode, true, entity, _, DHook_ExplodePost);
+		DHookEntity(g_DHookGrenadeExplode, false, entity, _, DHook_GrenadeExplodePre);
+		DHookEntity(g_DHookGrenadeExplode, true, entity, _, DHook_GrenadeExplodePost);
+	}
+	else if (StrEqual(classname, "tf_projectile_spellfireball"))
+	{
+		DHookEntity(g_DHookFireballExplode, false, entity, _, DHook_FireballExplodePre);
+		DHookEntity(g_DHookFireballExplode, true, entity, _, DHook_FireballExplodePost);
 	}
 	else if (StrContains(classname, "tf_projectile_pipe") == 0)
 	{
@@ -522,21 +529,42 @@ public MRESReturn DHook_SmackPost(int weapon)
 	}
 }
 
-public MRESReturn DHook_ExplodePre(int entity, Handle params)
+public MRESReturn DHook_GrenadeExplodePre(int entity, Handle params)
 {
 	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	if (0 < owner <= MaxClients)
 	{
 		FRPlayer(owner).ChangeToSpectator();
 		TF2_ChangeTeam(entity, TFTeam_Spectator);
 	}
 }
 
-public MRESReturn DHook_ExplodePost(int entity, Handle params)
+public MRESReturn DHook_GrenadeExplodePost(int entity, Handle params)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	if (0 < owner <= MaxClients)
+	{
+		FRPlayer(owner).ChangeToTeam();
+		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
+	}
+}
+
+public MRESReturn DHook_FireballExplodePre(int entity, Handle params)
+{
+	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
+	int owner = GetOwnerLoop(entity);
+	if (0 < owner <= MaxClients)
+	{
+		FRPlayer(owner).ChangeToSpectator();
+		TF2_ChangeTeam(entity, TFTeam_Spectator);
+	}
+}
+
+public MRESReturn DHook_FireballExplodePost(int entity, Handle params)
+{
+	int owner = GetOwnerLoop(entity);
+	if (0 < owner <= MaxClients)
 	{
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
