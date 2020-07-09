@@ -10,6 +10,8 @@ static Handle g_DHookGrenadeExplode;
 static Handle g_DHookFireballExplode;
 static Handle g_DHookGetLiveTime;
 static Handle g_DHookTossJarThink;
+static Handle g_DHookIsEnemy;
+static Handle g_DHookIsFriend;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_StartLagCompensationClient;
@@ -42,6 +44,8 @@ void DHook_Init(GameData gamedata)
 	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
+	g_DHookIsEnemy = DHook_CreateVirtual(gamedata, "INextBot::IsEnemy");
+	g_DHookIsFriend = DHook_CreateVirtual(gamedata, "INextBot::IsFriend");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
@@ -142,6 +146,11 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_PrimaryAttackPre);
 		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_PrimaryAttackPost);
+	}
+	else if (StrEqual(classname, "tf_zombie"))
+	{
+		DHookEntity(g_DHookIsEnemy, true, entity, _, DHook_IsEnemyPost);
+		DHookEntity(g_DHookIsFriend, true, entity, _, DHook_IsFriendPost);
 	}
 }
 
@@ -595,4 +604,34 @@ public MRESReturn DHook_TossJarThinkPost(int entity, Handle params)
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 		FRPlayer(owner).ChangeToTeam();
+}
+
+public MRESReturn DHook_IsEnemyPost(int nextbot, Handle returnVal, Handle params)
+{
+	int them = DHookGetParam(params, 1);
+	int owner = GetEntProp(nextbot, Prop_Send, "m_hOwnerEntity");
+	
+	if (owner == them)
+	{
+		DHookSetReturn(returnVal, false);
+		return MRES_Supercede;
+	}
+	
+	DHookSetReturn(returnVal, true);
+	return MRES_Ignored;
+}
+
+public MRESReturn DHook_IsFriendPost(int nextbot, Handle returnVal, Handle params)
+{
+	int them = DHookGetParam(params, 1);
+	int owner = GetEntProp(nextbot, Prop_Send, "m_hOwnerEntity");
+	
+	if (owner == them)
+	{
+		DHookSetReturn(returnVal, true);
+		return MRES_Supercede;
+	}
+	
+	DHookSetReturn(returnVal, false);
+	return MRES_Ignored;
 }

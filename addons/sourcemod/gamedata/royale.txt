@@ -227,6 +227,16 @@
 				"linux"		"1308"
 				"windows"	"1288"
 			}
+			"INextBot::IsEnemy"
+			{
+				"linux"		"55"
+				"windows"	"54"
+			}
+			"INextBot::IsFriend"
+			{
+				"linux"		"56"
+				"windows"	"55"
+			}
 		}
 		"Functions"
 		{
@@ -606,6 +616,34 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"INextBot::IsEnemy"
+			{
+				"offset"	"INextBot::IsEnemy"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"them"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"INextBot::IsFriend"
+			{
+				"offset"	"INextBot::IsFriend"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"them"
+					{
+						"type"	"cbaseentity"
+					}
+				}
 			}
 		}
 	}
