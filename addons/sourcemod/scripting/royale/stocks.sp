@@ -544,6 +544,13 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	
 	DispatchSpawn(droppedWeapon);
 	
+	//Check if weapon is not marked for deletion after spawn, otherwise we may get bad physics model leading to a crash
+	if (GetEntProp(droppedWeapon, Prop_Data, "m_iEFlags") & EFL_KILLME)
+	{
+		LogError("Unable to create dropped weapon with model '%s' and def index '%d'", model, index);
+		return INVALID_ENT_REFERENCE;
+	}
+	
 	//Setup ammo, energy count etc
 	if (TF2_IsWearable(fromWeapon))	//Pass non-wearable weapon just so it doesn't crash
 		SDKCall_InitDroppedWeapon(droppedWeapon, client, TF2_GetItemInSlot(client, WeaponSlot_Melee), swap);
