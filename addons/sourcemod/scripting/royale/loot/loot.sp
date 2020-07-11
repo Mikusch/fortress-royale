@@ -60,8 +60,6 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 			if (physics)
 				AcceptEntityInput(crate, "EnableMotion");
 			
-			Loot_CreateGlow(crate);
-			
 			if (IsEntityStuck(crate))
 				LogError("Entity crate at origin '%.0f %.0f %.0f' is stuck inside world or entity, possible crash incoming", loot.origin[0], loot.origin[1], loot.origin[2]);
 			
@@ -72,37 +70,6 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 	return INVALID_ENT_REFERENCE;
 }
 
-void Loot_CreateGlow(int entity)
-{
-	int glow = CreateEntityByName("tf_taunt_prop");
-	if (IsValidEntity(glow) && DispatchSpawn(glow))
-	{
-		char model[PLATFORM_MAX_PATH];
-		GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
-		SetEntityModel(glow, model);
-		
-		SetEntPropEnt(glow, Prop_Data, "m_hEffectEntity", entity);
-		SetEntProp(glow, Prop_Send, "m_bGlowEnabled", 1);
-		
-		int effects = GetEntProp(glow, Prop_Send, "m_fEffects");
-		SetEntProp(glow, Prop_Send, "m_fEffects", effects | EF_BONEMERGE | EF_NOSHADOW | EF_NORECEIVESHADOW);
-		
-		SetVariantString("!activator");
-		AcceptEntityInput(glow, "SetParent", entity);
-		
-		SDKHook(glow, SDKHook_SetTransmit, Loot_SetTransmit);
-	}
-}
-
-public Action Loot_SetTransmit(int glow, int client)
-{
-	int crate = GetEntPropEnt(glow, Prop_Data, "m_hMoveParent");
-	if (client > 0 && client <= MaxClients && Loot_IsClientLookingAtCrate(crate, client))
-		return Plugin_Continue;
-	
-	return Plugin_Handled;
-}
-
 void Loot_SetCratePrefab(int crate, LootCrate loot)
 {
 	SetEntityModel(crate, loot.model);
@@ -111,7 +78,7 @@ void Loot_SetCratePrefab(int crate, LootCrate loot)
 	SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 }
 
-stock ArrayList Loot_StrToLootTypes(const char[] str)
+ArrayList Loot_StrToLootTypes(const char[] str)
 {
 	ArrayList types = new ArrayList();
 	
@@ -123,38 +90,17 @@ stock ArrayList Loot_StrToLootTypes(const char[] str)
 	return types;
 }
 
-stock LootType Loot_StrToLootType(const char[] str)
+LootType Loot_StrToLootType(const char[] str)
 {
 	LootType type;
 	g_LootTypeMap.GetValue(str, type);
 	return type;
 }
 
-stock bool Loot_IsCrate(int crate)
+bool Loot_IsCrate(int crate)
 {
 	LootCrate loot;
 	return LootConfig_GetCrateByEntity(crate, loot) >= 0;
-}
-
-stock bool Loot_IsClientLookingAtCrate(int crate, int client)
-{
-	float position[3], angles[3];
-	GetClientEyePosition(client, position);
-	GetClientEyeAngles(client, angles);
-	
-	if (TR_PointOutsideWorld(position))
-		return false;
-	
-	Handle trace = TR_TraceRayFilterEx(position, angles, MASK_PLAYERSOLID, RayType_Infinite, Trace_DontHitEntity, client);
-	if (!TR_DidHit(trace))
-	{
-		delete trace;
-		return false;
-	}
-	
-	int entity = TR_GetEntityIndex(trace);
-	delete trace;
-	return Loot_IsCrate(EntIndexToEntRef(entity)) && entity == crate;
 }
 
 void Loot_OnEntityDestroyed(int entity)
