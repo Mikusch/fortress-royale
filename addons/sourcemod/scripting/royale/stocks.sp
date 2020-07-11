@@ -251,6 +251,11 @@ public bool Trace_DontHitEntity(int entity, int mask, any data)
 	return entity != data;
 }
 
+public bool Trace_DontHitClient(int entity, int mask)
+{
+	return 0 >= entity || entity > MaxClients;
+}
+
 public bool Trace_OnlyHitWorld(int entity, int mask)
 {
 	return entity == 0;	// 0 as worldspawn
@@ -521,6 +526,14 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 		ModelIndexToString(modelIndex, model, sizeof(model));
 	}
 	
+	//Dropped weapon doesn't like being spawn high in air, create on ground then teleport back after DispatchSpawn
+	TR_TraceRayFilter(origin, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_DontHitClient);
+	if (!TR_DidHit())	//Outside of map
+		return INVALID_ENT_REFERENCE;
+	
+	float originSpawn[3];
+	TR_GetEndPosition(originSpawn);
+	
 	// CTFDroppedWeapon::Create deletes tf_dropped_weapon if there too many in map, pretend entity is marking for deletion so it doesnt actually get deleted
 	int entity = MaxClients + 1;
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
@@ -530,7 +543,7 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	}
 	
 	//Pass client as NULL, only used for deleting existing dropped weapon which we do not want to happen
-	int droppedWeapon = SDKCall_CreateDroppedWeapon(-1, origin, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+	int droppedWeapon = SDKCall_CreateDroppedWeapon(-1, originSpawn, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
 	
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
 	{
@@ -557,6 +570,7 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	else
 		SDKCall_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
 	
+	TeleportEntity(droppedWeapon, origin, NULL_VECTOR, NULL_VECTOR);
 	if (!UnstuckEntity(droppedWeapon))
 	{
 		LogError("Unable to unstuck dropped weapon at origin '%.0f %.0f %.0f'", droppedWeapon, origin[0], origin[1], origin[2]);
