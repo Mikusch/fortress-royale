@@ -242,18 +242,18 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	}
 	
 	//Check if client already has weapon in given slot, remove and create dropped weapon if so
-	int weapon = TF2_GetItemInSlot(client, slot);
-	if (weapon > MaxClients)
+	int weapon, pos;
+	while (TF2_GetItem(client, weapon, pos))
 	{
-		if (TF2_ShouldDropWeapon(client, weapon))
+		if (slot == TF2_GetItemSlot(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), class) && TF2_ShouldDropWeapon(client, weapon))
 		{
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
 			GetClientEyeAngles(client, angles);
+			
 			TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
+			TF2_RemoveItem(client, weapon);
 		}
-		
-		TF2_RemoveItem(client, weapon);
 	}
 	
 	//Create new weapon
