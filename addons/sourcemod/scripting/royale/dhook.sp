@@ -245,13 +245,18 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	int weapon, pos;
 	while (TF2_GetItem(client, weapon, pos))
 	{
-		if (slot == TF2_GetItemSlot(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), class) && TF2_ShouldDropWeapon(client, weapon))
+		int index = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+		if (slot == TF2_GetItemSlot(index, class) && TF2_ShouldDropWeapon(client, weapon))
 		{
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
 			GetClientEyeAngles(client, angles);
 			
 			TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
+			TF2_RemoveItem(client, weapon);
+		}
+		else if (slot == WeaponSlot_Melee && index == INDEX_FISTS)
+		{
 			TF2_RemoveItem(client, weapon);
 		}
 	}
