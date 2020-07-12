@@ -7,14 +7,18 @@ enum struct LootTable
 	CallbackParams callbackParams;
 }
 
-static ArrayList g_LootTable[view_as<int>(LootType)][view_as<int>(TFClassType)];
+static ArrayList g_LootTableClass[view_as<int>(LootType)][view_as<int>(TFClassType)];
+static ArrayList g_LootTableGlobal[view_as<int>(LootType)];
 
 void LootTable_ReadConfig(KeyValues kv)
 {
 	//Clear current table
-	for (int type = 0; type < sizeof(g_LootTable); type++)
-		for (int class = 0; class < sizeof(g_LootTable[]); class++)
-			delete g_LootTable[type][class];
+	for (int type = 0; type < sizeof(g_LootTableClass); type++)
+		for (int class = 0; class < sizeof(g_LootTableClass[]); class++)
+			delete g_LootTableClass[type][class];
+	
+	for (int type = 0; type < sizeof(g_LootTableGlobal); type++)
+		delete g_LootTableGlobal[type];
 	
 	if (kv.GotoFirstSubKey(false))
 	{
@@ -81,10 +85,10 @@ void LootTable_ReadConfig(KeyValues kv)
 			//Call class function, see which class this is for
 			if (lootTable.callback_class == INVALID_FUNCTION)
 			{
-				if (!g_LootTable[lootTable.type][TFClass_Unknown])
-					g_LootTable[lootTable.type][0] = new ArrayList(sizeof(LootTable));
+				if (!g_LootTableClass[lootTable.type][TFClass_Unknown])
+					g_LootTableClass[lootTable.type][0] = new ArrayList(sizeof(LootTable));
 				
-				ArrayList list = g_LootTable[lootTable.type][0];
+				ArrayList list = g_LootTableClass[lootTable.type][0];
 				list.PushArray(lootTable);
 			}
 			else
@@ -98,14 +102,19 @@ void LootTable_ReadConfig(KeyValues kv)
 					bool result;
 					if (Call_Finish(result) == SP_ERROR_NONE && result)
 					{
-						if (!g_LootTable[lootTable.type][class])
-							g_LootTable[lootTable.type][class] = new ArrayList(sizeof(LootTable));
+						if (!g_LootTableClass[lootTable.type][class])
+							g_LootTableClass[lootTable.type][class] = new ArrayList(sizeof(LootTable));
 						
-						ArrayList list = g_LootTable[lootTable.type][class];
+						ArrayList list = g_LootTableClass[lootTable.type][class];
 						list.PushArray(lootTable);
 					}
 				}
 			}
+			
+			if (!g_LootTableGlobal[lootTable.type])
+				g_LootTableGlobal[lootTable.type] = new ArrayList(sizeof(LootTable));
+			
+			g_LootTableGlobal[lootTable.type].PushArray(lootTable);
 		}
 		while (kv.GotoNextKey(false));
 		kv.GoBack();
@@ -117,12 +126,22 @@ bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, TFClassType cla
 {
 	ArrayList list;
 	
-	if (g_LootTable[type][class])
-		list = g_LootTable[type][class];
-	else if (g_LootTable[type][TFClass_Unknown])
-		list = g_LootTable[type][0];
+	if (fr_classfilter.BoolValue)
+	{
+		if (g_LootTableClass[type][class])
+			list = g_LootTableClass[type][class];
+		else if (g_LootTableClass[type][TFClass_Unknown])
+			list = g_LootTableClass[type][0];
+		else
+			return false;
+	}
 	else
-		return false;
+	{
+		if (g_LootTableGlobal[type])
+			list = g_LootTableGlobal[type];
+		else
+			return false;
+	}
 	
 	list.GetArray(GetRandomInt(0, list.Length - 1), lootTable, sizeof(lootTable));
 	return true;

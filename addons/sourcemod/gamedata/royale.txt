@@ -162,6 +162,11 @@
 				"linux"		"285"
 				"windows"	"279"
 			}
+			"CBaseCombatWeapon::GetSlot"
+			{
+				"linux"		"332"
+				"windows"	"326"
+			}
 			"CTFWeaponBaseGun::FireProjectile"
 			{
 				"linux"		"469"

@@ -63,13 +63,14 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 		return;
 	
 	TF2_CheckClientWeapons(client);
+	TFClassType class = TF2_GetPlayerClass(client);
 	
 	//Create starting fists weapon
-	int fists = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
+	int fists = TF2_CreateWeapon(INDEX_FISTS, g_fistsClassname[class]);
 	if (fists > MaxClients)
 	{
 		TF2_EquipWeapon(client, fists);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", fists);
+		TF2_SwitchActiveWeapon(client, fists);
 	}
 	
 	//Create spellbook so spells can actually be created
@@ -78,9 +79,26 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 		TF2_EquipWeapon(client, spellbook);
 	
 	//Create starting parachute
-	int parachute = TF2_CreateWeapon(INDEX_BASEJUMPER, _, "tf_weapon_parachute_secondary");
+	int parachute = TF2_CreateWeapon(INDEX_BASEJUMPER, "tf_weapon_parachute_secondary");
 	if (parachute > MaxClients)
 		TF2_EquipWeapon(client, parachute);
+	
+	if (!fr_classfilter.BoolValue || class == TFClass_Engineer)
+	{
+		//Give toolbox back if playing as engineer, or class filter is off
+		Address item = SDKCall_GetLoadoutItem(client, TFClass_Engineer, 4);	//Uses econ slot, 4 for toolbox
+		if (item)
+		{
+			int weapon = TF2_GiveNamedItem(client, item);
+			
+			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", true, _, view_as<int>(TFObject_Dispenser));
+			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", true, _, view_as<int>(TFObject_Teleporter));
+			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", true, _, view_as<int>(TFObject_Sentry));
+			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", false, _, view_as<int>(TFObject_Sapper));
+			
+			TF2_EquipWeapon(client, weapon);
+		}
+	}
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)

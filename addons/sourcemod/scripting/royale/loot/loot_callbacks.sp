@@ -1,13 +1,6 @@
 public void LootCallback_CreateWeapon(int client, CallbackParams params, const float origin[3])
 {
-	TFClassType class = TF2_GetPlayerClass(client);
 	int defindex = params.GetInt("defindex");
-	int slot = TF2Econ_GetItemSlot(defindex, class);
-	if (slot < WeaponSlot_Primary)
-	{
-		LogError("Unable to get slot for def index '%d' and class '%d'", defindex, class);
-		return;
-	}
 	
 	//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
 	FRPlayer(client).ChangeToTeam();
@@ -15,38 +8,47 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 	int weapon = -1;
 	
 	//Find possible reskin to use
-	Address item = SDKCall_GetLoadoutItem(client, class, slot);
-	if (item)
+	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
 	{
+		int slot = TF2Econ_GetItemSlot(defindex, class);
+		if (slot < WeaponSlot_Primary)
+			continue;
+		
+		Address item = SDKCall_GetLoadoutItem(client, class, slot);
+		if (!item)
+			continue;
+	
 		int reskin = LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16);
 		if (reskin == defindex)
 		{
 			weapon = TF2_GiveNamedItem(client, item);
+			break;
 		}
-		else
+		
+		char buffer[256];
+		if (params.GetString("reskins", buffer, sizeof(buffer)))
 		{
-			char buffer[256];
-			if (params.GetString("reskins", buffer, sizeof(buffer)))
+			int defindexbuffer;
+			char indexbuffer[32][12];
+			int count = ExplodeString(buffer, " ", indexbuffer, sizeof(indexbuffer), sizeof(indexbuffer[]));
+			for (int i = 0; i < count; i++)
 			{
-				int defindexbuffer;
-				char indexbuffer[32][12];
-				int count = ExplodeString(buffer, " ", indexbuffer, sizeof(indexbuffer), sizeof(indexbuffer[]));
-				for (int i = 0; i < count; i++)
+				if (StringToIntEx(indexbuffer[i], defindexbuffer) && reskin == defindexbuffer)
 				{
-					if (StringToIntEx(indexbuffer[i], defindexbuffer) && reskin == defindexbuffer)
-					{
-						weapon = TF2_GiveNamedItem(client, item);
-						break;
-					}
+					weapon = TF2_GiveNamedItem(client, item);
+					break;
 				}
 			}
 		}
+		
+		if (weapon != -1)
+			break;
 	}
 	
 	//Can't find reskin, create default weapon
 	if (weapon == -1)
 	{
-		weapon = TF2_CreateWeapon(defindex, class);
+		weapon = TF2_CreateWeapon(defindex);
 		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client));
 	}
 	

@@ -146,7 +146,7 @@ public Action Console_DropItem(int client, const char[] command, int args)
 	int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
 	if (melee == -1)	//Dropped melee weapon, give fists back
 	{
-		melee = TF2_CreateWeapon(INDEX_FISTS, _, g_fistsClassname[TF2_GetPlayerClass(client)]);
+		melee = TF2_CreateWeapon(INDEX_FISTS, g_fistsClassname[TF2_GetPlayerClass(client)]);
 		if (melee != -1)
 			TF2_EquipWeapon(client, melee);
 	}

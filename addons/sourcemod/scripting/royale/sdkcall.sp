@@ -7,6 +7,7 @@ static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallFindAndHealTargets;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
 static Handle g_SDKCallGiveNamedItem;
+static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
 static Handle g_SDKCallSetVelocity;
 static Handle g_SDKCallGetVelocity;
@@ -22,6 +23,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
+	g_SDKCallGetSlot = PrepSDKCall_GetSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
 	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
 	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
@@ -161,6 +163,18 @@ static Handle PrepSDKCall_GiveNamedItem(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_GetSlot(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseCombatWeapon::GetSlot");
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create call: CBaseCombatWeapon::GetSlot");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
@@ -245,6 +259,11 @@ float SDKCall_GetDefaultItemChargeMeterValue(int weapon)
 int SDKCall_GiveNamedItem(int client, const char[] classname, int subtype, Address item, bool force)
 {
 	return SDKCall(g_SDKCallGiveNamedItem, client, classname, subtype, item, force);
+}
+
+int SDKCall_GetSlot(int weapon)
+{
+	return SDKCall(g_SDKCallGetSlot, weapon);
 }
 
 void SDKCall_EquipWearable(int client, int wearable)

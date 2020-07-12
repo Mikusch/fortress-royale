@@ -419,10 +419,6 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 	
 	int slot = TF2_GetItemSlot(index, TF2_GetPlayerClass(client));
 	
-	//Allow keep toolbox
-	if (slot == WeaponSlot_BuilderEngie && StrEqual(classname, "tf_weapon_builder"))
-		return Plugin_Continue;
-	
 	//Don't allow weapons and action items from client loadout slots
 	if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
 		return Plugin_Handled;
@@ -431,14 +427,18 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 	return Plugin_Continue;
 }
 
-stock int TF2_GiveNamedItem(int client, Address item)
+stock int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClass_Unknown)
 {
 	char classname[256];
 	TF2Econ_GetItemClassName(LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16), classname, sizeof(classname));
-	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	
+	if (class == TFClass_Unknown)
+		class = TF2_GetPlayerClass(client);
+	
+	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
 	
 	int subtype = 0;
-	if ((StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")) && TF2_GetPlayerClass(client) == TFClass_Spy)
+	if ((StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")) && class == TFClass_Spy)
 		subtype = view_as<int>(TFObject_Sapper);
 	
 	g_SkipGiveNamedItem = true;
@@ -447,19 +447,27 @@ stock int TF2_GiveNamedItem(int client, Address item)
 	return weapon;
 }
 
-stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const char[] classnameTemp = NULL_STRING)
+stock int TF2_CreateWeapon(int defindex, const char[] classnameTemp = NULL_STRING)
 {
+	TFClassType class = TFClass_Unknown;
+	
 	char classname[256];
-	if (classnameTemp[0] != '\0')
+	if (classnameTemp[0])
 	{
 		strcopy(classname, sizeof(classname), classnameTemp);
 	}
 	else
 	{
-		TF2Econ_GetItemClassName(index, classname, sizeof(classname));
+		TF2Econ_GetItemClassName(defindex, classname, sizeof(classname));
 		
-		if (class != TFClass_Unknown)
-			TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
+		for (class = TFClass_Scout; class <= TFClass_Engineer; class++)
+		{
+			if (TF2_GetItemSlot(defindex, class) >= WeaponSlot_Primary)
+			{
+				TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
+				break;
+			}
+		}
 	}
 	
 	bool sapper;
@@ -474,7 +482,7 @@ stock int TF2_CreateWeapon(int index, TFClassType class = TFClass_Unknown, const
 	int weapon = CreateEntityByName(classname);
 	if (IsValidEntity(weapon))
 	{
-		SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", index);
+		SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", defindex);
 		SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
 		
 		SetEntProp(weapon, Prop_Send, "m_iEntityQuality", 6);
@@ -621,6 +629,26 @@ stock int TF2_GetWeaponAmmo(int client, int weapon)
 	return -1;
 }
 
+stock int TF2_GetSlot(int weapon)
+{
+	if (TF2_IsWearable(weapon))
+	{
+		int index = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+		for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
+		{
+			int slot = TF2_GetItemSlot(index, view_as<TFClassType>(class));
+			if (0 <= slot <= WeaponSlot_BuilderEngie)
+				return slot;
+		}
+	}
+	else
+	{
+		return SDKCall_GetSlot(weapon);
+	}
+	
+	return -1;
+}
+
 stock int TF2_GetItemSlot(int defindex, TFClassType class)
 {
 	int slot = TF2Econ_GetItemSlot(defindex, class);
@@ -682,13 +710,8 @@ stock bool TF2_GetItem(int client, int &weapon, int &pos)
 	{
 		if (GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == client || GetEntPropEnt(weapon, Prop_Send, "moveparent") == client)
 		{
-			int defIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-			for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
-			{
-				int slot = TF2_GetItemSlot(defIndex, class);
-				if (0 <= slot <= WeaponSlot_BuilderEngie)
-					return true;
-			}
+			if (0 <= TF2_GetSlot(weapon) <= WeaponSlot_BuilderEngie)
+				return true;
 		}
 	}
 	
