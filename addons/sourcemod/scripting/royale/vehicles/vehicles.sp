@@ -357,12 +357,13 @@ void Vehicles_EnterVehicle(int entity, int toucher)
 
 void Vehicles_ExitVehicle(int client)
 {
+	Vehicle vehicle;
+	if (!Vehicles_GetByClient(client, vehicle))
+		return;
+	
+	vehicle.LeaveSeat(client);
 	AcceptEntityInput(client, "ClearParent");
 	SetEntityMoveType(client, MOVETYPE_WALK);
-	
-	Vehicle vehicle;
-	if (Vehicles_GetByClient(client, vehicle))
-		vehicle.LeaveSeat(client);
 	
 	//TODO: Exit offset, if blocked teleport player to first free location
 	float origin[3];
