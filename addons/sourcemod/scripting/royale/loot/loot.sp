@@ -124,37 +124,39 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		class = TF2_GetPlayerClass(client);
 	
-	//Search the contents table of this crate
+	//Search the contents table of this crate while rolling for percentage chance
 	LootCrateContent content;
-	while (loot.GetRandomLootCrateContent(content))
+	do
 	{
-		if (GetRandomFloat() <= content.percentage)
-		{
-			//Keep going until we find loot from the wanted type and tier
-			LootTable lootTable;
-			while (!LootTable_GetRandomLoot(lootTable, content.type, content.tier, class)) {  }
-			
-			float origin[3];
-			GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
-			
-			//Calculate where centre of origin by boundary box
-			float mins[3], maxs[3], offset[3];
-			GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
-			GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
-			AddVectors(maxs, mins, offset);
-			ScaleVector(offset, 0.5);
-			AddVectors(origin, offset, origin);
-			
-			//Start function call to loot creation function
-			Call_StartFunction(null, lootTable.callback_create);
-			Call_PushCell(client);
-			Call_PushCell(lootTable.callbackParams);
-			Call_PushArray(origin, sizeof(origin));
-			
-			if (Call_Finish() != SP_ERROR_NONE)
-				LogError("Unable to call function for LootType '%d' class '%d'", lootTable.type, class);
-			
-			break;
-		}
+		loot.GetRandomLootCrateContent(content);
 	}
+	while (GetRandomFloat() > content.percentage);
+	
+	//Find loot from the wanted type and tier
+	LootTable lootTable;
+	if (!LootTable_GetRandomLoot(lootTable, content.type, content.tier, class))
+	{
+		LogError("Unable to find loot with type '%d', tier '%d' and class '%d'", content.type, content.tier, class);
+		return;
+	}
+	
+	float origin[3];
+	GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
+	
+	//Calculate where centre of origin by boundary box
+	float mins[3], maxs[3], offset[3];
+	GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
+	GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
+	AddVectors(maxs, mins, offset);
+	ScaleVector(offset, 0.5);
+	AddVectors(origin, offset, origin);
+	
+	//Start function call to loot creation function
+	Call_StartFunction(null, lootTable.callback_create);
+	Call_PushCell(client);
+	Call_PushCell(lootTable.callbackParams);
+	Call_PushArray(origin, sizeof(origin));
+	
+	if (Call_Finish() != SP_ERROR_NONE)
+		LogError("Unable to call function for LootType '%d' class '%d'", lootTable.type, class);
 }

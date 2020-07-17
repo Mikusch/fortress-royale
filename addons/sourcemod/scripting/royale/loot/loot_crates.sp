@@ -72,8 +72,8 @@ enum struct LootCrate
 		kv.SetVector("angles", this.angles);
 	}
 	
-	bool GetRandomLootCrateContent(LootCrateContent buffer)
+	void GetRandomLootCrateContent(LootCrateContent buffer)
 	{
-		return this.contents.GetArray(GetRandomInt(0, this.contents.Length - 1), buffer, sizeof(buffer)) > 0;
+		this.contents.GetArray(GetRandomInt(0, this.contents.Length - 1), buffer, sizeof(buffer));
 	}
 }

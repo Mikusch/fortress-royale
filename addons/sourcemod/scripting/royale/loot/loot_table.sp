@@ -125,7 +125,7 @@ void LootTable_ReadConfig(KeyValues kv)
 	kv.GoBack();
 }
 
-stock bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, int tier, TFClassType class)
+bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, int tier, TFClassType class)
 {
 	ArrayList list;
 	
@@ -157,8 +157,11 @@ stock bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, int tier,
 		
 		LootTable temp;
 		for (int i = 0; i < list.Length; i++)
-			if (list.GetArray(i, temp, sizeof(temp)) > 0 && temp.tier == tier)
+		{
+			list.GetArray(i, temp, sizeof(temp));
+			if (temp.tier == tier)
 				loot.PushArray(temp, sizeof(temp));
+		}
 		
 		loot.GetArray(GetRandomInt(0, loot.Length - 1), lootTable, sizeof(lootTable));
 		delete loot;
