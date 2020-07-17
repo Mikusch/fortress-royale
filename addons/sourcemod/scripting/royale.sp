@@ -253,16 +253,11 @@ enum ETFGameType
  */
 enum LootType
 {
-	Loot_Weapon_Common = 0,		/**< Common weapons */
-	Loot_Weapon_Uncommon,		/**< Uncommon weapons */
-	Loot_Weapon_Rare,			/**< Rare weapons */
-	Loot_Weapon_Misc,			/**< Grappling Hook, etc. */
-	Loot_Pickup_Health,			/**< Health pickups */
-	Loot_Pickup_Ammo,			/**< Ammunition pickups */
-	Loot_Pickup_Spell,			/**< Halloween spells */
-	Loot_Powerup_Crits,			/**< Mannpower crit powerup */
-	Loot_Powerup_Uber,			/**< Mannpower uber powerup */
-	Loot_Powerup_Rune			/**< Mannpower rune powerup */
+	Loot_Weapon,			/**< Weapons */
+	Loot_Item_HealthKit,	/**< Health pickups */
+	Loot_Item_AmmoPack,		/**< Ammunition pickups */
+	Loot_Pickup_Spell,		/**< Halloween spell pickups */
+	Loot_Item_Powerup,		/**< Mannpower powerups */
 }
 
 char g_fistsClassname[][] = {
