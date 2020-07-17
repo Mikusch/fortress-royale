@@ -267,7 +267,7 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	int weaponOld, pos;
 	while (TF2_GetItem(client, weaponOld, pos))
 	{
-		if (slot == SDKCall_GetSlot(weaponOld) && TF2_ShouldDropWeapon(client, weaponOld))
+		if (slot == TF2_GetSlot(weaponOld) && TF2_ShouldDropWeapon(client, weaponOld))
 		{
 			float origin[3], angles[3];
 			GetClientEyePosition(client, origin);
