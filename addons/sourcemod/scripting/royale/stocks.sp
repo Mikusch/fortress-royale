@@ -251,11 +251,6 @@ public bool Trace_DontHitEntity(int entity, int mask, any data)
 	return entity != data;
 }
 
-public bool Trace_DontHitClient(int entity, int mask)
-{
-	return 0 >= entity || entity > MaxClients;
-}
-
 public bool Trace_OnlyHitWorld(int entity, int mask)
 {
 	return entity == 0;	// 0 as worldspawn
@@ -535,7 +530,7 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	}
 	
 	//Dropped weapon doesn't like being spawn high in air, create on ground then teleport back after DispatchSpawn
-	TR_TraceRayFilter(origin, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_DontHitClient);
+	TR_TraceRayFilter(origin, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_OnlyHitWorld);
 	if (!TR_DidHit())	//Outside of map
 		return INVALID_ENT_REFERENCE;
 	
