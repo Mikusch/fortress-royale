@@ -127,7 +127,6 @@ void LootConfig_ReadConfig(KeyValues kv)
 	
 	if (kv.JumpToKey("LootBus", false))
 	{
-		g_LootCrateBus = g_LootCrateDefault;
 		g_LootCrateBus.ReadConfig(kv);
 		kv.GoBack();
 	}
