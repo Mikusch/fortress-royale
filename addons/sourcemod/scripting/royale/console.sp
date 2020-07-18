@@ -13,21 +13,27 @@ void Console_Init()
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
 	//Force change spectator, has mannpower mode check
+	bool spectate;
+	
 	if (StrContains(command, "spectate") == 0)
 	{
-		TF2_ChangeClientTeam(client, TFTeam_Spectator);
-		return Plugin_Handled;
+		spectate = true;
 	}
-	
-	if (args > 0 && StrContains(command, "jointeam") == 0)
+	else if (args > 0 && StrContains(command, "jointeam") == 0)
 	{
 		char team[16];
 		GetCmdArg(1, team, sizeof(team));
-		if (StrContains(team, "spectate") == 0)
-		{
-			TF2_ChangeClientTeam(client, TFTeam_Spectator);
-			return Plugin_Handled;
-		}
+		spectate = StrContains(team, "spectate") == 0;
+	}
+	
+	if (spectate)
+	{
+		if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
+			SetClientViewEntity(client, client);
+		
+		FRPlayer(client).PlayerState = PlayerState_Waiting;
+		TF2_ChangeClientTeam(client, TFTeam_Spectator);
+		return Plugin_Handled;
 	}
 	
 	//Disallow join red or blu, whats the point of allowing it anyway
