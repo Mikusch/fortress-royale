@@ -4,6 +4,9 @@ void Event_Init()
 	HookEvent("teamplay_round_start", Event_RoundStart);
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
+	HookEvent("fish_notice", Event_FishNotice, EventHookMode_Pre);
+	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
+	HookEvent("slap_notice", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	HookEvent("player_dropobject", Event_DropObject);
 	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
@@ -117,6 +120,22 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 			
 			TF2_EquipWeapon(client, weapon);
 		}
+	}
+}
+
+public Action Event_FishNotice(Event event, const char[] name, bool dontBroadcast)
+{
+	int victim = GetClientOfUserId(event.GetInt("userid"));
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int assister = GetClientOfUserId(event.GetInt("assister"));
+	
+	//Only show event to some players
+	event.BroadcastDisabled = true;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && (client == victim || client == attacker || client == assister || !IsPlayerAlive(client)))
+			event.FireToClient(client);
 	}
 }
 
