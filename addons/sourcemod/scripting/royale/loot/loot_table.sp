@@ -1,6 +1,7 @@
 enum struct LootTable
 {
 	LootType type;
+	int tier;
 	Function callback_create;
 	Function callback_class;
 	Function callback_precache;
@@ -28,6 +29,8 @@ void LootTable_ReadConfig(KeyValues kv)
 			char type[CONFIG_MAXCHAR];
 			kv.GetString("type", type, sizeof(type));
 			lootTable.type = Loot_StrToLootType(type);
+			
+			lootTable.tier = kv.GetNum("tier", -1);
 			
 			char callback[CONFIG_MAXCHAR];
 			kv.GetString("callback_create", callback, sizeof(callback), NULL_STRING);
@@ -122,7 +125,7 @@ void LootTable_ReadConfig(KeyValues kv)
 	kv.GoBack();
 }
 
-bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, TFClassType class)
+bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, int tier, TFClassType class)
 {
 	ArrayList list;
 	
@@ -143,6 +146,26 @@ bool LootTable_GetRandomLoot(LootTable lootTable, LootType type, TFClassType cla
 			return false;
 	}
 	
-	list.GetArray(GetRandomInt(0, list.Length - 1), lootTable, sizeof(lootTable));
+	if (tier == -1)
+	{
+		list.GetArray(GetRandomInt(0, list.Length - 1), lootTable, sizeof(lootTable));
+	}
+	else
+	{
+		//Collect all loot with the specified tier
+		ArrayList loot = new ArrayList(sizeof(LootTable));
+		
+		LootTable temp;
+		for (int i = 0; i < list.Length; i++)
+		{
+			list.GetArray(i, temp, sizeof(temp));
+			if (temp.tier == tier)
+				loot.PushArray(temp, sizeof(temp));
+		}
+		
+		loot.GetArray(GetRandomInt(0, loot.Length - 1), lootTable, sizeof(lootTable));
+		delete loot;
+	}
+	
 	return true;
 }

@@ -1,3 +1,10 @@
+enum struct LootCrateContent
+{
+	LootType type;
+	int tier;
+	float percentage;
+}
+
 enum struct LootCrate
 {
 	int entity; 					/**< Entity crate ref */
@@ -12,7 +19,7 @@ enum struct LootCrate
 	int skin;						/**< Model skin */
 	char sound[PLATFORM_MAX_PATH];	/**< Sound this crate emits when opening */
 	int health;						/**< Amount of damage required to open */
-	ArrayList contents;				/**< ArrayList of contents bitflags to select at random */
+	ArrayList contents;				/**< ArrayList of LootCrateContent */
 	
 	// LootBus
 	float mass;						/**< Crate mass */
@@ -31,25 +38,21 @@ enum struct LootCrate
 		
 		if (kv.JumpToKey("contents", false))
 		{
-			this.contents = new ArrayList();
+			this.contents = new ArrayList(sizeof(LootCrateContent));
 			if (kv.GotoFirstSubKey(false))
 			{
 				do
 				{
-					char type[PLATFORM_MAX_PATH];
+					LootCrateContent content;
+					
+					char type[64];
 					kv.GetString("type", type, sizeof(type));
+					content.type = Loot_StrToLootType(type);
 					
-					ArrayList types = Loot_StrToLootTypes(type);
-					int frequency = kv.GetNum("frequency", 1);
+					content.tier = kv.GetNum("tier", -1);
+					content.percentage = kv.GetFloat("percentage", 1.0);
 					
-					for (int i = 0; i < types.Length; i++)
-					{
-						LootType lootType = types.Get(i);
-						for (int j = 0; j < frequency; j++)
-							this.contents.Push(lootType);
-					}
-					
-					delete types;
+					this.contents.PushArray(content);
 				}
 				while (kv.GotoNextKey(false));
 				kv.GoBack();
@@ -69,8 +72,8 @@ enum struct LootCrate
 		kv.SetVector("angles", this.angles);
 	}
 	
-	LootType GetRandomLootType()
+	void GetRandomLootCrateContent(LootCrateContent buffer)
 	{
-		return this.contents.Get(GetRandomInt(0, this.contents.Length - 1));
+		this.contents.GetArray(GetRandomInt(0, this.contents.Length - 1), buffer, sizeof(buffer));
 	}
 }

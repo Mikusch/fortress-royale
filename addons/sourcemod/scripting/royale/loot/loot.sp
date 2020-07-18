@@ -3,16 +3,11 @@ static StringMap g_LootTypeMap;
 void Loot_Init()
 {
 	g_LootTypeMap = new StringMap();
-	g_LootTypeMap.SetValue("WEAPON_COMMON", Loot_Weapon_Common);
-	g_LootTypeMap.SetValue("WEAPON_UNCOMMON", Loot_Weapon_Uncommon);
-	g_LootTypeMap.SetValue("WEAPON_RARE", Loot_Weapon_Rare);
-	g_LootTypeMap.SetValue("WEAPON_MISC", Loot_Weapon_Misc);
-	g_LootTypeMap.SetValue("PICKUP_HEALTH", Loot_Pickup_Health);
-	g_LootTypeMap.SetValue("PICKUP_AMMO", Loot_Pickup_Ammo);
-	g_LootTypeMap.SetValue("PICKUP_SPELL", Loot_Pickup_Spell);
-	g_LootTypeMap.SetValue("POWERUP_CRITS", Loot_Powerup_Crits);
-	g_LootTypeMap.SetValue("POWERUP_UBER", Loot_Powerup_Uber);
-	g_LootTypeMap.SetValue("POWERUP_RUNE", Loot_Powerup_Rune);
+	g_LootTypeMap.SetValue("weapon", Loot_Weapon);
+	g_LootTypeMap.SetValue("item_healthkit", Loot_Item_HealthKit);
+	g_LootTypeMap.SetValue("item_ammopack", Loot_Item_AmmoPack);
+	g_LootTypeMap.SetValue("spell_pickup", Loot_Pickup_Spell);
+	g_LootTypeMap.SetValue("item_powerup", Loot_Item_Powerup);
 }
 
 void Loot_SpawnCratesInWorld()
@@ -78,19 +73,7 @@ void Loot_SetCratePrefab(int crate, LootCrate loot)
 	SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 }
 
-ArrayList Loot_StrToLootTypes(const char[] str)
-{
-	ArrayList types = new ArrayList();
-	
-	char parts[32][PLATFORM_MAX_PATH];
-	int count = ExplodeString(str, "|", parts, sizeof(parts), sizeof(parts[]));
-	for (int i = 0; i < count; i++)
-		types.Push(Loot_StrToLootType(parts[i]));
-	
-	return types;
-}
-
-LootType Loot_StrToLootType(const char[] str)
+stock LootType Loot_StrToLootType(const char[] str)
 {
 	LootType type;
 	g_LootTypeMap.GetValue(str, type);
@@ -141,9 +124,21 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		class = TF2_GetPlayerClass(client);
 	
-	//While loop to keep searching for loot until found valid
+	//Search the contents table of this crate while rolling for percentage chance
+	LootCrateContent content;
+	do
+	{
+		loot.GetRandomLootCrateContent(content);
+	}
+	while (GetRandomFloat() > content.percentage);
+	
+	//Find loot from the wanted type and tier
 	LootTable lootTable;
-	while (!LootTable_GetRandomLoot(lootTable, loot.GetRandomLootType(), class)) {  }
+	if (!LootTable_GetRandomLoot(lootTable, content.type, content.tier, class))
+	{
+		LogError("Unable to find loot with type '%d', tier '%d' and class '%d'", content.type, content.tier, class);
+		return;
+	}
 	
 	float origin[3];
 	GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
