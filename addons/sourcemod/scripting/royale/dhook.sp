@@ -24,7 +24,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTargetPre, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::DropAmmoPack", DHook_DropAmmoPackPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
 	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
@@ -319,28 +318,6 @@ public MRESReturn DHook_CanPickupDroppedWeaponPre(int client, Handle returnVal, 
 	
 	//Prevent TF2 doing any extra work, we done that
 	DHookSetReturn(returnVal, false);
-	return MRES_Supercede;
-}
-
-public MRESReturn DHook_DropAmmoPackPre(int client, Handle params)
-{
-	//Ignore feign death
-	if (DHookGetParam(params, 2))
-		return MRES_Supercede;
-	
-	float origin[3], angles[3];
-	GetClientEyePosition(client, origin);
-	GetClientEyeAngles(client, angles);
-	
-	//Drop all weapons
-	int weapon, pos;
-	while (TF2_GetItem(client, weapon, pos))
-	{
-		if (TF2_ShouldDropWeapon(client, weapon))
-			TF2_CreateDroppedWeapon(client, weapon, false, origin, angles);
-	}
-	
-	//Prevent TF2 dropping anything else
 	return MRES_Supercede;
 }
 

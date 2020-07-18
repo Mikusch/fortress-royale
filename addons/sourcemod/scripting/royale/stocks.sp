@@ -546,7 +546,9 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	}
 	
 	//Pass client as NULL, only used for deleting existing dropped weapon which we do not want to happen
+	g_AllowDroppedWeapon = true;
 	int droppedWeapon = SDKCall_CreateDroppedWeapon(-1, originSpawn, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
+	g_AllowDroppedWeapon = false;
 	
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
 	{
@@ -782,4 +784,25 @@ stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int disp
 			RemoveEntity(msg);
 		}
 	}
+}
+
+stock int TF2_DropItem(const char[] classname, const float origin[3])
+{
+	int item = CreateEntityByName(classname);
+	if (item == INVALID_ENT_REFERENCE)
+		return INVALID_ENT_REFERENCE;
+	
+	DispatchKeyValue(item, "OnPlayerTouch", "!self,Kill,,0,-1");
+	DispatchSpawn(item);
+	SetEntityMoveType(item, MOVETYPE_FLYGRAVITY);
+	SetEntProp(item, Prop_Send, "m_nSolidType", SOLID_BBOX);
+	
+	float velocity[3];
+	velocity[0] = GetRandomFloat(-50.0, 50.0);
+	velocity[1] = GetRandomFloat(-50.0, 50.0);
+	velocity[2] = GetRandomFloat(-50.0, 0.0);
+	
+	TeleportEntity(item, origin, NULL_VECTOR, velocity);
+	
+	return EntIndexToEntRef(item);
 }

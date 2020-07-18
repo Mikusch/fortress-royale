@@ -298,6 +298,7 @@ TFCond g_runeConds[] = {
 
 bool g_TF2Items;
 bool g_WaitingForPlayers;
+bool g_AllowDroppedWeapon;
 int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
@@ -511,6 +512,8 @@ public void OnEntityCreated(int entity, const char[] classname)
 	
 	if (StrContains(classname, "obj_") == 0)
 		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
+	else if (StrEqual(classname, "tf_dropped_weapon") && !g_AllowDroppedWeapon)
+		RemoveEntity(entity);	//Remove dropped weapon created by TF2 on player death
 }
 
 public void OnEntityDestroyed(int entity)

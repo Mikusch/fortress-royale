@@ -206,6 +206,23 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	
 	if (!deadringer)
 	{
+		float origin[3], angles[3];
+		GetClientEyePosition(victim, origin);
+		GetClientEyeAngles(victim, angles);
+		
+		origin[2] -= 20.0;
+		
+		//Drop all weapons
+		int weapon, pos;
+		while (TF2_GetItem(victim, weapon, pos))
+		{
+			if (TF2_ShouldDropWeapon(victim, weapon))
+				TF2_CreateDroppedWeapon(victim, weapon, false, origin, angles);
+		}
+		
+		//Drop small health pack
+		TF2_DropItem("item_healthkit_small", origin);
+		
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
