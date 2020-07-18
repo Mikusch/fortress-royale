@@ -1,11 +1,26 @@
 void Event_Init()
 {
+	HookEvent("teamplay_broadcast_audio", Event_Broadcast_Audio, EventHookMode_Pre);
 	HookEvent("teamplay_round_start", Event_RoundStart);
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	HookEvent("player_dropobject", Event_DropObject);
 	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
+}
+
+public Action Event_Broadcast_Audio(Event event, const char[] name, bool dontBroadcast)
+{
+	char sound[PLATFORM_MAX_PATH];
+	event.GetString("sound", sound, sizeof(sound));
+	
+	if (StrEqual(sound, "Game.YourTeamWon") || StrEqual(sound, "Game.YourTeamLost"))
+	{
+		event.SetString("sound", GetRandomInt(0, 1) ? "MatchMaking.MatchEndBlueWinMusic" : "MatchMaking.MatchEndRedWinMusic");
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -18,6 +33,10 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
+		//Clear round win music
+		StopSound(client, SNDCHAN_STATIC, "ui/mm_match_end_blue_win_music.wav");
+		StopSound(client, SNDCHAN_STATIC, "ui/mm_match_end_red_win_music.wav");
+		
 		FRPlayer(client).PlayerState = PlayerState_Waiting;
 		FRPlayer(client).Killstreak = 0;
 		
