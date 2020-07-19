@@ -141,10 +141,15 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
 	}
+	else if (StrEqual(classname, "tf_weapon_bat"))
+	{
+		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_BatPrimaryAttackPre);
+		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_BatPrimaryAttackPost);
+	}
 	else if (StrEqual(classname, "tf_weapon_knife"))
 	{
-		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_PrimaryAttackPre);
-		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_PrimaryAttackPost);
+		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_KnifePrimaryAttackPre);
+		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_KnifePrimaryAttackPost);
 	}
 	else if (StrEqual(classname, "tf_zombie"))
 	{
@@ -496,14 +501,35 @@ public void DHook_GiveNamedItemRemoved(int hookid)
 	}
 }
 
-public MRESReturn DHook_PrimaryAttackPre(int weapon)
+public MRESReturn DHook_BatPrimaryAttackPre(int weapon)
+{
+	//For Boston Basher (tf_weapon_bat), m_potentialVictimVector collects enemy team to possibly not bleed itself, but client in spectator would collect themself.
+	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		FRPlayer(client).ChangeToTeam();
+		TF2_ChangeTeam(client, TF2_GetEnemyTeam(client));
+	}
+}
+
+public MRESReturn DHook_BatPrimaryAttackPost(int weapon)
+{
+	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		TF2_ChangeTeam(client, TF2_GetEnemyTeam(client));
+		FRPlayer(client).ChangeToSpectator();
+	}
+}
+
+public MRESReturn DHook_KnifePrimaryAttackPre(int weapon)
 {
 	//Client is in spectator, prevent backstab if using fists
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToTeam();
 }
 
-public MRESReturn DHook_PrimaryAttackPost(int weapon)
+public MRESReturn DHook_KnifePrimaryAttackPost(int weapon)
 {
 	//Client is in spectator, prevent backstab if using fists
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
@@ -530,7 +556,7 @@ public MRESReturn DHook_SmackPre(int weapon)
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
 	{
 		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-		if (0 < client <= MaxClients && IsClientInGame(client))
+		if (0 < client <= MaxClients)
 			FRPlayer(client).ChangeBuildingsToSpectator();
 	}
 }
@@ -542,7 +568,7 @@ public MRESReturn DHook_SmackPost(int weapon)
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
 	{
 		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-		if (0 < client <= MaxClients && IsClientInGame(client))
+		if (0 < client <= MaxClients)
 			FRPlayer(client).ChangeBuildingsToTeam();
 	}
 }
