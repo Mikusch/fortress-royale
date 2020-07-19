@@ -111,18 +111,13 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 
 public void Client_PostThink(int client)
 {
-	int weapon = TF2_GetItemInSlot(client, WeaponSlot_Secondary);
+	int weapon = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (weapon > MaxClients)
 	{
-		char classname[256];
-		GetEntityClassname(weapon, classname, sizeof(classname));
-		if (StrEqual(classname, "tf_weapon_medigun"))
-		{
-			//Set target to ourself so we can build uber passive
-			SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", client);
-			SDKCall_FindAndHealTargets(weapon);
-			SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", -1);
-		}
+		//Set target to ourself so we can build uber passive
+		SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", client);
+		SDKCall_FindAndHealTargets(weapon);
+		SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", -1);
 	}
 	
 	//This function have millions of team checks, swap team to spec to allow both red and blu to take effect

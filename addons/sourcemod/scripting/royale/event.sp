@@ -3,7 +3,7 @@ void Event_Init()
 	HookEvent("teamplay_broadcast_audio", Event_Broadcast_Audio, EventHookMode_Pre);
 	HookEvent("teamplay_round_start", Event_RoundStart);
 	HookEvent("arena_round_start", Event_ArenaRoundStart);
-	HookEvent("post_inventory_application", Event_PlayerInventoryUpdate, EventHookMode_Pre);
+	HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("slap_notice", Event_FishNotice, EventHookMode_Pre);
@@ -77,7 +77,7 @@ public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBro
 	Loot_SpawnCratesInWorld();
 }
 
-public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool dontBroadcast)
+public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
@@ -105,13 +105,13 @@ public Action Event_PlayerInventoryUpdate(Event event, const char[] name, bool d
 	if (parachute > MaxClients)
 		TF2_EquipWeapon(client, parachute);
 	
-	if (!fr_classfilter.BoolValue || class == TFClass_Engineer)
+	if (!fr_classfilter.BoolValue && class != TFClass_Engineer)
 	{
-		//Give toolbox back if playing as engineer, or class filter is off
+		//Give toolbox to non-engineer if class filter is off
 		Address item = SDKCall_GetLoadoutItem(client, TFClass_Engineer, 4);	//Uses econ slot, 4 for toolbox
 		if (item)
 		{
-			int weapon = TF2_GiveNamedItem(client, item);
+			int weapon = TF2_GiveNamedItem(client, item, TFClass_Engineer);
 			
 			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", true, _, view_as<int>(TFObject_Dispenser));
 			SetEntProp(weapon, Prop_Send, "m_aBuildableObjectTypes", true, _, view_as<int>(TFObject_Teleporter));

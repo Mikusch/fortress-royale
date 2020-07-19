@@ -49,7 +49,7 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 public Action Console_Build(int client, const char[] command, int args)
 {
 	// Check if player owns Construction PDA
-	if (TF2_GetItemInSlot(client, WeaponSlot_PDABuild) > MaxClients)
+	if (TF2_GetItemByClassname(client, "tf_weapon_pda_engineer_build") != INVALID_ENT_REFERENCE)
 		return Plugin_Continue;
 	
 	// Block build by default
@@ -59,7 +59,7 @@ public Action Console_Build(int client, const char[] command, int args)
 public Action Console_Destroy(int client, const char[] command, int args)
 {
 	// Check if player owns Destruction PDA
-	if (TF2_GetItemInSlot(client, WeaponSlot_PDADestroy) > MaxClients)
+	if (TF2_GetItemByClassname(client, "tf_weapon_pda_engineer_destroy") != INVALID_ENT_REFERENCE)
 		return Plugin_Continue;
 	
 	// Block destroy by default

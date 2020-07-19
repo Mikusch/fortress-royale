@@ -412,7 +412,13 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 	if (g_SkipGiveNamedItem)
 		return Plugin_Continue;
 	
-	int slot = TF2_GetItemSlot(index, TF2_GetPlayerClass(client));
+	TFClassType class = TF2_GetPlayerClass(client);
+	
+	//Allow keep toolbox
+	if (class == TFClass_Engineer && StrEqual(classname, "tf_weapon_builder"))
+		return Plugin_Continue;
+	
+	int slot = TF2_GetItemSlot(index, class);
 	
 	//Don't allow weapons and action items from client loadout slots
 	if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
@@ -713,6 +719,20 @@ stock bool TF2_GetItem(int client, int &weapon, int &pos)
 	}
 	
 	return false;
+}
+
+stock int TF2_GetItemByClassname(int client, const char[] classname)
+{
+	int weapon, pos;
+	while (TF2_GetItem(client, weapon, pos))
+	{
+		char buffer[256];
+		GetEntityClassname(weapon, buffer, sizeof(buffer));
+		if (StrEqual(classname, buffer))
+			return weapon;
+	}
+	
+	return INVALID_ENT_REFERENCE;
 }
 
 stock int TF2_GetItemInSlot(int client, int slot)
