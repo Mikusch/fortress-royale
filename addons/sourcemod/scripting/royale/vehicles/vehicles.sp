@@ -544,7 +544,7 @@ public void Vehicles_UpdateHUD(Vehicle vehicle)
 			else
 			{
 				SetHudTextParams(-1.0, 0.9, 0.1, 255, 0, 0, 255);
-				ShowSyncHudText(client, vehicle.fuelHudSync, "%t", "Vehicle_OutOfFuel", LANG_SERVER);
+				ShowSyncHudText(client, vehicle.fuelHudSync, "%t", "Vehicle_OutOfFuel");
 			}
 		}
 	}

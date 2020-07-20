@@ -8,7 +8,7 @@ public Action Command_Editor(int client, int args)
 {
 	if (client == 0)
 	{
-		ReplyToCommand(client, "%T", "Command_NotInGame", LANG_SERVER);
+		ReplyToCommand(client, "%t", "Command_NotInGame");
 		return Plugin_Handled;
 	}
 
@@ -20,13 +20,13 @@ public Action Command_Vehicle(int client, int args)
 {
 	if (client == 0)
 	{
-		ReplyToCommand(client, "%T", "Command_NotInGame", LANG_SERVER);
+		ReplyToCommand(client, "%t", "Command_NotInGame");
 		return Plugin_Handled;
 	}
 	
 	if (args == 0)
 	{
-		ReplyToCommand(client, "%T", "Command_VehicleUsage", LANG_SERVER);
+		ReplyToCommand(client, "%t", "Command_VehicleUsage");
 		return Plugin_Handled;
 	}
 	
@@ -36,7 +36,7 @@ public Action Command_Vehicle(int client, int args)
 	Vehicle vehicle;
 	if (!VehiclesConfig_GetByName(name, vehicle))
 	{
-		ReplyToCommand(client, "%T", "Command_VehicleCantFindName", LANG_SERVER, name);
+		ReplyToCommand(client, "%t", "Command_VehicleCantFindName", name);
 		return Plugin_Handled;
 	}
 	

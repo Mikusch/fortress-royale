@@ -2,24 +2,25 @@
 {
 	"BattleBus_HowToDrop"
 	{
-		"en"	"Press your Special Attack key (default: MOUSE3) to drop!"
+		"en"		"Press your Special Attack key (default: MOUSE3) to drop!"
 	}
 	"BattleBus_SecToDeployParachute"
 	{
-		"en"	"%d seconds to auto deploy parachute"
+		"#format"	"{1:d}"
+		"en"		"{1} seconds to auto deploy parachute"
 	}
 	"BattleBus_ParachuteDeployed"
 	{
-		"en"	"Parachute deployed"
+		"en"		"Parachute deployed"
 	}
 	"BattleBus_IncomingCrate"
 	{
-		"en"	"Incoming Mannpower loot crate!"
+		"en"		"Incoming Mannpower loot crate!"
 	}
 	
 	"Command_NotInGame"
 	{
-		"en"	"This Command can only be used ingame"
+		"en"		"This Command can only be used ingame"
 	}
 	"Command_VehicleUsage"
 	{
@@ -33,53 +34,54 @@
 	
 	"Editor_Title"
 	{
-		"en"	"Editor Menu"
+		"en"		"Editor Menu"
 	}
 	"Editor_NotLookingAtAny"
 	{
-		"en"	"You are currently not looking at any crates or vehicles"
+		"en"		"You are currently not looking at any crates or vehicles"
 	}
 	"Editor_Delete"
 	{
-		"en"	"Delete this item"
+		"en"		"Delete this item"
 	}
 	"Editor_Move"
 	{
-		"en"	"Move this item"
+		"en"		"Move this item"
 	}
 	"Editor_CreateCrate"
 	{
-		"en"	"Create new crate"
+		"en"		"Create new crate"
 	}
 	"Editor_CreateVehicle"
 	{
-		"en"	"Create new vehicle"
+		"en"		"Create new vehicle"
 	}
 	"Editor_Place"
 	{
-		"en"	"Place this item"
+		"en"		"Place this item"
 	}
 	"Editor_Save"
 	{
-		"en"	"Save to KeyValues file"
+		"en"		"Save to KeyValues file"
 	}
 	"Editor_Prefab"
 	{
-		"en"	"Prefab: %s"
+		"#format"	"{1:s}"
+		"en"		"Prefab: {1}"
 	}
 	
 	"Editor_Prefab_Title"
 	{
-		"en"	"Editor Prefabs"
+		"en"		"Editor Prefabs"
 	}
 	
 	"Vehicle_OutOfFuel"
 	{
-		"en"	"Out of Fuel"
+		"en"		"Out of Fuel"
 	}
 	
 	"Zone_ShrinkAlert"
 	{
-		"en"	"The death zone is shrinking, get moving!"
+		"en"		"The death zone is shrinking, get moving!"
 	}
 }

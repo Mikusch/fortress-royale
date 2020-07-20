@@ -181,7 +181,7 @@ void BattleBus_SpectateBus(int client)
 	{
 		FRPlayer(client).PlayerState = PlayerState_BattleBus;
 		SetClientViewEntity(client, g_BattleBusCameraRef);
-		PrintHintText(client, "%T", "BattleBus_HowToDrop", LANG_SERVER);
+		PrintHintText(client, "%t", "BattleBus_HowToDrop");
 	}
 }
 
@@ -245,7 +245,7 @@ void BattleBus_EjectClient(int client)
 	EmitSoundToAll(g_BattleBusClientDropSound, bus);
 	
 	FRPlayer(client).SecToDeployParachute = fr_sectodeployparachute.IntValue;
-	PrintHintText(client, "%T", "BattleBus_SecToDeployParachute", LANG_SERVER, FRPlayer(client).SecToDeployParachute);
+	PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
 	CreateTimer(1.0, Timer_SecToDeployParachute, GetClientSerial(client));
 }
 
@@ -259,19 +259,19 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 			FRPlayer(client).SecToDeployParachute--;
 			if (FRPlayer(client).SecToDeployParachute > 0)
 			{
-				PrintHintText(client, "%T", "BattleBus_SecToDeployParachute", LANG_SERVER, FRPlayer(client).SecToDeployParachute);
+				PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
 				CreateTimer(1.0, Timer_SecToDeployParachute, serial);
 			}
 			else
 			{
 				TF2_AddCondition(client, TFCond_Parachute);
-				PrintHintText(client, "%T", "BattleBus_ParachuteDeployed", LANG_SERVER);
+				PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
 			}
 		}
 		else
 		{
 			FRPlayer(client).SecToDeployParachute = 0;
-			PrintHintText(client, "%T", "BattleBus_ParachuteDeployed", LANG_SERVER);
+			PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
 		}
 	}
 }

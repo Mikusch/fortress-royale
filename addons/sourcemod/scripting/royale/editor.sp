@@ -32,11 +32,12 @@ void Editor_ClientThink(int client)
 
 void Editor_Display(int client)
 {
+	SetGlobalTransTarget(client);
 	Menu menu = new Menu(Editor_MenuSelected, MenuAction_Select | MenuAction_Cancel | MenuAction_End | MenuAction_DisplayItem);
 	
 	if (FRPlayer(client).EditorState == EditorState_View && FRPlayer(client).EditorItemRef == INVALID_ENT_REFERENCE)
 	{
-		menu.SetTitle("%T\n\n%T", "Editor_Title", LANG_SERVER, "Editor_NotLookingAtAny", LANG_SERVER);
+		menu.SetTitle("%t\n\n%t", "Editor_Title", "Editor_NotLookingAtAny");
 		menu.AddItem("delete", "Editor_Delete", ITEMDRAW_DISABLED);
 		menu.AddItem("move", "Editor_Move", ITEMDRAW_DISABLED);
 		menu.AddItem("crate", "Editor_CreateCrate");
@@ -47,9 +48,7 @@ void Editor_Display(int client)
 		char name[CONFIG_MAXCHAR];
 		Editor_GetItemPrefab(FRPlayer(client).EditorItemRef, name, sizeof(name));
 		
-		menu.SetTitle("%T\n\n%T", 
-			"Editor_Title", LANG_SERVER, 
-			"Editor_Prefab", LANG_SERVER, name);
+		menu.SetTitle("%t\n\n%t", "Editor_Title", "Editor_Prefab", name);
 		menu.AddItem("delete", "Editor_Delete");
 		
 		if (FRPlayer(client).EditorState == EditorState_View)
