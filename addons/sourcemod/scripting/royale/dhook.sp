@@ -21,6 +21,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPre, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTargetPre, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
+	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHook_CanPickupDroppedWeaponPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
 	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
@@ -210,6 +211,18 @@ public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Hand
 	if (0 < target <= MaxClients)
 	{
 		DHookSetReturn(returnVal, TF2_IsObjectFriendly(dispenser, target));
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
+}
+
+public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
+{
+	//Dont create any dropped weapon created by tf2 (TF2_CreateDroppedWeapon pass client param as NULL)
+	if (!DHookIsNullParam(params, 1))
+	{
+		DHookSetReturn(returnVal, 0);
 		return MRES_Supercede;
 	}
 	

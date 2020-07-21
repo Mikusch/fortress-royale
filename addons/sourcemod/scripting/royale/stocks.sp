@@ -544,24 +544,31 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	TR_GetEndPosition(originSpawn);
 	
 	// CTFDroppedWeapon::Create deletes tf_dropped_weapon if there too many in map, pretend entity is marking for deletion so it doesnt actually get deleted
+	ArrayList droppedWeapons = new ArrayList();
 	int entity = MaxClients + 1;
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
 	{
 		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
-		SetEntProp(entity, Prop_Data, "m_iEFlags", flags|EFL_KILLME);
+		if (!(flags & EFL_KILLME))
+		{
+			SetEntProp(entity, Prop_Data, "m_iEFlags", flags|EFL_KILLME);
+			droppedWeapons.Push(entity);
+		}
 	}
 	
 	//Pass client as NULL, only used for deleting existing dropped weapon which we do not want to happen
-	g_AllowDroppedWeapon = true;
 	int droppedWeapon = SDKCall_CreateDroppedWeapon(-1, originSpawn, angles, model, GetEntityAddress(fromWeapon) + view_as<Address>(itemOffset));
-	g_AllowDroppedWeapon = false;
 	
-	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) > MaxClients)
+	int length = droppedWeapons.Length;
+	for (int i = 0; i < length; i++)
 	{
+		entity = droppedWeapons.Get(i);
 		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
 		flags = flags &= ~EFL_KILLME;
 		SetEntProp(entity, Prop_Data, "m_iEFlags", flags);
 	}
+	
+	delete droppedWeapons;
 	
 	if (droppedWeapon == INVALID_ENT_REFERENCE)
 		return INVALID_ENT_REFERENCE;

@@ -312,6 +312,38 @@
 					}
 				}
 			}
+			"CTFDroppedWeapon::Create"
+			{
+				"signature"	"CTFDroppedWeapon::Create"
+				"callconv"	"cdecl"
+				"return"	"cbaseentity"
+				"this"		"ignore"
+				"arguments"
+				{
+					"pLastOwner"
+					{
+						"type"	"cbaseentity"
+					}
+					"vecOrigin"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"vecAngles"
+					{
+						"type"	"vectorptr"
+						"flags"	"byref"
+					}
+					"pszModelName"
+					{
+						"type"	"charptr"
+					}
+					"pItem"
+					{
+						"type"	"objectptr"
+					}
+				}
+			}
 			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
