@@ -131,6 +131,11 @@
 				"linux"		"191"
 				"windows"	"190"
 			}
+			"CTFPlayer::ForceRespawn"
+			{
+				"linux"		"330"
+				"windows"	"329"
+			}
 			"CTFPlayer::GiveNamedItem"
 			{
 				"linux"		"484"
@@ -428,6 +433,13 @@
 				"offset"	"CBaseEntity::GetMaxHealth"
 				"hooktype"	"entity"
 				"return"	"int"
+				"this"		"entity"
+			}
+			"CTFPlayer::ForceRespawn"
+			{
+				"offset"	"CTFPlayer::ForceRespawn"
+				"hooktype"	"entity"
+				"return"	"void"
 				"this"		"entity"
 			}
 			"CTFPlayer::GiveNamedItem"

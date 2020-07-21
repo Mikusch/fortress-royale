@@ -27,6 +27,9 @@ public Action Event_Broadcast_Audio(Event event, const char[] name, bool dontBro
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		//Clear round win music
@@ -239,5 +242,5 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
-		FRPlayer(client).ChangeTeam(TFTeam_Dead);
+		TF2_ChangeClientTeam(client, TFTeam_Dead);
 }

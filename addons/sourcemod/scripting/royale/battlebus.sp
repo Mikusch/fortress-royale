@@ -198,7 +198,8 @@ void BattleBus_EjectClient(int client)
 	
 	//Respawn into alive team, removing ghost
 	FRPlayer(client).PlayerState = PlayerState_Parachute;
-	FRPlayer(client).ChangeTeam(TFTeam_Alive, true, false);
+	TF2_ChangeClientTeam(client, TFTeam_Alive);
+	TF2_RespawnPlayer(client);
 	
 	SetClientViewEntity(client, client);
 	

@@ -2,6 +2,7 @@ void Console_Init()
 {
 	AddCommandListener(Console_JoinTeam, "jointeam");
 	AddCommandListener(Console_JoinTeam, "autoteam");
+	AddCommandListener(Console_JoinTeam, "spectate");
 	AddCommandListener(Console_Build, "build");
 	AddCommandListener(Console_Destroy, "destroy");
 	AddCommandListener(Console_VoiceMenu, "voicemenu");
@@ -12,12 +13,21 @@ void Console_Init()
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
 	//Allow join spectator
+	if (StrContains(command, "spectate") == 0)
+	{
+		FRPlayer(client).PlayerState = PlayerState_Waiting;
+		return Plugin_Continue;
+	}
+	
 	if (args > 0 && StrContains(command, "jointeam") == 0)
 	{
 		char team[16];
 		GetCmdArg(1, team, sizeof(team));
 		if (StrContains(team, "spectate") == 0)
+		{
+			FRPlayer(client).PlayerState = PlayerState_Waiting;
 			return Plugin_Continue;
+		}
 	}
 	
 	if (IsPlayerAlive(client))
