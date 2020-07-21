@@ -2,7 +2,6 @@ void Event_Init()
 {
 	HookEvent("teamplay_broadcast_audio", Event_Broadcast_Audio, EventHookMode_Pre);
 	HookEvent("teamplay_round_start", Event_RoundStart);
-	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
