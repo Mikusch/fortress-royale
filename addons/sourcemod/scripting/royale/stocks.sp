@@ -826,3 +826,8 @@ stock int TF2_DropItem(const char[] classname, const float origin[3])
 	
 	return EntIndexToEntRef(item);
 }
+
+stock int TF2_GetMaxHealth(int client)
+{
+	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
+}

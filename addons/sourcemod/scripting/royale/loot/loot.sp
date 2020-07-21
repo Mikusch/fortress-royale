@@ -125,20 +125,13 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 		class = TF2_GetPlayerClass(client);
 	
 	//Search the contents table of this crate while rolling for percentage chance
+	LootTable lootTable;
 	LootCrateContent content;
 	do
 	{
 		loot.GetRandomLootCrateContent(content);
 	}
-	while (GetRandomFloat() > content.percentage);
-	
-	//Find loot from the wanted type and tier
-	LootTable lootTable;
-	if (!LootTable_GetRandomLoot(lootTable, content.type, content.tier, class))
-	{
-		LogError("Unable to find loot with type '%d', tier '%d' and class '%d'", content.type, content.tier, class);
-		return;
-	}
+	while (GetRandomFloat() > content.percentage || !LootTable_GetRandomLoot(lootTable, client, content.type, content.tier, class));
 	
 	float origin[3];
 	GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
