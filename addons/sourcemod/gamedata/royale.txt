@@ -121,16 +121,6 @@
 		}
 		"Offsets"
 		{
-			"CTeamplayRoundBasedRules::SetWinningTeam"
-			{
-				"linux"		"161"
-				"windows"	"160"
-			}
-			"CTeamplayRoundBasedRules::BHavePlayers"
-			{
-				"linux"		"225"
-				"windows"	"223"
-			}
 			"CBaseEntity::GetMaxHealth"
 			{
 				"linux"		"118"
@@ -437,47 +427,6 @@
 						"type"	"bool"
 					}
 				}
-			}
-			"CTeamplayRoundBasedRules::SetWinningTeam"
-			{
-				"offset"	"CTeamplayRoundBasedRules::SetWinningTeam"
-				"hooktype"	"gamerules"
-				"return"	"void"
-				"this"		"ignore"
-				"arguments"
-				{
-					"team"
-					{
-						"type"	"int"
-					}
-					"iWinReason"
-					{
-						"type"	"int"
-					}
-					"bForceMapReset"
-					{
-						"type"	"bool"
-					}
-					"bSwitchTeams"
-					{
-						"type"	"bool"
-					}
-					"bDontAddScore"
-					{
-						"type"	"bool"
-					}
-					"bFinal"
-					{
-						"type"	"bool"
-					}
-				}
-			}
-			"CTeamplayRoundBasedRules::BHavePlayers"
-			{
-				"offset"	"CTeamplayRoundBasedRules::BHavePlayers"
-				"hooktype"	"gamerules"
-				"return"	"bool"
-				"this"		"ignore"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{

@@ -88,6 +88,15 @@ enum eEurekaTeleportTargets
 	EUREKA_NUM_TARGETS
 }
 
+enum FRRoundState
+{
+	FRRoundState_Waiting,
+	FRRoundState_NeedPlayers,
+	FRRoundState_Setup,
+	FRRoundState_Active,
+	FRRoundState_End,
+}
+
 enum PlayerState
 {
 	PlayerState_Waiting,	/**< Client is in spectator or waiting for new game */
@@ -233,21 +242,6 @@ enum
 	TFCOLLISION_GROUP_ROCKET_BUT_NOT_WITH_OTHER_ROCKETS,
 };
 
-enum ETFGameType
-{
-	TF_GAMETYPE_UNDEFINED = 0,
-	TF_GAMETYPE_CTF,
-	TF_GAMETYPE_CP,
-	TF_GAMETYPE_ESCORT,
-	TF_GAMETYPE_ARENA,
-	TF_GAMETYPE_MVM,
-	TF_GAMETYPE_RD,
-	TF_GAMETYPE_PASSTIME,
-	TF_GAMETYPE_PD,
-	
-	TF_GAMETYPE_COUNT
-};
-
 /**
  * Possible drops from loot crates
  */
@@ -297,8 +291,8 @@ TFCond g_runeConds[] = {
 };
 
 bool g_TF2Items;
-bool g_WaitingForPlayers;
 bool g_AllowDroppedWeapon;
+FRRoundState g_RoundState;
 int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
@@ -401,31 +395,28 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
-	ConVar_Disable();
+	if (g_RoundState == FRRoundState_Setup || g_RoundState == FRRoundState_Active)
+		TF2_ForceRoundWin(TFTeam_Spectator);
 	
-	//Restore arena and remove waiting for players if needed
-	if (g_WaitingForPlayers)
-	{
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
-		GameRules_SetProp("m_bInWaitingForPlayers", false);
-	}
+	ConVar_Disable();
 }
 
 public void OnMapStart()
 {
-	if (GameRules_GetRoundState() == RoundState_Pregame && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) == TF_GAMETYPE_ARENA)
-	{
-		//Enable waiting for players
-		g_WaitingForPlayers = true;
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
-	}
+	if (GameRules_GetRoundState() == RoundState_Preround)
+		g_RoundState = FRRoundState_Waiting;
+	else
+		g_RoundState = FRRoundState_NeedPlayers;
 	
 	Config_Refresh();
 	
 	BattleBus_Precache();
 	Zone_Precache();
-	
-	DHook_HookGamerules();
+}
+
+public void OnMapEnd()
+{
+	g_RoundState = FRRoundState_Waiting;
 }
 
 public void OnLibraryAdded(const char[] sName)
@@ -500,9 +491,11 @@ public void OnGameFrame()
 {
 	Vehicles_OnGameFrame();
 	
-	//Make sure other plugins is not overriding gamerules prop
-	if (g_WaitingForPlayers && !GameRules_GetProp("m_bInWaitingForPlayers") && view_as<ETFGameType>(GameRules_GetProp("m_nGameType")) != TF_GAMETYPE_UNDEFINED)
-		GameRules_SetProp("m_nGameType", TF_GAMETYPE_UNDEFINED);
+	switch (g_RoundState)
+	{
+		case FRRoundState_NeedPlayers: TryToStartRound();
+		case FRRoundState_Active: TryToEndRound();
+	}
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -528,20 +521,6 @@ public void OnEntityDestroyed(int entity)
 public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
 {
 	FREntity(EntIndexToEntRef(caller)).Destroy();
-}
-
-public void TF2_OnWaitingForPlayersStart()
-{
-	//Set game type back to arena after waiting for players calculations is done
-	GameRules_SetProp("m_nGameType", TF_GAMETYPE_ARENA);
-	
-	//Set m_bInWaitingForPlayers to true so TF2 ignore arena's playercount rules
-	GameRules_SetProp("m_bInWaitingForPlayers", true);
-}
-
-public void TF2_OnWaitingForPlayersEnd()
-{
-	g_WaitingForPlayers = false;
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)
@@ -578,4 +557,70 @@ public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
 {
 	return TF2_OnGiveNamedItem(client, classname, index);
+}
+
+bool TryToStartRound()
+{
+	//Need 2 players
+	if (GetPlayerCount() < 2)
+		return false;
+	
+	//Start round
+	g_RoundState = FRRoundState_Setup;
+	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+	return true;
+}
+
+public Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
+{
+	RemoveEntity(caller);
+	
+	// how
+	if (g_RoundState != FRRoundState_Setup)
+		return;
+	
+	g_RoundState = FRRoundState_Active;
+	
+	BattleBus_SpawnPlayerBus();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			BattleBus_SpectateBus(client);
+	}
+	
+	g_PlayerCount = GetAlivePlayersCount();
+	
+	Zone_RoundArenaStart();
+	Loot_SpawnCratesInWorld();
+}
+
+void TryToEndRound()
+{
+	int winner;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && FRPlayer(client).IsAlive())
+		{
+			if (winner)	//More than 1 player alive
+				return;
+			
+			winner = client;
+		}
+	}
+	
+	//Round ended
+	g_RoundState = FRRoundState_End;
+	
+	if (!winner)	//Nobody alive? wew
+	{
+		TF2_ForceRoundWin(TFTeam_Spectator);
+		PrintToChatAll("%t", "RoundState_NoWinner");
+	}
+	else
+	{
+		TF2_ForceRoundWin(TFTeam_Alive);
+		PrintToChatAll("%t", "RoundState_Winner", winner);
+	}
 }

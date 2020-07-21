@@ -2,7 +2,6 @@ void Event_Init()
 {
 	HookEvent("teamplay_broadcast_audio", Event_Broadcast_Audio, EventHookMode_Pre);
 	HookEvent("teamplay_round_start", Event_RoundStart);
-	HookEvent("arena_round_start", Event_ArenaRoundStart);
 	HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
@@ -28,11 +27,8 @@ public Action Event_Broadcast_Audio(Event event, const char[] name, bool dontBro
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	if (!g_WaitingForPlayers)
-	{
-		//Set back to false from TF2_OnWaitingForPlayersStart
-		GameRules_SetProp("m_bInWaitingForPlayers", false);
-	}
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -59,28 +55,13 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
 	Vehicles_SpawnVehiclesInWorld();
-}
-
-public Action Event_ArenaRoundStart(Event event, const char[] name, bool dontBroadcast)
-{
-	BattleBus_SpawnPlayerBus();
 	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			BattleBus_SpectateBus(client);
-	}
-	
-	g_PlayerCount = GetAlivePlayersCount();
-	
-	Zone_RoundArenaStart();
-	Loot_SpawnCratesInWorld();
+	g_RoundState = FRRoundState_NeedPlayers;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	

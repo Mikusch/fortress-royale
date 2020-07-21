@@ -777,6 +777,37 @@ stock void TF2_RemoveItemInSlot(int client, int slot)
 		TF2_RemoveWearable(client, wearable);
 }
 
+stock void TF2_CreateSetupTimer(int duration, EntityOutput callback)
+{
+	int timer = CreateEntityByName("team_round_timer");
+	
+	char string[12];
+	IntToString(duration, string, sizeof(string));
+	DispatchKeyValue(timer, "setup_length", string);
+	
+	DispatchKeyValue(timer, "show_in_hud", "1");
+	DispatchSpawn(timer);
+	HookSingleEntityOutput(timer, "OnSetupFinished", callback);
+	
+	AcceptEntityInput(timer, "Enable");
+	AcceptEntityInput(timer, "Resume");
+	
+	Event event = CreateEvent("teamplay_update_timer");
+	event.Fire();
+}
+
+stock void TF2_ForceRoundWin(TFTeam team)
+{
+	int roundwin = CreateEntityByName("game_round_win"); 
+	DispatchSpawn(roundwin);
+
+	SetVariantString("force_map_reset 1");
+	AcceptEntityInput(roundwin, "AddOutput");
+	SetVariantInt(view_as<int>(team));
+	AcceptEntityInput(roundwin, "SetTeam");
+	AcceptEntityInput(roundwin, "RoundWin");
+}
+
 stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int displayToTeam = 0, int teamColor = 0)
 {
 	int msg = CreateEntityByName("game_text_tf");
@@ -830,4 +861,10 @@ stock int TF2_DropItem(const char[] classname, const float origin[3])
 stock int TF2_GetMaxHealth(int client)
 {
 	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
+}
+
+stock Action Timer_RemoveEntity(Handle timer, int entity)
+{
+	if (IsValidEntity(entity))
+		RemoveEntity(entity);
 }

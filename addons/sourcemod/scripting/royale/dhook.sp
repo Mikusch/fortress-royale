@@ -1,5 +1,3 @@
-static Handle g_DHookSetWinningTeam;
-static Handle g_DHookBHavePlayers;
 static Handle g_DHookGetMaxHealth;
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
@@ -31,8 +29,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
-	g_DHookSetWinningTeam = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::SetWinningTeam");
-	g_DHookBHavePlayers = DHook_CreateVirtual(gamedata, "CTeamplayRoundBasedRules::BHavePlayers");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
@@ -99,12 +95,6 @@ bool DHook_IsGiveNamedItemActive()
 			return true;
 	
 	return false;
-}
-
-void DHook_HookGamerules()
-{
-	DHookGamerules(g_DHookSetWinningTeam, false, _, DHook_SetWinningTeamPre);
-	DHookGamerules(g_DHookBHavePlayers, false, _, DHook_BHavePlayersPre);
 }
 
 void DHook_HookClient(int client)
@@ -405,22 +395,6 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
 {
 	//DHook bug with post hook returning incorrect client address
 	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
-}
-
-public MRESReturn DHook_SetWinningTeamPre(Handle params)
-{
-	//Prevent round win if atleast 2 players alive
-	if (GetAlivePlayersCount() >= 2)
-		return MRES_Supercede;
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_BHavePlayersPre(Handle returnVal)
-{
-	//Waiting for players period never ends if there are no alive players
-	DHookSetReturn(returnVal, GetPlayerCount() >= 2);
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_GetMaxHealthPre(int client, Handle returnVal)

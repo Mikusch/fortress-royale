@@ -189,6 +189,11 @@ methodmap FRPlayer
 		}
 	}
 	
+	public bool IsAlive()
+	{
+		return g_ClientPlayerState[this] == PlayerState_BattleBus || g_ClientPlayerState[this] == PlayerState_Parachute || g_ClientPlayerState[this] == PlayerState_Alive;
+	}
+	
 	public void ChangeToSpectator()
 	{
 		if (++g_ClientSpectator[this] == 1)

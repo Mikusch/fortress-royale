@@ -12,37 +12,30 @@ void Console_Init()
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
-	//Force change spectator, has mannpower mode check
-	bool spectate;
-	
+	//Allow join spectator
 	if (StrContains(command, "spectate") == 0)
 	{
-		spectate = true;
+		FRPlayer(client).PlayerState = PlayerState_Waiting;
+		return Plugin_Continue;
 	}
-	else if (args > 0 && StrContains(command, "jointeam") == 0)
+	
+	if (args > 0 && StrContains(command, "jointeam") == 0)
 	{
 		char team[16];
 		GetCmdArg(1, team, sizeof(team));
-		spectate = StrContains(team, "spectate") == 0;
+		if (StrContains(team, "spectate") == 0)
+		{
+			FRPlayer(client).PlayerState = PlayerState_Waiting;
+			return Plugin_Continue;
+		}
 	}
 	
-	if (spectate)
-	{
-		if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
-			SetClientViewEntity(client, client);
-		
-		FRPlayer(client).PlayerState = PlayerState_Waiting;
-		TF2_ChangeClientTeam(client, TFTeam_Spectator);
-		return Plugin_Handled;
-	}
-	
-	//Disallow join red or blu, whats the point of allowing it anyway
 	if (IsPlayerAlive(client))
 		return Plugin_Handled;
 	
+	//Force set client to dead team
 	TF2_ChangeClientTeam(client, TFTeam_Dead);
 	ShowVGUIPanel(client, TF2_GetClientTeam(client) == TFTeam_Blue ? "class_blue" : "class_red");
-	
 	return Plugin_Handled;
 }
 
