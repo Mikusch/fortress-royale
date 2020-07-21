@@ -34,6 +34,8 @@
 #define DAMAGE_YES				2
 #define DAMAGE_AIM				3
 
+#define TF_WEAPON_PICKUP_RANGE	150.0
+
 #define INDEX_FISTS			5
 #define INDEX_SPELLBOOK		1070	// Spellbook Magazine
 #define INDEX_BASEJUMPER	1101
@@ -471,8 +473,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	}
 	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
 	{
-		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
-			SDKCall_TryToPickupDroppedWeapon(client);
+		TF2_TryToPickupDroppedWeapon(client);
 		
 		//Entering and exiting vehicles
 		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
@@ -484,6 +485,16 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				Vehicles_TryToEnterVehicle(client);
 		}
 	}
+}
+
+public Action OnClientCommandKeyValues(int client, KeyValues kv)
+{
+	char command[64];
+	kv.GetSectionName(command, sizeof(command));
+	if (StrEqual(command, "+use_action_slot_item_server") && TF2_TryToPickupDroppedWeapon(client))
+		return Plugin_Handled;
+	
+	return Plugin_Continue;
 }
 
 public void OnGameFrame()

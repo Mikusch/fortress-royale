@@ -71,8 +71,8 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 	
 	if (arg1[0] == '0' && arg2[0] == '0')
 	{
-		if (FRPlayer(client).LastWeaponPickupTime < GetGameTime() - 1.0)
-			SDKCall_TryToPickupDroppedWeapon(client);
+		if (TF2_TryToPickupDroppedWeapon(client))
+			return Plugin_Handled;
 		
 		//Entering and exiting vehicles
 		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)

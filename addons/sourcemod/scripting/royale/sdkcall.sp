@@ -1,7 +1,6 @@
 static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
-static Handle g_SDKCallTryToPickupDroppedWeapon;
 static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallFindAndHealTargets;
@@ -17,7 +16,6 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
-	g_SDKCallTryToPickupDroppedWeapon = PrepSDKCall_TryToPickupDroppedWeapon(gamedata);
 	g_SDKCallGetLoadoutItem = PrepSDKCall_GetLoadoutItem(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
@@ -73,19 +71,6 @@ static Handle PrepSDKCall_InitPickedUpWeapon(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitPickedUpWeapon");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_TryToPickupDroppedWeapon(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Player);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::TryToPickupDroppedWeapon");
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CTFPlayer::TryToPickupDroppedWeapon");
 	
 	return call;
 }
@@ -229,11 +214,6 @@ void SDKCall_InitDroppedWeapon(int droppedWeapon, int client, int fromWeapon, bo
 void SDKCall_InitPickedUpWeapon(int droppedWeapon, int client, int fromWeapon)
 {
 	SDKCall(g_SDKCallInitPickedUpWeapon, droppedWeapon, client, fromWeapon);
-}
-
-bool SDKCall_TryToPickupDroppedWeapon(int client)
-{
-	return SDKCall(g_SDKCallTryToPickupDroppedWeapon, client);
 }
 
 Address SDKCall_GetLoadoutItem(int client, TFClassType class, int slot)

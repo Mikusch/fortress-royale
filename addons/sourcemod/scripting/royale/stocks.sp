@@ -377,6 +377,108 @@ stock void TF2_CheckClientWeapons(int client)
 	}
 }
 
+stock bool TF2_TryToPickupDroppedWeapon(int client)
+{
+	if (FRPlayer(client).LastWeaponPickupTime > GetGameTime() - 1.0 || FRPlayer(client).PlayerState != PlayerState_Alive || TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
+		return false;
+	
+	float origin[3], angles[3], endPos[3];
+	GetClientEyePosition(client, origin);
+	GetClientEyeAngles(client, angles);
+	
+	GetAngleVectors(angles, endPos, NULL_VECTOR, NULL_VECTOR);
+	ScaleVector(endPos, TF_WEAPON_PICKUP_RANGE);
+	AddVectors(endPos, origin, endPos);
+	
+	TR_TraceRayFilter(origin, endPos, MASK_SOLID|CONTENTS_DEBRIS, RayType_EndPoint, Trace_DontHitEntity, client);
+	if (!TR_DidHit())
+		return false;
+	
+	int droppedWeapon = TR_GetEntityIndex();
+	
+	char classname[256];
+	GetEntityClassname(droppedWeapon, classname, sizeof(classname));
+	if (!StrEqual(classname, "tf_dropped_weapon"))
+		return false;
+	
+	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
+	TFClassType class = TFClass_Unknown;
+	int slot = -1;
+	
+	if (fr_classfilter.BoolValue)
+	{
+		//Only allow pickup weapon if class can normally use
+		slot = TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client));
+		if (slot < WeaponSlot_Primary)
+			return false;
+	}
+	else
+	{
+		//Find best class and slot to translate classname
+		for (TFClassType classTemp = TFClass_Scout; classTemp <= TFClass_Engineer; classTemp++)
+		{
+			int slotTemp = TF2_GetItemSlot(defindex, classTemp);
+			if (slotTemp < WeaponSlot_Primary)
+				continue;
+			
+			class = classTemp;
+			slot = slotTemp;
+			
+			//If client dont have any weapons in slot, perfect class to use so break out the search. Otherwise keep searching for possible better class/slot
+			if (TF2_GetItemInSlot(client, slot) == -1)
+				break;
+		}
+	}
+	
+	//Check if client already has weapon in given slot, remove and create dropped weapon if so
+	int weaponOld, pos;
+	while (TF2_GetItem(client, weaponOld, pos))
+	{
+		if (slot == TF2_GetSlot(weaponOld) && TF2_ShouldDropWeapon(client, weaponOld))
+		{
+			TF2_CreateDroppedWeapon(client, weaponOld, true, origin, angles);
+			TF2_RemoveItem(client, weaponOld);
+		}
+		else if (slot == WeaponSlot_Melee && GetEntProp(weaponOld, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		{
+			TF2_RemoveItem(client, weaponOld);
+		}
+	}
+	
+	static int itemOffset = -1;
+	if (itemOffset == -1)
+		itemOffset = FindSendPropInfo("CTFDroppedWeapon", "m_Item");
+	
+	//Create and equip new weapon
+	int weapon = TF2_GiveNamedItem(client, GetEntityAddress(droppedWeapon) + view_as<Address>(itemOffset), class);
+	if (weapon == INVALID_ENT_REFERENCE)
+		return false;
+	
+	TF2_EquipWeapon(client, weapon);
+	
+	//Restore ammo, energy etc from picked up weapon
+	if (!TF2_IsWearable(weapon))
+		SDKCall_InitPickedUpWeapon(droppedWeapon, client, weapon);
+	
+	//If max ammo not calculated yet (-1), do it now
+	if (!TF2_IsWearable(weapon) && TF2_GetWeaponAmmo(client, weapon) < 0)
+	{
+		TF2_SetWeaponAmmo(client, weapon, 0);
+		TF2_RefillWeaponAmmo(client, weapon);
+		SetEntPropFloat(client, Prop_Send, "m_flItemChargeMeter", SDKCall_GetDefaultItemChargeMeterValue(weapon), slot);
+	}
+	
+	//Fix active weapon, incase was switched to wearable
+	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") <= MaxClients)
+		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
+	
+	//Remove dropped weapon
+	RemoveEntity(droppedWeapon);
+	
+	FRPlayer(client).LastWeaponPickupTime = GetGameTime();
+	return true;
+}
+
 stock bool TF2_ShouldDropWeapon(int client, int weapon)
 {
 	//Starting fists and spellbook

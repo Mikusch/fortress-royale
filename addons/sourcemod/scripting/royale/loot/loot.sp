@@ -152,4 +152,7 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	
 	if (Call_Finish() != SP_ERROR_NONE)
 		LogError("Unable to call function for LootType '%d' class '%d'", lootTable.type, class);
+	
+	//Reset pickup time so client dont pickup weapon in an instant
+	FRPlayer(client).LastWeaponPickupTime = GetGameTime();
 }
