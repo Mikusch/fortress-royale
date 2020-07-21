@@ -395,6 +395,9 @@ public void OnPluginStart()
 
 public void OnPluginEnd()
 {
+	if (g_RoundState == FRRoundState_Setup || g_RoundState == FRRoundState_Active)
+		TF2_ForceRoundWin(TFTeam_Spectator);
+	
 	ConVar_Disable();
 }
 
@@ -409,7 +412,11 @@ public void OnMapStart()
 	
 	BattleBus_Precache();
 	Zone_Precache();
-	
+}
+
+public void OnMapEnd()
+{
+	g_RoundState = FRRoundState_Waiting;
 }
 
 public void OnLibraryAdded(const char[] sName)
