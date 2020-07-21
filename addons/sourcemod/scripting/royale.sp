@@ -616,11 +616,11 @@ void TryToEndRound()
 	if (!winner)	//Nobody alive? wew
 	{
 		TF2_ForceRoundWin(TFTeam_Spectator);
-		PrintToChatAll("%T", "RoundState_NoWinner", LANG_SERVER);
+		PrintToChatAll("%t", "RoundState_NoWinner");
 	}
 	else
 	{
 		TF2_ForceRoundWin(TFTeam_Alive);
-		PrintToChatAll("%T", "RoundState_Winner", LANG_SERVER, winner);
+		PrintToChatAll("%t", "RoundState_Winner", winner);
 	}
 }
