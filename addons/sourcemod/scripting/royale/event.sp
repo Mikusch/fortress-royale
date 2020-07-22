@@ -202,7 +202,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		}
 		
 		//Drop medium health kit
-		TF2_DropItem("item_healthkit_medium", origin);
+		TF2_DropItem(victim, "item_healthkit_medium");
 		
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;

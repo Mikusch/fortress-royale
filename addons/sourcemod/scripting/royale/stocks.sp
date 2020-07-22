@@ -217,6 +217,14 @@ stock bool GetWaterHeightFromEntity(int entity, float &height)
 	return true;
 }
 
+stock void GetEntityWorldSpaceCenter(int entity, float[3] buffer)
+{
+	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", buffer);
+	float maxs[3];
+	GetEntPropVector(entity, Prop_Data, "m_vecMaxs", maxs);
+	buffer[2] += maxs[2] / 2;
+}
+
 stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERSOLID)
 {
 	float posStart[3], posEnd[3], angles[3], mins[3], maxs[3];
@@ -946,34 +954,43 @@ stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int disp
 	}
 }
 
-stock int TF2_DropItem(const char[] classname, const float origin[3])
+stock int TF2_DropItem(int client, const char[] classname)
 {
 	int item = CreateEntityByName(classname);
-	if (item == INVALID_ENT_REFERENCE)
-		return INVALID_ENT_REFERENCE;
 	
-	DispatchKeyValue(item, "OnPlayerTouch", "!self,Kill,,0,-1");
-	DispatchSpawn(item);
-	SetEntityMoveType(item, MOVETYPE_FLYGRAVITY);
-	SetEntProp(item, Prop_Send, "m_nSolidType", SOLID_BBOX);
+	if (IsValidEntity(item))
+	{
+		DispatchKeyValue(item, "OnPlayerTouch", "!self,Kill,,0,-1");
+		
+		if (DispatchSpawn(item))
+		{
+			DispatchKeyValue(item, "nextthink", "0.1");
+			
+			SetEntityMoveType(item, MOVETYPE_FLYGRAVITY);
+			SetEntProp(item, Prop_Data, "m_MoveCollide", MOVECOLLIDE_FLY_BOUNCE);
+			SetEntProp(item, Prop_Data, "m_nSolidType", SOLID_BBOX);
+			SetEntPropEnt(item, Prop_Data, "m_hOwnerEntity", client);
+			
+			float origin[3];
+			GetEntityWorldSpaceCenter(client, origin);
+			
+			float impulse[3];
+			impulse[0] = GetRandomFloat(-1.0);
+			impulse[1] = GetRandomFloat(-1.0);
+			impulse[2] = 1.0;
+			NormalizeVector(impulse, impulse);
+			ScaleVector(impulse, 250.0);
+			
+			TeleportEntity(item, origin, NULL_VECTOR, impulse);
+			
+			return EntIndexToEntRef(item);
+		}
+	}
 	
-	float velocity[3];
-	velocity[0] = GetRandomFloat(-50.0, 50.0);
-	velocity[1] = GetRandomFloat(-50.0, 50.0);
-	velocity[2] = GetRandomFloat(-50.0, 0.0);
-	
-	TeleportEntity(item, origin, NULL_VECTOR, velocity);
-	
-	return EntIndexToEntRef(item);
+	return INVALID_ENT_REFERENCE;
 }
 
 stock int TF2_GetMaxHealth(int client)
 {
 	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
-}
-
-stock Action Timer_RemoveEntity(Handle timer, int entity)
-{
-	if (IsValidEntity(entity))
-		RemoveEntity(entity);
 }
