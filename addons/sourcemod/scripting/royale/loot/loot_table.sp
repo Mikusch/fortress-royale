@@ -180,8 +180,17 @@ bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootType type, int
 				loot.PushArray(temp, sizeof(temp));
 		}
 		
-		loot.GetArray(GetRandomInt(0, loot.Length - 1), lootTable, sizeof(lootTable));
-		delete loot;
+		//Check if this loot table has loot of that type and tier, reroll otherwise
+		if (loot.Length > 0)
+		{
+			loot.GetArray(GetRandomInt(0, loot.Length - 1), lootTable, sizeof(lootTable));
+			delete loot;
+		}
+		else
+		{
+			delete loot;
+			return false;
+		}
 	}
 	
 	//Conditional callback to determine if this loot should spawn
