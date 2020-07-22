@@ -954,7 +954,7 @@ stock void TF2_ShowGameMessage(const char[] message, const char[] icon, int disp
 	}
 }
 
-stock int TF2_DropItem(int client, const char[] classname)
+stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0)
 {
 	int item = CreateEntityByName(classname);
 	
@@ -983,11 +983,22 @@ stock int TF2_DropItem(int client, const char[] classname)
 			
 			TeleportEntity(item, origin, NULL_VECTOR, impulse);
 			
-			return EntIndexToEntRef(item);
+			int ref = EntIndexToEntRef(item);
+			
+			if (lifeTime > 0.0)
+				CreateTimer(lifeTime, Timer_DestroyItem, ref);
+			
+			return ref;
 		}
 	}
 	
 	return INVALID_ENT_REFERENCE;
+}
+
+public Action Timer_DestroyItem(Handle timer, int ref)
+{
+	if (IsValidEntity(ref))
+		RemoveEntity(ref);
 }
 
 stock int TF2_GetMaxHealth(int client)
