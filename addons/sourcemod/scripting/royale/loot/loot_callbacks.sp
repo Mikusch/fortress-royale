@@ -177,5 +177,5 @@ public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 
 public bool LootCallback_ShouldCreateHealthKit(int client, CallbackParams params)
 {
-	return GetEntProp(client, Prop_Send, "m_iHealth") / TF2_GetMaxHealth(client) <= 0.795;
+	return float(GetEntProp(client, Prop_Send, "m_iHealth")) / float(TF2_GetMaxHealth(client)) <= 0.795;
 }
