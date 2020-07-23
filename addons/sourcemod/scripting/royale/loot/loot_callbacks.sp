@@ -148,14 +148,11 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 {
 	//Check Engineers if they are low on metal
-	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
-	{
-		int maxMetal = SDKCall_GetMaxAmmo(client, view_as<int>(TF_AMMO_METAL));
-		int metal = GetEntProp(client, Prop_Data, "m_iAmmo", _, view_as<int>(TF_AMMO_METAL));  
-		
-		if (metal / maxMetal <= 0.8)
-			return true;
-	}
+	int maxMetal = SDKCall_GetMaxAmmo(client, view_as<int>(TF_AMMO_METAL));
+	int metal = GetEntProp(client, Prop_Data, "m_iAmmo", _, view_as<int>(TF_AMMO_METAL));
+	
+	if (metal / maxMetal <= 0.8)
+		return true;
 	
 	//Check if any weapon in loadout is low on ammo
 	for (int slot = TFWeaponSlot_Primary; slot <= WeaponSlot_Melee; slot++)
