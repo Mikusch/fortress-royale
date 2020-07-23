@@ -9,7 +9,6 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKHook(client, SDKHook_Touch, Client_Touch);
 	SDKHook(client, SDKHook_TouchPost, Client_TouchPost);
-	SDKHook(client, SDKHook_WeaponCanSwitchTo, Client_WeaponCanSwitchTo);
 }
 
 void SDKHook_OnEntityCreated(int entity, const char[] classname)
@@ -128,65 +127,6 @@ public void Client_PostThink(int client)
 public void Client_PostThinkPost(int client)
 {
 	FRPlayer(client).ChangeToTeam();
-	
-	if (IsPlayerAlive(client))
-	{
-		TFClassType disguiseClass = view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_nDisguiseClass"));
-		TFTeam disguiseTeam = view_as<TFTeam>(GetEntProp(client, Prop_Send, "m_nDisguiseTeam"));
-		int disguiseTarget = GetEntProp(client, Prop_Send, "m_iDisguiseTargetIndex");
-		
-		if (FRPlayer(client).DisguiseClass != disguiseClass || FRPlayer(client).DisguiseTeam != disguiseTeam || FRPlayer(client).DisguiseTarget != disguiseTarget)
-		{
-			if (FRPlayer(client).DisguiseClass == TFClass_Unknown)
-			{
-				//Player just disguised, get current model
-				char model[PLATFORM_MAX_PATH];
-				int modelIndex = GetEntProp(client, Prop_Send, "m_nModelIndex");
-				ModelIndexToString(modelIndex, model, sizeof(model));
-				FRPlayer(client).SetModel(model);
-			}
-			
-			char model[PLATFORM_MAX_PATH];
-			if (TF2_IsPlayerInCondition(client, TFCond_Disguised))
-			{
-				if (0 < disguiseTarget <= MaxClients && TF2_GetPlayerClass(disguiseTarget) == disguiseClass && TF2_GetClientTeam(disguiseTarget) == disguiseTeam)
-				{
-					int modelIndex = GetEntProp(disguiseTarget, Prop_Send, "m_nModelIndex");
-					ModelIndexToString(modelIndex, model, sizeof(model));
-				}
-				else
-				{
-					strcopy(model, sizeof(model), g_classModel[disguiseClass]);
-				}
-				
-				//Set disguise weapon visible for everyone
-				int disguisedWeapon = GetEntPropEnt(client, Prop_Send, "m_hDisguiseWeapon");
-				SetEntProp(disguisedWeapon, Prop_Send, "m_bDisguiseWeapon", false);
-				SetEntPropFloat(disguisedWeapon, Prop_Send, "m_flNextPrimaryAttack", GetGameTime() + 9999.0);
-				SetEntPropFloat(disguisedWeapon, Prop_Send, "m_flNextSecondaryAttack", GetGameTime() + 9999.0);
-				
-				FRPlayer(client).ActiveWeapon = EntIndexToEntRef(GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon"));
-				SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", disguisedWeapon);
-				
-				SetEntProp(client, Prop_Send, "m_bForcedSkin", true);
-				SetEntProp(client, Prop_Send, "m_nForcedSkin", view_as<int>(disguiseTeam)-2);
-			}
-			else
-			{
-				FRPlayer(client).GetModel(model, sizeof(model));
-				SetEntProp(client, Prop_Send, "m_bForcedSkin", false);
-				SetEntProp(client, Prop_Send, "m_nForcedSkin", 0);
-			}
-			
-			SetVariantString(model);
-			AcceptEntityInput(client, "SetCustomModel");
-			SetEntProp(client, Prop_Send, "m_bUseClassAnimations", true);
-			
-			FRPlayer(client).DisguiseClass = disguiseClass;
-			FRPlayer(client).DisguiseTeam = disguiseTeam;
-			FRPlayer(client).DisguiseTarget = disguiseTarget;
-		}
-	}
 }
 
 public Action Client_Touch(int client, int toucher)
@@ -205,14 +145,6 @@ public void Client_TouchPost(int client, int toucher)
 		FRPlayer(client).ChangeToTeam();
 		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_ALIVE);
 	}
-}
-
-public Action Client_WeaponCanSwitchTo(int client, int weapon)
-{
-	if (TF2_IsPlayerInCondition(client, TFCond_Disguised))
-		return Plugin_Handled;
-	
-	return Plugin_Continue;
 }
 
 public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)

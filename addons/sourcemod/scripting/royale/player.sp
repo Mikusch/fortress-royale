@@ -1,12 +1,6 @@
 static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
 static int g_ClientSecToDeployParachute[TF_MAXPLAYERS + 1];
 static int g_ClientVisibleCond[TF_MAXPLAYERS + 1];
-
-static TFClassType g_ClientDisguiseClass[TF_MAXPLAYERS + 1];
-static TFTeam g_ClientDisguiseTeam[TF_MAXPLAYERS + 1];
-static int g_ClientDisguiseTarget[TF_MAXPLAYERS + 1];
-
-static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
 static float g_ClientLastWeaponPickupTime[TF_MAXPLAYERS + 1];
 static float g_ClientLastVehicleEnterTime[TF_MAXPLAYERS + 1];
 static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
@@ -20,8 +14,6 @@ static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
 static TFClassType g_ClientClass[TF_MAXPLAYERS + 1];
 static int g_ClientClassUnknown[TF_MAXPLAYERS + 1];
-
-static char g_ClientModel[TF_MAXPLAYERS + 1][PLATFORM_MAX_PATH];
 
 methodmap FRPlayer
 {
@@ -74,55 +66,6 @@ methodmap FRPlayer
 		public set(int val)
 		{
 			g_ClientVisibleCond[this] = val;
-		}
-	}
-	
-	property TFClassType DisguiseClass
-	{
-		public get()
-		{
-			return g_ClientDisguiseClass[this];
-		}
-		public set(TFClassType val)
-		{
-			g_ClientDisguiseClass[this] = val; 
-		}
-	}
-	
-	property TFTeam DisguiseTeam
-	{
-		public get()
-		{
-			return g_ClientDisguiseTeam[this];
-		}
-		public set(TFTeam val)
-		{
-			g_ClientDisguiseTeam[this] = val; 
-		}
-	}
-	
-	property int DisguiseTarget
-	{
-		public get()
-		{
-			return g_ClientDisguiseTarget[this];
-		}
-		public set(int val)
-		{
-			g_ClientDisguiseTarget[this] = val; 
-		}
-	}
-	
-	property int ActiveWeapon
-	{
-		public get()
-		{
-			return g_ClientActiveWeapon[this];
-		}
-		
-		public set(int val)
-		{
-			g_ClientActiveWeapon[this] = val;
 		}
 	}
 	
@@ -244,16 +187,6 @@ methodmap FRPlayer
 		{
 			return g_ClientClass[this];
 		}
-	}
-	
-	public void GetModel(char[] buffer, int length)
-	{
-		strcopy(buffer, length, g_ClientModel[this]);
-	}
-	
-	public void SetModel(const char[] buffer)
-	{
-		strcopy(g_ClientModel[this], sizeof(g_ClientModel[]), buffer);
 	}
 	
 	public bool IsAlive()

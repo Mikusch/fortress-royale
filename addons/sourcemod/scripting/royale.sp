@@ -284,19 +284,6 @@ enum LootType
 	Loot_Item_Powerup,		/**< Mannpower powerups */
 }
 
-char g_classModel[][] = {
-	"",								//Unknown
-	"models/player/scout.mdl",		//Scout
-	"models/player/sniper.mdl",		//Sniper
-	"models/player/soldier.mdl",	//Soldier
-	"models/player/demo.mdl",		//Demoman
-	"models/player/medic.mdl",		//Medic
-	"models/player/heavy.mdl",		//Heavy
-	"models/player/pyro.mdl",		//Pyro
-	"models/player/spy.mdl",		//Spy
-	"models/player/engineer.mdl"	//Engineer
-};
-
 char g_fistsClassname[][] = {
 	"",						//Unknown
 	"tf_weapon_bat",		//Scout
@@ -454,9 +441,6 @@ public void OnMapStart()
 	
 	BattleBus_Precache();
 	Zone_Precache();
-	
-	for (int class = 1; class < sizeof(g_classModel); class++)
-		PrecacheModel(g_classModel[class]);
 }
 
 public void OnMapEnd()
@@ -527,12 +511,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				Vehicles_ExitVehicle(client);
 			else
 				Vehicles_TryToEnterVehicle(client);
-		}
-		
-		if (TF2_IsPlayerInCondition(client, TFCond_Disguised))
-		{
-			TF2_RemovePlayerDisguise(client);
-			SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
 		}
 	}
 }
