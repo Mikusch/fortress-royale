@@ -260,6 +260,18 @@ enum MoveCollide_t
 	MOVECOLLIDE_MAX_BITS = 3
 };
 
+enum ETFAmmoType
+{
+	TF_AMMO_DUMMY = 0,	// Dummy index to make the CAmmoDef indices correct for the other ammo types.
+	TF_AMMO_PRIMARY,
+	TF_AMMO_SECONDARY,
+	TF_AMMO_METAL,
+	TF_AMMO_GRENADES1,
+	TF_AMMO_GRENADES2,
+	TF_AMMO_GRENADES3,	// Utility Slot Grenades
+	TF_AMMO_COUNT
+};
+
 /**
  * Possible drops from loot crates
  */

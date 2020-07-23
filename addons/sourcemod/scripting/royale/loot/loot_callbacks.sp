@@ -17,7 +17,6 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 		Address item = SDKCall_GetLoadoutItem(client, class, slot);
 		if (!item)
 			continue;
-	
 		int reskin = LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16);
 		if (reskin == defindex)
 		{
@@ -144,6 +143,39 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 		DispatchSpawn(entity);
 		GameRules_SetProp("m_bPowerupMode", false);
 	}
+}
+
+public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
+{
+	//Check Engineers if they are low on metal
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
+	{
+		int maxMetal = SDKCall_GetMaxAmmo(client, view_as<int>(TF_AMMO_METAL));
+		int metal = GetEntProp(client, Prop_Data, "m_iAmmo", _, view_as<int>(TF_AMMO_METAL));  
+		
+		if (metal / maxMetal <= 0.8)
+			return true;
+	}
+	
+	//Check if any weapon in loadout is low on ammo
+	for (int slot = TFWeaponSlot_Primary; slot <= WeaponSlot_Melee; slot++)
+	{
+		int weapon = GetPlayerWeaponSlot(client, slot);
+		if (weapon != -1)
+		{
+			int ammoType = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+			if (ammoType != -1)
+			{
+				int maxAmmo = SDKCall_GetMaxAmmo(client, ammoType);
+				int ammo = GetEntProp(client, Prop_Send, "m_iAmmo", _, ammoType);
+				
+				if (ammo / maxAmmo <= 0.8)
+					return true;
+			}
+		}
+	}
+	
+	return false;
 }
 
 public bool LootCallback_ShouldCreateHealthKit(int client, CallbackParams params)

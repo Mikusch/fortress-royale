@@ -3,6 +3,7 @@ static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
+static Handle g_SDKCallGetMaxAmmo;
 static Handle g_SDKCallFindAndHealTargets;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
 static Handle g_SDKCallGiveNamedItem;
@@ -18,6 +19,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
 	g_SDKCallGetLoadoutItem = PrepSDKCall_GetLoadoutItem(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
+	g_SDKCallGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
@@ -101,6 +103,21 @@ static Handle PrepSDKCall_GetEquippedWearableForLoadoutSlot(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::GetEquippedWearableForLoadoutSlot");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetMaxAmmo");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::GetMaxAmmo");
 	
 	return call;
 }
@@ -224,6 +241,11 @@ Address SDKCall_GetLoadoutItem(int client, TFClassType class, int slot)
 int SDKCall_GetEquippedWearableForLoadoutSlot(int client, int slot)
 {
 	return SDKCall(g_SDKCallGetEquippedWearableForLoadoutSlot, client, slot);
+}
+
+int SDKCall_GetMaxAmmo(int client, int ammoType)
+{
+	return SDKCall(g_SDKCallGetMaxAmmo, client, ammoType, -1);
 }
 
 bool SDKCall_FindAndHealTargets(int medigun)
