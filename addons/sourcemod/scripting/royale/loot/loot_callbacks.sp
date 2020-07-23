@@ -147,11 +147,11 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 
 public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 {
-	//Check Engineers if they are low on metal
+	//Check if client is low on metal
 	int maxMetal = SDKCall_GetMaxAmmo(client, view_as<int>(TF_AMMO_METAL));
 	int metal = GetEntProp(client, Prop_Data, "m_iAmmo", _, view_as<int>(TF_AMMO_METAL));
 	
-	if (metal / maxMetal <= 0.8)
+	if (float(metal) / float(maxMetal) <= 0.8)
 		return true;
 	
 	//Check if any weapon in loadout is low on ammo
@@ -166,7 +166,7 @@ public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 				int maxAmmo = SDKCall_GetMaxAmmo(client, ammoType);
 				int ammo = GetEntProp(client, Prop_Send, "m_iAmmo", _, ammoType);
 				
-				if (ammo / maxAmmo <= 0.8)
+				if (float(ammo) / float(maxAmmo) <= 0.8)
 					return true;
 			}
 		}
