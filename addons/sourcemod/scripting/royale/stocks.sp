@@ -293,7 +293,7 @@ stock bool TF2_IsObjectFriendly(int obj, int entity)
 		if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == entity)
 			return true;
 		
-		if (view_as<TFClassType>(GetEntProp(entity, Prop_Send, "m_nDisguiseClass")) == TFClass_Engineer)
+		if (TF2_GetPlayerClass(entity) == TFClass_Spy)
 			return true;
 	}
 	else if (entity > MaxClients)
