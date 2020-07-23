@@ -148,5 +148,5 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 
 public bool LootCallback_ShouldCreateHealthKit(int client, CallbackParams params)
 {
-	return GetEntProp(client, Prop_Send, "m_iHealth") < TF2_GetMaxHealth(client);
+	return GetEntProp(client, Prop_Send, "m_iHealth") / TF2_GetMaxHealth(client) <= 0.795;
 }
