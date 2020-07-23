@@ -127,7 +127,7 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_DHookTossJarThink, false, entity, _, DHook_TossJarThinkPre);
 		DHookEntity(g_DHookTossJarThink, true, entity, _, DHook_TossJarThinkPost);
 	}
-	else if (StrEqual(classname, "tf_weapon_particle_cannon") || StrEqual(classname, "tf_weapon_pipebomblauncher"))
+	else if (StrEqual(classname, "tf_weapon_particle_cannon") || StrEqual(classname, "tf_weapon_grenadelauncher") || StrEqual(classname, "tf_weapon_cannon") || StrEqual(classname, "tf_weapon_pipebomblauncher"))
 	{
 		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
 	}
