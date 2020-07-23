@@ -530,8 +530,8 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 	
 	int slot = TF2_GetItemSlot(index, class);
 	
-	//Don't allow weapons and action items from client loadout slots
-	if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie || slot == WeaponSlot_Action)
+	//Don't allow weapons from client loadout slots
+	if (WeaponSlot_Primary <= slot <= WeaponSlot_BuilderEngie)
 		return Plugin_Handled;
 	
 	//Allow cosmetics
@@ -798,6 +798,10 @@ stock int TF2_GetItemSlot(int defindex, TFClassType class)
 				}
 			}
 		}
+		
+		// Action weapons share toolbox slot
+		if (slot == WeaponSlot_Action)
+			slot = WeaponSlot_BuilderEngie;
 	}
 	
 	return slot;
