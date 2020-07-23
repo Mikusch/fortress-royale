@@ -166,7 +166,8 @@ public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 				int maxAmmo = SDKCall_GetMaxAmmo(client, ammoType);
 				int ammo = GetEntProp(client, Prop_Send, "m_iAmmo", _, ammoType);
 				
-				if (float(ammo) / float(maxAmmo) <= 0.8)
+				//Ignore charge meters
+				if (maxAmmo != 1 && float(ammo) / float(maxAmmo) <= 0.8)
 					return true;
 			}
 		}
