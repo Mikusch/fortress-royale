@@ -483,6 +483,7 @@ stock bool TF2_TryToPickupDroppedWeapon(int client)
 	//Remove dropped weapon
 	RemoveEntity(droppedWeapon);
 	
+	CreateTimer(0.1, Timer_UpdateClientHud, GetClientSerial(client));
 	FRPlayer(client).LastWeaponPickupTime = GetGameTime();
 	return true;
 }
@@ -999,13 +1000,25 @@ stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0
 	return INVALID_ENT_REFERENCE;
 }
 
+stock int TF2_GetMaxHealth(int client)
+{
+	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
+}
+
+public Action Timer_UpdateClientHud(Handle timer, int serial)
+{
+	int client = GetClientFromSerial(serial);
+	if (0 < client <= MaxClients)
+	{
+		//Call client to reset HUD meter
+		Event event = CreateEvent("localplayer_pickup_weapon", true);
+		event.FireToClient(client);
+		event.Cancel();
+	}
+}
+
 public Action Timer_DestroyItem(Handle timer, int ref)
 {
 	if (IsValidEntity(ref))
 		RemoveEntity(ref);
-}
-
-stock int TF2_GetMaxHealth(int client)
-{
-	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
 }

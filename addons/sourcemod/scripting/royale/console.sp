@@ -154,6 +154,7 @@ public Action Console_DropItem(int client, const char[] command, int args)
 	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
 		TF2_SwitchActiveWeapon(client, melee);
 	
+	CreateTimer(0.1, Timer_UpdateClientHud, GetClientSerial(client));
 	return Plugin_Continue;
 }
 
