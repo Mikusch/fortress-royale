@@ -93,7 +93,6 @@ enum eEurekaTeleportTargets
 enum FRRoundState
 {
 	FRRoundState_Waiting,
-	FRRoundState_NeedPlayers,
 	FRRoundState_Setup,
 	FRRoundState_Active,
 	FRRoundState_End,
@@ -432,10 +431,7 @@ public void OnPluginEnd()
 
 public void OnMapStart()
 {
-	if (GameRules_GetRoundState() == RoundState_Preround)
-		g_RoundState = FRRoundState_Waiting;
-	else
-		g_RoundState = FRRoundState_NeedPlayers;
+	g_RoundState = FRRoundState_Waiting;
 	
 	Config_Refresh();
 	
@@ -531,7 +527,7 @@ public void OnGameFrame()
 	
 	switch (g_RoundState)
 	{
-		case FRRoundState_NeedPlayers: TryToStartRound();
+		case FRRoundState_Waiting: TryToStartRound();
 		case FRRoundState_Active: TryToEndRound();
 	}
 }
@@ -597,6 +593,9 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, 
 
 bool TryToStartRound()
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return false;
+	
 	//Need 2 players
 	if (GetPlayerCount() < 2)
 		return false;
