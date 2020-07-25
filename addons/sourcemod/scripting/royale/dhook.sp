@@ -26,6 +26,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
+	DHook_CreateDetour(gamedata, "CTFGrapplingHook::ActivateRune", DHook_ActivateRunePre, DHook_ActivateRunePost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
@@ -273,10 +274,44 @@ public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
 	FRPlayer(client).ChangeToTeam();
 }
 
+public MRESReturn DHook_ActivateRunePre(int grapple)
+{
+	//This function only targets one team, red or blu team
+	//Move owner back to normal team, move everyone else to enemy team
+	int client = GetEntPropEnt(grapple, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		FRPlayer(client).ChangeToTeam();
+		TFTeam team = TF2_GetEnemyTeam(client);
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+			{
+				FRPlayer(i).Team = TF2_GetTeam(i);
+				TF2_ChangeTeam(i, team);
+			}
+		}
+	}
+}
+
+public MRESReturn DHook_ActivateRunePost(int grapple)
+{
+	int client = GetEntPropEnt(grapple, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		FRPlayer(client).ChangeToSpectator();
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+				TF2_ChangeTeam(i, FRPlayer(i).Team);
+		}
+	}
+}
+
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 {
 	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	if (0 < owner <= MaxClients)
 	{
 		FRPlayer(owner).ChangeToSpectator();
 		FREntity(eyeball).ChangeToSpectator();
@@ -286,7 +321,7 @@ public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 {
 	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
+	if (0 < owner <= MaxClients)
 	{
 		FRPlayer(owner).ChangeToTeam();
 		FREntity(eyeball).ChangeToTeam();

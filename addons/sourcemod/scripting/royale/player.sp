@@ -179,6 +179,11 @@ methodmap FRPlayer
 		{
 			return g_ClientTeam[this];
 		}
+		
+		public set(TFTeam val)
+		{
+			g_ClientTeam[this] = val;
+		}
 	}
 	
 	property TFClassType Class
