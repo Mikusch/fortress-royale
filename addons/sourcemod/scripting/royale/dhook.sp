@@ -23,7 +23,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
-	DHook_CreateDetour(gamedata, "CTFPlayer::SaveMe", DHook_SaveMePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CTFGrapplingHook::ActivateRune", DHook_ActivateRunePre, DHook_ActivateRunePost);
@@ -227,12 +226,6 @@ public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
 	}
 	
 	return MRES_Ignored;
-}
-
-public MRESReturn DHook_SaveMePre(int client, Handle params)
-{
-	//Prevent showing medic bubble over this player's head
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_RegenThinkPre(int client, Handle params)

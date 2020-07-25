@@ -43,6 +43,7 @@ void ConVar_Init()
 	ConVar_Add("mp_respawnwavetime", 99999.0);
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
+	ConVar_Add("tf_helpme_range", -1.0);
 	ConVar_Add("tf_max_health_boost", 4.0);
 	ConVar_Add("tf_parachute_maxspeed_xy", 600.0);
 	ConVar_Add("tf_parachute_maxspeed_z", -200.0);
