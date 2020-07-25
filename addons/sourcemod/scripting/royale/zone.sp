@@ -292,7 +292,8 @@ public void Frame_UpdateZone(int ref)
 	int obj = MaxClients + 1;
 	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
 	{
-		int objRef = EntIndexToEntRef(obj);
+		FREntity entityObj = FREntity(obj);
+		
 		if (!GetEntProp(obj, Prop_Send, "m_bCarried"))
 		{
 			float originObj[3];
@@ -301,14 +302,14 @@ public void Frame_UpdateZone(int ref)
 			
 			bool outsideZone = GetVectorDistance(originObj, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
 			
-			if (!outsideZone && FREntity(objRef).OutsideZone)
-				FREntity(objRef).ZoneDamageTicks++;
+			if (!outsideZone && entityObj.OutsideZone)
+				entityObj.ZoneDamageTicks++;
 			
-			FREntity(objRef).OutsideZone = outsideZone;
+			entityObj.OutsideZone = outsideZone;
 		}
-		else if (FREntity(objRef).OutsideZone)
+		else if (entityObj.OutsideZone)
 		{
-			FREntity(objRef).OutsideZone = false;
+			entityObj.OutsideZone = false;
 		}
 	}
 	
@@ -334,11 +335,11 @@ public Action Timer_Bleed(Handle timer)
 	int obj = MaxClients + 1;
 	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
 	{
-		int objRef = EntIndexToEntRef(obj);
-		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && FREntity(objRef).OutsideZone)
+		FREntity entityObj = FREntity(obj);
+		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && entityObj.OutsideZone)
 		{
-			FREntity(objRef).ZoneDamageTicks++;
-			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(FREntity(objRef).ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
+			entityObj.ZoneDamageTicks++;
+			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(entityObj.ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
 			AcceptEntityInput(obj, "RemoveHealth");
 		}
 	}

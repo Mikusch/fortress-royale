@@ -279,7 +279,7 @@ public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 	{
 		FRPlayer(owner).ChangeToSpectator();
-		TF2_ChangeTeam(eyeball, TFTeam_Spectator);
+		FREntity(eyeball).ChangeToSpectator();
 	}
 }
 
@@ -289,7 +289,7 @@ public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 	if (0 < owner <= MaxClients && IsClientInGame(owner))
 	{
 		FRPlayer(owner).ChangeToTeam();
-		TF2_ChangeTeam(eyeball, TF2_GetTeam(owner));
+		FREntity(eyeball).ChangeToTeam();
 	}
 }
 

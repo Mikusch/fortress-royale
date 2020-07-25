@@ -403,6 +403,7 @@ public void OnPluginStart()
 	
 	delete gamedata;
 	
+	FREntity.InitPropertyList();
 	Command_Init();
 	Console_Init();
 	ConVar_Init();
@@ -536,9 +537,6 @@ public void OnEntityCreated(int entity, const char[] classname)
 {
 	DHook_OnEntityCreated(entity, classname);
 	SDKHook_OnEntityCreated(entity, classname);
-	
-	if (StrContains(classname, "obj_") == 0)
-		HookSingleEntityOutput(entity, "OnDestroyed", EntityOutput_OnDestroyed, true);
 }
 
 public void OnEntityDestroyed(int entity)
@@ -547,12 +545,8 @@ public void OnEntityDestroyed(int entity)
 	{
 		Loot_OnEntityDestroyed(entity);
 		Vehicles_OnEntityDestroyed(entity);
+		FREntity.Destroy(entity);
 	}
-}
-
-public void EntityOutput_OnDestroyed(const char[] output, int caller, int activator, float delay)
-{
-	FREntity(EntIndexToEntRef(caller)).Destroy();
 }
 
 public void TF2_OnConditionAdded(int client, TFCond condition)
