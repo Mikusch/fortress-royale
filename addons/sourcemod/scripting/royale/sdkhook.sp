@@ -20,10 +20,10 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_OnTakeDamagePost, Building_OnTakeDamagePost);
 	}
 	
-	if (StrEqual(classname, "tf_projectile_cleaver"))
+	if (StrEqual(classname, "tf_projectile_cleaver") || StrEqual(classname, "tf_projectile_pipe"))
 	{
-		SDKHook(entity, SDKHook_Touch, Cleaver_Touch);
-		SDKHook(entity, SDKHook_TouchPost, Cleaver_TouchPost);
+		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
+		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
 	}
 	else if (StrEqual(classname, "obj_attachment_sapper"))
 	{
@@ -164,19 +164,25 @@ public void Building_OnTakeDamagePost(int building, int attacker, int inflictor,
 	GameRules_SetProp("m_bPowerupMode", false);
 }
 
-public Action Cleaver_Touch(int entity, int other)
+public Action Projectile_Touch(int entity, int other)
 {
 	//This function have team check, change projectile and owner to spectator to touch both teams
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (owner != other)
+	{
 		FRPlayer(owner).ChangeToSpectator();
+		TF2_ChangeTeam(entity, TFTeam_Spectator);
+	}
 }
 
-public void Cleaver_TouchPost(int entity, int other)
+public void Projectile_TouchPost(int entity, int other)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (owner != other)
+	{
 		FRPlayer(owner).ChangeToTeam();
+		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
+	}
 }
 
 public Action Sapper_Think(int entity)
