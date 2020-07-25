@@ -134,15 +134,7 @@ public void Loot_BreakCrate(int client, int crate, LootCrate loot)
 	while (GetRandomFloat() > content.percentage || !LootTable_GetRandomLoot(lootTable, client, content.type, content.tier, class));
 	
 	float origin[3];
-	GetEntPropVector(crate, Prop_Data, "m_vecOrigin", origin);
-	
-	//Calculate where centre of origin by boundary box
-	float mins[3], maxs[3], offset[3];
-	GetEntPropVector(crate, Prop_Data, "m_vecMins", mins);
-	GetEntPropVector(crate, Prop_Data, "m_vecMaxs", maxs);
-	AddVectors(maxs, mins, offset);
-	ScaleVector(offset, 0.5);
-	AddVectors(origin, offset, origin);
+	WorldSpaceCenter(crate, origin);
 	
 	//Start function call to loot creation function
 	Call_StartFunction(null, lootTable.callback_create);

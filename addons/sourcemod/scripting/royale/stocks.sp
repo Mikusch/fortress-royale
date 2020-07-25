@@ -217,12 +217,15 @@ stock bool GetWaterHeightFromEntity(int entity, float &height)
 	return true;
 }
 
-stock void GetEntityWorldSpaceCenter(int entity, float[3] buffer)
+stock void WorldSpaceCenter(int entity, float[3] buffer)
 {
-	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", buffer);
-	float maxs[3];
+	float origin[3], mins[3], maxs[3], offset[3];
+	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(entity, Prop_Data, "m_vecMins", mins);
 	GetEntPropVector(entity, Prop_Data, "m_vecMaxs", maxs);
-	buffer[2] += maxs[2] / 2;
+	AddVectors(mins, maxs, offset);
+	ScaleVector(offset, 0.5);
+	AddVectors(origin, offset, buffer);
 }
 
 stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERSOLID)
@@ -977,7 +980,7 @@ stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0
 			SetEntPropEnt(item, Prop_Data, "m_hOwnerEntity", client);
 			
 			float origin[3];
-			GetEntityWorldSpaceCenter(client, origin);
+			WorldSpaceCenter(client, origin);
 			
 			float impulse[3];
 			impulse[0] = GetRandomFloat(-1.0);
