@@ -9,6 +9,8 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKHook(client, SDKHook_Touch, Client_Touch);
 	SDKHook(client, SDKHook_TouchPost, Client_TouchPost);
+	SDKHook(client, SDKHook_WeaponSwitch, Client_WeaponSwitch);
+	SDKHook(client, SDKHook_WeaponSwitchPost, Client_WeaponSwitchPost);
 }
 
 void SDKHook_OnEntityCreated(int entity, const char[] classname)
@@ -145,6 +147,28 @@ public void Client_TouchPost(int client, int toucher)
 		FRPlayer(client).ChangeToTeam();
 		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_ALIVE);
 	}
+}
+
+public Action Client_WeaponSwitch(int client, int weapon)
+{
+	int oldWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (oldWeapon == -1)
+		return;
+	
+	char classname[256];
+	GetEntityClassname(oldWeapon, classname, sizeof(classname));
+	if (StrEqual(classname, "tf_weapon_medigun"))
+	{
+		//Remove medigun's owner, so TF2 can't find owner to remove self effects on holster
+		SetEntPropEnt(oldWeapon, Prop_Send, "m_hOwnerEntity", -1);
+	}
+}
+
+public Action Client_WeaponSwitchPost(int client, int weapon)
+{
+	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
+	if (medigun != -1)
+		SetEntPropEnt(medigun, Prop_Send, "m_hOwnerEntity", client);
 }
 
 public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)

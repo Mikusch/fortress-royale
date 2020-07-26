@@ -64,11 +64,11 @@
 				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF\x75\x2A\xFF\xB7\x2A\x2A\x2A\x2A\xEB\x01\x50\xE8"
 			}
-			"CTFPlayerShared::SetChargeEffect"
+			"CTFPlayer::GetChargeEffectBeingProvided"
 			{
 				"library"	"server"
-				"linux"		"@_ZN15CTFPlayerShared15SetChargeEffectE20medigun_charge_typesbbRK16MedigunEffects_tfP9CTFPlayer"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x53\x8B\x5D\x14"
+				"linux"		"@_ZN9CTFPlayer28GetChargeEffectBeingProvidedEv"
+				"windows"	"\x55\x8B\xEC\x51\x56\x8B\xF1\x8D\x86\x0C\x21\x00\x00"
 			}
 			"CTFPlayerShared::PulseRageBuff"
 			{
@@ -306,40 +306,12 @@
 				"return"	"void"
 				"this"		"entity"
 			}
-			"CTFPlayerShared::SetChargeEffect"
+			"CTFPlayer::GetChargeEffectBeingProvided"
 			{
-				"signature"	"CTFPlayerShared::SetChargeEffect"
+				"signature"	"CTFPlayer::GetChargeEffectBeingProvided"
 				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"iCharge"
-					{
-						"type"	"int"
-					}
-					"bState"
-					{
-						"type"	"bool"
-					}
-					"bInstant"
-					{
-						"type"	"bool"
-					}
-					"effects"
-					{
-						"type"	"objectptr"
-						"flags"	"byref"
-					}
-					"flWearOffTime"
-					{
-						"type"	"float"
-					}
-					"pProvider"
-					{
-						"type"	"cbaseentity"
-					}
-				}
+				"return"	"int"
+				"this"		"entity"
 			}
 			"CTFPlayerShared::PulseRageBuff"
 			{

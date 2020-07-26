@@ -21,7 +21,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
-	DHook_CreateDetour(gamedata, "CTFPlayerShared::SetChargeEffect", DHook_SetChargeEffectPre, _);
+	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CTFGrapplingHook::ActivateRune", DHook_ActivateRunePre, DHook_ActivateRunePost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
@@ -266,13 +266,26 @@ public MRESReturn DHook_RegenThinkPost(int client, Handle params)
 	FRPlayer(client).ChangeToClass();
 }
 
-public MRESReturn DHook_SetChargeEffectPre(Address playershared, Handle params)
+public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle returnVal)
 {
-	//If pProvider is null, medic is switching weapon and losing effect, allow medic keep effect
-	if (DHookIsNullParam(params, 6))
-		return MRES_Supercede;
-	
-	return MRES_Ignored;
+	//Allow return medigun effects while client switched away from active weapon
+	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
+	if (medigun != -1)
+	{
+		FRPlayer(client).ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		SetEntProp(medigun, Prop_Send, "m_bHolstered", false);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", medigun);
+	}
+}
+
+public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle returnVal)
+{
+	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
+	if (medigun != -1)
+	{
+		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
+	}
 }
 
 public MRESReturn DHook_PulseRageBuffPre(Address playershared, Handle params)

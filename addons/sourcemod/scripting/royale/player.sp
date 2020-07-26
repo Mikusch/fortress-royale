@@ -9,6 +9,7 @@ static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
 static EditorItem g_ClientEditorItem[TF_MAXPLAYERS + 1];
 static int g_ClientEditorItemRef[TF_MAXPLAYERS + 1];
 static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
+static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
@@ -170,6 +171,19 @@ methodmap FRPlayer
 		public set(int val)
 		{
 			g_ClientZoneDamageTicks[this] = val;
+		}
+	}
+	
+	property int ActiveWeapon
+	{
+		public get()
+		{
+			return g_ClientActiveWeapon[this];
+		}
+		
+		public set(int val)
+		{
+			g_ClientActiveWeapon[this] = val;
 		}
 	}
 	
