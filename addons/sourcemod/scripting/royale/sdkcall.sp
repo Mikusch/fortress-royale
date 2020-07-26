@@ -5,10 +5,14 @@ static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallGetMaxAmmo;
 static Handle g_SDKCallFindAndHealTargets;
+static Handle g_SDKCallGetGlobalTeam;
+static Handle g_SDKCallChangeTeam;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
 static Handle g_SDKCallGiveNamedItem;
 static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
+static Handle g_SDKCallAddPlayer;
+static Handle g_SDKCallRemovePlayer;
 static Handle g_SDKCallSetVelocity;
 static Handle g_SDKCallGetVelocity;
 
@@ -21,10 +25,14 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
+	g_SDKCallGetGlobalTeam = PrepSDKCall_GetGlobalTeam(gamedata);
+	g_SDKCallChangeTeam = PrepSDKCall_ChangeTeam(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallGetSlot = PrepSDKCall_GetSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+	g_SDKCallAddPlayer = PrepSDKCall_AddPlayer(gamedata);
+	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
 	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
 	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
 }
@@ -135,6 +143,33 @@ static Handle PrepSDKCall_FindAndHealTargets(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_GetGlobalTeam(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "GetGlobalTeam");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: GetGlobalTeam");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_ChangeTeam(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseEntity::ChangeTeam");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseEntity::ChangeTeam");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_GetDefaultItemChargeMeterValue(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -186,6 +221,32 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CBasePlayer::EquipWearable");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_AddPlayer(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CTeam::AddPlayer");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogMessage("Failed to create SDKCall: CTeam::AddPlayer");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_RemovePlayer(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CTeam::RemovePlayer");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogMessage("Failed to create SDKCall: CTeam::RemovePlayer");
 	
 	return call;
 }
@@ -253,6 +314,16 @@ bool SDKCall_FindAndHealTargets(int medigun)
 	return SDKCall(g_SDKCallFindAndHealTargets, medigun);
 }
 
+Address SDKCall_GetGlobalTeam(TFTeam team)
+{
+	return SDKCall(g_SDKCallGetGlobalTeam, team);
+}
+
+void SDKCall_ChangeTeam(int entity, TFTeam team)
+{
+	SDKCall(g_SDKCallChangeTeam, entity, team);
+}
+
 float SDKCall_GetDefaultItemChargeMeterValue(int weapon)
 {
 	return SDKCall(g_SDKCallGetDefaultItemChargeMeterValue, weapon);
@@ -271,6 +342,16 @@ int SDKCall_GetSlot(int weapon)
 void SDKCall_EquipWearable(int client, int wearable)
 {
 	SDKCall(g_SDKCallEquipWearable, client, wearable);
+}
+
+void SDKCall_AddPlayer(Address team, int client)
+{
+	SDKCall(g_SDKCallAddPlayer, team, client);
+}
+
+void SDKCall_RemovePlayer(Address team, int client)
+{
+	SDKCall(g_SDKCallRemovePlayer, team, client);
 }
 
 void SDKCall_SetVelocity(int entity, const float velocity[3], const float angVelocity[3])

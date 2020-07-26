@@ -18,8 +18,6 @@ void DHook_Init(GameData gamedata)
 {
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::FindTarget", DHook_FindTargetPre, DHook_FindTargetPost);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetPlayer", DHook_ValidTargetPre, _);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::ValidTargetObject", DHook_ValidTargetPre, _);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
@@ -175,33 +173,62 @@ public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle param
 
 public MRESReturn DHook_FindTargetPre(int sentry, Handle returnVal)
 {
-	//Sentry can only target one team, target enemy team
-	int client = GetEntPropEnt(sentry, Prop_Send, "m_hBuilder");
-	if (client <= 0)
-		return;
+	//Sentry can only target one team, move all friendly to sentry team, move everyone else to enemy team.
+	//CTeam class is used to collect players, so m_iTeamNum change wont be enough to fix it.
+	TFTeam teamFriendly = TF2_GetTeam(sentry);
+	TFTeam teamEnemy = TF2_GetEnemyTeam(sentry);
+	Address team = SDKCall_GetGlobalTeam(teamEnemy);
 	
-	TF2_ChangeTeam(sentry, TF2_GetEnemyTeam(client));
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+		{
+			FRPlayer(client).Team = TF2_GetTeam(client);
+			bool friendly = TF2_IsObjectFriendly(sentry, client);
+			
+			if (friendly && FRPlayer(client).Team == teamEnemy)
+				SDKCall_RemovePlayer(team, client);
+			else if (!friendly && FRPlayer(client).Team != teamEnemy)
+				SDKCall_AddPlayer(team, client);
+		}
+	}
+	
+	int building = MaxClients + 1;
+	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+	{
+		if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
+		{
+			FREntity(building).Team = TF2_GetTeam(building);
+			if (TF2_IsObjectFriendly(sentry, building))
+				SDKCall_ChangeTeam(building, teamFriendly);
+			else
+				SDKCall_ChangeTeam(building, teamEnemy);
+		}
+	}
 }
 
 public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
 {
-	int client = GetEntPropEnt(sentry, Prop_Send, "m_hBuilder");
-	if (client <= 0)
-		return;
+	TFTeam enemyTeam = TF2_GetEnemyTeam(sentry);
+	Address team = SDKCall_GetGlobalTeam(enemyTeam);
 	
-	TF2_ChangeTeam(sentry, TF2_GetTeam(client));
-}
-
-public MRESReturn DHook_ValidTargetPre(int sentry, Handle returnVal, Handle hParams)
-{
-	int target = DHookGetParam(hParams, 1);
-	if (TF2_IsObjectFriendly(sentry, target))
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		DHookSetReturn(returnVal, false);
-		return MRES_Supercede;
+		if (IsClientInGame(client))
+		{
+			bool friendly = TF2_IsObjectFriendly(sentry, client);
+			
+			if (friendly && FRPlayer(client).Team == enemyTeam)
+				SDKCall_AddPlayer(team, client);
+			else if (!friendly && FRPlayer(client).Team != enemyTeam)
+				SDKCall_RemovePlayer(team, client);
+		}
 	}
 	
-	return MRES_Ignored;
+	int building = MaxClients + 1;
+	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
+			SDKCall_ChangeTeam(building, FREntity(building).Team);
 }
 
 public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Handle hParams)
