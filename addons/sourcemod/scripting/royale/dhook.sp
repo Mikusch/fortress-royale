@@ -445,21 +445,36 @@ public void DHook_GiveNamedItemRemoved(int hookid)
 public MRESReturn DHook_BatPrimaryAttackPre(int weapon)
 {
 	//For Boston Basher (tf_weapon_bat), m_potentialVictimVector collects enemy team to possibly not bleed itself, but client in spectator would collect themself.
+	//Move client back to team, move everyone else to enemy team.
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
+	if (client <= 0 || client > MaxClients)
+		return;
+	
+	FRPlayer(client).ChangeToTeam();
+	TFTeam team = TF2_GetEnemyTeam(client);
+	
+	for (int i = 1; i <= MaxClients; i++)
 	{
-		FRPlayer(client).ChangeToTeam();
-		TF2_ChangeTeam(client, TF2_GetEnemyTeam(client));
+		if (IsClientInGame(i) && i != client)
+		{
+			FRPlayer(i).Team = TF2_GetTeam(i);
+			TF2_ChangeTeam(i, team);
+		}
 	}
 }
 
 public MRESReturn DHook_BatPrimaryAttackPost(int weapon)
 {
 	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
+	if (client <= 0 || client > MaxClients)
+		return;
+	
+	FRPlayer(client).ChangeToSpectator();
+	
+	for (int i = 1; i <= MaxClients; i++)
 	{
-		TF2_ChangeTeam(client, TF2_GetEnemyTeam(client));
-		FRPlayer(client).ChangeToSpectator();
+		if (IsClientInGame(i) && i != client)
+			TF2_ChangeTeam(i, FRPlayer(i).Team);
 	}
 }
 
