@@ -205,6 +205,9 @@ public MRESReturn DHook_FindTargetPre(int sentry, Handle returnVal)
 				SDKCall_ChangeTeam(building, teamEnemy);
 		}
 	}
+	
+	//eyeball_boss uses InSameTeam check but obj_sentrygun owner is itself
+	SetEntPropEnt(sentry, Prop_Send, "m_hOwnerEntity", GetEntPropEnt(sentry, Prop_Send, "m_hBuilder"));
 }
 
 public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
@@ -229,6 +232,8 @@ public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
 	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
 		if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
 			SDKCall_ChangeTeam(building, FREntity(building).Team);
+	
+	SetEntPropEnt(sentry, Prop_Send, "m_hOwnerEntity", sentry);
 }
 
 public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Handle hParams)
@@ -343,22 +348,62 @@ public MRESReturn DHook_ActivateRunePost(int grapple)
 
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 {
-	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients)
+	//This function only targets one team, red or blu team
+	//Move owner back to normal team, move everyone else to enemy team
+	int client = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
+	if (client <= 0 || client > MaxClients)
+		return;
+	
+	TFTeam teamFriendly = TF2_GetTeam(client);
+	TFTeam teamEnemy = TF2_GetEnemyTeam(client);
+	
+	for (int i = 1; i <= MaxClients; i++)
 	{
-		FRPlayer(owner).ChangeToSpectator();
-		FREntity(eyeball).ChangeToSpectator();
+		if (IsClientInGame(i) && i != client)
+		{
+			FRPlayer(i).Team = TF2_GetTeam(i);
+			TF2_ChangeTeam(i, teamEnemy);
+		}
+	}
+	
+	int building = MaxClients + 1;
+	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+	{
+		FREntity(building).Team = TF2_GetTeam(building);
+		if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == client)
+			TF2_ChangeTeam(building, teamFriendly);
+		else
+			TF2_ChangeTeam(building, teamEnemy);
+	}
+	
+	int boss = MaxClients + 1;
+	while ((boss = FindEntityByClassname(boss, "eyeball_boss")) > MaxClients)
+	{
+		//Dont care if eyeball should attack another eyeball, always be friendly
+		FREntity(boss).Team = TF2_GetTeam(boss);
+		TF2_ChangeTeam(boss, teamFriendly);
 	}
 }
 
 public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 {
-	int owner = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients)
+	int client = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
+	if (client <= 0 || client > MaxClients)
+		return;
+	
+	for (int i = 1; i <= MaxClients; i++)
 	{
-		FRPlayer(owner).ChangeToTeam();
-		FREntity(eyeball).ChangeToTeam();
+		if (IsClientInGame(i) && i != client)
+			TF2_ChangeTeam(i, FRPlayer(i).Team);
 	}
+	
+	int building = MaxClients + 1;
+	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		TF2_ChangeTeam(building, FREntity(building).Team);
+	
+	int boss = MaxClients + 1;
+	while ((boss = FindEntityByClassname(boss, "eyeball_boss")) > MaxClients)
+		TF2_ChangeTeam(boss, FREntity(boss).Team);
 }
 
 public MRESReturn DHook_StartLagCompensationPre(Address manager, Handle params)
