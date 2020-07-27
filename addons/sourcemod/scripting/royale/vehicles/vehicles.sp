@@ -64,8 +64,8 @@ enum struct Vehicle
 	float tilt_max;				/**< Max tilt speed */
 	
 	/**< Config map */
-	float origin[3];			/**< Positon to spawn entity in world */
-	float angles[3];			/**< Angles to spawn entity in world */
+	char origin[CONFIG_MAXCHAR];/**< Positon to spawn entity in world */
+	char angles[CONFIG_MAXCHAR];/**< Angles to spawn entity in world */
 	
 	void ReadConfig(KeyValues kv)
 	{
@@ -94,8 +94,9 @@ enum struct Vehicle
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
-		kv.GetVector("origin", this.origin, this.origin);
-		kv.GetVector("angles", this.angles, this.angles);
+		//origin and angles is saved as string so we dont get float precision problem
+		kv.GetString("origin", this.origin, CONFIG_MAXCHAR, this.origin);
+		kv.GetString("angles", this.angles, CONFIG_MAXCHAR, this.angles);
 		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
 		this.mass = kv.GetFloat("mass", this.mass);
 		this.impact = kv.GetFloat("impact", this.impact);
@@ -132,8 +133,8 @@ enum struct Vehicle
 	{
 		//We only care prefab, origin and angles to save to "Vehicles" section, for now
 		kv.SetString("prefab", this.name);
-		kv.SetVector("origin", this.origin);
-		kv.SetVector("angles", this.angles);
+		kv.SetString("origin", this.origin);
+		kv.SetString("angles", this.angles);
 	}
 	
 	void Create(int entity)
@@ -245,7 +246,12 @@ int Vehicles_CreateEntity(Vehicle vehicle)
 		
 		if (DispatchSpawn(entity))
 		{
-			TeleportEntity(entity, vehicle.origin, vehicle.angles, NULL_VECTOR);
+			//Convert kv strings to vector to teleport vehicle
+			float origin[3], angles[3];
+			StringToVector(vehicle.origin, origin);
+			StringToVector(vehicle.angles, angles);
+			TeleportEntity(entity, origin, angles, NULL_VECTOR);
+			
 			AcceptEntityInput(entity, "EnableMotion");
 			SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 			

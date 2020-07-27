@@ -92,6 +92,20 @@ stock void AnglesToVelocity(const float angles[3], float velocity[3], float spee
 	ScaleVector(velocity, speed);
 }
 
+stock void StringToVector(const char[] string, float vector[3])
+{
+	char buffer[3][16];
+	ExplodeString(string, " ", buffer, sizeof(buffer), sizeof(buffer[]));
+	
+	for (int i = 0; i < sizeof(vector); i++)
+		vector[i] = StringToFloat(buffer[i]);
+}
+
+stock void VectorToString(const float vector[3], char[] string, int length)
+{
+	Format(string, length, "%f %f %f", vector[0], vector[1], vector[2]);
+}
+
 stock bool IsEntityStuck(int entity)
 {
 	float mins[3], maxs[3], origin[3];

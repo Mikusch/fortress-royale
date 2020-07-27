@@ -49,7 +49,13 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 		{
 			Loot_SetCratePrefab(crate, loot);
 			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
-			TeleportEntity(crate, loot.origin, loot.angles, NULL_VECTOR);
+			
+			//origin and angles in config is saved as string, convert to vector
+			float origin[3], angles[3];
+			StringToVector(loot.origin, origin);
+			StringToVector(loot.angles, angles);
+			TeleportEntity(crate, origin, angles, NULL_VECTOR);
+			
 			HookSingleEntityOutput(crate, "OnBreak", callback, true);
 			
 			if (physics)

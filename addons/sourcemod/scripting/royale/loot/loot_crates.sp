@@ -11,8 +11,8 @@ enum struct LootCrate
 	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
 	
 	// Loots
-	float origin[3];				/**< Spawn origin */
-	float angles[3];				/**< Spawn angles */
+	char origin[CONFIG_MAXCHAR];	/**< Spawn origin */
+	char angles[CONFIG_MAXCHAR];	/**< Spawn angles */
 	
 	// LootDefault/LootBus/LootPrefabs
 	char model[PLATFORM_MAX_PATH];	/**< World model */
@@ -27,8 +27,10 @@ enum struct LootCrate
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetVector("origin", this.origin, this.origin);
-		kv.GetVector("angles", this.angles, this.angles);
+		//Get vectors as string so we dont worry float precision when converting back to kv
+		kv.GetString("origin", this.origin, CONFIG_MAXCHAR, this.origin);
+		kv.GetString("angles", this.angles, CONFIG_MAXCHAR, this.angles);
+		
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		this.skin = kv.GetNum("skin", this.skin);
@@ -68,8 +70,8 @@ enum struct LootCrate
 	{
 		//We only care prefab, origin and angles to save to "Loot" section, for now
 		kv.SetString("prefab", this.namePrefab);
-		kv.SetVector("origin", this.origin);
-		kv.SetVector("angles", this.angles);
+		kv.SetString("origin", this.origin);
+		kv.SetString("angles", this.angles);
 	}
 	
 	void GetRandomLootCrateContent(LootCrateContent buffer)

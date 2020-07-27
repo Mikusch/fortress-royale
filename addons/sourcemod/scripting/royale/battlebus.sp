@@ -322,8 +322,13 @@ public Action BattleBus_SpawnLootCrate(Handle timer, int bus)
 	
 	LootCrate loot;
 	LootCrate_GetBus(loot);
-	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", loot.origin);
-	GetEntPropVector(bus, Prop_Data, "m_angRotation", loot.angles);
+	
+	//Get vectors and convert to string, as that how config is done
+	float origin[3], angles[3];
+	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(bus, Prop_Data, "m_angRotation", angles);
+	VectorToString(origin, loot.origin, sizeof(loot.origin));
+	VectorToString(angles, loot.angles, sizeof(loot.angles));
 	
 	Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateBus, true);
 }

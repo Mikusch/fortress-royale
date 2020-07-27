@@ -103,7 +103,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 			}
 			else if (StrEqual(select, "place"))
 			{
-				//Use ghost entity to get origin and angles to set, and spawn new item
+				//Use ghost entity to get vector origin and angles, then convert to string so kv can set it, and spawn new item
 				int ghost = entity;
 				float origin[3], angles[3];
 				GetEntPropVector(ghost, Prop_Data, "m_vecOrigin", origin);
@@ -115,8 +115,8 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 					{
 						LootCrate loot;
 						int configIndex = LootConfig_GetCrateByEntity(ghost, loot);
-						loot.origin = origin;
-						loot.angles = angles;
+						VectorToString(origin, loot.origin, sizeof(loot.origin));
+						VectorToString(angles, loot.angles, sizeof(loot.angles));
 						
 						entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 						
@@ -127,8 +127,8 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 					{
 						Vehicle vehicle;
 						Vehicles_GetByEntity(ghost, vehicle);
-						vehicle.origin = origin;
-						vehicle.angles = angles;
+						VectorToString(origin, vehicle.origin, sizeof(vehicle.origin));
+						VectorToString(angles, vehicle.angles, sizeof(vehicle.angles));
 						
 						entity = Vehicles_CreateEntity(vehicle);
 						
