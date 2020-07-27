@@ -558,6 +558,10 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	for (int i = 0; i < sizeof(g_visibleConds); i++)
 		if (condition == g_visibleConds[i])
 			FRPlayer(client).VisibleCond++;
+	
+	//knockout dont get forced to melee if have fists as melee weapon (only works properly on heavy)
+	if (condition == TFCond_RuneKnockout)
+		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
