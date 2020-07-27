@@ -217,6 +217,19 @@ stock bool GetWaterHeightFromEntity(int entity, float &height)
 	return true;
 }
 
+stock void CreateFade(int client, int duration = 1000, int r = 255, int g = 255, int b = 255, int a = 255)
+{
+	BfWrite bf = UserMessageToBfWrite(StartMessageOne("Fade", client));
+	bf.WriteShort(duration);	//Fade duration
+	bf.WriteShort(0);
+	bf.WriteShort(0x0001);
+	bf.WriteByte(r);			//Red
+	bf.WriteByte(g);			//Green
+	bf.WriteByte(b);			//Blue
+	bf.WriteByte(a);			//Alpha
+	EndMessage();
+}
+
 stock void WorldSpaceCenter(int entity, float[3] buffer)
 {
 	float origin[3], mins[3], maxs[3], offset[3];

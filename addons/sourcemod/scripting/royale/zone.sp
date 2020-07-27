@@ -3,6 +3,9 @@
 #define ZONE_DIAMETER	15000.0
 #define ZONE_DURATION	60.0
 
+#define ZONE_FADE_START_RATIO	0.95
+#define ZONE_FADE_ALPHA_MAX		64
+
 enum struct ZoneConfig
 {
 	int numShrinks;		/**< How many shrinks should be done */
@@ -38,7 +41,7 @@ void Zone_ReadConfig(KeyValues kv)
 
 void Zone_Precache()
 {
-	PrecacheSound("mvm/ambient_mp3/mvm_siren.mp3");
+	PrecacheScriptSound(ZONE_SHRINK_SOUND);
 	
 	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vmt");
 	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vtf");
@@ -268,8 +271,23 @@ public void Frame_UpdateZone(int ref)
 			GetClientAbsOrigin(client, originClient);
 			originClient[2] = originZone[2];
 			
-			bool outsideZone = GetVectorDistance(originClient, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
+			float radius = g_ZoneConfig.diameterMax * percentage / 2.0;
+			float ratio = GetVectorDistance(originClient, originZone) / radius;
+			bool outsideZone = ratio > 1.0;
 			
+			//Create screen fade when approaching the zone border
+			if (ratio > ZONE_FADE_START_RATIO)
+			{
+				float alpha;
+				if (ratio > 1.0)
+					alpha = float(ZONE_FADE_ALPHA_MAX);
+				else
+					alpha = (ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX;
+				
+				CreateFade(client, _, 255, 0, 0, RoundToNearest(alpha));
+			}
+			
+			//Apply or remove bleed effect
 			if (outsideZone && !TF2_IsPlayerInCondition(client, TFCond_Bleeding))
 			{
 				TF2_MakeBleed(client, client, 9999.0);	//Does no damage
