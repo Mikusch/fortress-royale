@@ -566,12 +566,26 @@ public MRESReturn DHook_SmackPre(int weapon)
 	//Mannpower have increased melee damage, and even bigger for knockout powerup
 	GameRules_SetProp("m_bPowerupMode", true);
 	
-	//For wrench, client is in spectator during this hook so allow repair and upgrade his building if not using bare hands
 	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
 	{
+		//For wrench, client is in spectator during this hook so allow repair and upgrade his building if not using bare hands
 		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
 		if (0 < client <= MaxClients)
 			FRPlayer(client).ChangeBuildingsToSpectator();
+	}
+	else
+	{
+		//For gunslinger hands, prevent combo punch
+		char classname[256];
+		GetEntityClassname(weapon, classname, sizeof(classname));
+		if (StrEqual(classname, "tf_weapon_robot_arm"))
+		{
+			static int offsetComboCount = -1;
+			if (offsetComboCount == -1)
+				offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
+			
+			SetEntData(weapon, offsetComboCount, 0);
+		}
 	}
 }
 

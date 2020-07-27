@@ -725,8 +725,7 @@ stock void TF2_EquipWeapon(int client, int weapon)
 	else if (StrContains(classname, "tf_wearable") == 0)
 		SDKCall_EquipWearable(client, weapon);
 	
-	int defindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-	if (TF2Econ_GetItemSlot(defindex, TF2_GetPlayerClass(client)) == WeaponSlot_Melee)
+	if (SDKCall_GetSlot(weapon) == WeaponSlot_Melee)
 		DHook_HookMeleeWeapon(weapon);
 }
 
