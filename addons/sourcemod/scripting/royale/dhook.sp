@@ -273,6 +273,9 @@ public MRESReturn DHook_RegenThinkPost(int client, Handle params)
 
 public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle returnVal)
 {
+	if (!IsClientInGame(client))
+		return;
+	
 	//Allow return medigun effects while client switched away from active weapon
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun != -1)
@@ -285,6 +288,9 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle retur
 
 public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle returnVal)
 {
+	if (!IsClientInGame(client))
+		return;
+	
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun != -1)
 	{
