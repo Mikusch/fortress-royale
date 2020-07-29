@@ -1,7 +1,6 @@
-#define ZONE_MODEL			"models/br/br_zone_gray_nonbezier.mdl"
+#define ZONE_MODEL			"models/kirillian/brsphere_huge.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
-#define ZONE_DIAMETER	15000.0
-#define ZONE_DURATION	60.0
+#define ZONE_DIAMETER	20000.0
 
 #define ZONE_FADE_START_RATIO	0.95
 #define ZONE_FADE_ALPHA_MAX		64
@@ -11,24 +10,32 @@ enum struct ZoneConfig
 	int numShrinks;		/**< How many shrinks should be done */
 	float diameterMax;	/**< Starting zone size */
 	float diameterSafe; /**< center of the zone must always be inside this diameter of center of map */
-	float center[3];	/**< center of the map, and starting zone position */
+	
+	float center_x;
+	float center_y;
+	float center_z_max;
+	float center_z_min;
 	
 	void ReadConfig(KeyValues kv)
 	{
 		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
 		this.diameterMax = kv.GetFloat("diametermax", this.diameterMax);
 		this.diameterSafe = kv.GetFloat("diametersafe", this.diameterSafe);
-		kv.GetVector("center", this.center, this.center);
+		
+		this.center_x = kv.GetFloat("center_x", this.center_x);
+		this.center_y = kv.GetFloat("center_y", this.center_y);
+		this.center_z_max = kv.GetFloat("center_z_max", this.center_z_max);
+		this.center_z_min = kv.GetFloat("center_z_min", this.center_z_min);
 	}
 }
 
 static ZoneConfig g_ZoneConfig;
 
-static ArrayList g_ZonePropGhost;
 static Handle g_ZoneTimer;
 static Handle g_ZoneTimerBleed;
 
 static int g_ZonePropRef = INVALID_ENT_REFERENCE;	//Zone prop model
+static int g_ZoneGhostRef = INVALID_ENT_REFERENCE;	//Ghost zone prop model
 static float g_ZonePropcenterOld[3];	//Where the zone will start moving
 static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
 static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
@@ -43,98 +50,117 @@ void Zone_Precache()
 {
 	PrecacheScriptSound(ZONE_SHRINK_SOUND);
 	
-	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vmt");
-	AddFileToDownloadsTable("materials/models/br/br_zone_gray.vtf");
-	AddFileToDownloadsTable("materials/models/br/invuln_gray.vtf");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx80.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx90.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge.mdl");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge.sw.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge.vvd");
+
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vmt");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vtf");
+}
+
+bool Zone_GetHeight(float origin[3])
+{
+	//Height is calculated by creating 25 traces in a 5 x 5 grid from max height down to ground to figure out average height
+	ArrayList heights = new ArrayList();
 	
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx80.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.dx90.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.mdl");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.sw.vtx");
-	AddFileToDownloadsTable("models/br/br_zone_gray_nonbezier.vvd");
+	for (int x = -2; x <= 2; x++)
+	{
+		for (int y = -2; y <= 2; y++)
+		{
+			float originStart[3], originEnd[3];
+			originStart[0] = origin[0] + (x * 64.0);
+			originStart[1] = origin[1] + (y * 64.0);
+			originStart[2] = g_ZoneConfig.center_z_max;
+			
+			if (TR_GetPointContents(originStart) & MASK_SOLID)
+				continue;
+			
+			TR_TraceRayFilter(originStart, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_OnlyHitWorld);
+			if (!TR_DidHit())
+				continue;
+			
+			TR_GetEndPosition(originEnd);
+			if (originEnd[2] < g_ZoneConfig.center_z_min)
+				continue;
+			
+			heights.Push(originEnd[2]);
+		}
+	}
+	
+	int length = heights.Length;
+	if (length <= 10)
+	{
+		//Only collected 10 out of 25, origin is probably in a bad area to fight, refuse to give height
+		delete heights;
+		return false;
+	}
+	
+	origin[2] = 0.0;
+	for (int i = 0; i < length; i++)
+		origin[2] += view_as<float>(heights.Get(i));	//bullshit adds as int instead of float
+	
+	origin[2] /= length;
+	delete heights;
+	return true;
 }
 
 void Zone_RoundStart()
 {
-	delete g_ZonePropGhost;
-	g_ZonePropGhost = new ArrayList();
-	
 	g_ZoneTimer = null;
 	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
-	g_ZonePropcenterOld = g_ZoneConfig.center;
-	g_ZonePropcenterNew = g_ZoneConfig.center;
 	g_ZoneShrinkStart = 0.0;
 	
-	int zone = CreateEntityByName("prop_dynamic");
-	if (zone > MaxClients)
+	float origin[3];
+	origin[0] = g_ZoneConfig.center_x;
+	origin[1] = g_ZoneConfig.center_y;
+	if (!Zone_GetHeight(origin))
 	{
-		DispatchKeyValueVector(zone, "origin", g_ZonePropcenterOld);
-		DispatchKeyValue(zone, "model", ZONE_MODEL);
-		DispatchKeyValue(zone, "disableshadows", "1");
-		
-		SetEntPropFloat(zone, Prop_Send, "m_flModelScale", g_ZoneConfig.diameterMax / ZONE_DIAMETER);
-		SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
-		
-		DispatchSpawn(zone);
-		
-		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
-		SetEntityRenderColor(zone, 255, 0, 0, 255);
-		
-		SetVariantString("shrink");
-		AcceptEntityInput(zone, "SetAnimation");
-		
-		SetVariantFloat(0.0);
-		AcceptEntityInput(zone, "SetPlaybackRate");
-		
-		g_ZonePropRef = EntIndexToEntRef(zone);
-		
-		RequestFrame(Frame_UpdateZone, g_ZonePropRef);
+		//bruh cant find valid spot in center of the map
+		LogError("Unable to find valid height to set zone at center of the map");
+		return;
 	}
-
-	//Create ghost zones
-	for (int i = 1; i < g_ZoneConfig.numShrinks; i++)
-	{
-		zone = CreateEntityByName("prop_dynamic");
-		if (zone > MaxClients)
-		{
-			DispatchKeyValueVector(zone, "origin", g_ZonePropcenterOld);	//Will be updated later anyway
-			DispatchKeyValue(zone, "model", ZONE_MODEL);
-			DispatchKeyValue(zone, "disableshadows", "1");
-			
-			SetEntPropFloat(zone, Prop_Send, "m_flModelScale", g_ZoneConfig.diameterMax / ZONE_DIAMETER);
-			SetEntProp(zone, Prop_Send, "m_nSolidType", SOLID_NONE);
-			
-			DispatchSpawn(zone);
-			
-			SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
-			SetEntityRenderColor(zone, 0, 0, 0, 0);
-			
-			SetVariantString("shrink");
-			AcceptEntityInput(zone, "SetAnimation");
-			
-			SetVariantFloat((float(i) / float(g_ZoneConfig.numShrinks)) * ZONE_DURATION / 10.0);
-			AcceptEntityInput(zone, "SetPlaybackRate");
-			
-			int ref = EntIndexToEntRef(zone);
-			g_ZonePropGhost.Push(ref);
-			CreateTimer(10.0, Timer_PauseZone, ref);
-		}
-	}
+	
+	g_ZonePropcenterOld = origin;
+	g_ZonePropcenterNew = origin;
+	
+	//Create actual zone
+	g_ZonePropRef = EntIndexToEntRef(CreateEntityByName("prop_dynamic"));
+	
+	DispatchKeyValueVector(g_ZonePropRef, "origin", origin);
+	DispatchKeyValue(g_ZonePropRef, "model", ZONE_MODEL);
+	DispatchKeyValue(g_ZonePropRef, "disableshadows", "1");
+	
+	SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale());
+	SetEntProp(g_ZonePropRef, Prop_Send, "m_nSolidType", SOLID_NONE);
+	
+	DispatchSpawn(g_ZonePropRef);
+	
+	SetEntityRenderMode(g_ZonePropRef, RENDER_TRANSCOLOR);
+	SetEntityRenderColor(g_ZonePropRef, 255, 0, 0, 255);
+	
+	//Create ghost zone
+	g_ZoneGhostRef = EntIndexToEntRef(CreateEntityByName("prop_dynamic"));
+	
+	DispatchKeyValueVector(g_ZoneGhostRef, "origin", origin);
+	DispatchKeyValue(g_ZoneGhostRef, "model", ZONE_MODEL);
+	DispatchKeyValue(g_ZoneGhostRef, "disableshadows", "1");
+	
+	SetEntProp(g_ZoneGhostRef, Prop_Send, "m_nSolidType", SOLID_NONE);
+	
+	DispatchSpawn(g_ZoneGhostRef);
+	
+	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
+	SetEntityRenderColor(g_ZoneGhostRef, 0, 0, 255, 255);
+	
+	RequestFrame(Frame_UpdateZone, g_ZonePropRef);
 }
 
 void Zone_RoundArenaStart()
 {
 	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay);
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
-}
-
-public Action Timer_PauseZone(Handle timer, int ref)
-{
-	if (IsValidEntity(ref))
-	{
-		SetVariantFloat(0.0);
-		AcceptEntityInput(ref, "SetPlaybackRate");
-	}
 }
 
 public Action Timer_StartDisplay(Handle timer)
@@ -152,30 +178,33 @@ public Action Timer_StartDisplay(Handle timer)
 		float angleRandom = GetRandomFloat(0.0, 360.0);
 		float diameterRandom = GetRandomFloat(0.0, diameterSearch);
 		
-		float centerNew[3];
-		centerNew[0] = (Cosine(DegToRad(angleRandom)) * diameterRandom / 2.0);
-		centerNew[1] = (Sine(DegToRad(angleRandom)) * diameterRandom / 2.0);
-		AddVectors(centerNew, g_ZonePropcenterOld, centerNew);
+		float origin[3], originNew[3];
+		originNew[0] = (Cosine(DegToRad(angleRandom)) * diameterRandom / 2.0);
+		originNew[1] = (Sine(DegToRad(angleRandom)) * diameterRandom / 2.0);
+		AddVectors(originNew, g_ZonePropcenterOld, originNew);
+		
+		//Get height to put zone center ontop of it
+		if (!Zone_GetHeight(originNew))
+			continue;
 		
 		//Check if new center is not outside of 'safe' spot
-		if (GetVectorDistance(g_ZoneConfig.center, centerNew) <= g_ZoneConfig.diameterSafe / 2.0)
-		{
-			g_ZonePropcenterNew = centerNew;
-			found = true;
-		}
+		origin[0] = g_ZoneConfig.center_x;
+		origin[1] = g_ZoneConfig.center_y;
+		origin[2] = originNew[2];
+		if (GetVectorDistance(origin, originNew) > g_ZoneConfig.diameterSafe / 2.0)
+			continue;
+		
+		g_ZonePropcenterNew = originNew;
+		found = true;
 	}
 	while (!found);
 	
-	//Display ghost prop
-	if (g_ZonePropGhost.Length)
+	if (g_ZoneShrinkLevel > 1)	//Dont bother display ghost if were doing last shrink
 	{
-		int ghost = g_ZonePropGhost.Get(0);
-		if (IsValidEntity(ghost))
-		{
-			TeleportEntity(ghost, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
-			SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
-			SetEntityRenderColor(ghost, 0, 0, 255, 25);
-		}
+		//Teleport ghost to new center, update size and display
+		TeleportEntity(g_ZoneGhostRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
+		SetEntPropFloat(g_ZoneGhostRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_ZoneShrinkLevel - 1) / float(g_ZoneConfig.numShrinks)));
+		SetEntityRenderMode(g_ZoneGhostRef, RENDER_TRANSCOLOR);
 	}
 	
 	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink);
@@ -193,12 +222,8 @@ public Action Timer_StartShrink(Handle timer)
 	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 	
-	float duration = Zone_GetShrinkDuration();
-	SetVariantFloat(1.0 / (duration / (ZONE_DURATION / g_ZoneConfig.numShrinks)));
-	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
-	
 	g_ZoneShrinkStart = GetGameTime();
-	g_ZoneTimer = CreateTimer(duration, Timer_FinishShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink);
 }
 
 public Action Timer_FinishShrink(Handle timer)
@@ -208,21 +233,11 @@ public Action Timer_FinishShrink(Handle timer)
 	
 	g_ZonePropcenterOld = g_ZonePropcenterNew;
 	TeleportEntity(g_ZonePropRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
+	SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks)));
 	
-	SetVariantFloat(0.0);
-	AcceptEntityInput(g_ZonePropRef, "SetPlaybackRate");
+	//Hide ghost prop
+	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
 	
-	//Delete ghost prop
-	if (g_ZonePropGhost.Length)
-	{
-		int ghost = g_ZonePropGhost.Get(0);
-		if (IsValidEntity(ghost))
-			RemoveEntity(ghost);
-		
-		g_ZonePropGhost.Erase(0);
-	}
-	
-	//TODO move me
 	BattleBus_SpawnLootBus();
 	
 	if (g_ZoneShrinkLevel > 0)
@@ -231,8 +246,8 @@ public Action Timer_FinishShrink(Handle timer)
 
 public void Frame_UpdateZone(int ref)
 {
-	int zone = EntRefToEntIndex(ref);
-	if (zone <= MaxClients)
+	//ref param is just to help prevent this function called twice in one frame every round
+	if (!IsValidEntity(ref))
 		return;
 	
 	float originZone[3];
@@ -242,7 +257,7 @@ public void Frame_UpdateZone(int ref)
 	float duration = Zone_GetShrinkDuration();
 	if (g_ZoneShrinkStart > gametime - duration)
 	{
-		//We in shrinking state, update zone position and diameter
+		//We in shrinking state, update zone position and model size
 		
 		//Progress from level X+1 to level X
 		percentage = (gametime - g_ZoneShrinkStart) / duration;
@@ -250,15 +265,16 @@ public void Frame_UpdateZone(int ref)
 		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, originZone);	//Distance from start to end
 		ScaleVector(originZone, percentage);									//Scale by percentage
 		AddVectors(originZone, g_ZonePropcenterOld, originZone);				//Add distance to old center
-		TeleportEntity(zone, originZone, NULL_VECTOR, NULL_VECTOR);
+		TeleportEntity(g_ZonePropRef, originZone, NULL_VECTOR, NULL_VECTOR);
 		
 		//Progress from 1.0 to 0.0 (starting zone to zero size)
 		percentage = (float(g_ZoneShrinkLevel + 1) - percentage) / float(g_ZoneConfig.numShrinks);
+		SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(percentage));
 	}
 	else
 	{
 		//Zone is not shrinking
-		GetEntPropVector(g_ZonePropRef, Prop_Data, "m_vecOrigin", originZone);
+		originZone = g_ZonePropcenterOld;
 		percentage = float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks);
 	}
 	
@@ -269,7 +285,6 @@ public void Frame_UpdateZone(int ref)
 		{
 			float originClient[3];
 			GetClientAbsOrigin(client, originClient);
-			originClient[2] = originZone[2];
 			
 			float radius = g_ZoneConfig.diameterMax * percentage / 2.0;
 			float ratio = GetVectorDistance(originClient, originZone) / radius;
@@ -373,6 +388,11 @@ float Zone_GetCurrentDamage()
 void Zone_GetNewCenter(float center[3])
 {
 	center = g_ZonePropcenterNew;
+}
+
+float Zone_GetPropScale(float precentage = 1.0)
+{
+	return SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER * precentage);
 }
 
 float Zone_GetNewDiameter()

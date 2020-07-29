@@ -1,0 +1,10 @@
+"UnlitGeneric"
+{
+	"$basetexture" "models\kirillian\brsphere\br_fog"
+	"$selfillum" 1
+	//"$translucent" 1
+	//"$alphatest" 1
+	$Additive 1
+	$overbrightfactor 15	
+	$depthblend 1
+}
