@@ -12,6 +12,7 @@ static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
 static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
+static TFTeam g_ClientTeam2[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
 static TFClassType g_ClientClass[TF_MAXPLAYERS + 1];
 static int g_ClientClassUnknown[TF_MAXPLAYERS + 1];
@@ -191,12 +192,12 @@ methodmap FRPlayer
 	{
 		public get()
 		{
-			return g_ClientTeam[this];
+			return g_ClientTeam2[this];
 		}
 		
 		public set(TFTeam val)
 		{
-			g_ClientTeam[this] = val;
+			g_ClientTeam2[this] = val;
 		}
 	}
 	

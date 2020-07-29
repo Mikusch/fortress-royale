@@ -19,6 +19,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CObjectSentrygun::FindTarget", DHook_FindTargetPre, DHook_FindTargetPost);
 	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
+	DHook_CreateDetour(gamedata, "CTFPistol_ScoutPrimary::Push", DHook_PushPre, DHook_PushPost);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
@@ -246,6 +247,38 @@ public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Hand
 	}
 	
 	return MRES_Ignored;
+}
+
+public MRESReturn DHook_PushPre(int pistol)
+{
+	int client = GetEntPropEnt(pistol, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		FRPlayer(client).ChangeToTeam();
+		TFTeam team = TF2_GetEnemyTeam(client);
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+			{
+				FRPlayer(i).Team = TF2_GetTeam(i);
+				TF2_ChangeTeam(i, team);
+			}
+		}
+	}
+}
+
+public MRESReturn DHook_PushPost(int pistol)
+{
+	int client = GetEntPropEnt(pistol, Prop_Send, "m_hOwnerEntity");
+	if (0 < client <= MaxClients)
+	{
+		FRPlayer(client).ChangeToSpectator();
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+				TF2_ChangeTeam(i, FRPlayer(i).Team);
+		}
+	}
 }
 
 public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
