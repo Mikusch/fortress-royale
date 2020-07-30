@@ -1,3 +1,4 @@
+static Handle g_SDKCallGetNextThink;
 static Handle g_SDKCallCreateDroppedWeapon;
 static Handle g_SDKCallInitDroppedWeapon;
 static Handle g_SDKCallInitPickedUpWeapon;
@@ -18,6 +19,7 @@ static Handle g_SDKCallGetVelocity;
 
 void SDKCall_Init(GameData gamedata)
 {
+	g_SDKCallGetNextThink = PrepSDKCall_GetNextThink(gamedata);
 	g_SDKCallCreateDroppedWeapon = PrepSDKCall_CreateDroppedWeapon(gamedata);
 	g_SDKCallInitDroppedWeapon = PrepSDKCall_InitDroppedWeapon(gamedata);
 	g_SDKCallInitPickedUpWeapon = PrepSDKCall_InitPickedUpWeapon(gamedata);
@@ -35,6 +37,20 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
 	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
 	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
+}
+
+static Handle PrepSDKCall_GetNextThink(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CBaseEntity::GetNextThink");
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseEntity::GetNextThink");
+	
+	return call;
 }
 
 static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
@@ -277,6 +293,14 @@ static Handle PrepSDKCall_GetVelocity(GameData gamedata)
 		LogMessage("Failed to create SDKCall: IPhysicsObject::GetVelocity");
 	
 	return call;
+}
+
+float SDKCall_GetNextThink(int entity, const char[] context = "")
+{
+	if (context[0])
+		return SDKCall(g_SDKCallGetNextThink, entity, context);
+	else
+		return SDKCall(g_SDKCallGetNextThink, entity, NULL_STRING);
 }
 
 int SDKCall_CreateDroppedWeapon(int client, const float origin[3] = { 0.0, 0.0, 0.0 }, const float angles[3] = { 0.0, 0.0, 0.0 }, const char[] model, Address item)

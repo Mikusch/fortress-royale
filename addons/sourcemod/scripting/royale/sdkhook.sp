@@ -32,6 +32,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_Think, Sapper_Think);
 		SDKHook(entity, SDKHook_ThinkPost, Sapper_ThinkPost);
 	}
+	else if (StrEqual(classname, "obj_dispenser"))
+	{
+		SDKHook(entity, SDKHook_StartTouch, Dispenser_StartTouch);
+		SDKHook(entity, SDKHook_StartTouchPost, Dispenser_StartTouchPost);
+	}
 	else if (StrEqual(classname, "tf_projectile_syringe"))
 	{
 		SDKHook(entity, SDKHook_ShouldCollide, Entity_ShouldCollide);
@@ -218,6 +223,20 @@ public Action Sapper_Think(int entity)
 public void Sapper_ThinkPost(int entity)
 {
 	GameRules_SetProp("m_bPowerupMode", false);
+}
+
+public Action Dispenser_StartTouch(int dispenser, int toucher)
+{
+	//Disallow players able to be healed from dispenser
+	//TODO allow blu spy from enemy team to be healed
+	if (0 < toucher <= MaxClients && !TF2_IsObjectFriendly(dispenser, toucher))
+		FRPlayer(toucher).ChangeToSpectator();
+}
+
+public Action Dispenser_StartTouchPost(int dispenser, int toucher)
+{
+	if (0 < toucher <= MaxClients && !TF2_IsObjectFriendly(dispenser, toucher))
+		FRPlayer(toucher).ChangeToTeam();
 }
 
 public Action FlameManager_Touch(int entity, int toucher)

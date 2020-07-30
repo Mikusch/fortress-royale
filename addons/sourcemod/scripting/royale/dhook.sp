@@ -1,3 +1,12 @@
+enum ThinkFunction
+{
+	ThinkFunction_None,
+	ThinkFunction_DispenseThink,
+	ThinkFunction_SentryThink,
+	ThinkFunction_RegenThink,
+	ThinkFunction_TossJarThink,
+}
+
 static Handle g_DHookGetMaxHealth;
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
@@ -7,21 +16,19 @@ static Handle g_DHookSmack;
 static Handle g_DHookGrenadeExplode;
 static Handle g_DHookFireballExplode;
 static Handle g_DHookGetLiveTime;
-static Handle g_DHookTossJarThink;
 static Handle g_DHookIsEnemy;
 static Handle g_DHookIsFriend;
 
+static ThinkFunction g_ThinkFunction;
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_StartLagCompensationClient;
 
 void DHook_Init(GameData gamedata)
 {
+	DHook_CreateDetour(gamedata, "CBaseEntity::PhysicsDispatchThink", DHook_PhysicsDispatchThinkPre, DHook_PhysicsDispatchThinkPost);
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
-	DHook_CreateDetour(gamedata, "CObjectSentrygun::FindTarget", DHook_FindTargetPre, DHook_FindTargetPost);
-	DHook_CreateDetour(gamedata, "CObjectDispenser::CouldHealTarget", DHook_CouldHealTargetPre, _);
 	DHook_CreateDetour(gamedata, "CTFPistol_ScoutPrimary::Push", DHook_PushPre, DHook_PushPost);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::RegenThink", DHook_RegenThinkPre, DHook_RegenThinkPost);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CTFGrapplingHook::ActivateRune", DHook_ActivateRunePre, DHook_ActivateRunePost);
@@ -37,7 +44,6 @@ void DHook_Init(GameData gamedata)
 	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
-	g_DHookTossJarThink = DHook_CreateVirtual(gamedata, "CTFJar::TossJarThink");
 	g_DHookIsEnemy = DHook_CreateVirtual(gamedata, "INextBot::IsEnemy");
 	g_DHookIsFriend = DHook_CreateVirtual(gamedata, "INextBot::IsFriend");
 }
@@ -121,11 +127,6 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_DHookGetLiveTime, false, entity, _, DHook_GetLiveTimePre);
 		DHookEntity(g_DHookGetLiveTime, true, entity, _, DHook_GetLiveTimePost);
 	}
-	else if (StrEqual(classname, "tf_weapon_spellbook"))
-	{
-		DHookEntity(g_DHookTossJarThink, false, entity, _, DHook_TossJarThinkPre);
-		DHookEntity(g_DHookTossJarThink, true, entity, _, DHook_TossJarThinkPost);
-	}
 	else if (StrEqual(classname, "tf_weapon_particle_cannon") || StrEqual(classname, "tf_weapon_grenadelauncher") || StrEqual(classname, "tf_weapon_cannon") || StrEqual(classname, "tf_weapon_pipebomblauncher"))
 	{
 		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
@@ -153,6 +154,147 @@ void DHook_HookMeleeWeapon(int entity)
 	DHookEntity(g_DHookSmack, true, entity, _, DHook_SmackPost);
 }
 
+public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
+{
+	//This detour calls everytime an entity was about to call a think function, useful as it only requires 1 gamedata
+	
+	char classname[256];
+	GetEntityClassname(entity, classname, sizeof(classname));
+	
+	if (StrEqual(classname, "obj_dispenser"))
+	{
+		if (!GetEntProp(entity, Prop_Send, "m_bPlacing") && !GetEntProp(entity, Prop_Send, "m_bBuilding") && SDKCall_GetNextThink(entity, "DispenseThink") == TICK_NEVER_THINK)	// CObjectDispenser::DispenseThink
+		{
+			g_ThinkFunction = ThinkFunction_DispenseThink;
+			
+			//Disallow players able to be healed from dispenser
+			//TODO allow blu spy from enemy team to be healed
+			for (int client = 1; client <= MaxClients; client++)
+			{
+				if (IsClientInGame(client) && !TF2_IsObjectFriendly(entity, client))
+					FRPlayer(client).ChangeToSpectator();
+			}
+		}
+	}
+	else if (StrEqual(classname, "obj_sentrygun"))	// CObjectSentrygun::SentryThink
+	{
+		g_ThinkFunction = ThinkFunction_SentryThink;
+		
+		//Sentry can only target one team, move all friendly to sentry team, move everyone else to enemy team.
+		//CTeam class is used to collect players, so m_iTeamNum change wont be enough to fix it.
+		TFTeam teamFriendly = TF2_GetTeam(entity);
+		TFTeam teamEnemy = TF2_GetEnemyTeam(entity);
+		Address team = SDKCall_GetGlobalTeam(teamEnemy);
+		
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			if (IsClientInGame(client))
+			{
+				FRPlayer(client).Team = TF2_GetTeam(client);
+				bool friendly = TF2_IsObjectFriendly(entity, client);
+				
+				if (friendly && FRPlayer(client).Team == teamEnemy)
+					SDKCall_RemovePlayer(team, client);
+				else if (!friendly && FRPlayer(client).Team != teamEnemy)
+					SDKCall_AddPlayer(team, client);
+			}
+		}
+		
+		int building = MaxClients + 1;
+		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		{
+			if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
+			{
+				FREntity(building).Team = TF2_GetTeam(building);
+				if (TF2_IsObjectFriendly(entity, building))
+					SDKCall_ChangeTeam(building, teamFriendly);
+				else
+					SDKCall_ChangeTeam(building, teamEnemy);
+			}
+		}
+		
+		//eyeball_boss uses InSameTeam check but obj_sentrygun owner is itself
+		SetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity", GetEntPropEnt(entity, Prop_Send, "m_hBuilder"));
+	}
+	
+	else if (StrEqual(classname, "player"))
+	{
+		if (IsPlayerAlive(entity) && SDKCall_GetNextThink(entity, "RegenThink") == TICK_NEVER_THINK)	// CTFPlayer::RegenThink
+		{
+			g_ThinkFunction = ThinkFunction_RegenThink;
+			
+			//Disable Medic health regen
+			FRPlayer(entity).ChangeToUnknown();
+		}
+	}
+	
+	else if (StrEqual(classname, "tf_weapon_spellbook"))	// CTFJar::TossJarThink
+	{
+		g_ThinkFunction = ThinkFunction_TossJarThink;
+		
+		//Allow self-spell only take effects to themself
+		int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+		if (0 < owner <= MaxClients && IsClientInGame(owner))
+			FRPlayer(owner).ChangeToSpectator();
+	}
+}
+
+public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
+{
+	switch (g_ThinkFunction)
+	{
+		case ThinkFunction_DispenseThink:
+		{
+			for (int client = 1; client <= MaxClients; client++)
+			{
+				//TODO allow blu spy from enemy team to be healed
+				if (IsClientInGame(client) && !TF2_IsObjectFriendly(entity, client))
+					FRPlayer(client).ChangeToTeam();
+			}
+		}
+		
+		case ThinkFunction_SentryThink:
+		{
+			TFTeam enemyTeam = TF2_GetEnemyTeam(entity);
+			Address team = SDKCall_GetGlobalTeam(enemyTeam);
+			
+			for (int client = 1; client <= MaxClients; client++)
+			{
+				if (IsClientInGame(client))
+				{
+					bool friendly = TF2_IsObjectFriendly(entity, client);
+					
+					if (friendly && FRPlayer(client).Team == enemyTeam)
+						SDKCall_AddPlayer(team, client);
+					else if (!friendly && FRPlayer(client).Team != enemyTeam)
+						SDKCall_RemovePlayer(team, client);
+				}
+			}
+			
+			int building = MaxClients + 1;
+			while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+				if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
+					SDKCall_ChangeTeam(building, FREntity(building).Team);
+			
+			SetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity", entity);
+		}
+		
+		case ThinkFunction_RegenThink:
+		{
+			FRPlayer(entity).ChangeToClass();
+		}
+		
+		case ThinkFunction_TossJarThink:
+		{
+			int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+			if (0 < owner <= MaxClients && IsClientInGame(owner))
+				FRPlayer(owner).ChangeToTeam();
+		}
+	}
+	
+	g_ThinkFunction = ThinkFunction_None;
+}
+
 public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
 {
 	//In friendly fire we only want to return true if both entity owner is the same
@@ -170,83 +312,6 @@ public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle param
 	
 	DHookSetReturn(returnVal, entity == other);
 	return MRES_Supercede;
-}
-
-public MRESReturn DHook_FindTargetPre(int sentry, Handle returnVal)
-{
-	//Sentry can only target one team, move all friendly to sentry team, move everyone else to enemy team.
-	//CTeam class is used to collect players, so m_iTeamNum change wont be enough to fix it.
-	TFTeam teamFriendly = TF2_GetTeam(sentry);
-	TFTeam teamEnemy = TF2_GetEnemyTeam(sentry);
-	Address team = SDKCall_GetGlobalTeam(teamEnemy);
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-		{
-			FRPlayer(client).Team = TF2_GetTeam(client);
-			bool friendly = TF2_IsObjectFriendly(sentry, client);
-			
-			if (friendly && FRPlayer(client).Team == teamEnemy)
-				SDKCall_RemovePlayer(team, client);
-			else if (!friendly && FRPlayer(client).Team != teamEnemy)
-				SDKCall_AddPlayer(team, client);
-		}
-	}
-	
-	int building = MaxClients + 1;
-	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
-	{
-		if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
-		{
-			FREntity(building).Team = TF2_GetTeam(building);
-			if (TF2_IsObjectFriendly(sentry, building))
-				SDKCall_ChangeTeam(building, teamFriendly);
-			else
-				SDKCall_ChangeTeam(building, teamEnemy);
-		}
-	}
-	
-	//eyeball_boss uses InSameTeam check but obj_sentrygun owner is itself
-	SetEntPropEnt(sentry, Prop_Send, "m_hOwnerEntity", GetEntPropEnt(sentry, Prop_Send, "m_hBuilder"));
-}
-
-public MRESReturn DHook_FindTargetPost(int sentry, Handle returnVal)
-{
-	TFTeam enemyTeam = TF2_GetEnemyTeam(sentry);
-	Address team = SDKCall_GetGlobalTeam(enemyTeam);
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-		{
-			bool friendly = TF2_IsObjectFriendly(sentry, client);
-			
-			if (friendly && FRPlayer(client).Team == enemyTeam)
-				SDKCall_AddPlayer(team, client);
-			else if (!friendly && FRPlayer(client).Team != enemyTeam)
-				SDKCall_RemovePlayer(team, client);
-		}
-	}
-	
-	int building = MaxClients + 1;
-	while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
-		if (!GetEntProp(building, Prop_Send, "m_bPlacing"))
-			SDKCall_ChangeTeam(building, FREntity(building).Team);
-	
-	SetEntPropEnt(sentry, Prop_Send, "m_hOwnerEntity", sentry);
-}
-
-public MRESReturn DHook_CouldHealTargetPre(int dispenser, Handle returnVal, Handle hParams)
-{
-	int target = DHookGetParam(hParams, 1);
-	if (0 < target <= MaxClients)
-	{
-		DHookSetReturn(returnVal, TF2_IsObjectFriendly(dispenser, target));
-		return MRES_Supercede;
-	}
-	
-	return MRES_Ignored;
 }
 
 public MRESReturn DHook_PushPre(int pistol)
@@ -291,17 +356,6 @@ public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
 	}
 	
 	return MRES_Ignored;
-}
-
-public MRESReturn DHook_RegenThinkPre(int client, Handle params)
-{
-	//Disable Medic health regen
-	FRPlayer(client).ChangeToUnknown();
-}
-
-public MRESReturn DHook_RegenThinkPost(int client, Handle params)
-{
-	FRPlayer(client).ChangeToClass();
 }
 
 public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle returnVal)
@@ -691,21 +745,6 @@ public MRESReturn DHook_GetLiveTimePre(int entity, Handle returnVal)
 public MRESReturn DHook_GetLiveTimePost(int entity, Handle returnVal)
 {
 	GameRules_SetProp("m_bPowerupMode", false);
-}
-
-public MRESReturn DHook_TossJarThinkPre(int entity, Handle params)
-{
-	//Allow self-spell only take effects to themself
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
-		FRPlayer(owner).ChangeToSpectator();
-}
-
-public MRESReturn DHook_TossJarThinkPost(int entity, Handle params)
-{
-	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	if (0 < owner <= MaxClients && IsClientInGame(owner))
-		FRPlayer(owner).ChangeToTeam();
 }
 
 public MRESReturn DHook_IsEnemyPost(int nextbot, Handle returnVal, Handle params)

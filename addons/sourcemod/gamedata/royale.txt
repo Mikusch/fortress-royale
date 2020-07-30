@@ -4,23 +4,23 @@
 	{
 		"Signatures"
 		{
+			"CBaseEntity::GetNextThink"
+			{
+				"library"	"server"
+				"linux" 	"@_ZN11CBaseEntity12GetNextThinkEPKc"
+				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x56\x8B\xF1\x85\xC0\x75\x2A\x8B\x86\xD0\x00\x00\x00\x89\x45\x08"
+			}
+			"CBaseEntity::PhysicsDispatchThink"
+			{
+				"library"	"server"
+				"linux" 	"@_ZN11CBaseEntity20PhysicsDispatchThinkEMS_FvvE"
+				"windows"	"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x83\xEC\x08\x83\x78\x30\x00\x53"
+			}
 			"CBaseEntity::InSameTeam"
 			{
 				"library"	"server"
 				"linux"		"@_ZNK11CBaseEntity10InSameTeamEPKS_"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x57\x8B\xF9\x85\xC0\x75\x2A"
-			}
-			"CObjectSentrygun::FindTarget"
-			{
-				"library"	"server"
-				"linux"		"@_ZN16CObjectSentrygun10FindTargetEv"
-				"windows"	"\x55\x8B\xEC\x81\xEC\xC8\x00\x00\x00\x56\x57\x8B\xF9"
-			}
-			"CObjectDispenser::CouldHealTarget"
-			{
-				"library"	"server"
-				"linux"		"@_ZN16CObjectDispenser15CouldHealTargetEP11CBaseEntity"
-				"windows"	"\x55\x8B\xEC\x56\x8B\x75\x08\x57\x8B\xF9\x8B\x87\x10\x01\x00\x00"
 			}
 			"CTFPistol_ScoutPrimary::Push"
 			{
@@ -57,12 +57,6 @@
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer33GetEquippedWearableForLoadoutSlotEi"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x2A\x8B\xC1\x53\x56\x33\xF6\x89\x45\xF8\x8B\x88\x2A\x2A\x2A\x2A\x57\x89\x4D\xFC"
-			}
-			"CTFPlayer::RegenThink"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer10RegenThinkEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x74\x57\x8B\xF9\x8B\x07"
 			}
 			"CTFPlayer::GetMaxAmmo"
 			{
@@ -175,11 +169,6 @@
 				"linux"		"250"
 				"windows"	"249"
 			}
-			"CTFJar::TossJarThink"
-			{
-				"linux"		"490"
-				"windows"	"483"
-			}
 			"CBasePlayer::EquipWearable"
 			{
 				"linux"		"431"
@@ -238,6 +227,20 @@
 		}
 		"Functions"
 		{
+			"CBaseEntity::PhysicsDispatchThink"
+			{
+				"signature"	"CBaseEntity::PhysicsDispatchThink"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"thinkFunc"
+					{
+						"type"	"int"
+					}
+				}
+			}
 			"CBaseEntity::InSameTeam"
 			{
 				"signature"	"CBaseEntity::InSameTeam"
@@ -247,27 +250,6 @@
 				"arguments"
 				{
 					"pEntity"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CObjectSentrygun::FindTarget"
-			{
-				"signature"	"CObjectSentrygun::FindTarget"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-			}
-			"CObjectDispenser::CouldHealTarget"
-			{
-				"signature"	"CObjectDispenser::CouldHealTarget"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pTarget"
 					{
 						"type"	"cbaseentity"
 					}
@@ -311,13 +293,6 @@
 						"type"	"objectptr"
 					}
 				}
-			}
-			"CTFPlayer::RegenThink"
-			{
-				"signature"	"CTFPlayer::RegenThink"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
 			}
 			"CTFPlayer::GetChargeEffectBeingProvided"
 			{
@@ -491,13 +466,6 @@
 				"offset"	"CTFGrenadePipebombProjectile::GetLiveTime"
 				"hooktype"	"entity"
 				"return"	"float"
-				"this"		"entity"
-			}
-			"CTFJar::TossJarThink"
-			{
-				"offset"	"CTFJar::TossJarThink"
-				"hooktype"	"entity"
-				"return"	"void"
 				"this"		"entity"
 			}
 			"INextBot::IsEnemy"
