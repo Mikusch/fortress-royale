@@ -656,6 +656,43 @@ void TryToEndRound()
 	else
 	{
 		TF2_ForceRoundWin(TFTeam_Alive);
-		PrintToChatAll("%t", "RoundState_Winner", winner);
+		PrintToChatAll("%t", "RoundState_Winner", winner, FRPlayer(winner).Killstreak);
 	}
+	
+	ArrayList mostKills = new ArrayList();
+	int killStreak;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && FRPlayer(client).Killstreak > 0)
+		{
+			if (FRPlayer(client).Killstreak > killStreak)
+			{
+				mostKills.Clear();
+				killStreak = FRPlayer(client).Killstreak;
+				mostKills.Push(client);
+			}
+			else if (FRPlayer(client).Killstreak == killStreak)
+			{
+				mostKills.Push(client);
+			}
+		}
+	}
+	
+	int length = mostKills.Length;
+	if (length == 0)
+		return;
+	
+	char message[256];
+	for (int i = 0; i < length; i++)
+	{
+		if (length > 1 && i < length - 2)
+			Format(message, sizeof(message), "%s, %N", message, mostKills.Get(i));
+		else if (length > 1 && i < length - 1)
+			Format(message, sizeof(message), "%s %t %N", message, "RoundState_MostKillsAnd", mostKills.Get(i));
+		else
+			Format(message, sizeof(message), "%N", mostKills.Get(i));
+	}
+	
+	PrintToChatAll("%t", "RoundState_MostKills", message, killStreak);
 }

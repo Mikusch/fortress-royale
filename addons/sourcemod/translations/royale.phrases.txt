@@ -76,12 +76,21 @@
 	
 	"RoundState_NoWinner"
 	{
-		"en"	"Nobody won this round!"
+		"en"		"Nobody won this round!"
 	}
-	
 	"RoundState_Winner"
 	{
-		"en"	"%N won this round!"
+		"#format"	"{1:N},{2:d}"
+		"en"		"{1} won this round with {2} kills!"
+	}
+	"RoundState_MostKills"
+	{
+		"#format"	"{1:s},{2:d}"
+		"en"		"{1} is the top killer with {2} kills this round!"
+	}
+	"RoundState_MostKillsAnd"
+	{
+		"en"		"and"
 	}
 	
 	"Vehicle_OutOfFuel"
