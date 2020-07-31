@@ -6,7 +6,6 @@ void Event_Init()
 	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("slap_notice", Event_FishNotice, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-	HookEvent("player_dropobject", Event_DropObject);
 	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
 }
 
@@ -192,18 +191,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
-	}
-}
-
-public Action Event_DropObject(Event event, const char[] name, bool dontBroadcast)
-{
-	//One of the hook caused building to be switched to spectator team, switch back to correct team
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	int building = event.GetInt("index");
-	if (0 < client <= MaxClients && IsClientInGame(client))
-	{
-		TF2_ChangeTeam(building, FRPlayer(client).Team);
-		SetEntProp(building, Prop_Send, "m_nSkin", view_as<int>(FRPlayer(client).Team) - 2);
 	}
 }
 

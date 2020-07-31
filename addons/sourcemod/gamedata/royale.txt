@@ -22,12 +22,6 @@
 				"linux"		"@_ZNK11CBaseEntity10InSameTeamEPKS_"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x57\x8B\xF9\x85\xC0\x75\x2A"
 			}
-			"CTFPistol_ScoutPrimary::Push"
-			{
-				"library"	"server"
-				"linux"		"@_ZN22CTFPistol_ScoutPrimary4PushEv"
-				"windows"	"\x55\x8B\xEC\x81\xEC\x4C\x01\x00\x00\x56\x8B\xC1"
-			}
 			"CTFDroppedWeapon::Create"
 			{
 				"library"	"server"
@@ -82,12 +76,6 @@
 				"linux"		"@_ZN14CWeaponMedigun18FindAndHealTargetsEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x57\x8B\xF9"
 			}
-			"CTFGrapplingHook::ActivateRune"
-			{
-				"library"	"server"
-				"linux"		"@_ZN16CTFGrapplingHook12ActivateRuneEv"
-				"windows"	"\x53\x8B\xDC\x83\xEC\x08\x83\xE4\xF0\x83\xC4\x04\x55\x8B\x6B\x04\x89\x6C\x24\x04\x8B\xEC\x81\xEC\x68\x01\x00\x00\x56\x57\x89\x4D\xDC"
-			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
 				"library"	"server"
@@ -134,25 +122,10 @@
 				"linux"		"484"
 				"windows"	"477"
 			}
-			"CBaseCombatWeapon::PrimaryAttack"
-			{
-				"linux"		"285"
-				"windows"	"279"
-			}
 			"CBaseCombatWeapon::GetSlot"
 			{
 				"linux"		"332"
 				"windows"	"326"
-			}
-			"CTFWeaponBaseGun::FireProjectile"
-			{
-				"linux"		"469"
-				"windows"	"462"
-			}
-			"CTFWeaponBaseMelee::Smack"
-			{
-				"linux"		"469"
-				"windows"	"462"
 			}
 			"CBaseGrenade::Explode"
 			{
@@ -255,13 +228,6 @@
 					}
 				}
 			}
-			"CTFPistol_ScoutPrimary::Push"
-			{
-				"signature"	"CTFPistol_ScoutPrimary::Push"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
-			}
 			"CTFDroppedWeapon::Create"
 			{
 				"signature"	"CTFDroppedWeapon::Create"
@@ -314,13 +280,6 @@
 						"type"	"int"
 					}
 				}
-			}
-			"CTFGrapplingHook::ActivateRune"
-			{
-				"signature"	"CTFGrapplingHook::ActivateRune"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
 			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
@@ -400,34 +359,6 @@
 						"type"	"bool"
 					}
 				}
-			}
-			"CBaseCombatWeapon::PrimaryAttack"
-			{
-				"offset"	"CBaseCombatWeapon::PrimaryAttack"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
-			}
-			"CTFWeaponBaseGun::FireProjectile"
-			{
-				"offset"	"CTFWeaponBaseGun::FireProjectile"
-				"hooktype"	"entity"
-				"return"	"cbaseentity"
-				"this"		"entity"
-				"arguments"
-				{
-					"pPlayer"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CTFWeaponBaseMelee::Smack"
-			{
-				"offset"	"CTFWeaponBaseMelee::Smack"
-				"hooktype"	"entity"
-				"return"	"void"
-				"this"		"entity"
 			}
 			"CBaseGrenade::Explode"
 			{

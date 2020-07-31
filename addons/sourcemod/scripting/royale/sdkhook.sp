@@ -1,3 +1,14 @@
+enum PostThink
+{
+	PostThink_None,
+	PostThink_Spectator,
+	PostThink_SpectatorAll,
+	PostThink_EnemyTeam,
+}
+
+static PostThink g_PostThink;
+static bool g_PostThinkMelee;
+
 void SDKHook_HookClient(int client)
 {
 	SDKHook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
@@ -118,22 +129,133 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 
 public void Client_PostThink(int client)
 {
-	int weapon = TF2_GetItemByClassname(client, "tf_weapon_medigun");
-	if (weapon > MaxClients)
+	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
+	if (medigun > MaxClients)
 	{
 		//Set target to ourself so we can build uber passive
-		SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", client);
-		SDKCall_FindAndHealTargets(weapon);
-		SetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget", -1);
+		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", client);
+		SDKCall_FindAndHealTargets(medigun);
+		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
 	}
 	
-	//This function have millions of team checks, swap team to spec to allow both red and blu to take effect
-	FRPlayer(client).ChangeToSpectator();
+	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
+	{
+		//Allow taunt kill work on both teams
+		g_PostThink = PostThink_Spectator;
+		FRPlayer(client).ChangeToSpectator();
+		return;
+	}
+	
+	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (weapon == -1)
+		return;
+	
+	char classname[256];
+	GetEntityClassname(weapon, classname, sizeof(classname));
+	
+	if (SDKCall_GetSlot(weapon) == WeaponSlot_Melee)	// CTFWeaponBaseMelee::Smack
+	{
+		g_PostThinkMelee = true;
+		
+		//Mannpower have increased melee damage, and even bigger for knockout powerup
+		GameRules_SetProp("m_bPowerupMode", true);
+		
+		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		{
+			//Dont allow repair and upgrade his building if using bare hands
+			FRPlayer(client).ChangeBuildingsToSpectator();
+			
+			if (StrEqual(classname, "tf_weapon_robot_arm"))
+			{
+				//Dont allow triple combo punch from gunslinger hand
+				static int offsetComboCount = -1;
+				if (offsetComboCount == -1)
+					offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
+				
+				SetEntData(weapon, offsetComboCount, 0);
+			}
+		}
+	}
+	
+	if (StrEqual(classname, "tf_weapon_knife"))	// CTFKnife::PrimaryAttack
+	{
+		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+		{
+			//Allow backstab work on both teams
+			g_PostThink = PostThink_Spectator;
+			FRPlayer(client).ChangeToSpectator();
+		}
+		else
+		{
+			//Dont backstab anyone with fists, send everyone to same team
+			g_PostThink = PostThink_SpectatorAll;
+			for (int i = 1; i <= MaxClients; i++)
+			{
+				if (IsClientInGame(i))
+					FRPlayer(i).ChangeToSpectator();
+			}
+		}
+	}
+	
+	else if (StrEqual(classname, "tf_weapon_handgun_scout_primary")	// CTFPistol_ScoutPrimary::Push
+		|| StrEqual(classname, "tf_weapon_bat")						// CTFWeaponBaseMelee::PrimaryAttack
+		|| StrEqual(classname, "tf_weapon_grapplinghook"))			// CTFGrapplingHook::ActivateRune
+	{
+		g_PostThink = PostThink_EnemyTeam;
+		
+		//Those function only targets one team, red or blu team, move everyone to enemy team
+		TFTeam team = TF2_GetEnemyTeam(client);
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+			{
+				FRPlayer(i).Team = TF2_GetTeam(i);
+				TF2_ChangeTeam(i, team);
+			}
+		}
+	}
 }
 
 public void Client_PostThinkPost(int client)
 {
-	FRPlayer(client).ChangeToTeam();
+	switch (g_PostThink)
+	{
+		case PostThink_Spectator:
+		{
+			FRPlayer(client).ChangeToTeam();
+		}
+		
+		case PostThink_SpectatorAll:
+		{
+			for (int i = 1; i <= MaxClients; i++)
+			{
+				if (IsClientInGame(i))
+					FRPlayer(i).ChangeToTeam();
+			}
+		}
+		
+		case PostThink_EnemyTeam:
+		{
+			for (int i = 1; i <= MaxClients; i++)
+			{
+				if (IsClientInGame(i) && i != client)
+					TF2_ChangeTeam(i, FRPlayer(i).Team);
+			}
+		}
+	}
+	
+	g_PostThink = PostThink_None;
+	
+	if (g_PostThinkMelee)
+	{
+		g_PostThinkMelee = false;
+		
+		GameRules_SetProp("m_bPowerupMode", false);
+		
+		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (weapon != -1 && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+			FRPlayer(client).ChangeBuildingsToTeam();
+	}
 }
 
 public Action Client_Touch(int client, int toucher)
@@ -169,7 +291,7 @@ public Action Client_WeaponSwitch(int client, int weapon)
 	}
 }
 
-public Action Client_WeaponSwitchPost(int client, int weapon)
+public void Client_WeaponSwitchPost(int client, int weapon)
 {
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun != -1)

@@ -112,18 +112,22 @@ public Action EntityOutput_OnBreakCrateConfig(const char[] output, int caller, i
 	LootCrate loot;
 	int pos = LootConfig_GetCrateByEntity(crate, loot);
 	if (pos >= 0)
-		Loot_BreakCrate(GetOwnerLoop(activator), crate, loot);
+		Loot_BreakCrate(activator, crate, loot);
 }
 
 public Action EntityOutput_OnBreakCrateBus(const char[] output, int caller, int activator, float delay)
 {
 	LootCrate loot;
 	LootCrate_GetBus(loot);
-	Loot_BreakCrate(GetOwnerLoop(activator), EntIndexToEntRef(caller), loot);
+	Loot_BreakCrate(activator, EntIndexToEntRef(caller), loot);
 }
 
-public void Loot_BreakCrate(int client, int crate, LootCrate loot)
+public void Loot_BreakCrate(int entity, int crate, LootCrate loot)
 {
+	int client = GetOwnerLoop(entity);
+	if ((client <= 0 || client > MaxClients) && HasEntProp(entity, Prop_Send, "m_hLauncher"))
+		client = GetOwnerLoop(GetEntPropEnt(entity, Prop_Send, "m_hLauncher"));
+	
 	EmitSoundToAll(loot.sound, crate);
 	
 	TFClassType class = TFClass_Unknown;

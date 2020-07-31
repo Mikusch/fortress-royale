@@ -10,9 +10,6 @@ enum ThinkFunction
 static Handle g_DHookGetMaxHealth;
 static Handle g_DHookForceRespawn;
 static Handle g_DHookGiveNamedItem;
-static Handle g_DHookPrimaryAttack;
-static Handle g_DHookFireProjectile;
-static Handle g_DHookSmack;
 static Handle g_DHookGrenadeExplode;
 static Handle g_DHookFireballExplode;
 static Handle g_DHookGetLiveTime;
@@ -27,20 +24,15 @@ void DHook_Init(GameData gamedata)
 {
 	DHook_CreateDetour(gamedata, "CBaseEntity::PhysicsDispatchThink", DHook_PhysicsDispatchThinkPre, DHook_PhysicsDispatchThinkPost);
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
-	DHook_CreateDetour(gamedata, "CTFPistol_ScoutPrimary::Push", DHook_PushPre, DHook_PushPost);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
 	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
-	DHook_CreateDetour(gamedata, "CTFGrapplingHook::ActivateRune", DHook_ActivateRunePre, DHook_ActivateRunePost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CTFPlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
-	g_DHookPrimaryAttack = DHook_CreateVirtual(gamedata, "CBaseCombatWeapon::PrimaryAttack");
-	g_DHookFireProjectile = DHook_CreateVirtual(gamedata, "CTFWeaponBaseGun::FireProjectile");
-	g_DHookSmack = DHook_CreateVirtual(gamedata, "CTFWeaponBaseMelee::Smack");
 	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
@@ -127,31 +119,11 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_DHookGetLiveTime, false, entity, _, DHook_GetLiveTimePre);
 		DHookEntity(g_DHookGetLiveTime, true, entity, _, DHook_GetLiveTimePost);
 	}
-	else if (StrEqual(classname, "tf_weapon_particle_cannon") || StrEqual(classname, "tf_weapon_grenadelauncher") || StrEqual(classname, "tf_weapon_cannon") || StrEqual(classname, "tf_weapon_pipebomblauncher"))
-	{
-		DHookEntity(g_DHookFireProjectile, true, entity, _, DHook_FireProjectilePost);
-	}
-	else if (StrEqual(classname, "tf_weapon_bat"))
-	{
-		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_BatPrimaryAttackPre);
-		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_BatPrimaryAttackPost);
-	}
-	else if (StrEqual(classname, "tf_weapon_knife"))
-	{
-		DHookEntity(g_DHookPrimaryAttack, false, entity, _, DHook_KnifePrimaryAttackPre);
-		DHookEntity(g_DHookPrimaryAttack, true, entity, _, DHook_KnifePrimaryAttackPost);
-	}
 	else if (StrEqual(classname, "tf_zombie"))
 	{
 		DHookEntity(g_DHookIsEnemy, true, entity, _, DHook_IsEnemyPost);
 		DHookEntity(g_DHookIsFriend, true, entity, _, DHook_IsFriendPost);
 	}
-}
-
-void DHook_HookMeleeWeapon(int entity)
-{
-	DHookEntity(g_DHookSmack, false, entity, _, DHook_SmackPre);
-	DHookEntity(g_DHookSmack, true, entity, _, DHook_SmackPost);
 }
 
 public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
@@ -314,38 +286,6 @@ public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle param
 	return MRES_Supercede;
 }
 
-public MRESReturn DHook_PushPre(int pistol)
-{
-	int client = GetEntPropEnt(pistol, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
-	{
-		FRPlayer(client).ChangeToTeam();
-		TFTeam team = TF2_GetEnemyTeam(client);
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientInGame(i) && i != client)
-			{
-				FRPlayer(i).Team = TF2_GetTeam(i);
-				TF2_ChangeTeam(i, team);
-			}
-		}
-	}
-}
-
-public MRESReturn DHook_PushPost(int pistol)
-{
-	int client = GetEntPropEnt(pistol, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
-	{
-		FRPlayer(client).ChangeToSpectator();
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientInGame(i) && i != client)
-				TF2_ChangeTeam(i, FRPlayer(i).Team);
-		}
-	}
-}
-
 public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
 {
 	//Dont create any dropped weapon created by tf2 (TF2_CreateDroppedWeapon pass client param as NULL)
@@ -403,40 +343,6 @@ public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
 		return;
 	
 	FRPlayer(client).ChangeToTeam();
-}
-
-public MRESReturn DHook_ActivateRunePre(int grapple)
-{
-	//This function only targets one team, red or blu team
-	//Move owner back to normal team, move everyone else to enemy team
-	int client = GetEntPropEnt(grapple, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
-	{
-		FRPlayer(client).ChangeToTeam();
-		TFTeam team = TF2_GetEnemyTeam(client);
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientInGame(i) && i != client)
-			{
-				FRPlayer(i).Team = TF2_GetTeam(i);
-				TF2_ChangeTeam(i, team);
-			}
-		}
-	}
-}
-
-public MRESReturn DHook_ActivateRunePost(int grapple)
-{
-	int client = GetEntPropEnt(grapple, Prop_Send, "m_hOwnerEntity");
-	if (0 < client <= MaxClients)
-	{
-		FRPlayer(client).ChangeToSpectator();
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientInGame(i) && i != client)
-				TF2_ChangeTeam(i, FRPlayer(i).Team);
-		}
-	}
 }
 
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
@@ -590,107 +496,6 @@ public void DHook_GiveNamedItemRemoved(int hookid)
 			g_HookIdGiveNamedItem[iClient] = 0;
 			return;
 		}
-	}
-}
-
-public MRESReturn DHook_BatPrimaryAttackPre(int weapon)
-{
-	//For Boston Basher (tf_weapon_bat), m_potentialVictimVector collects enemy team to possibly not bleed itself, but client in spectator would collect themself.
-	//Move client back to team, move everyone else to enemy team.
-	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (client <= 0 || client > MaxClients)
-		return;
-	
-	FRPlayer(client).ChangeToTeam();
-	TFTeam team = TF2_GetEnemyTeam(client);
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (IsClientInGame(i) && i != client)
-		{
-			FRPlayer(i).Team = TF2_GetTeam(i);
-			TF2_ChangeTeam(i, team);
-		}
-	}
-}
-
-public MRESReturn DHook_BatPrimaryAttackPost(int weapon)
-{
-	int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	if (client <= 0 || client > MaxClients)
-		return;
-	
-	FRPlayer(client).ChangeToSpectator();
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		if (IsClientInGame(i) && i != client)
-			TF2_ChangeTeam(i, FRPlayer(i).Team);
-	}
-}
-
-public MRESReturn DHook_KnifePrimaryAttackPre(int weapon)
-{
-	//Client is in spectator, prevent backstab if using fists
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToTeam();
-}
-
-public MRESReturn DHook_KnifePrimaryAttackPost(int weapon)
-{
-	//Client is in spectator, prevent backstab if using fists
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-		FRPlayer(GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity")).ChangeToSpectator();
-}
-
-public MRESReturn DHook_FireProjectilePost(int weapon, Handle returnVal, Handle params)
-{
-	//Client may be in spectator team during this hook, change projectile team to correct team
-	int client = DHookGetParam(params, 1);
-	int projectile = DHookGetReturn(returnVal);
-	TF2_ChangeTeam(projectile, FRPlayer(client).Team);
-	
-	//Set owner entity so breaking loots with projectile works (stickybomb)
-	SetEntPropEnt(projectile, Prop_Send, "m_hOwnerEntity", client);
-}
-
-public MRESReturn DHook_SmackPre(int weapon)
-{
-	//Mannpower have increased melee damage, and even bigger for knockout powerup
-	GameRules_SetProp("m_bPowerupMode", true);
-	
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
-	{
-		//For wrench, client is in spectator during this hook so allow repair and upgrade his building if not using bare hands
-		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-		if (0 < client <= MaxClients)
-			FRPlayer(client).ChangeBuildingsToSpectator();
-	}
-	else
-	{
-		//For gunslinger hands, prevent combo punch
-		char classname[256];
-		GetEntityClassname(weapon, classname, sizeof(classname));
-		if (StrEqual(classname, "tf_weapon_robot_arm"))
-		{
-			static int offsetComboCount = -1;
-			if (offsetComboCount == -1)
-				offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
-			
-			SetEntData(weapon, offsetComboCount, 0);
-		}
-	}
-}
-
-public MRESReturn DHook_SmackPost(int weapon)
-{
-	GameRules_SetProp("m_bPowerupMode", false);
-	
-	if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
-	{
-		int client = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-		if (0 < client <= MaxClients)
-			FRPlayer(client).ChangeBuildingsToTeam();
 	}
 }
 
