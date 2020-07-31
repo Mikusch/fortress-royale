@@ -518,8 +518,23 @@ public Action OnClientCommandKeyValues(int client, KeyValues kv)
 {
 	char command[64];
 	kv.GetSectionName(command, sizeof(command));
-	if (StrEqual(command, "+use_action_slot_item_server") && TF2_TryToPickupDroppedWeapon(client))
-		return Plugin_Handled;
+	if (StrEqual(command, "+use_action_slot_item_server"))
+	{
+		if (TF2_TryToPickupDroppedWeapon(client))
+			return Plugin_Handled;
+		
+		int spellbook = TF2_GetItemByClassname(client, "tf_weapon_spellbook");
+		if (spellbook != -1 && GetEntProp(spellbook, Prop_Send, "m_iSpellCharges") > 0)
+			return Plugin_Continue;
+		
+		//Player cant switch grappling hook if have spellbook, fix that if not picking up weapon or have spell to cast
+		int grapplinghook = TF2_GetItemByClassname(client, "tf_weapon_grapplinghook");
+		if (grapplinghook != -1)
+		{
+			TF2_SwitchActiveWeapon(client, grapplinghook);
+			return Plugin_Handled;
+		}
+	}
 	
 	return Plugin_Continue;
 }
