@@ -704,9 +704,9 @@ void TryToEndRound()
 	char message[256];
 	for (int i = 0; i < length; i++)
 	{
-		if (length > 1 && i < length - 2)
+		if (length > 1 && 0 < i < length - 1)
 			Format(message, sizeof(message), "%s, %N", message, mostKills.Get(i));
-		else if (length > 1 && i < length - 1)
+		else if (length > 1 && i == length - 1)
 			Format(message, sizeof(message), "%s %t %N", message, "RoundState_MostKillsAnd", mostKills.Get(i));
 		else
 			Format(message, sizeof(message), "%N", mostKills.Get(i));
