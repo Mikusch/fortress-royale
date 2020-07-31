@@ -47,6 +47,7 @@ void ConVar_Init()
 	ConVar_Add("tf_max_health_boost", 4.0);
 	ConVar_Add("tf_parachute_maxspeed_xy", 600.0);
 	ConVar_Add("tf_parachute_maxspeed_z", -200.0);
+	ConVar_Add("tf_spawn_glows_duration", 0.0);
 	ConVar_Add("tf_spells_enabled", 1.0);
 	ConVar_Add("tf_weapon_criticals", 0.0);
 }
