@@ -204,14 +204,10 @@ public void Client_PostThink(int client)
 		g_PostThink = PostThink_EnemyTeam;
 		
 		//Those function only targets one team, red or blu team, move everyone to enemy team
-		TFTeam team = TF2_GetEnemyTeam(client);
 		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (IsClientInGame(i) && i != client)
-			{
-				FRPlayer(i).Team = TF2_GetTeam(i);
-				TF2_ChangeTeam(i, team);
-			}
+				FRPlayer(i).SwapToEnemyTeam();
 		}
 	}
 }
@@ -239,7 +235,7 @@ public void Client_PostThinkPost(int client)
 			for (int i = 1; i <= MaxClients; i++)
 			{
 				if (IsClientInGame(i) && i != client)
-					TF2_ChangeTeam(i, FRPlayer(i).Team);
+					FRPlayer(i).SwapToTeam();
 			}
 		}
 	}

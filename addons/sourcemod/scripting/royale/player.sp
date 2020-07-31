@@ -12,8 +12,8 @@ static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
 static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
-static TFTeam g_ClientTeam2[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
+static int g_ClientSwap[TF_MAXPLAYERS + 1];
 static TFClassType g_ClientClass[TF_MAXPLAYERS + 1];
 static int g_ClientClassUnknown[TF_MAXPLAYERS + 1];
 
@@ -192,12 +192,12 @@ methodmap FRPlayer
 	{
 		public get()
 		{
-			return g_ClientTeam2[this];
+			return g_ClientTeam[this];
 		}
 		
 		public set(TFTeam val)
 		{
-			g_ClientTeam2[this] = val;
+			g_ClientTeam[this] = val;
 		}
 	}
 	
@@ -218,8 +218,21 @@ methodmap FRPlayer
 	{
 		if (++g_ClientSpectator[this] == 1)
 		{
-			g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			if (g_ClientSwap[this] <= 0)
+				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			
 			TF2_ChangeTeam(this.Client, TFTeam_Spectator);
+		}
+	}
+	
+	public void SwapToEnemyTeam()
+	{
+		if (++g_ClientSwap[this] == 1)
+		{
+			if (g_ClientSpectator[this] <= 0)
+				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			
+			TF2_ChangeTeam(this.Client, TF2_GetEnemyTeam(g_ClientTeam[this]));
 		}
 	}
 	
@@ -237,8 +250,17 @@ methodmap FRPlayer
 	{
 		if (--g_ClientSpectator[this] == 0)
 		{
-			TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
+			if (g_ClientSwap[this] > 0)
+				TF2_ChangeTeam(this.Client, TF2_GetEnemyTeam(g_ClientTeam[this]));
+			else
+				TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
 		}
+	}
+	
+	public void SwapToTeam()
+	{
+		if (--g_ClientSwap[this] == 0 && g_ClientSpectator[this] <= 0)
+			TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
 	}
 	
 	public void ChangeBuildingsToTeam()

@@ -155,7 +155,7 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
 		//Sentry can only target one team, move all friendly to sentry team, move everyone else to enemy team.
 		//CTeam class is used to collect players, so m_iTeamNum change wont be enough to fix it.
 		TFTeam teamFriendly = TF2_GetTeam(entity);
-		TFTeam teamEnemy = TF2_GetEnemyTeam(entity);
+		TFTeam teamEnemy = TF2_GetEnemyTeam(teamFriendly);
 		Address team = SDKCall_GetGlobalTeam(teamEnemy);
 		
 		for (int client = 1; client <= MaxClients; client++)
@@ -227,7 +227,7 @@ public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
 		
 		case ThinkFunction_SentryThink:
 		{
-			TFTeam enemyTeam = TF2_GetEnemyTeam(entity);
+			TFTeam enemyTeam = TF2_GetEnemyTeam(TF2_GetTeam(entity));
 			Address team = SDKCall_GetGlobalTeam(enemyTeam);
 			
 			for (int client = 1; client <= MaxClients; client++)
@@ -354,7 +354,7 @@ public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 		return;
 	
 	TFTeam teamFriendly = TF2_GetTeam(client);
-	TFTeam teamEnemy = TF2_GetEnemyTeam(client);
+	TFTeam teamEnemy = TF2_GetEnemyTeam(teamFriendly);
 	
 	for (int i = 1; i <= MaxClients; i++)
 	{

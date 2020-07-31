@@ -304,10 +304,8 @@ stock TFTeam TF2_GetTeam(int entity)
 	return view_as<TFTeam>(GetEntProp(entity, Prop_Send, "m_iTeamNum"));
 }
 
-stock TFTeam TF2_GetEnemyTeam(int entity)
+stock TFTeam TF2_GetEnemyTeam(TFTeam team)
 {
-	TFTeam team = view_as<TFTeam>(GetEntProp(entity, Prop_Send, "m_iTeamNum"));
-	
 	switch (team)
 	{
 		case TFTeam_Red: return TFTeam_Blue;
