@@ -6,6 +6,17 @@ enum PostThink
 	PostThink_EnemyTeam,
 }
 
+static char g_SpectatorClassnames[][] = {
+	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
+	"tf_weapon_flamethrower",			//CBaseCombatWeapon::SecondaryAttack
+	"tf_weapon_rocketlauncher_fireball"	//CBaseCombatWeapon::SecondaryAttack
+};
+static char g_EnemyTeamClassnames[][] = {
+	"tf_weapon_handgun_scout_primary",	//CTFPistol_ScoutPrimary::Push
+	"tf_weapon_bat",					//CTFWeaponBaseMelee::PrimaryAttack
+	"tf_weapon_grapplinghook"
+};
+
 static PostThink g_PostThink;
 static bool g_PostThinkMelee;
 
@@ -177,37 +188,46 @@ public void Client_PostThink(int client)
 		}
 	}
 	
-	if (StrEqual(classname, "tf_weapon_knife"))	// CTFKnife::PrimaryAttack
+	//For functions that do simple "in same team" checks, move ourself to the spectator team
+	for (int i = 0; i < sizeof(g_SpectatorClassnames); i++)
 	{
-		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
+		if (StrEqual(classname, g_SpectatorClassnames[i]))
 		{
-			//Allow backstab work on both teams
-			g_PostThink = PostThink_Spectator;
-			FRPlayer(client).ChangeToSpectator();
-		}
-		else
-		{
-			//Dont backstab anyone with fists, send everyone to same team
-			g_PostThink = PostThink_SpectatorAll;
-			for (int i = 1; i <= MaxClients; i++)
+			if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
 			{
-				if (IsClientInGame(i))
-					FRPlayer(i).ChangeToSpectator();
+				//Allow backstab work on both teams
+				g_PostThink = PostThink_Spectator;
+				FRPlayer(client).ChangeToSpectator();
 			}
+			else
+			{
+				//Don't allow backstabbing with fists, move everyone to same team
+				g_PostThink = PostThink_SpectatorAll;
+				for (int j = 1; j <= MaxClients; j++)
+				{
+					if (IsClientInGame(j))
+						FRPlayer(j).ChangeToSpectator();
+				}
+			}
+			
+			return;
 		}
 	}
 	
-	else if (StrEqual(classname, "tf_weapon_handgun_scout_primary")	// CTFPistol_ScoutPrimary::Push
-		|| StrEqual(classname, "tf_weapon_bat")						// CTFWeaponBaseMelee::PrimaryAttack
-		|| StrEqual(classname, "tf_weapon_grapplinghook"))			// CTFGrapplingHook::ActivateRune
+	//For functions that collect members of one team (RED/BLU), move everyone else to enemy team
+	for (int i = 0; i < sizeof(g_EnemyTeamClassnames); i++)
 	{
-		g_PostThink = PostThink_EnemyTeam;
-		
-		//Those function only targets one team, red or blu team, move everyone to enemy team
-		for (int i = 1; i <= MaxClients; i++)
+		if (StrEqual(classname, g_EnemyTeamClassnames[i]))
 		{
-			if (IsClientInGame(i) && i != client)
-				FRPlayer(i).SwapToEnemyTeam();
+			g_PostThink = PostThink_EnemyTeam;
+			
+			for (int j = 1; j <= MaxClients; j++)
+			{
+				if (IsClientInGame(j) && j != client)
+					FRPlayer(j).SwapToEnemyTeam();
+			}
+			
+			return;
 		}
 	}
 }
