@@ -235,7 +235,7 @@ public void Client_PostThinkPost(int client)
 			for (int i = 1; i <= MaxClients; i++)
 			{
 				if (IsClientInGame(i) && i != client)
-					FRPlayer(i).SwapToTeam();
+					FRPlayer(i).SwapToOriginalTeam();
 			}
 		}
 	}

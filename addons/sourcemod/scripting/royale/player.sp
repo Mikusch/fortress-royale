@@ -257,7 +257,7 @@ methodmap FRPlayer
 		}
 	}
 	
-	public void SwapToTeam()
+	public void SwapToOriginalTeam()
 	{
 		if (--g_ClientSwap[this] == 0 && g_ClientSpectator[this] <= 0)
 			TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
