@@ -681,7 +681,10 @@ void TryToEndRound()
 	
 	int length = mostKills.Length;
 	if (length == 0)
+	{
+		delete mostKills;
 		return;
+	}
 	
 	char message[256];
 	for (int i = 0; i < length; i++)
@@ -695,4 +698,5 @@ void TryToEndRound()
 	}
 	
 	PrintToChatAll("%t", "RoundState_MostKills", message, killStreak);
+	delete mostKills;
 }
