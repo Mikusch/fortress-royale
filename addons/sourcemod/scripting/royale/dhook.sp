@@ -1,6 +1,7 @@
 enum ThinkFunction
 {
 	ThinkFunction_None,
+	ThinkFunction_SapperThink,
 	ThinkFunction_DispenseThink,
 	ThinkFunction_SentryThink,
 	ThinkFunction_RegenThink,
@@ -133,7 +134,14 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
 	char classname[256];
 	GetEntityClassname(entity, classname, sizeof(classname));
 	
-	if (StrEqual(classname, "obj_dispenser"))
+	if (StrEqual(classname, "obj_attachment_sapper"))
+	{
+		g_ThinkFunction = ThinkFunction_SapperThink;
+		
+		//Vampire powerup heals owner on damaging building
+		GameRules_SetProp("m_bPowerupMode", true);
+	}
+	else if (StrEqual(classname, "obj_dispenser"))
 	{
 		if (!GetEntProp(entity, Prop_Send, "m_bPlacing") && !GetEntProp(entity, Prop_Send, "m_bBuilding") && SDKCall_GetNextThink(entity, "DispenseThink") == TICK_NEVER_THINK)	// CObjectDispenser::DispenseThink
 		{
@@ -215,6 +223,10 @@ public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
 {
 	switch (g_ThinkFunction)
 	{
+		case ThinkFunction_SapperThink:
+		{
+			GameRules_SetProp("m_bPowerupMode", false);
+		}
 		case ThinkFunction_DispenseThink:
 		{
 			for (int client = 1; client <= MaxClients; client++)

@@ -49,11 +49,6 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
 		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
 	}
-	else if (StrEqual(classname, "obj_attachment_sapper"))
-	{
-		SDKHook(entity, SDKHook_Think, Sapper_Think);
-		SDKHook(entity, SDKHook_ThinkPost, Sapper_ThinkPost);
-	}
 	else if (StrEqual(classname, "obj_dispenser"))
 	{
 		SDKHook(entity, SDKHook_StartTouch, Dispenser_StartTouch);
@@ -350,17 +345,6 @@ public void Projectile_TouchPost(int entity, int other)
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 	}
-}
-
-public Action Sapper_Think(int entity)
-{
-	//Vampire powerup heals owner on damaging building
-	GameRules_SetProp("m_bPowerupMode", true);
-}
-
-public void Sapper_ThinkPost(int entity)
-{
-	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public Action Dispenser_StartTouch(int dispenser, int toucher)
