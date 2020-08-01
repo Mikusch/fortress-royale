@@ -151,11 +151,19 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
 			g_ThinkFunction = ThinkFunction_DispenseThink;
 			
 			//Disallow players able to be healed from dispenser
-			//TODO allow blu spy from enemy team to be healed
+			TFTeam team = TF2_GetTeam(entity);
 			for (int client = 1; client <= MaxClients; client++)
 			{
-				if (IsClientInGame(client) && !TF2_IsObjectFriendly(entity, client))
-					FRPlayer(client).ChangeToSpectator();
+				if (IsClientInGame(client))
+				{
+					FRPlayer(client).Team = TF2_GetTeam(client);
+					bool friendly = TF2_IsObjectFriendly(entity, client);
+					
+					if (friendly && FRPlayer(client).Team != team)
+						FRPlayer(client).SwapToEnemyTeam();
+					else if (!friendly && FRPlayer(client).Team == team)
+						FRPlayer(client).SwapToEnemyTeam();
+				}
 			}
 		}
 	}
@@ -232,11 +240,18 @@ public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
 		}
 		case ThinkFunction_DispenseThink:
 		{
+			TFTeam team = TF2_GetTeam(entity);
 			for (int client = 1; client <= MaxClients; client++)
 			{
-				//TODO allow blu spy from enemy team to be healed
-				if (IsClientInGame(client) && !TF2_IsObjectFriendly(entity, client))
-					FRPlayer(client).ChangeToTeam();
+				if (IsClientInGame(client))
+				{
+					bool friendly = TF2_IsObjectFriendly(entity, client);
+					
+					if (friendly && FRPlayer(client).Team != team)
+						FRPlayer(client).SwapToOriginalTeam();
+					else if (!friendly && FRPlayer(client).Team == team)
+						FRPlayer(client).SwapToOriginalTeam();
+				}
 			}
 		}
 		
