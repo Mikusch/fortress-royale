@@ -138,6 +138,9 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
 	{
 		g_ThinkFunction = ThinkFunction_SapperThink;
 		
+		//Always set team to spectator so sapper can sap both teams
+		TF2_ChangeTeam(entity, TFTeam_Spectator);
+		
 		//Vampire powerup heals owner on damaging building
 		GameRules_SetProp("m_bPowerupMode", true);
 	}
