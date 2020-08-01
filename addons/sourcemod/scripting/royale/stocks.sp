@@ -92,6 +92,37 @@ stock void AnglesToVelocity(const float angles[3], float velocity[3], float spee
 	ScaleVector(velocity, speed);
 }
 
+stock void RotateVector(const float vector[3], const float angles[3], float result[3])
+{
+	float rad[3];
+	rad[0] = DegToRad(angles[2]);
+	rad[1] = DegToRad(angles[0]);
+	rad[2] = DegToRad(angles[1]);
+	
+	float cosAlpha = Cosine(rad[0]);
+	float sinAlpha = Sine(rad[0]);
+	float cosBeta = Cosine(rad[1]);
+	float sinBeta = Sine(rad[1]);
+	float cosGamma = Cosine(rad[2]);
+	float sinGamma = Sine(rad[2]);
+	
+	// 3D rotation matrix
+	result = vector;
+	
+	float buffer[3];
+	buffer = result;
+	result[1] = cosAlpha*buffer[1] - sinAlpha*buffer[2];
+	result[2] = cosAlpha*buffer[2] + sinAlpha*buffer[1];
+	
+	buffer = result;
+	result[0] = cosBeta*buffer[0] + sinBeta*buffer[2];
+	result[2] = cosBeta*buffer[2] - sinBeta*buffer[0];
+	
+	buffer = result;
+	result[0] = cosGamma*buffer[0] - sinGamma*buffer[1];
+	result[1] = cosGamma*buffer[1] + sinGamma*buffer[0];
+}
+
 stock void StringToVector(const char[] string, float vector[3])
 {
 	char buffer[3][16];
@@ -246,12 +277,16 @@ stock void CreateFade(int client, int duration = 1000, int r = 255, int g = 255,
 
 stock void WorldSpaceCenter(int entity, float[3] buffer)
 {
-	float origin[3], mins[3], maxs[3], offset[3];
+	float origin[3], angles[3], mins[3], maxs[3], offset[3];
 	GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(entity, Prop_Data, "m_angRotation", angles);
 	GetEntPropVector(entity, Prop_Data, "m_vecMins", mins);
 	GetEntPropVector(entity, Prop_Data, "m_vecMaxs", maxs);
+	
 	AddVectors(mins, maxs, offset);
 	ScaleVector(offset, 0.5);
+	RotateVector(offset, angles, offset);
+	
 	AddVectors(origin, offset, buffer);
 }
 
