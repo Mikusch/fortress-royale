@@ -275,6 +275,18 @@ stock void CreateFade(int client, int duration = 1000, int r = 255, int g = 255,
 	EndMessage();
 }
 
+stock void ShowKeyHintText(int client, const char[] format, any ...)
+{
+	char buffer[255];
+	SetGlobalTransTarget(client);
+	VFormat(buffer, sizeof(buffer), format, 3);
+	
+	BfWrite bf = UserMessageToBfWrite(StartMessageOne("KeyHintText", client));
+	bf.WriteByte(1);	//One message
+	bf.WriteString(buffer);
+	EndMessage();
+}
+
 stock void WorldSpaceCenter(int entity, float[3] buffer)
 {
 	float origin[3], angles[3], mins[3], maxs[3], offset[3];

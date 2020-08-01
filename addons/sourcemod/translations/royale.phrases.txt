@@ -2,7 +2,7 @@
 {
 	"BattleBus_HowToDrop"
 	{
-		"en"		"Press your Special Attack key (default: MOUSE3) to drop!"
+		"en"		"%%+attack3%% DROP INTO BATTLE"
 	}
 	"BattleBus_SecToDeployParachute"
 	{
