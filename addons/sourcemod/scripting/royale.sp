@@ -321,12 +321,14 @@ TFCond g_runeConds[] = {
 	TFCond_SupernovaRune,
 };
 
+bool g_Enabled;
 bool g_TF2Items;
 FRRoundState g_RoundState;
 int g_PlayerCount;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
+ConVar fr_enable;
 ConVar fr_healthmultiplier[view_as<int>(TFClass_Engineer)+1];
 ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
@@ -415,8 +417,6 @@ public void OnPluginStart()
 	Vehicles_Init();
 	VehiclesConfig_Init();
 	
-	ConVar_Enable();
-	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client))
@@ -424,19 +424,79 @@ public void OnPluginStart()
 	}
 }
 
-public void OnPluginEnd()
+void Enable()
 {
+	Config_Refresh();
+	
+	if (g_Enabled)
+		return;
+	
+	g_Enabled = true;
+	
+	for (int client = 1; client <= MaxClients; client++)
+		if (IsClientInGame(client))
+			OnClientPutInServer(client);
+	
+	Console_Enable();
+	ConVar_Enable();
+	Event_Enable();
+	DHook_Enable();
+}
+
+void Disable()
+{
+	if (!g_Enabled)
+		return;
+	
+	for (int client = 1; client <= MaxClients; client++)
+		if (IsClientInGame(client))
+			OnClientDisconnect(client);
+	
+	g_Enabled = false;
+	
+	Console_Disable();
+	ConVar_Disable();
+	Event_Disable();
+	DHook_Disable();
+	
+	FREntity.ClearList();
+	
 	if (g_RoundState == FRRoundState_Setup || g_RoundState == FRRoundState_Active)
 		TF2_ForceRoundWin(TFTeam_Spectator);
-	
-	ConVar_Disable();
+}
+
+void RefreshEnable()
+{
+	switch (fr_enable.IntValue)
+	{
+		case -1:
+		{
+			if (Config_HasMapFilepath())
+				Enable();
+			else
+				Disable();
+		}
+		case 0:
+		{
+			Disable();
+		}
+		case 1:
+		{
+			Enable();
+		}
+	}
+}
+
+public void OnPluginEnd()
+{
+	Disable();
 }
 
 public void OnMapStart()
 {
 	g_RoundState = FRRoundState_Waiting;
 	
-	Config_Refresh();
+	RefreshEnable();
 	
 	BattleBus_Precache();
 	Zone_Precache();
@@ -447,9 +507,9 @@ public void OnMapEnd()
 	g_RoundState = FRRoundState_Waiting;
 }
 
-public void OnLibraryAdded(const char[] sName)
+public void OnLibraryAdded(const char[] name)
 {
-	if (StrEqual(sName, "TF2Items"))
+	if (StrEqual(name, "TF2Items"))
 	{
 		g_TF2Items = true;
 		
@@ -459,21 +519,25 @@ public void OnLibraryAdded(const char[] sName)
 	}
 }
 
-public void OnLibraryRemoved(const char[] sName)
+public void OnLibraryRemoved(const char[] name)
 {
-	if (StrEqual(sName, "TF2Items"))
+	if (StrEqual(name, "TF2Items"))
 	{
 		g_TF2Items = false;
 		
 		//TF2Items unloaded with GiveNamedItem unhooked, we can now safely hook GiveNamedItem ourself
-		for (int iClient = 1; iClient <= MaxClients; iClient++)
-			if (IsClientInGame(iClient))
-				DHook_HookGiveNamedItem(iClient);
+		if (g_Enabled)
+			for (int iClient = 1; iClient <= MaxClients; iClient++)
+				if (IsClientInGame(iClient))
+					DHook_HookGiveNamedItem(iClient);
 	}
 }
 
 public void OnClientPutInServer(int client)
 {
+	if (!g_Enabled)
+		return;
+	
 	DHook_HookClient(client);
 	DHook_HookGiveNamedItem(client);
 	SDKHook_HookClient(client);
@@ -485,12 +549,21 @@ public void OnClientPutInServer(int client)
 
 public void OnClientDisconnect(int client)
 {
+	if (!g_Enabled)
+		return;
+	
+	DHook_UnhookClient(client);
 	DHook_UnhookGiveNamedItem(client);
+	SDKHook_UnhookClient(client);
+	
 	Vehicles_ExitVehicle(client);
 }
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
+	if (!g_Enabled)
+		return;
+	
 	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
 	{
 		if (buttons & IN_ATTACK3)
@@ -516,6 +589,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 
 public Action OnClientCommandKeyValues(int client, KeyValues kv)
 {
+	if (!g_Enabled)
+		return Plugin_Continue;
+	
 	char command[64];
 	kv.GetSectionName(command, sizeof(command));
 	if (StrEqual(command, "+use_action_slot_item_server"))
@@ -541,6 +617,9 @@ public Action OnClientCommandKeyValues(int client, KeyValues kv)
 
 public void OnGameFrame()
 {
+	if (!g_Enabled)
+		return;
+	
 	Vehicles_OnGameFrame();
 	
 	switch (g_RoundState)
@@ -552,12 +631,18 @@ public void OnGameFrame()
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+	if (!g_Enabled)
+		return;
+	
 	DHook_OnEntityCreated(entity, classname);
 	SDKHook_OnEntityCreated(entity, classname);
 }
 
 public void OnEntityDestroyed(int entity)
 {
+	if (!g_Enabled)
+		return;
+	
 	if (0 < entity < 2048)
 	{
 		Loot_OnEntityDestroyed(entity);
@@ -568,6 +653,9 @@ public void OnEntityDestroyed(int entity)
 
 public void TF2_OnConditionAdded(int client, TFCond condition)
 {
+	if (!g_Enabled)
+		return;
+	
 	//Dont give uber on spawn from mannpower
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
@@ -583,6 +671,9 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
 {
+	if (!g_Enabled)
+		return;
+	
 	if (condition == TFCond_Parachute && FRPlayer(client).PlayerState == PlayerState_Parachute)
 	{
 		//Remove starting parachute as it no longer needed, and set state to alive
@@ -597,12 +688,18 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
 {
+	if (!g_Enabled)
+		return Plugin_Continue;
+	
 	result = TF2_IsObjectFriendly(teleporter, client);
 	return Plugin_Changed;
 }
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
 {
+	if (!g_Enabled)
+		return Plugin_Continue;
+	
 	return TF2_OnGiveNamedItem(client, classname, index);
 }
 

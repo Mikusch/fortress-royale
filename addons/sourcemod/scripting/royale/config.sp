@@ -109,3 +109,14 @@ void Confg_GetMapFilepath(char[] filePath, int length)
 	//Build file path
 	BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", tidyMapName);
 }
+
+bool Config_HasMapFilepath()
+{
+	char filePath[PLATFORM_MAX_PATH];
+	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	
+	KeyValues kv = new KeyValues("MapConfig");
+	bool result = kv.ImportFromFile(filePath);
+	delete kv;
+	return result;
+}

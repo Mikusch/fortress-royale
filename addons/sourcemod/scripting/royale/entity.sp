@@ -18,6 +18,11 @@ methodmap FREntity
 		g_Properties = new ArrayList(MAX_PROP_TYPES);
 	}
 	
+	public static void ClearList()
+	{
+		g_Properties.Clear();
+	}
+	
 	public static void Destroy(int entity)
 	{
 		int index = g_Properties.FindValue(EntIndexToEntRef(entity), Prop_EntRef);

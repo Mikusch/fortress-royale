@@ -1,4 +1,4 @@
-public void Command_Init()
+void Command_Init()
 {
 	RegAdminCmd("sm_editor", Command_Editor, ADMFLAG_CHANGEMAP);
 	RegAdminCmd("sm_vehicle", Command_Vehicle, ADMFLAG_CHANGEMAP);
@@ -6,6 +6,9 @@ public void Command_Init()
 
 public Action Command_Editor(int client, int args)
 {
+	if (!g_Enabled)
+		return Plugin_Continue;
+	
 	if (client == 0)
 	{
 		ReplyToCommand(client, "%t", "Command_NotInGame");
@@ -18,6 +21,9 @@ public Action Command_Editor(int client, int args)
 
 public Action Command_Vehicle(int client, int args)
 {
+	if (!g_Enabled)
+		return Plugin_Continue;
+	
 	if (client == 0)
 	{
 		ReplyToCommand(client, "%t", "Command_NotInGame");

@@ -5,10 +5,13 @@ enum struct ConVarInfo
 	float defaultValue;
 }
 
-static ArrayList ConVars;
+static ArrayList g_ConVarInfo;
 
 void ConVar_Init()
 {
+	fr_enable = CreateConVar("fr_enable", "-1", "-1 to enable based on map config existance, 0 to force disable, 1 to force enable", _, true, -1.0, true, 1.0);
+	fr_enable.AddChangeHook(ConVar_EnableChanged);
+	
 	//tag mismatch haha
 	fr_healthmultiplier[1] = CreateConVar("fr_healthmultiplier_scout", "2.0", "Max health multiplier for Scout", _, true, 0.0);
 	fr_healthmultiplier[2] = CreateConVar("fr_healthmultiplier_sniper", "2.4", "Max health multiplier for Sniper", _, true, 0.0);
@@ -34,7 +37,7 @@ void ConVar_Init()
 	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0.0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "", _, true, 0.0);
 	
-	ConVars = new ArrayList(sizeof(ConVarInfo));
+	g_ConVarInfo = new ArrayList(sizeof(ConVarInfo));
 	
 	ConVar_Add("mp_autoteambalance", 0.0);
 	ConVar_Add("mp_teams_unbalance_limit", 0.0);
@@ -57,17 +60,17 @@ void ConVar_Add(const char[] name, float value)
 	ConVarInfo info;
 	info.convar = FindConVar(name);
 	info.value = value;
-	ConVars.PushArray(info);
+	g_ConVarInfo.PushArray(info);
 }
 
 void ConVar_Enable()
 {
-	for (int i = 0; i < ConVars.Length; i++)
+	for (int i = 0; i < g_ConVarInfo.Length; i++)
 	{
 		ConVarInfo info;
-		ConVars.GetArray(i, info);
+		g_ConVarInfo.GetArray(i, info);
 		info.defaultValue = info.convar.FloatValue;
-		ConVars.SetArray(i, info);
+		g_ConVarInfo.SetArray(i, info);
 		
 		info.convar.SetFloat(info.value);
 		info.convar.AddChangeHook(ConVar_OnChanged);
@@ -76,10 +79,10 @@ void ConVar_Enable()
 
 void ConVar_Disable()
 {
-	for (int i = 0; i < ConVars.Length; i++)
+	for (int i = 0; i < g_ConVarInfo.Length; i++)
 	{
 		ConVarInfo info;
-		ConVars.GetArray(i, info);
+		g_ConVarInfo.GetArray(i, info);
 		
 		info.convar.RemoveChangeHook(ConVar_OnChanged);
 		info.convar.SetFloat(info.defaultValue);
@@ -88,14 +91,19 @@ void ConVar_Disable()
 
 void ConVar_OnChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	int index = ConVars.FindValue(convar, ConVarInfo::convar);
+	int index = g_ConVarInfo.FindValue(convar, ConVarInfo::convar);
 	if (index != -1)
 	{
 		ConVarInfo info;
-		ConVars.GetArray(index, info);
+		g_ConVarInfo.GetArray(index, info);
 		float value = StringToFloat(newValue);
 		
 		if (value != info.value)
 			info.convar.SetFloat(info.value);
 	}
+}
+
+public void ConVar_EnableChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	RefreshEnable();
 }

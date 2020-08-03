@@ -1,13 +1,53 @@
+enum struct ConsoleInfo
+{
+	CommandListener callback;
+	char command[64];
+}
+
+static ArrayList g_ConsoleInfo;
+
 void Console_Init()
 {
-	AddCommandListener(Console_JoinTeam, "jointeam");
-	AddCommandListener(Console_JoinTeam, "autoteam");
-	AddCommandListener(Console_JoinTeam, "spectate");
-	AddCommandListener(Console_Build, "build");
-	AddCommandListener(Console_Destroy, "destroy");
-	AddCommandListener(Console_VoiceMenu, "voicemenu");
-	AddCommandListener(Console_DropItem, "dropitem");
-	AddCommandListener(Console_EurekaTeleport, "eureka_teleport");
+	g_ConsoleInfo = new ArrayList(sizeof(ConsoleInfo));
+	
+	Console_Add(Console_JoinTeam, "jointeam");
+	Console_Add(Console_JoinTeam, "autoteam");
+	Console_Add(Console_JoinTeam, "spectate");
+	Console_Add(Console_Build, "build");
+	Console_Add(Console_Destroy, "destroy");
+	Console_Add(Console_VoiceMenu, "voicemenu");
+	Console_Add(Console_DropItem, "dropitem");
+	Console_Add(Console_EurekaTeleport, "eureka_teleport");
+}
+
+void Console_Add(CommandListener callback, const char[] command)
+{
+	ConsoleInfo info;
+	info.callback = callback;
+	strcopy(info.command, sizeof(info.command), command);
+	g_ConsoleInfo.PushArray(info);
+}
+
+void Console_Enable()
+{
+	int length = g_ConsoleInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		ConsoleInfo info;
+		g_ConsoleInfo.GetArray(i, info);
+		AddCommandListener(info.callback, info.command);
+	}
+}
+
+void Console_Disable()
+{
+	int length = g_ConsoleInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		ConsoleInfo info;
+		g_ConsoleInfo.GetArray(i, info);
+		RemoveCommandListener(info.callback, info.command);
+	}
 }
 
 public Action Console_JoinTeam(int client, const char[] command, int args)

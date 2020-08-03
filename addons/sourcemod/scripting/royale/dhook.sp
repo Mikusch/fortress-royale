@@ -1,3 +1,11 @@
+enum struct DetourInfo
+{
+	Handle detour;
+	char name[64];
+	DHookCallback callbackPre;
+	DHookCallback callbackPost;
+}
+
 enum ThinkFunction
 {
 	ThinkFunction_None,
@@ -17,12 +25,20 @@ static Handle g_DHookGetLiveTime;
 static Handle g_DHookIsEnemy;
 static Handle g_DHookIsFriend;
 
-static ThinkFunction g_ThinkFunction;
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
+static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
+static int g_HookIdGetMaxHealthPost[TF_MAXPLAYERS + 1];
+static int g_HookIdForceRespawnPre[TF_MAXPLAYERS + 1];
+static int g_HookIdForceRespawnPost[TF_MAXPLAYERS + 1];
+
+static ArrayList g_DetourInfo;
+static ThinkFunction g_ThinkFunction;
 static int g_StartLagCompensationClient;
 
 void DHook_Init(GameData gamedata)
 {
+	g_DetourInfo = new ArrayList(sizeof(DetourInfo));
+	
 	DHook_CreateDetour(gamedata, "CBaseEntity::PhysicsDispatchThink", DHook_PhysicsDispatchThinkPre, DHook_PhysicsDispatchThinkPost);
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
@@ -41,7 +57,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookIsFriend = DHook_CreateVirtual(gamedata, "INextBot::IsFriend");
 }
 
-static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback preCallback = INVALID_FUNCTION, DHookCallback postCallback = INVALID_FUNCTION)
+static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
 {
 	Handle detour = DHookCreateFromConf(gamedata, name);
 	if (!detour)
@@ -50,15 +66,12 @@ static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallba
 	}
 	else
 	{
-		if (preCallback != INVALID_FUNCTION)
-			if (!DHookEnableDetour(detour, false, preCallback))
-				LogError("Failed to enable pre detour: %s", name);
-		
-		if (postCallback != INVALID_FUNCTION)
-			if (!DHookEnableDetour(detour, true, postCallback))
-				LogError("Failed to enable post detour: %s", name);
-		
-		delete detour;
+		DetourInfo info;
+		info.detour = detour;
+		strcopy(info.name, sizeof(info.name), name);
+		info.callbackPre = callbackPre;
+		info.callbackPost = callbackPost;
+		g_DetourInfo.PushArray(info);
 	}
 }
 
@@ -69,6 +82,42 @@ static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
 		LogError("Failed to create virtual: %s", name);
 	
 	return hook;
+}
+
+void DHook_Enable()
+{
+	int length = g_DetourInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		DetourInfo info;
+		g_DetourInfo.GetArray(i, info);
+		
+		if (info.callbackPre != INVALID_FUNCTION)
+			if (!DHookEnableDetour(info.detour, false, info.callbackPre))
+				LogError("Failed to enable pre detour: %s", info.name);
+		
+		if (info.callbackPost != INVALID_FUNCTION)
+			if (!DHookEnableDetour(info.detour, true, info.callbackPost))
+				LogError("Failed to enable post detour: %s", info.name);
+	}
+}
+
+void DHook_Disable()
+{
+	int length = g_DetourInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		DetourInfo info;
+		g_DetourInfo.GetArray(i, info);
+		
+		if (info.callbackPre != INVALID_FUNCTION)
+			if (!DHookDisableDetour(info.detour, false, info.callbackPre))
+				LogError("Failed to disable pre detour: %s", info.name);
+		
+		if (info.callbackPost != INVALID_FUNCTION)
+			if (!DHookDisableDetour(info.detour, true, info.callbackPost))
+				LogError("Failed to disable post detour: %s", info.name);
+	}
 }
 
 void DHook_HookGiveNamedItem(int client)
@@ -97,10 +146,18 @@ bool DHook_IsGiveNamedItemActive()
 
 void DHook_HookClient(int client)
 {
-	DHookEntity(g_DHookGetMaxHealth, false, client, _, DHook_GetMaxHealthPre);
-	DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
-	DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
-	DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
+	g_HookIdGetMaxHealthPre[client] = DHookEntity(g_DHookGetMaxHealth, false, client, _, DHook_GetMaxHealthPre);
+	g_HookIdGetMaxHealthPost[client] = DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
+	g_HookIdForceRespawnPre[client] = DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
+	g_HookIdForceRespawnPost[client] = DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
+}
+
+void DHook_UnhookClient(int client)
+{
+	DHookRemoveHookID(g_HookIdGetMaxHealthPre[client]);
+	DHookRemoveHookID(g_HookIdGetMaxHealthPost[client]);
+	DHookRemoveHookID(g_HookIdForceRespawnPre[client]);
+	DHookRemoveHookID(g_HookIdForceRespawnPost[client]);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)

@@ -1,12 +1,54 @@
+enum struct EventInfo
+{
+	char name[64];
+	EventHook callback;
+	EventHookMode mode;
+}
+
+static ArrayList g_EventInfo;
+
 void Event_Init()
 {
-	HookEvent("teamplay_round_start", Event_RoundStart);
-	HookEvent("player_spawn", Event_PlayerSpawn);
-	HookEvent("fish_notice", Event_FishNotice, EventHookMode_Pre);
-	HookEvent("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
-	HookEvent("slap_notice", Event_FishNotice, EventHookMode_Pre);
-	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Pre);
-	HookEvent("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
+	g_EventInfo = new ArrayList(sizeof(EventInfo));
+	
+	Event_Add("teamplay_round_start", Event_RoundStart);
+	Event_Add("player_spawn", Event_PlayerSpawn);
+	Event_Add("fish_notice", Event_FishNotice, EventHookMode_Pre);
+	Event_Add("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
+	Event_Add("slap_notice", Event_FishNotice, EventHookMode_Pre);
+	Event_Add("player_death", Event_PlayerDeath, EventHookMode_Pre);
+	Event_Add("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
+}
+
+void Event_Add(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
+{
+	EventInfo info;
+	strcopy(info.name, sizeof(info.name), name);
+	info.callback = callback;
+	info.mode = mode;
+	g_EventInfo.PushArray(info);
+}
+
+void Event_Enable()
+{
+	int length = g_EventInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		EventInfo info;
+		g_EventInfo.GetArray(i, info);
+		HookEvent(info.name, info.callback, info.mode);
+	}
+}
+
+void Event_Disable()
+{
+	int length = g_EventInfo.Length;
+	for (int i = 0; i < length; i++)
+	{
+		EventInfo info;
+		g_EventInfo.GetArray(i, info);
+		UnhookEvent(info.name, info.callback, info.mode);
+	}
 }
 
 public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcast)

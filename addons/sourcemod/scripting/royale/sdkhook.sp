@@ -37,6 +37,21 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_WeaponSwitchPost, Client_WeaponSwitchPost);
 }
 
+void SDKHook_UnhookClient(int client)
+{
+	SDKUnhook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
+	
+	SDKUnhook(client, SDKHook_SetTransmit, Client_SetTransmit);
+	SDKUnhook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
+	SDKUnhook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
+	SDKUnhook(client, SDKHook_PostThink, Client_PostThink);
+	SDKUnhook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
+	SDKUnhook(client, SDKHook_Touch, Client_Touch);
+	SDKUnhook(client, SDKHook_TouchPost, Client_TouchPost);
+	SDKUnhook(client, SDKHook_WeaponSwitch, Client_WeaponSwitch);
+	SDKUnhook(client, SDKHook_WeaponSwitchPost, Client_WeaponSwitchPost);
+}
+
 void SDKHook_OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrContains(classname, "obj_") == 0)
