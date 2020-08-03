@@ -7,14 +7,16 @@ enum PostThink
 }
 
 static char g_SpectatorClassnames[][] = {
+	"tf_weapon_sniperrifle",			//CTFPlayer::FireBullet
 	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
 	"tf_weapon_flamethrower",			//CBaseCombatWeapon::SecondaryAttack
-	"tf_weapon_rocketlauncher_fireball"	//CBaseCombatWeapon::SecondaryAttack
+	"tf_weapon_rocketlauncher_fireball",//CBaseCombatWeapon::SecondaryAttack
 };
+
 static char g_EnemyTeamClassnames[][] = {
 	"tf_weapon_handgun_scout_primary",	//CTFPistol_ScoutPrimary::Push
 	"tf_weapon_bat",					//CTFWeaponBaseMelee::PrimaryAttack
-	"tf_weapon_grapplinghook"
+	"tf_weapon_grapplinghook",			//CTFGrapplingHook::ActivateRune
 };
 
 static PostThink g_PostThink;
@@ -186,7 +188,7 @@ public void Client_PostThink(int client)
 	//For functions that do simple "in same team" checks, move ourself to the spectator team
 	for (int i = 0; i < sizeof(g_SpectatorClassnames); i++)
 	{
-		if (StrEqual(classname, g_SpectatorClassnames[i]))
+		if (StrContains(classname, g_SpectatorClassnames[i]) == 0)
 		{
 			if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") != INDEX_FISTS)
 			{
@@ -212,7 +214,7 @@ public void Client_PostThink(int client)
 	//For functions that collect members of one team (RED/BLU), move everyone else to enemy team
 	for (int i = 0; i < sizeof(g_EnemyTeamClassnames); i++)
 	{
-		if (StrEqual(classname, g_EnemyTeamClassnames[i]))
+		if (StrContains(classname, g_EnemyTeamClassnames[i]) == 0)
 		{
 			g_PostThink = PostThink_EnemyTeam;
 			
