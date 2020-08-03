@@ -69,6 +69,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Touch, GasManager_Touch);
 	}
+	else if (StrEqual(classname, "tf_pumpkin_bomb"))
+	{
+		SDKHook(entity, SDKHook_OnTakeDamage, PumpkinBomb_OnTakeDamage);
+		SDKHook(entity, SDKHook_OnTakeDamagePost, PumpkinBomb_OnTakeDamagePost);
+	}
 	else if (StrEqual(classname, "item_powerup_rune"))
 	{
 		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
@@ -385,6 +390,48 @@ public Action GasManager_Touch(int entity, int other)
 		return Plugin_Handled;
 	
 	return Plugin_Continue;
+}
+
+public Action PumpkinBomb_OnTakeDamage(int pumpkin, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	//Pumpkin use private m_iTeam instead of m_iTeamNum which fucking sucks, lets use m_nSkin instead
+	TFTeam team;
+	switch (GetEntProp(pumpkin, Prop_Send, "m_nSkin"))
+	{
+		case 1: team = TFTeam_Red;
+		case 2: team = TFTeam_Blue;
+		default: return;
+	}
+	
+	//Make sure attacker is in same team as pumpkin bomb to explode
+	if (0 < attacker <= MaxClients)
+	{
+		FRPlayer(attacker).ChangeToTeam();
+		
+		if (FRPlayer(attacker).Team != team)
+			FRPlayer(attacker).SwapToEnemyTeam();
+	}
+}
+
+public void PumpkinBomb_OnTakeDamagePost(int pumpkin, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom)
+{
+	//If pumpkin did not explode and destroys itself, this callback wont be called, watch out
+	
+	TFTeam team;
+	switch (GetEntProp(pumpkin, Prop_Send, "m_nSkin"))
+	{
+		case 1: team = TFTeam_Red;
+		case 2: team = TFTeam_Blue;
+		default: return;
+	}
+	
+	if (0 < attacker <= MaxClients)
+	{
+		if (FRPlayer(attacker).Team != team)
+			FRPlayer(attacker).SwapToOriginalTeam();
+		
+		FRPlayer(attacker).ChangeToSpectator();
+	}
 }
 
 public Action Rune_Spawn(int rune)
