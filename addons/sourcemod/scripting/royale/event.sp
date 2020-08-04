@@ -3,6 +3,8 @@ enum struct EventInfo
 	char name[64];
 	EventHook callback;
 	EventHookMode mode;
+	bool force;
+	bool hooked;
 }
 
 static ArrayList g_EventInfo;
@@ -15,17 +17,18 @@ void Event_Init()
 	Event_Add("player_spawn", Event_PlayerSpawn);
 	Event_Add("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	Event_Add("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
-	Event_Add("slap_notice", Event_FishNotice, EventHookMode_Pre);
+	Event_Add("slap_notice", Event_FishNotice, EventHookMode_Pre, false);
 	Event_Add("player_death", Event_PlayerDeath, EventHookMode_Pre);
 	Event_Add("object_destroyed", Event_ObjectDestroyed, EventHookMode_Pre);
 }
 
-void Event_Add(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
+void Event_Add(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post, bool force = true)
 {
 	EventInfo info;
 	strcopy(info.name, sizeof(info.name), name);
 	info.callback = callback;
 	info.mode = mode;
+	info.force = force;
 	g_EventInfo.PushArray(info);
 }
 
@@ -36,7 +39,18 @@ void Event_Enable()
 	{
 		EventInfo info;
 		g_EventInfo.GetArray(i, info);
-		HookEvent(info.name, info.callback, info.mode);
+		
+		if (info.force)
+		{
+			HookEvent(info.name, info.callback, info.mode);
+			info.hooked = true;
+		}
+		else
+		{
+			info.hooked = HookEventEx(info.name, info.callback, info.mode);
+		}
+		
+		g_EventInfo.SetArray(i, info);
 	}
 }
 
@@ -47,7 +61,13 @@ void Event_Disable()
 	{
 		EventInfo info;
 		g_EventInfo.GetArray(i, info);
-		UnhookEvent(info.name, info.callback, info.mode);
+		
+		if (info.hooked)
+		{
+			UnhookEvent(info.name, info.callback, info.mode);
+			info.hooked = false;
+			g_EventInfo.SetArray(i, info);
+		}
 	}
 }
 
