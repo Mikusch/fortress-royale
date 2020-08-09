@@ -40,10 +40,10 @@ void ConVar_Init()
 	g_ConVarInfo = new ArrayList(sizeof(ConVarInfo));
 	
 	ConVar_Add("mp_autoteambalance", 0.0);
-	ConVar_Add("mp_teams_unbalance_limit", 0.0);
+	ConVar_Add("mp_disable_respawn_times", 1.0);
 	ConVar_Add("mp_forcecamera", 0.0);
 	ConVar_Add("mp_friendlyfire", 1.0);
-	ConVar_Add("mp_respawnwavetime", 99999.0);
+	ConVar_Add("mp_teams_unbalance_limit", 0.0);
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
 	ConVar_Add("tf_helpme_range", -1.0);
