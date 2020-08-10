@@ -286,20 +286,6 @@
 					}
 				}
 			}
-			"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
-			{
-				"signature"	"CTeamplayRoundBasedRules::SetInWaitingForPlayers"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"ignore"
-				"arguments"
-				{
-					"bWaitingForPlayers"
-					{
-						"type"	"bool"
-					}
-				}
-			}
 			"CBaseEntity::GetMaxHealth"
 			{
 				"offset"	"CBaseEntity::GetMaxHealth"
