@@ -64,12 +64,6 @@
 				"linux"		"@_ZN9CTFPlayer28GetChargeEffectBeingProvidedEv"
 				"windows"	"\x55\x8B\xEC\x51\x56\x8B\xF1\x8D\x86\x0C\x21\x00\x00"
 			}
-			"CTFPlayerShared::PulseRageBuff"
-			{
-				"library"	"server"
-				"linux"		"@_ZN15CTFPlayerShared13PulseRageBuffENS_13ERageBuffSlotE"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x18\xD9\x05\x2A\x2A\x2A\x2A"
-			}
 			"CWeaponMedigun::FindAndHealTargets"
 			{
 				"library"	"server"
@@ -266,20 +260,6 @@
 				"callconv"	"thiscall"
 				"return"	"int"
 				"this"		"entity"
-			}
-			"CTFPlayerShared::PulseRageBuff"
-			{
-				"signature"	"CTFPlayerShared::PulseRageBuff"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"eBuffSlot"
-					{
-						"type"	"int"
-					}
-				}
 			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{

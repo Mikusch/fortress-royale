@@ -62,25 +62,6 @@ stock void ModelIndexToString(int index, char[] model, int size)
 	ReadStringTable(table, index, model, size);
 }
 
-stock int GetClientFromPlayerShared(Address playershared)
-{
-	static int sharedOffset = -1;
-	if (sharedOffset == -1)
-	{
-		sharedOffset = FindSendPropInfo("CTFPlayer", "m_Shared");
-		if (sharedOffset <= -1)
-			ThrowError("Failed to find CTFPlayer::m_Shared offset");
-	}
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && GetEntityAddress(client) + view_as<Address>(sharedOffset) == playershared)
-			return client;
-	}
-	
-	return 0;
-}
-
 stock void AnglesToVelocity(const float angles[3], float velocity[3], float speed = 1.0)
 {
 	velocity[0] = Cosine(DegToRad(angles[1]));

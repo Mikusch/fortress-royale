@@ -43,7 +43,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
-	DHook_CreateDetour(gamedata, "CTFPlayerShared::PulseRageBuff", DHook_PulseRageBuffPre, DHook_PulseRageBuffPost);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
@@ -411,25 +410,6 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle retu
 		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
 		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
 	}
-}
-
-public MRESReturn DHook_PulseRageBuffPre(Address playershared, Handle params)
-{
-	int client = GetClientFromPlayerShared(playershared);
-	if (!client)
-		return;
-	
-	//Change team so client can't give boosts to teammate
-	FRPlayer(client).ChangeToSpectator();
-}
-
-public MRESReturn DHook_PulseRageBuffPost(Address playershared, Handle params)
-{
-	int client = GetClientFromPlayerShared(playershared);
-	if (!client)
-		return;
-	
-	FRPlayer(client).ChangeToTeam();
 }
 
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)

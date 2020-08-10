@@ -7,10 +7,11 @@ enum PostThink
 }
 
 static char g_SpectatorClassnames[][] = {
-	"tf_weapon_sniperrifle",			//CTFPlayer::FireBullet
-	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
+	"tf_weapon_buff_item",				//CTFPlayerShared::PulseRageBuff
 	"tf_weapon_flamethrower",			//CBaseCombatWeapon::SecondaryAttack
 	"tf_weapon_rocketlauncher_fireball",//CBaseCombatWeapon::SecondaryAttack
+	"tf_weapon_sniperrifle",			//CTFPlayer::FireBullet
+	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
 };
 
 static char g_EnemyTeamClassnames[][] = {
@@ -29,6 +30,8 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
+	SDKHook(client, SDKHook_PreThink, Client_PreThink);
+	SDKHook(client, SDKHook_PreThinkPost, Client_PreThinkPost);
 	SDKHook(client, SDKHook_PostThink, Client_PostThink);
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKHook(client, SDKHook_Touch, Client_Touch);
@@ -44,6 +47,8 @@ void SDKHook_UnhookClient(int client)
 	SDKUnhook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKUnhook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKUnhook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
+	SDKUnhook(client, SDKHook_PreThink, Client_PreThink);
+	SDKUnhook(client, SDKHook_PreThinkPost, Client_PreThinkPost);
 	SDKUnhook(client, SDKHook_PostThink, Client_PostThink);
 	SDKUnhook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKUnhook(client, SDKHook_Touch, Client_Touch);
@@ -153,6 +158,17 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 		FRPlayer(attacker).ChangeToTeam();
 	else
 		FRPlayer(victim).ChangeToTeam();
+}
+
+public void Client_PreThink(int client)
+{
+	//Dont allow buff banner give effects to teammates
+	FRPlayer(client).ChangeToSpectator();
+}
+
+public void Client_PreThinkPost(int client)
+{
+	FRPlayer(client).ChangeToTeam();
 }
 
 public void Client_PostThink(int client)
