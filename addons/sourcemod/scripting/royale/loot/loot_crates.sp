@@ -8,7 +8,7 @@ enum struct LootCrateContent
 enum struct LootCrate
 {
 	int entity; 					/**< Entity crate ref */
-	char namePrefab[CONFIG_MAXCHAR];/**< Name of prefab if any */
+	char targetname[CONFIG_MAXCHAR];/**< Name of prefab if any */
 	
 	// Loots
 	char origin[CONFIG_MAXCHAR];	/**< Spawn origin */
@@ -68,8 +68,8 @@ enum struct LootCrate
 	
 	void SetConfig(KeyValues kv)
 	{
-		//We only care prefab, origin and angles to save to "Loot" section, for now
-		kv.SetString("prefab", this.namePrefab);
+		//We only care targetname, origin and angles to save to "Loot" section, for now
+		kv.SetString("targetname", this.targetname);
 		kv.SetString("origin", this.origin);
 		kv.SetString("angles", this.angles);
 	}

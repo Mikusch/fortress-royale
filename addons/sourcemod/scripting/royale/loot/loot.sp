@@ -10,8 +10,32 @@ void Loot_Init()
 	g_LootTypeMap.SetValue("item_powerup", Loot_Item_Powerup);
 }
 
-void Loot_SpawnCratesInWorld()
+void Loot_SetupFinished()
 {
+	int crate = -1;
+	while ((crate = FindEntityByClassname(crate, "prop_dynamic_override")) != -1)
+	{
+		char targetname[CONFIG_MAXCHAR];
+		GetEntPropString(crate, Prop_Data, "m_iName", targetname, sizeof(targetname));
+		
+		LootCrate loot;
+		if (StrEqual(targetname, "fr_crate"))
+			LootCrate_GetDefault(loot);
+		else if (!LootConfig_GetPrefabByTargetname(targetname, loot))
+			continue;
+		
+		if (GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
+		{
+			SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
+			SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
+			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
+		}
+		else
+		{
+			RemoveEntity(crate);
+		}
+	}
+	
 	int pos;
 	LootCrate loot;
 	while (LootConfig_GetCrate(pos, loot))
@@ -103,6 +127,20 @@ void Loot_OnEntityDestroyed(int entity)
 		loot.entity = INVALID_ENT_REFERENCE;
 		LootConfig_SetCrate(pos, loot);
 	}
+}
+
+public Action EntityOutput_OnBreakCrateTargetname(const char[] output, int caller, int activator, float delay)
+{
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(caller, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	LootCrate loot;
+	if (StrEqual(targetname, "fr_crate"))
+		LootCrate_GetDefault(loot);
+	else
+		LootConfig_GetPrefabByTargetname(targetname, loot);
+	
+	Loot_BreakCrate(activator, EntIndexToEntRef(caller), loot);
 }
 
 public Action EntityOutput_OnBreakCrateConfig(const char[] output, int caller, int activator, float delay)

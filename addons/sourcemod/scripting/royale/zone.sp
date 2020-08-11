@@ -157,7 +157,7 @@ void Zone_RoundStart()
 	RequestFrame(Frame_UpdateZone, g_ZonePropRef);
 }
 
-void Zone_RoundArenaStart()
+void Zone_SetupFinished()
 {
 	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay);
 	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);

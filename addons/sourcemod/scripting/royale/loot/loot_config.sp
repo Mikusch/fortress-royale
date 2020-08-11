@@ -18,11 +18,11 @@ methodmap LootPrefabs < ArrayList
 				LootCrate loot;
 				loot = g_LootCrateDefault;
 				
-				//Must have a name for prefab
-				kv.GetString("name", loot.namePrefab, sizeof(loot.namePrefab));
-				if (!loot.namePrefab[0])
+				//Must have a targetname for prefab
+				kv.GetString("targetname", loot.targetname, sizeof(loot.targetname));
+				if (!loot.targetname[0])
 				{
-					LogError("Found prefab with missing 'name' key");
+					LogError("Found prefab with missing 'targetname' key");
 					continue;
 				}
 				
@@ -42,7 +42,7 @@ methodmap LootPrefabs < ArrayList
 			LootCrate Loot;
 			this.GetArray(i, Loot);
 			
-			if (StrEqual(Loot.namePrefab, name, false))
+			if (StrEqual(Loot.targetname, name, false))
 			{
 				lootBuffer = Loot;
 				return true;
@@ -71,9 +71,9 @@ methodmap LootConfig < ArrayList
 			{
 				LootCrate loot;
 				
-				//Attempt use prefab, otherwise use default
-				kv.GetString("prefab", loot.namePrefab, sizeof(loot.namePrefab));
-				if (!g_LootPrefabs.FindPrefab(loot.namePrefab, loot))
+				//Attempt use targetname, otherwise use default
+				kv.GetString("targetname", loot.targetname, sizeof(loot.targetname));
+				if (!g_LootPrefabs.FindPrefab(loot.targetname, loot))
 					loot = g_LootCrateDefault;
 				
 				loot.ReadConfig(kv);
@@ -195,7 +195,7 @@ bool LootConfig_GetPrefab(int pos, LootCrate loot)
 	return true;
 }
 
-bool LootConfig_GetPrefabByName(const char[] name, LootCrate loot)
+bool LootConfig_GetPrefabByTargetname(const char[] name, LootCrate loot)
 {
 	return g_LootPrefabs.FindPrefab(name, loot);
 }

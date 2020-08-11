@@ -738,8 +738,8 @@ public Action EntOutput_SetupFinished(const char[] output, int caller, int activ
 	
 	g_PlayerCount = GetAlivePlayersCount();
 	
-	Zone_RoundArenaStart();
-	Loot_SpawnCratesInWorld();
+	Zone_SetupFinished();
+	Loot_SetupFinished();
 }
 
 void TryToEndRound()

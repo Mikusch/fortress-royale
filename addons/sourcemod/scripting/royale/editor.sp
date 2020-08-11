@@ -207,7 +207,7 @@ void Editor_DisplayPrefab(int client, EditorItem itemType)
 			LootCrate lootPrefab;
 			while (LootConfig_GetPrefab(pos, lootPrefab))
 			{
-				menu.AddItem(lootPrefab.namePrefab, lootPrefab.namePrefab);
+				menu.AddItem(lootPrefab.targetname, lootPrefab.targetname);
 				pos++;
 			}
 		}
@@ -276,7 +276,7 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 			if (!prefab[0] || StrEqual(prefab, "__default__"))
 				LootCrate_GetDefault(loot);
 			else
-				LootConfig_GetPrefabByName(prefab, loot);
+				LootConfig_GetPrefabByTargetname(prefab, loot);
 			
 			//Create new crate
 			ghost = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
@@ -369,7 +369,7 @@ void Editor_GetItemPrefab(int entity, char[] name, int length)
 			//Copy crate from target and delete
 			LootCrate loot;
 			LootConfig_GetCrateByEntity(entity, loot);
-			strcopy(name, length, loot.namePrefab);
+			strcopy(name, length, loot.targetname);
 		}
 		case EditorItem_Vehicle:
 		{
