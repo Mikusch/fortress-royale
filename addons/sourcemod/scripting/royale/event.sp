@@ -118,10 +118,13 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 		TF2_SwitchActiveWeapon(client, fists);
 	}
 	
-	//Create spellbook so spells can actually be created
-	int spellbook = TF2_CreateWeapon(INDEX_SPELLBOOK);
-	if (spellbook > MaxClients)
-		TF2_EquipWeapon(client, spellbook);
+	//Create spellbook if player dont have one equipped
+	if (TF2_GetItemByClassname(client, "tf_weapon_spellbook") == -1)
+	{
+		int spellbook = TF2_CreateWeapon(INDEX_SPELLBOOK);
+		if (spellbook > MaxClients)
+			TF2_EquipWeapon(client, spellbook);
+	}
 	
 	//Create starting parachute
 	int parachute = TF2_CreateWeapon(INDEX_BASEJUMPER, "tf_weapon_parachute_secondary");

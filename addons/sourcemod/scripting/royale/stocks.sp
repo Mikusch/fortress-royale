@@ -546,9 +546,9 @@ stock bool TF2_TryToPickupDroppedWeapon(int client)
 
 stock bool TF2_ShouldDropWeapon(int client, int weapon)
 {
-	//Starting fists and spellbook
+	//Starting fists
 	int defindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-	if (defindex == INDEX_FISTS || defindex == INDEX_SPELLBOOK)
+	if (defindex == INDEX_FISTS)
 		return false;
 	
 	if (defindex == INDEX_BASEJUMPER)
@@ -562,14 +562,16 @@ stock bool TF2_ShouldDropWeapon(int client, int weapon)
 			return false;
 	}
 	
+	char classname[256];
+	GetEntityClassname(weapon, classname, sizeof(classname));
+	
+	//Starting spellbook
+	if (StrEqual(classname, "tf_weapon_spellbook"))
+		return false;
+	
 	//Toolbox
-	if (TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client)) == WeaponSlot_BuilderEngie)
-	{
-		char classname[256];
-		GetEntityClassname(weapon, classname, sizeof(classname));
-		if (StrEqual(classname, "tf_weapon_builder"))
-			return false;
-	}
+	if (StrEqual(classname, "tf_weapon_builder") && TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client)) == WeaponSlot_BuilderEngie)
+		return false;
 	
 	return true;
 }
@@ -577,6 +579,10 @@ stock bool TF2_ShouldDropWeapon(int client, int weapon)
 stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 {
 	if (g_SkipGiveNamedItem)
+		return Plugin_Continue;
+	
+	//Allow keep spellbook
+	if (StrEqual(classname, "tf_weapon_spellbook"))
 		return Plugin_Continue;
 	
 	TFClassType class = TF2_GetPlayerClass(client);
