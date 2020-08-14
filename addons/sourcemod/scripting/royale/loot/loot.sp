@@ -13,7 +13,7 @@ void Loot_Init()
 void Loot_SetupFinished()
 {
 	int crate = -1;
-	while ((crate = FindEntityByClassname(crate, "prop_dynamic_override")) != -1)
+	while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
 	{
 		char targetname[CONFIG_MAXCHAR];
 		GetEntPropString(crate, Prop_Data, "m_iName", targetname, sizeof(targetname));
@@ -28,6 +28,7 @@ void Loot_SetupFinished()
 		{
 			SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
 			SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
+			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
 			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
 		}
 		else
