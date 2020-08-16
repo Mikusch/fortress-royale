@@ -217,7 +217,7 @@ void Editor_DisplayPrefab(int client, EditorItem itemType)
 			Vehicle vehicle;
 			while (VehiclesConfig_GetPrefab(pos, vehicle))
 			{
-				menu.AddItem(vehicle.name, vehicle.name);
+				menu.AddItem(vehicle.targetname, vehicle.targetname);
 				pos++;
 			}
 		}
@@ -289,7 +289,7 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 			if (!prefab[0] || StrEqual(prefab, "__default__"))
 				VehiclesConfig_GetDefault(vehicle);
 			else
-				VehiclesConfig_GetByName(prefab, vehicle);
+				VehiclesConfig_GetByTargetname(prefab, vehicle);
 			
 			//Create new vehicle
 			ghost = Vehicles_CreateEntity(vehicle);
@@ -375,7 +375,7 @@ void Editor_GetItemPrefab(int entity, char[] name, int length)
 		{
 			Vehicle vehicle;
 			Vehicles_GetByEntity(entity, vehicle);
-			strcopy(name, length, vehicle.name);
+			strcopy(name, length, vehicle.targetname);
 		}
 	}
 }

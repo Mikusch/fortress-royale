@@ -40,7 +40,7 @@ public Action Command_Vehicle(int client, int args)
 	GetCmdArgString(name, sizeof(name));
 	
 	Vehicle vehicle;
-	if (!VehiclesConfig_GetByName(name, vehicle))
+	if (!VehiclesConfig_GetByTargetname(name, vehicle))
 	{
 		ReplyToCommand(client, "%t", "Command_VehicleCantFindName", name);
 		return Plugin_Handled;

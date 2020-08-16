@@ -71,8 +71,8 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 				Vehicle vehicle;
 				
 				//Attempt use prefab, otherwise use default
-				kv.GetString("prefab", vehicle.name, sizeof(vehicle.name));
-				if (!VehiclesConfig_GetByName(vehicle.name, vehicle))
+				kv.GetString("targetname", vehicle.targetname, sizeof(vehicle.targetname));
+				if (!VehiclesConfig_GetByTargetname(vehicle.targetname, vehicle))
 					vehicle = g_VehiclesDefault;
 				
 				vehicle.ReadConfig(kv);
@@ -109,7 +109,7 @@ bool VehiclesConfig_GetPrefab(int pos, Vehicle buffer)
 	return true;
 }
 
-bool VehiclesConfig_GetByName(const char[] name, Vehicle buffer)
+bool VehiclesConfig_GetByTargetname(const char[] name, Vehicle buffer)
 {
 	int length = g_VehiclesPrefabs.Length;
 	for (int i = 0; i < length; i++)
@@ -117,7 +117,7 @@ bool VehiclesConfig_GetByName(const char[] name, Vehicle buffer)
 		Vehicle vehicle;
 		g_VehiclesPrefabs.GetArray(i, vehicle);
 		
-		if (StrEqual(vehicle.name, name, false))
+		if (StrEqual(vehicle.targetname, name, false))
 		{
 			buffer = vehicle;
 			return true;

@@ -30,7 +30,7 @@ enum struct Vehicle
 	Handle fuelHudSync;		/**< Fuel meter HUD synchronizer */
 	
 	/**< Config prefab */
-	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
+	char targetname[CONFIG_MAXCHAR];/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Entity model */
 	float offset_angles[3];			/**< Angles offset when manually spawned by player */
 	float mass;						/**< Entity mass */
@@ -90,7 +90,7 @@ enum struct Vehicle
 			this.seats = this.seats.Clone();
 		}
 		
-		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
+		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
@@ -131,8 +131,8 @@ enum struct Vehicle
 	
 	void SetConfig(KeyValues kv)
 	{
-		//We only care prefab, origin and angles to save to "Vehicles" section, for now
-		kv.SetString("prefab", this.name);
+		//We only care targetname, origin and angles to save to "Vehicles" section, for now
+		kv.SetString("targetname", this.targetname);
 		kv.SetString("origin", this.origin);
 		kv.SetString("angles", this.angles);
 	}
@@ -286,8 +286,24 @@ void Vehicles_CreateEntityAtCrosshair(Vehicle vehicle, int client)
 	}
 }
 
-void Vehicles_SpawnVehiclesInWorld()
+void Vehicles_RoundStart()
 {
+	int entity = -1;
+	while ((entity = FindEntityByClassname(entity, "prop_physics*")) != -1)
+	{
+		char targetname[CONFIG_MAXCHAR];
+		GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+		
+		Vehicle vehicle;
+		if (StrEqual(targetname, "fr_vehicle"))
+			VehiclesConfig_GetDefault(vehicle);
+		else if (!VehiclesConfig_GetByTargetname(targetname, vehicle))
+			continue;
+		
+		vehicle.entity = entity;
+		g_VehiclesEntity.PushArray(vehicle);
+	}
+	
 	int pos;
 	Vehicle config, vehicle;
 	while (VehiclesConfig_GetVehicle(pos, config))
