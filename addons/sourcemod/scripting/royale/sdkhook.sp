@@ -191,7 +191,7 @@ public void Client_PostThink(int client)
 		{
 			if (hintTextMode[client] != 2)
 			{
-				PrintHintText(client, "%t", "Vehicle_HowToExit");
+				ShowKeyHintText(client, "%t", "Vehicle_HowToExit");
 				hintTextMode[client] = 2;
 			}
 		}
@@ -202,7 +202,7 @@ public void Client_PostThink(int client)
 			{
 				if (hintTextMode[client] != 1)
 				{
-					PrintHintText(client, "%t", "Vehicle_HowToEnter");
+					ShowKeyHintText(client, "%t", "Vehicle_HowToEnter");
 					hintTextMode[client] = 1;
 				}
 			}
