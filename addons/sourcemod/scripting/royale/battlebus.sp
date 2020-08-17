@@ -181,7 +181,7 @@ void BattleBus_SpectateBus(int client)
 	{
 		FRPlayer(client).PlayerState = PlayerState_BattleBus;
 		SetClientViewEntity(client, g_BattleBusCameraRef);
-		ShowKeyHintText(client, "%t", "BattleBus_HowToDrop");
+		PrintHintText(client, "%t", "BattleBus_HowToDrop");
 	}
 }
 

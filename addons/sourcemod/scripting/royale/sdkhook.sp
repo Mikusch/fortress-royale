@@ -182,6 +182,37 @@ public void Client_PostThink(int client)
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
 	}
 	
+	if (IsPlayerAlive(client))
+	{
+		static int hintTextMode[TF_MAXPLAYERS+1];
+		
+		Vehicle vehicle;
+		if (Vehicles_GetByClient(client, vehicle))
+		{
+			if (hintTextMode[client] != 2)
+			{
+				PrintHintText(client, "%t", "Vehicle_HowToExit");
+				hintTextMode[client] = 2;
+			}
+		}
+		else
+		{
+			int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
+			if (entity != -1 && Vehicles_IsVehicle(EntIndexToEntRef(entity)))
+			{
+				if (hintTextMode[client] != 1)
+				{
+					PrintHintText(client, "%t", "Vehicle_HowToEnter");
+					hintTextMode[client] = 1;
+				}
+			}
+			else
+			{
+				hintTextMode[client] = 0;
+			}
+		}
+	}
+	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
 	{
 		//Allow taunt kill work on both teams

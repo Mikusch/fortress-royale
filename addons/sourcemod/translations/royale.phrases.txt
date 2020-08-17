@@ -93,6 +93,14 @@
 		"en"		"and"
 	}
 	
+	"Vehicle_HowToEnter"
+	{
+		"en"		"%%voicemenu 0 0%% TO ENTER VEHICLE"
+	}
+	"Vehicle_HowToExit"
+	{
+		"en"		"%%voicemenu 0 0%% TO EXIT VEHICLE"
+	}
 	"Vehicle_OutOfFuel"
 	{
 		"en"		"Out of Fuel"
