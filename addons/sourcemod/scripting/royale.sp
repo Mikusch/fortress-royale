@@ -574,16 +574,6 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
 	{
 		TF2_TryToPickupDroppedWeapon(client);
-		
-		//Entering and exiting vehicles
-		if (FRPlayer(client).LastVehicleEnterTime < GetGameTime() - 1.0)
-		{
-			Vehicle vehicle;
-			if (Vehicles_GetByClient(client, vehicle))
-				Vehicles_ExitVehicle(client);
-			else
-				Vehicles_TryToEnterVehicle(client);
-		}
 	}
 }
 

@@ -402,6 +402,22 @@ void Vehicles_OnGameFrame()
 		Vehicle vehicle;
 		g_VehiclesEntity.GetArray(i, vehicle);
 		
+		//Block client primary and secondary attacks
+		int client;
+		while (vehicle.GetClients(client))
+		{
+			int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+			if (weapon != -1)
+			{
+				float cooldown = GetGameTime() + 0.5;
+				if (GetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack") < cooldown)
+					SetEntPropFloat(weapon, Prop_Send, "m_flNextPrimaryAttack", cooldown);
+				
+				if (GetEntPropFloat(weapon, Prop_Send, "m_flNextSecondaryAttack") < cooldown)
+					SetEntPropFloat(weapon, Prop_Send, "m_flNextSecondaryAttack", cooldown);
+			}
+		}
+		
 		if (vehicle.fuel_max > 0 && vehicle.fuel > 0)
 			Vehicles_UpdateFuel(vehicle);
 			
