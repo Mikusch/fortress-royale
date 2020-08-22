@@ -442,6 +442,11 @@ public void Vehicles_UpdateMovement(Vehicle vehicle)
 	if (client != -1)
 	{
 		int buttons = GetClientButtons(client);
+		int buttonsDir = 0;
+		if (buttons & IN_FORWARD && !(buttons & IN_BACK) && vehicle.land_forward_speed)
+			buttonsDir = IN_FORWARD;
+		else if (buttons & IN_BACK && !(buttons & IN_FORWARD) && vehicle.land_backward_speed)
+			buttonsDir = IN_BACK;
 		
 		float angles[3], velocity[3], angVelocity[3];
 		GetEntPropVector(vehicle.entity, Prop_Data, "m_angRotation", angles);
@@ -450,10 +455,14 @@ public void Vehicles_UpdateMovement(Vehicle vehicle)
 		//Helicopter
 		if (vehicle.flight)
 		{
-			if (buttons & IN_FORWARD)
+			if (buttonsDir == IN_FORWARD)	//Tilting to forward
 				vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, vehicle.tilt_max);
-			else
+			else if (buttonsDir == IN_BACK)	//Tilting to backward
+				vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, -vehicle.tilt_max);
+			else if (vehicle.tilt[0] > 0.0)	//Tilting to 0 from forward
 				vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, 0.0);
+			else if (vehicle.tilt[0] < 0.0)	//Tilting to 0 from backward
+				vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, 0.0);
 			
 			Vehicles_SetByEntity(vehicle);
 			SubtractVectors(angles, vehicle.tilt, angles);
@@ -490,16 +499,16 @@ public void Vehicles_UpdateMovement(Vehicle vehicle)
 				water = 1.0;
 		}
 		
-		if ((buttons & IN_FORWARD && !(buttons & IN_BACK)) || (buttons & IN_BACK && !(buttons & IN_FORWARD)))
+		if (buttonsDir)
 		{
 			float speed, max;
 			
-			if (buttons & IN_FORWARD)
+			if (buttonsDir == IN_FORWARD)
 			{
 				speed = ((1.0 - water) * vehicle.land_forward_speed) + (water * vehicle.water_forward_speed);
 				max = ((1.0 - water) * vehicle.land_forward_max) + (water * vehicle.water_forward_max);
 			}
-			else if (buttons & IN_BACK)
+			else if (buttonsDir == IN_BACK)
 			{
 				speed = -((1.0 - water) * vehicle.land_backward_speed) - (water * vehicle.water_backward_speed);
 				max = ((1.0 - water) * vehicle.land_backward_max) + (water * vehicle.water_backward_max);
