@@ -288,22 +288,6 @@ void Vehicles_CreateEntityAtCrosshair(Vehicle vehicle, int client)
 
 void Vehicles_RoundStart()
 {
-	int entity = -1;
-	while ((entity = FindEntityByClassname(entity, "prop_physics*")) != -1)
-	{
-		char targetname[CONFIG_MAXCHAR];
-		GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-		
-		Vehicle vehicle;
-		if (StrEqual(targetname, "fr_vehicle"))
-			VehiclesConfig_GetDefault(vehicle);
-		else if (!VehiclesConfig_GetByTargetname(targetname, vehicle))
-			continue;
-		
-		vehicle.entity = entity;
-		g_VehiclesEntity.PushArray(vehicle);
-	}
-	
 	int pos;
 	Vehicle config, vehicle;
 	while (VehiclesConfig_GetVehicle(pos, config))
@@ -314,6 +298,30 @@ void Vehicles_RoundStart()
 		VehiclesConfig_SetVehicle(pos, config);
 		pos++;
 	}
+}
+
+void Vehicles_OnEntitySpawned(int entity)
+{
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	Vehicle vehicle;
+	if (StrEqual(targetname, "fr_vehicle"))
+		VehiclesConfig_GetDefault(vehicle);
+	else if (!VehiclesConfig_GetByTargetname(targetname, vehicle))
+		return;
+	
+	vehicle.Create(EntIndexToEntRef(entity));
+	
+	DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
+	DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
+	
+	SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
+	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
+	
+	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
+	
+	g_VehiclesEntity.PushArray(vehicle);
 }
 
 void Vehicles_OnEntityDestroyed(int entity)

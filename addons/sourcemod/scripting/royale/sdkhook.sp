@@ -66,19 +66,18 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_OnTakeDamagePost, Building_OnTakeDamagePost);
 	}
 	
-	if (StrEqual(classname, "tf_projectile_cleaver") || StrEqual(classname, "tf_projectile_pipe"))
+	if (StrEqual(classname, "item_powerup_rune"))
 	{
-		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
-		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
+		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
+	}
+	else if (StrContains(classname, "prop_physics") == 0)
+	{
+		SDKHook(entity, SDKHook_Spawn, Prop_Spawn);
 	}
 	else if (StrEqual(classname, "obj_dispenser"))
 	{
 		SDKHook(entity, SDKHook_StartTouch, Dispenser_StartTouch);
 		SDKHook(entity, SDKHook_StartTouchPost, Dispenser_StartTouchPost);
-	}
-	else if (StrEqual(classname, "tf_projectile_syringe"))
-	{
-		SDKHook(entity, SDKHook_ShouldCollide, Entity_ShouldCollide);
 	}
 	else if (StrEqual(classname, "tf_flame_manager"))
 	{
@@ -89,14 +88,19 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Touch, GasManager_Touch);
 	}
+	else if (StrEqual(classname, "tf_projectile_cleaver") || StrEqual(classname, "tf_projectile_pipe"))
+	{
+		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
+		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
+	}
+	else if (StrEqual(classname, "tf_projectile_syringe"))
+	{
+		SDKHook(entity, SDKHook_ShouldCollide, Entity_ShouldCollide);
+	}
 	else if (StrEqual(classname, "tf_pumpkin_bomb"))
 	{
 		SDKHook(entity, SDKHook_OnTakeDamage, PumpkinBomb_OnTakeDamage);
 		SDKHook(entity, SDKHook_OnTakeDamagePost, PumpkinBomb_OnTakeDamagePost);
-	}
-	else if (StrEqual(classname, "item_powerup_rune"))
-	{
-		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
 	}
 	else if (StrEqual(classname, "tf_spell_meteorshowerspawner"))
 	{
@@ -414,6 +418,11 @@ public void Projectile_TouchPost(int entity, int other)
 		FRPlayer(owner).ChangeToTeam();
 		TF2_ChangeTeam(entity, FRPlayer(owner).Team);
 	}
+}
+
+public Action Prop_Spawn(int prop)
+{
+	Vehicles_OnEntitySpawned(prop);
 }
 
 public Action Dispenser_StartTouch(int dispenser, int toucher)
