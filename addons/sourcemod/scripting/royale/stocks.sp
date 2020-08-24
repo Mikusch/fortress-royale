@@ -972,7 +972,7 @@ stock void TF2_CreateSetupTimer(int duration, EntityOutput callback)
 	AcceptEntityInput(timer, "Enable");
 	AcceptEntityInput(timer, "Resume");
 	
-	Event event = CreateEvent("teamplay_update_timer");
+	Event event = CreateEvent("teamplay_update_timer", true);
 	event.Fire();
 }
 
