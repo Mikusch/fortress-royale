@@ -449,8 +449,16 @@ void Disable()
 		return;
 	
 	for (int client = 1; client <= MaxClients; client++)
+	{
 		if (IsClientInGame(client))
-			OnClientDisconnect(client);
+		{
+			DHook_UnhookClient(client);
+			DHook_UnhookGiveNamedItem(client);
+			SDKHook_UnhookClient(client);
+			
+			Vehicles_ExitVehicle(client);
+		}
+	}
 	
 	g_Enabled = false;
 	
@@ -551,10 +559,6 @@ public void OnClientDisconnect(int client)
 {
 	if (!g_Enabled)
 		return;
-	
-	DHook_UnhookClient(client);
-	DHook_UnhookGiveNamedItem(client);
-	SDKHook_UnhookClient(client);
 	
 	Vehicles_ExitVehicle(client);
 }
