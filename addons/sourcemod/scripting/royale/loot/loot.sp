@@ -8,6 +8,11 @@ void Loot_Init()
 	g_LootTypeMap.SetValue("item_ammopack", Loot_Item_AmmoPack);
 	g_LootTypeMap.SetValue("spell_pickup", Loot_Pickup_Spell);
 	g_LootTypeMap.SetValue("item_powerup", Loot_Item_Powerup);
+	
+	HookEntityOutput("prop_dynamic", "OnBreak", EntityOutput_OnBreakCrate);
+	HookEntityOutput("prop_dynamic_override", "OnBreak", EntityOutput_OnBreakCrate);
+	HookEntityOutput("prop_physics", "OnBreak", EntityOutput_OnBreakCrate);
+	HookEntityOutput("prop_physics_override", "OnBreak", EntityOutput_OnBreakCrate);
 }
 
 void Loot_SetupFinished()
@@ -29,7 +34,6 @@ void Loot_SetupFinished()
 			SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
 			SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
-			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
 		}
 		else
 		{
@@ -43,7 +47,7 @@ void Loot_SetupFinished()
 	{
 		if (GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
 		{
-			loot.entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+			loot.entity = Loot_SpawnCrateInWorld(loot);
 			LootConfig_SetCrate(pos, loot);
 		}
 		
@@ -51,7 +55,7 @@ void Loot_SetupFinished()
 	}
 }
 
-int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics = false)
+int Loot_SpawnCrateInWorld(LootCrate loot, bool physics = false)
 {
 	int crate = INVALID_ENT_REFERENCE;
 	if (physics)
@@ -81,8 +85,6 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 			StringToVector(loot.angles, angles);
 			TeleportEntity(crate, origin, angles, NULL_VECTOR);
 			
-			HookSingleEntityOutput(crate, "OnBreak", callback, true);
-			
 			if (physics)
 				AcceptEntityInput(crate, "EnableMotion");
 			
@@ -99,6 +101,7 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 void Loot_SetCratePrefab(int crate, LootCrate loot)
 {
 	SetEntityModel(crate, loot.model);
+	SetEntPropString(crate, Prop_Data, "m_iName", loot.targetname);
 	SetEntProp(crate, Prop_Data, "m_nSkin", loot.skin);
 	SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
 	SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
@@ -130,7 +133,7 @@ void Loot_OnEntityDestroyed(int entity)
 	}
 }
 
-public Action EntityOutput_OnBreakCrateTargetname(const char[] output, int caller, int activator, float delay)
+public Action EntityOutput_OnBreakCrate(const char[] output, int caller, int activator, float delay)
 {
 	char targetname[CONFIG_MAXCHAR];
 	GetEntPropString(caller, Prop_Data, "m_iName", targetname, sizeof(targetname));
@@ -138,26 +141,11 @@ public Action EntityOutput_OnBreakCrateTargetname(const char[] output, int calle
 	LootCrate loot;
 	if (StrEqual(targetname, "fr_crate"))
 		LootCrate_GetDefault(loot);
-	else
-		LootConfig_GetPrefabByTargetname(targetname, loot);
+	else if (StrEqual(targetname, "fr_crate_bus"))
+		LootCrate_GetBus(loot);
+	else if (!LootConfig_GetPrefabByTargetname(targetname, loot))
+		return;
 	
-	Loot_BreakCrate(activator, EntIndexToEntRef(caller), loot);
-}
-
-public Action EntityOutput_OnBreakCrateConfig(const char[] output, int caller, int activator, float delay)
-{
-	int crate = EntIndexToEntRef(caller);
-	
-	LootCrate loot;
-	int pos = LootConfig_GetCrateByEntity(crate, loot);
-	if (pos >= 0)
-		Loot_BreakCrate(activator, crate, loot);
-}
-
-public Action EntityOutput_OnBreakCrateBus(const char[] output, int caller, int activator, float delay)
-{
-	LootCrate loot;
-	LootCrate_GetBus(loot);
 	Loot_BreakCrate(activator, EntIndexToEntRef(caller), loot);
 }
 

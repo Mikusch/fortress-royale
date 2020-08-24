@@ -330,7 +330,7 @@ public Action BattleBus_SpawnLootCrate(Handle timer, int bus)
 	VectorToString(origin, loot.origin, sizeof(loot.origin));
 	VectorToString(angles, loot.angles, sizeof(loot.angles));
 	
-	Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateBus, true);
+	Loot_SpawnCrateInWorld(loot, true);
 }
 
 public Action BattleBus_EndLootBus(Handle timer, int bus)

@@ -118,7 +118,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 						VectorToString(origin, loot.origin, sizeof(loot.origin));
 						VectorToString(angles, loot.angles, sizeof(loot.angles));
 						
-						entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+						entity = Loot_SpawnCrateInWorld(loot);
 						
 						loot.entity = entity;
 						LootConfig_SetCrate(configIndex, loot);
@@ -279,7 +279,7 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 				LootConfig_GetPrefabByTargetname(prefab, loot);
 			
 			//Create new crate
-			ghost = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
+			ghost = Loot_SpawnCrateInWorld(loot);
 			loot.entity = ghost;
 			LootConfig_AddCrate(loot);
 		}
