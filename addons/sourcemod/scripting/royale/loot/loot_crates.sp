@@ -28,7 +28,6 @@ enum struct LootCrate
 	void ReadConfig(KeyValues kv)
 	{
 		//Get vectors as string so we dont worry float precision when converting back to kv
-		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
 		kv.GetString("origin", this.origin, CONFIG_MAXCHAR, this.origin);
 		kv.GetString("angles", this.angles, CONFIG_MAXCHAR, this.angles);
 		
