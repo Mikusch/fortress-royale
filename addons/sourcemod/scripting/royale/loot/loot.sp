@@ -163,8 +163,8 @@ public Action EntityOutput_OnBreakCrateBus(const char[] output, int caller, int 
 
 public void Loot_BreakCrate(int entity, int crate, LootCrate loot)
 {
-	int client = GetOwnerLoop(entity);
-	if ((client <= 0 || client > MaxClients) && HasEntProp(entity, Prop_Send, "m_hLauncher"))
+	int client = (entity == -1) ? -1 : GetOwnerLoop(entity);
+	if ((client <= 0 || client > MaxClients) && entity != -1 && HasEntProp(entity, Prop_Send, "m_hLauncher"))
 		client = GetOwnerLoop(GetEntPropEnt(entity, Prop_Send, "m_hLauncher"));
 	
 	EmitSoundToAll(loot.sound, crate);
@@ -195,5 +195,6 @@ public void Loot_BreakCrate(int entity, int crate, LootCrate loot)
 		LogError("Unable to call function for LootType '%d' class '%d'", lootTable.type, class);
 	
 	//Reset pickup time so client dont pickup weapon in an instant
-	FRPlayer(client).LastWeaponPickupTime = GetGameTime();
+	if (0 < client <= MaxClients)
+		FRPlayer(client).LastWeaponPickupTime = GetGameTime();
 }

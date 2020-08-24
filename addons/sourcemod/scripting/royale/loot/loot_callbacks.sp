@@ -147,6 +147,9 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 
 public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 {
+	if (client <= 0 || client > MaxClients)
+		return false;
+	
 	//Check if client is low on metal
 	int maxMetal = SDKCall_GetMaxAmmo(client, view_as<int>(TF_AMMO_METAL));
 	int metal = GetEntProp(client, Prop_Data, "m_iAmmo", _, view_as<int>(TF_AMMO_METAL));
@@ -178,5 +181,8 @@ public bool LootCallback_ShouldCreateAmmoPack(int client, CallbackParams params)
 
 public bool LootCallback_ShouldCreateHealthKit(int client, CallbackParams params)
 {
+	if (client <= 0 || client > MaxClients)
+		return false;
+	
 	return float(GetEntProp(client, Prop_Send, "m_iHealth")) / float(TF2_GetMaxHealth(client)) <= 0.795;
 }
