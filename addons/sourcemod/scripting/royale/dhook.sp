@@ -34,6 +34,7 @@ static int g_HookIdForceRespawnPost[TF_MAXPLAYERS + 1];
 static ArrayList g_DetourInfo;
 static ThinkFunction g_ThinkFunction;
 static int g_StartLagCompensationClient;
+static int g_GetChargeEffectBeingProvidedClient;
 
 void DHook_Init(GameData gamedata)
 {
@@ -397,11 +398,13 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle retur
 		SetEntProp(medigun, Prop_Send, "m_bHolstered", false);
 		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", medigun);
 	}
+	
+	g_GetChargeEffectBeingProvidedClient = client;
 }
 
 public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle returnVal)
 {
-	if (!IsClientInGame(client))
+	if (!g_GetChargeEffectBeingProvidedClient)
 		return;
 	
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
@@ -410,6 +413,8 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle retu
 		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
 		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
 	}
+	
+	g_GetChargeEffectBeingProvidedClient = 0;
 }
 
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
