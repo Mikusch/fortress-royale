@@ -407,11 +407,11 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle retu
 	if (!g_GetChargeEffectBeingProvidedClient)
 		return;
 	
-	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
+	int medigun = TF2_GetItemByClassname(g_GetChargeEffectBeingProvidedClient, "tf_weapon_medigun");
 	if (medigun != -1)
 	{
-		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
+		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(g_GetChargeEffectBeingProvidedClient, Prop_Send, "m_hActiveWeapon") != FRPlayer(g_GetChargeEffectBeingProvidedClient).ActiveWeapon);
+		SetEntPropEnt(g_GetChargeEffectBeingProvidedClient, Prop_Send, "m_hActiveWeapon", FRPlayer(g_GetChargeEffectBeingProvidedClient).ActiveWeapon);
 	}
 	
 	g_GetChargeEffectBeingProvidedClient = 0;
