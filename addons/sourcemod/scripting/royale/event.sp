@@ -131,10 +131,6 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	if (parachute > MaxClients)
 		TF2_EquipWeapon(client, parachute);
 	
-	//Create spy wallhack
-	if (class == TFClass_Spy)
-		TF2_AddCondition(client, TFCond_SpawnOutline, TFCondDuration_Infinite);
-	
 	if (!fr_classfilter.BoolValue && class != TFClass_Engineer)
 	{
 		//Give toolbox to non-engineer if class filter is off
