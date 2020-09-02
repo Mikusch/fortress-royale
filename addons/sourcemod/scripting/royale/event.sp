@@ -246,8 +246,8 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 				TF2_CreateDroppedWeapon(victim, weapon, false, origin, angles);
 		}
 		
-		//Drop medium health kit
-		TF2_DropItem(victim, "item_healthkit_medium");
+		//Drop small health kit
+		TF2_DropItem(victim, "item_healthkit_small");
 		
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
