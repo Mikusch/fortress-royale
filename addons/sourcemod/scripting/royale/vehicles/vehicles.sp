@@ -146,6 +146,9 @@ enum struct Vehicle
 		
 		if (this.seats)
 			this.seats = this.seats.Clone();
+		
+		SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
+		SDKHook(entity, SDKHook_StartTouchPost, Vehicles_StartTouchPost);
 	}
 	
 	bool GetClients(int &client)
@@ -253,7 +256,6 @@ int Vehicles_CreateEntity(Vehicle vehicle)
 			TeleportEntity(entity, origin, angles, NULL_VECTOR);
 			
 			AcceptEntityInput(entity, "EnableMotion");
-			SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 			
 			vehicle.Create(EntIndexToEntRef(entity));
 			g_VehiclesEntity.PushArray(vehicle);
@@ -318,8 +320,6 @@ void Vehicles_OnEntitySpawned(int entity)
 	
 	SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
 	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
-	
-	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 	
 	g_VehiclesEntity.PushArray(vehicle);
 }
@@ -429,128 +429,128 @@ void Vehicles_OnGameFrame()
 		if (vehicle.fuel_max > 0 && vehicle.fuel > 0)
 			Vehicles_UpdateFuel(vehicle);
 			
-		if (vehicle.fuel_max <= 0 || vehicle.fuel > 0)
-			Vehicles_UpdateMovement(vehicle);
-		
+		Vehicles_UpdateMovement(vehicle);
 		Vehicles_UpdateHUD(vehicle);
 	}
 }
 
 public void Vehicles_UpdateMovement(Vehicle vehicle)
 {
+	float velocity[3], angVelocity[3];
+	SDKCall_GetVelocity(vehicle.entity, velocity, angVelocity);
+	
 	int client = vehicle.GetDriver();
-	if (client != -1)
+	
+	int buttons, buttonsDir;
+	if (client != -1 && (vehicle.fuel_max <= 0 || vehicle.fuel > 0))
 	{
-		int buttons = GetClientButtons(client);
-		int buttonsDir = 0;
+		buttons = GetClientButtons(client);
 		if (buttons & IN_FORWARD && !(buttons & IN_BACK) && vehicle.land_forward_speed)
 			buttonsDir = IN_FORWARD;
 		else if (buttons & IN_BACK && !(buttons & IN_FORWARD) && vehicle.land_backward_speed)
 			buttonsDir = IN_BACK;
-		
-		float angles[3], velocity[3], angVelocity[3];
-		GetEntPropVector(vehicle.entity, Prop_Data, "m_angRotation", angles);
-		SDKCall_GetVelocity(vehicle.entity, velocity, angVelocity);
-		
-		//Helicopter
-		if (vehicle.flight)
-		{
-			if (buttonsDir == IN_FORWARD)	//Tilting to forward
-				vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, vehicle.tilt_max);
-			else if (buttonsDir == IN_BACK)	//Tilting to backward
-				vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, -vehicle.tilt_max);
-			else if (vehicle.tilt[0] > 0.0)	//Tilting to 0 from forward
-				vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, 0.0);
-			else if (vehicle.tilt[0] < 0.0)	//Tilting to 0 from backward
-				vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, 0.0);
-			
-			Vehicles_SetByEntity(vehicle);
-			SubtractVectors(angles, vehicle.tilt, angles);
-		}
-		
-		//Stabilize vehicle's angle vel, for helicopter and prevent barrel rolls
-		angVelocity[0] -= angles[2] * 0.5;	//side
-		angVelocity[1] -= angles[0] * 0.5;	//front
-		
-		if (vehicle.flight)	//Dont consider upward/downward angles for helicopter
-			angles[0] = 0.0;
-		
-		AddVectors(angles, vehicle.offset_angles, angles);
-		
-		//Reduce velocity and angVelocity down to not have entity act like riding on ice
-		ScaleVector(velocity, 0.95);
-		ScaleVector(angVelocity, 0.95);
-		
-		if (buttons & IN_MOVELEFT)
-			angVelocity[2] = fMin(angVelocity[2] + vehicle.rotate_speed, vehicle.rotate_max);
-		
-		if (buttons & IN_MOVERIGHT)
-			angVelocity[2] = fMax(angVelocity[2] - vehicle.rotate_speed, -vehicle.rotate_max);
-		
-		float water = 0.0;	// Percentage the vehicle is in water
-		float height;
-		if (GetWaterHeightFromEntity(vehicle.entity, height) && height > -vehicle.land_height)
-		{
-			//Vehicle is inside water, calculate height of water from vehicle
-			float maxHeight = vehicle.land_height + vehicle.water_height;
-			if (maxHeight > 0.0)
-				water = fMin(height + vehicle.land_height, maxHeight) / maxHeight;
-			else
-				water = 1.0;
-		}
-		
-		if (buttonsDir)
-		{
-			float speed, max;
-			
-			if (buttonsDir == IN_FORWARD)
-			{
-				speed = ((1.0 - water) * vehicle.land_forward_speed) + (water * vehicle.water_forward_speed);
-				max = ((1.0 - water) * vehicle.land_forward_max) + (water * vehicle.water_forward_max);
-			}
-			else if (buttonsDir == IN_BACK)
-			{
-				speed = -((1.0 - water) * vehicle.land_backward_speed) - (water * vehicle.water_backward_speed);
-				max = ((1.0 - water) * vehicle.land_backward_max) + (water * vehicle.water_backward_max);
-			}
-			
-			float direction[3];
-			AnglesToVelocity(angles, direction, speed);
-			AddVectors(velocity, direction, velocity);
-			
-			speed = GetVectorLength(velocity);
-			if (speed > max)
-				ScaleVector(velocity, max / speed);
-		}
-		
-		if (water > 0.0 && vehicle.water_float_height > 0.0)
-			velocity[2] += fMin(height, vehicle.water_float_height) / vehicle.water_float_height * vehicle.water_float_speed;
-		
-		if (buttons & IN_JUMP && vehicle.flight_upward > 0.0)
-		{
-			//Set flight to vehicle
-			vehicle.flight = true;
-			Vehicles_SetByEntity(vehicle);
-			
-			velocity[2] = fMax(velocity[2] + vehicle.flight_upward, vehicle.flight_upward);
-		}
-		
-		if (buttons & IN_DUCK && vehicle.flight)
-		{
-			velocity[2] = fMin(velocity[2] - vehicle.flight_downward, vehicle.flight_downward);
-		}
-		
-		if (!(buttons & IN_JUMP || buttons & IN_DUCK) && vehicle.flight)
-		{
-			//Slow down vehicle upward/downward vel, as no gravity doesnt slow down vel
-			if (velocity[2] > 0.0)
-				velocity[2] = fMin(velocity[2] - vehicle.flight_upward, 0.0);
-			else if (velocity[2] < 0.0)
-				velocity[2] = fMax(velocity[2] + vehicle.flight_downward, 0.0);
-		}
-		
-		SDKCall_SetVelocity(vehicle.entity, velocity, angVelocity);
 	}
+	
+	float angles[3];
+	GetEntPropVector(vehicle.entity, Prop_Data, "m_angRotation", angles);
+	
+	//Helicopter
+	if (vehicle.flight)
+	{
+		if (buttonsDir == IN_FORWARD)	//Tilting to forward
+			vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, vehicle.tilt_max);
+		else if (buttonsDir == IN_BACK)	//Tilting to backward
+			vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, -vehicle.tilt_max);
+		else if (vehicle.tilt[0] > 0.0)	//Tilting to 0 from forward
+			vehicle.tilt[0] = fMax(vehicle.tilt[0] - vehicle.tilt_speed, 0.0);
+		else if (vehicle.tilt[0] < 0.0)	//Tilting to 0 from backward
+			vehicle.tilt[0] = fMin(vehicle.tilt[0] + vehicle.tilt_speed, 0.0);
+		
+		SubtractVectors(angles, vehicle.tilt, angles);
+	}
+	
+	//Stabilize vehicle's angle vel, for helicopter and prevent barrel rolls
+	angVelocity[0] -= angles[2] * 0.5;	//side
+	angVelocity[1] -= angles[0] * 0.5;	//front
+	
+	if (vehicle.flight)	//Dont consider upward/downward angles for helicopter
+		angles[0] = 0.0;
+	
+	AddVectors(angles, vehicle.offset_angles, angles);
+	
+	//Reduce velocity and angVelocity down to not have entity act like riding on ice
+	ScaleVector(velocity, 0.95);
+	ScaleVector(angVelocity, 0.95);
+	
+	if (buttons & IN_MOVELEFT)
+		angVelocity[2] = fMin(angVelocity[2] + vehicle.rotate_speed, vehicle.rotate_max);
+	
+	if (buttons & IN_MOVERIGHT)
+		angVelocity[2] = fMax(angVelocity[2] - vehicle.rotate_speed, -vehicle.rotate_max);
+	
+	float water = 0.0;	// Percentage the vehicle is in water
+	float height;
+	if (GetWaterHeightFromEntity(vehicle.entity, height) && height > -vehicle.land_height)
+	{
+		//Vehicle is inside water, calculate height of water from vehicle
+		float maxHeight = vehicle.land_height + vehicle.water_height;
+		if (maxHeight > 0.0)
+			water = fMin(height + vehicle.land_height, maxHeight) / maxHeight;
+		else
+			water = 1.0;
+	}
+	
+	if (buttonsDir)
+	{
+		float speed, max;
+		
+		if (buttonsDir == IN_FORWARD)
+		{
+			speed = ((1.0 - water) * vehicle.land_forward_speed) + (water * vehicle.water_forward_speed);
+			max = ((1.0 - water) * vehicle.land_forward_max) + (water * vehicle.water_forward_max);
+		}
+		else if (buttonsDir == IN_BACK)
+		{
+			speed = -((1.0 - water) * vehicle.land_backward_speed) - (water * vehicle.water_backward_speed);
+			max = ((1.0 - water) * vehicle.land_backward_max) + (water * vehicle.water_backward_max);
+		}
+		
+		float direction[3];
+		AnglesToVelocity(angles, direction, speed);
+		AddVectors(velocity, direction, velocity);
+		
+		speed = GetVectorLength(velocity);
+		if (speed > max)
+			ScaleVector(velocity, max / speed);
+	}
+	
+	if (water > 0.0 && vehicle.water_float_height > 0.0)
+		velocity[2] += fMin(height, vehicle.water_float_height) / vehicle.water_float_height * vehicle.water_float_speed;
+	
+	if (buttons & IN_JUMP && vehicle.flight_upward > 0.0)
+	{
+		//Set flight to vehicle
+		vehicle.flight = true;
+		
+		velocity[2] = fMax(velocity[2] + vehicle.flight_upward, vehicle.flight_upward);
+	}
+	
+	if (buttons & IN_DUCK && vehicle.flight)
+	{
+		velocity[2] = fMin(velocity[2] - vehicle.flight_downward, vehicle.flight_downward);
+	}
+	
+	if (!(buttons & IN_JUMP || buttons & IN_DUCK) && vehicle.flight)
+	{
+		//Slow down vehicle upward/downward vel, as no gravity doesnt slow down vel
+		if (velocity[2] > 0.0)
+			velocity[2] = fMin(velocity[2] - vehicle.flight_upward, 0.0);
+		else if (velocity[2] < 0.0)
+			velocity[2] = fMax(velocity[2] + vehicle.flight_downward, 0.0);
+	}
+	
+	SDKCall_SetVelocity(vehicle.entity, velocity, angVelocity);
+	Vehicles_SetByEntity(vehicle);
 }
 
 public void Vehicles_UpdateFuel(Vehicle vehicle)
@@ -617,6 +617,32 @@ public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, f
 	}
 }
 
+public void Vehicles_StartTouchPost(int entity, int toucher)
+{
+	if (0 < toucher <= MaxClients)
+	{
+		Vehicle vehicle;
+		Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle);
+		
+		float velocity[3], angVelocity[3], origin[3];
+		SDKCall_GetVelocity(vehicle.entity, velocity, angVelocity);
+		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
+		
+		float damage = (GetVectorLength(velocity) - 25.0) * 0.5;
+		if (damage < 0.5)
+			return;
+		
+		int attacker = vehicle.GetDriver();
+		if (attacker == -1)
+			attacker = toucher;
+		
+		SDKHooks_TakeDamage(toucher, vehicle.entity, attacker, damage, DMG_VEHICLE, -1, velocity, origin);
+		
+		ScaleVector(velocity, 0.3);
+		SDKCall_SetVelocity(vehicle.entity, velocity, angVelocity);
+	}
+}
+
 void Vehicles_TryToEnterVehicle(int client)
 {
 	int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
@@ -661,6 +687,12 @@ bool Vehicles_GetByClient(int client, Vehicle vehicle)
 	}
 	
 	return false;
+}
+
+bool Vehicles_IsClientInVehicle(int client)
+{
+	Vehicle vehicle;
+	return Vehicles_GetByClient(client, vehicle);
 }
 
 void Vehicles_SetByEntity(Vehicle vehicle)

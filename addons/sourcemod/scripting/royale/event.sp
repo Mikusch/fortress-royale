@@ -181,6 +181,9 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("weaponid", TF_WEAPON_FISTS);
 	}
 	
+	if (event.GetInt("damagebits") & DMG_VEHICLE)	//choo choo
+		event.SetString("weapon", "vehicle");
+	
 	event.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
 	
 	if (0 < assister <= MaxClients)

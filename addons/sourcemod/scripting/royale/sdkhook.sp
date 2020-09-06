@@ -116,12 +116,6 @@ public bool Entity_ShouldCollide(int entity, int collisiongroup, int contentsmas
 	return originalResult;
 }
 
-public void Building_SpawnPost(int building)
-{
-	//Enable collision for both teams
-	SetEntProp(building, Prop_Send, "m_CollisionGroup", TFCOLLISION_GROUP_OBJECT_SOLIDTOPLAYERMOVEMENT);
-}
-
 public Action Client_SetTransmit(int entity, int client)
 {
 	//Don't allow alive players see invis spy
@@ -190,8 +184,7 @@ public void Client_PostThink(int client)
 	{
 		static int hintTextMode[TF_MAXPLAYERS+1];
 		
-		Vehicle vehicle;
-		if (Vehicles_GetByClient(client, vehicle))
+		if (Vehicles_IsClientInVehicle(client))
 		{
 			if (hintTextMode[client] != 2)
 			{
@@ -380,6 +373,12 @@ public void Client_WeaponSwitchPost(int client, int weapon)
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun != -1)
 		SetEntPropEnt(medigun, Prop_Send, "m_hOwnerEntity", client);
+}
+
+public void Building_SpawnPost(int building)
+{
+	//Enable collision for both teams
+	SetEntProp(building, Prop_Send, "m_CollisionGroup", TFCOLLISION_GROUP_OBJECT_SOLIDTOPLAYERMOVEMENT);
 }
 
 public Action Building_OnTakeDamage(int building, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)

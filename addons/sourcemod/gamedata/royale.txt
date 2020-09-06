@@ -106,7 +106,7 @@
 				"linux"		"191"
 				"windows"	"190"
 			}
-			"CTFPlayer::ForceRespawn"
+			"CBasePlayer::ForceRespawn"
 			{
 				"linux"		"330"
 				"windows"	"329"
@@ -293,9 +293,9 @@
 				"return"	"int"
 				"this"		"entity"
 			}
-			"CTFPlayer::ForceRespawn"
+			"CBasePlayer::ForceRespawn"
 			{
-				"offset"	"CTFPlayer::ForceRespawn"
+				"offset"	"CBasePlayer::ForceRespawn"
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
