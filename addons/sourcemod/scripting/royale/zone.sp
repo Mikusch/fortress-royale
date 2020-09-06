@@ -7,7 +7,8 @@
 
 enum struct ZoneConfig
 {
-	float color[3];		/**< The color of the zone */
+	int color[4];			/**< The color of the zone */
+	int color_ghost[4];		/**< The color of the ghost zone */
 	
 	int numShrinks;		/**< How many shrinks should be done */
 	float diameterMax;	/**< Starting zone size */
@@ -20,7 +21,8 @@ enum struct ZoneConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetVector("color", this.color, this.color);
+		kv.GetColor4("color", this.color);
+		kv.GetColor4("color_ghost", this.color_ghost);
 		
 		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
 		this.diameterMax = kv.GetFloat("diametermax", this.diameterMax);
@@ -141,12 +143,8 @@ void Zone_RoundStart()
 	
 	DispatchSpawn(g_ZonePropRef);
 	
-	int r = RoundFloat(g_ZoneConfig.color[0]);
-	int g = RoundFloat(g_ZoneConfig.color[1]);
-	int b = RoundFloat(g_ZoneConfig.color[2]);
-	
 	SetEntityRenderMode(g_ZonePropRef, RENDER_TRANSCOLOR);
-	SetEntityRenderColor(g_ZonePropRef, r, g, b, 255);
+	SetEntityRenderColor(g_ZonePropRef, g_ZoneConfig.color[0], g_ZoneConfig.color[1], g_ZoneConfig.color[2], g_ZoneConfig.color[3]);
 	
 	//Create ghost zone
 	g_ZoneGhostRef = EntIndexToEntRef(CreateEntityByName("prop_dynamic"));
@@ -160,7 +158,7 @@ void Zone_RoundStart()
 	DispatchSpawn(g_ZoneGhostRef);
 	
 	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
-	SetEntityRenderColor(g_ZoneGhostRef, r, g, b, 64);
+	SetEntityRenderColor(g_ZoneGhostRef, g_ZoneConfig.color_ghost[0], g_ZoneConfig.color_ghost[1], g_ZoneConfig.color_ghost[2], g_ZoneConfig.color_ghost[3]);
 	
 	RequestFrame(Frame_UpdateZone, g_ZonePropRef);
 }
@@ -301,17 +299,13 @@ public void Frame_UpdateZone(int ref)
 			//Create screen fade when approaching the zone border
 			if (ratio > ZONE_FADE_START_RATIO)
 			{
-				int r = RoundFloat(g_ZoneConfig.color[0]);
-				int g = RoundFloat(g_ZoneConfig.color[1]);
-				int b = RoundFloat(g_ZoneConfig.color[2]);
-				
 				float alpha;
 				if (ratio > 1.0)
 					alpha = float(ZONE_FADE_ALPHA_MAX);
 				else
 					alpha = (ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX;
 				
-				CreateFade(client, _, r, g, b, RoundToNearest(alpha));
+				CreateFade(client, _, g_ZoneConfig.color[0], g_ZoneConfig.color[1], g_ZoneConfig.color[2], RoundToNearest(alpha));
 			}
 			
 			//Apply or remove bleed effect
