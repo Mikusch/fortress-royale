@@ -10,7 +10,7 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 	//Find possible reskin to use
 	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
 	{
-		int slot = TF2Econ_GetItemSlot(defindex, class);
+		int slot = TF2Econ_GetItemLoadoutSlot(defindex, class);
 		if (slot < WeaponSlot_Primary)
 			continue;
 		

@@ -830,7 +830,7 @@ stock int TF2_GetSlot(int weapon)
 
 stock int TF2_GetItemSlot(int defindex, TFClassType class)
 {
-	int slot = TF2Econ_GetItemSlot(defindex, class);
+	int slot = TF2Econ_GetItemLoadoutSlot(defindex, class);
 	if (WeaponSlot_Primary <= slot)
 	{
 		// Econ reports wrong slots for Engineer and Spy
