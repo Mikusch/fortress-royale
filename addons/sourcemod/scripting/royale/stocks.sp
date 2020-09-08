@@ -170,8 +170,8 @@ stock bool UnstuckEntity(int entity)
 		
 		if (!direction[0] && !direction[1] && !direction[2])
 		{
-			//Should be unstuck now
-			return true;
+			//All corners is solid or not solid, cant find way to unstuck
+			return false;
 		}
 		
 		float newOrigin[3];

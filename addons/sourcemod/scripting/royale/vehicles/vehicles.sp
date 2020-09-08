@@ -5,8 +5,9 @@ enum struct VehicleSeat
 	int client;			/**< Client occupying this seat */
 	
 	bool isDriverSeat;		/**< Is this the driver seat? */
-	float offset_player[3];	/**< Offset from entity to teleport player */
+	float offset_player[3];	/**< Offset from entity to teleport player on entering vehicle */
 	float offset_angles[3];	/**< Angle offset from entity to teleport player */
+	float offset_exit[3];	/**< Offset from entity to teleport player on exiting vehicle */
 	
 	void ReadConfig(KeyValues kv)
 	{
@@ -14,6 +15,7 @@ enum struct VehicleSeat
 		this.isDriverSeat = !!kv.GetNum("driver", this.isDriverSeat);
 		kv.GetVector("offset_player", this.offset_player, this.offset_player);
 		kv.GetVector("offset_angles", this.offset_angles, this.offset_angles);
+		kv.GetVector("offset_exit", this.offset_exit, this.offset_exit);
 	}
 }
 
@@ -151,6 +153,11 @@ enum struct Vehicle
 		SDKHook(entity, SDKHook_StartTouchPost, Vehicles_StartTouchPost);
 	}
 	
+	bool HasClient(int client)
+	{
+		return this.seats && this.seats.FindValue(client, VehicleSeat::client) != -1;
+	}
+	
 	bool GetClients(int &client)
 	{
 		if (!this.seats)
@@ -167,9 +174,30 @@ enum struct Vehicle
 		return false;
 	}
 	
-	bool HasClient(int client)
+	bool GetClientSeat(int client, VehicleSeat seat)
 	{
-		return this.seats && this.seats.FindValue(client, VehicleSeat::client) != -1;
+		if (!this.seats)
+			return false;
+		
+		int index = this.seats.FindValue(client, VehicleSeat::client);
+		if (index == -1)
+			return false;
+		
+		this.seats.GetArray(index, seat, sizeof(seat));
+		return true;
+	}
+	
+	bool GetSeats(int &index, VehicleSeat seat)
+	{
+		if (!this.seats)
+			return false;
+		
+		if (index < 0 || index >= this.seats.Length)
+			return false;
+			
+		this.seats.GetArray(index, seat, sizeof(seat));
+		index++;
+		return true;
 	}
 	
 	int GetDriver()
@@ -391,15 +419,53 @@ void Vehicles_ExitVehicle(int client)
 	if (!Vehicles_GetByClient(client, vehicle))
 		return;
 	
-	vehicle.LeaveSeat(client);
 	AcceptEntityInput(client, "ClearParent");
 	SetEntityMoveType(client, MOVETYPE_WALK);
 	
-	//TODO: Exit offset, if blocked teleport player to first free location
-	float origin[3];
-	GetClientAbsOrigin(client, origin);
-	origin[2] += 150.0;
-	TeleportEntity(client, origin, NULL_VECTOR, NULL_VECTOR);
+	VehicleSeat seat;
+	vehicle.GetClientSeat(client, seat);
+	
+	float origin[3], angles[3], clientOrigin[3], clientAngles[3];
+	GetEntPropVector(vehicle.entity, Prop_Data, "m_vecAbsOrigin", origin);
+	GetEntPropVector(vehicle.entity, Prop_Data, "m_angRotation", angles);
+	GetClientEyeAngles(client, clientAngles);
+	
+	RotateVector(seat.offset_exit, angles, seat.offset_exit);
+	AddVectors(origin, seat.offset_exit, clientOrigin);
+	
+	AddVectors(clientAngles, angles, clientAngles);
+	clientAngles[2] = 0.0;
+	
+	TeleportEntity(client, clientOrigin, clientAngles, NULL_VECTOR);
+	
+	//Unstuck player if needed
+	if (!UnstuckEntity(client))
+	{
+		//Cant find good spot to unstuck, try different seat offset
+		int index;
+		do
+		{
+			if (!vehicle.GetSeats(index, seat))
+			{
+				//No more seats to try, just teleport above vehicle
+				clientOrigin = origin;
+				clientOrigin[2] += 150.0;
+				TeleportEntity(client, clientOrigin, NULL_VECTOR, NULL_VECTOR);
+				
+				break;
+			}
+			
+			if (seat.client == client)
+				continue;	//Already tried this
+			
+			RotateVector(seat.offset_exit, angles, seat.offset_exit);
+			AddVectors(origin, seat.offset_exit, clientOrigin);
+			TeleportEntity(client, clientOrigin, NULL_VECTOR, NULL_VECTOR);
+		}
+		while (!UnstuckEntity(client));
+	}
+	
+	vehicle.LeaveSeat(client);
 }
 
 void Vehicles_OnGameFrame()
