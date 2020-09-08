@@ -21,8 +21,15 @@ enum struct ZoneConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetColor4("color", this.color);
-		kv.GetColor4("color_ghost", this.color_ghost);
+		char buffer[2];
+		
+		kv.GetString("color", buffer, sizeof(buffer));
+		if (buffer[0])
+			kv.GetColor4("color", this.color);
+		
+		kv.GetString("color_ghost", buffer, sizeof(buffer));
+		if (buffer[0])
+			kv.GetColor4("color_ghost", this.color_ghost);
 		
 		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
 		this.diameterMax = kv.GetFloat("diametermax", this.diameterMax);
