@@ -211,7 +211,7 @@ methodmap FRPlayer
 	
 	public bool IsAlive()
 	{
-		return g_ClientPlayerState[this] == PlayerState_BattleBus || g_ClientPlayerState[this] == PlayerState_Parachute || g_ClientPlayerState[this] == PlayerState_Alive;
+		return g_ClientPlayerState[this] == PlayerState_BattleBus || g_ClientPlayerState[this] == PlayerState_Parachute || g_ClientPlayerState[this] == PlayerState_Alive || g_ClientPlayerState[this] == PlayerState_Winning;
 	}
 	
 	public void ChangeToSpectator()

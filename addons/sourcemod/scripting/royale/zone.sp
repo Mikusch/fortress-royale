@@ -367,26 +367,33 @@ public Action Timer_Bleed(Handle timer)
 	if (g_ZoneTimerBleed != timer)
 		return Plugin_Stop;
 	
-	// Players
+	//Players
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && IsPlayerAlive(client) && FRPlayer(client).OutsideZone)
+		FRPlayer player = FRPlayer(client);
+		
+		if (IsClientInGame(client) && IsPlayerAlive(client) && player.OutsideZone && player.PlayerState != PlayerState_Winning)
 		{
-			FRPlayer(client).ZoneDamageTicks++;
-			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * FRPlayer(client).ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
+			player.ZoneDamageTicks++;
+			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * player.ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
 		}
 	}
 	
-	// Engineer buildings
+	//Engineer buildings
 	int obj = MaxClients + 1;
 	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
 	{
-		FREntity entityObj = FREntity(obj);
-		if (!GetEntProp(obj, Prop_Send, "m_bCarried") && entityObj.OutsideZone)
+		int builder = GetEntPropEnt(obj, Prop_Send, "m_hBuilder");
+		if (0 < builder <= MaxClients && FRPlayer(builder).PlayerState != PlayerState_Winning)
 		{
-			entityObj.ZoneDamageTicks++;
-			SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(entityObj.ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
-			AcceptEntityInput(obj, "RemoveHealth");
+			FREntity entityObj = FREntity(obj);
+			
+			if (!GetEntProp(obj, Prop_Send, "m_bCarried") && entityObj.OutsideZone)
+			{
+				entityObj.ZoneDamageTicks++;
+				SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(entityObj.ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
+				AcceptEntityInput(obj, "RemoveHealth");
+			}
 		}
 	}
 	

@@ -106,6 +106,7 @@ enum PlayerState
 	PlayerState_BattleBus,	/**< Client is in Battle Bus */
 	PlayerState_Parachute,	/**< Client is alive and dropping with parachute */
 	PlayerState_Alive,		/**< Client is alive in map */
+	PlayerState_Winning,	/**< Client is alive and has won the game */
 	PlayerState_Dead		/**< Client is dead and spectating */
 }
 
@@ -761,6 +762,7 @@ void TryToEndRound()
 	}
 	else
 	{
+		FRPlayer(winner).PlayerState = PlayerState_Winning;
 		TF2_ForceRoundWin(TFTeam_Alive);
 		PrintToChatAll("%t", "RoundState_Winner", winner, FRPlayer(winner).Killstreak);
 	}
