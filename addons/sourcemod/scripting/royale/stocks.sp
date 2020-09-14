@@ -762,13 +762,6 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 		SDKCall_InitDroppedWeapon(droppedWeapon, client, fromWeapon, swap);
 	
 	TeleportEntity(droppedWeapon, origin, NULL_VECTOR, NULL_VECTOR);
-	if (!UnstuckEntity(droppedWeapon))
-	{
-		LogError("Unable to unstuck dropped weapon at origin '%.0f %.0f %.0f'", droppedWeapon, origin[0], origin[1], origin[2]);
-		RemoveEntity(droppedWeapon);
-		return INVALID_ENT_REFERENCE;
-	}
-	
 	return droppedWeapon;
 }
 
