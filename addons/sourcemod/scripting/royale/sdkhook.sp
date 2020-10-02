@@ -174,9 +174,11 @@ public void Client_PostThink(int client)
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun > MaxClients)
 	{
-		//Set target to ourself so we can build uber passive
+		//Set target to ourself so we can build uber passive, and mannpower enabled so uber rate reduced while carrying rune
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", client);
+		GameRules_SetProp("m_bPowerupMode", true);
 		SDKCall_FindAndHealTargets(medigun);
+		GameRules_SetProp("m_bPowerupMode", false);
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
 	}
 	
