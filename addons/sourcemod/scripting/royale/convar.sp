@@ -13,7 +13,7 @@ void ConVar_Init()
 	fr_enable.AddChangeHook(ConVar_EnableChanged);
 	
 	//tag mismatch haha
-	fr_healthmultiplier[1] = CreateConVar("fr_healthmultiplier_scout", "2.0", "Max health multiplier for Scout", _, true, 0.0);
+	fr_healthmultiplier[1] = CreateConVar("fr_healthmultiplier_scout", "1.6", "Max health multiplier for Scout", _, true, 0.0);
 	fr_healthmultiplier[2] = CreateConVar("fr_healthmultiplier_sniper", "2.4", "Max health multiplier for Sniper", _, true, 0.0);
 	fr_healthmultiplier[3] = CreateConVar("fr_healthmultiplier_soldier", "2.0", "Max health multiplier for Soldier", _, true, 0.0);
 	fr_healthmultiplier[4] = CreateConVar("fr_healthmultiplier_demoman", "2.0", "Max health multiplier for Demoman", _, true, 0.0);
