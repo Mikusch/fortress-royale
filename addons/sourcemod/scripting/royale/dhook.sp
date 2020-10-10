@@ -44,6 +44,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
+	DHook_CreateDetour(gamedata, "CWeaponMedigun::StopHealingOwner", DHook_StopHealingOwnerPre, _);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
@@ -415,6 +416,18 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle retu
 	}
 	
 	g_GetChargeEffectBeingProvidedClient = 0;
+}
+
+public MRESReturn DHook_StopHealingOwnerPre(int medigun)
+{
+	if (medigun == -1)	//this happens
+		return MRES_Ignored;
+	
+	//Dont remove self heals while still ubered, so quick-fix heal can apply while switched out
+	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease"))
+		return MRES_Supercede;
+	
+	return MRES_Ignored;
 }
 
 public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)

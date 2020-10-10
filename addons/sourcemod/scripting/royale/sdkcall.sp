@@ -6,6 +6,7 @@ static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallGetMaxAmmo;
 static Handle g_SDKCallFindAndHealTargets;
+static Handle g_SDKCallStopHealingOwner;
 static Handle g_SDKCallGetGlobalTeam;
 static Handle g_SDKCallChangeTeam;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
@@ -27,6 +28,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
+	g_SDKCallStopHealingOwner = PrepSDKCall_StopHealingOwner(gamedata);
 	g_SDKCallGetGlobalTeam = PrepSDKCall_GetGlobalTeam(gamedata);
 	g_SDKCallChangeTeam = PrepSDKCall_ChangeTeam(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
@@ -155,6 +157,18 @@ static Handle PrepSDKCall_FindAndHealTargets(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CWeaponMedigun::FindAndHealTargets");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_StopHealingOwner(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CWeaponMedigun::StopHealingOwner");
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CWeaponMedigun::StopHealingOwner");
 	
 	return call;
 }
@@ -336,6 +350,11 @@ int SDKCall_GetMaxAmmo(int client, int ammoType)
 bool SDKCall_FindAndHealTargets(int medigun)
 {
 	return SDKCall(g_SDKCallFindAndHealTargets, medigun);
+}
+
+void SDKCall_StopHealingOwner(int medigun)
+{
+	SDKCall(g_SDKCallStopHealingOwner, medigun);
 }
 
 Address SDKCall_GetGlobalTeam(TFTeam team)
