@@ -1065,6 +1065,14 @@ stock int TF2_GetMaxHealth(int client)
 	return GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iMaxHealth", _, client);
 }
 
+stock void TF2_SendHudNotification(HudNotification_t type, bool forceShow = false)
+{
+	BfWrite bf = UserMessageToBfWrite(StartMessageAll("HudNotify"));
+	bf.WriteByte(view_as<int>(type));
+	bf.WriteBool(forceShow);	//Display in cl_hud_minmode
+	EndMessage();
+}
+
 public Action Timer_UpdateClientHud(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);

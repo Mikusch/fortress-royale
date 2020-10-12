@@ -37,6 +37,8 @@ void ConVar_Init()
 	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0.0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "", _, true, 0.0);
 	
+	fr_truce_duration = CreateConVar("fr_truce_duration", "60", "How long the truce at the beginning of the round should last", _, true, 0.0);
+	
 	g_ConVarInfo = new ArrayList(sizeof(ConVarInfo));
 	
 	ConVar_Add("mp_autoteambalance", 0.0);

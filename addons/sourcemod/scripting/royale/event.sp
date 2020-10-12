@@ -8,12 +8,14 @@ enum struct EventInfo
 }
 
 static ArrayList g_EventInfo;
+static Handle g_TruceEndTimer;
 
 void Event_Init()
 {
 	g_EventInfo = new ArrayList(sizeof(EventInfo));
 	
 	Event_Add("teamplay_round_start", Event_RoundStart);
+	Event_Add("teamplay_setup_finished", Event_SetupFinished);
 	Event_Add("player_spawn", Event_PlayerSpawn);
 	Event_Add("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	Event_Add("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
@@ -99,6 +101,14 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
 	Vehicles_RoundStart();
+}
+
+public Action Event_SetupFinished(Event event, const char[] name, bool dontBroadcast)
+{
+	//Start a truce to allow people to grab weapons in peace
+	GameRules_SetProp("m_bTruceActive", true);
+	TF2_SendHudNotification(HUD_NOTIFY_TRUCE_START, true);
+	g_TruceEndTimer = CreateTimer(fr_truce_duration.FloatValue, Timer_EndTruce);
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -279,4 +289,13 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
 		TF2_ChangeClientTeam(client, TFTeam_Dead);
+}
+
+public Action Timer_EndTruce(Handle timer)
+{
+	if (timer != g_TruceEndTimer)
+		return;
+	
+	GameRules_SetProp("m_bTruceActive", false);
+	TF2_SendHudNotification(HUD_NOTIFY_TRUCE_END, true);
 }
