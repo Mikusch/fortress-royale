@@ -106,9 +106,12 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 public Action Event_SetupFinished(Event event, const char[] name, bool dontBroadcast)
 {
 	//Start a truce to allow people to grab weapons in peace
-	GameRules_SetProp("m_bTruceActive", true);
-	TF2_SendHudNotification(HUD_NOTIFY_TRUCE_START, true);
-	g_TruceEndTimer = CreateTimer(fr_truce_duration.FloatValue, Timer_EndTruce);
+	if (fr_truce_duration.FloatValue > 0.0)
+	{
+		GameRules_SetProp("m_bTruceActive", true);
+		TF2_SendHudNotification(HUD_NOTIFY_TRUCE_START, true);
+		g_TruceEndTimer = CreateTimer(fr_truce_duration.FloatValue, Timer_EndTruce);
+	}
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
