@@ -1,6 +1,6 @@
 enum struct DetourInfo
 {
-	Handle detour;
+	DynamicDetour detour;
 	char name[64];
 	DHookCallback callbackPre;
 	DHookCallback callbackPost;
@@ -16,14 +16,12 @@ enum ThinkFunction
 	ThinkFunction_TossJarThink,
 }
 
-static Handle g_DHookGetMaxHealth;
-static Handle g_DHookForceRespawn;
-static Handle g_DHookGiveNamedItem;
-static Handle g_DHookGrenadeExplode;
-static Handle g_DHookFireballExplode;
-static Handle g_DHookGetLiveTime;
-static Handle g_DHookIsEnemy;
-static Handle g_DHookIsFriend;
+static DynamicHook g_DHookGetMaxHealth;
+static DynamicHook g_DHookForceRespawn;
+static DynamicHook g_DHookGiveNamedItem;
+static DynamicHook g_DHookGrenadeExplode;
+static DynamicHook g_DHookFireballExplode;
+static DynamicHook g_DHookGetLiveTime;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
@@ -33,8 +31,6 @@ static int g_HookIdForceRespawnPost[TF_MAXPLAYERS + 1];
 
 static ArrayList g_DetourInfo;
 static ThinkFunction g_ThinkFunction;
-static int g_StartLagCompensationClient;
-static int g_GetChargeEffectBeingProvidedClient;
 
 void DHook_Init(GameData gamedata)
 {
@@ -54,13 +50,11 @@ void DHook_Init(GameData gamedata)
 	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
 	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
-	g_DHookIsEnemy = DHook_CreateVirtual(gamedata, "INextBot::IsEnemy");
-	g_DHookIsFriend = DHook_CreateVirtual(gamedata, "INextBot::IsFriend");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
 {
-	Handle detour = DHookCreateFromConf(gamedata, name);
+	DynamicDetour detour = DynamicDetour.FromConf(gamedata, name);
 	if (!detour)
 	{
 		LogError("Failed to create detour: %s", name);
@@ -76,12 +70,12 @@ static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallba
 	}
 }
 
-static Handle DHook_CreateVirtual(GameData gamedata, const char[] name)
+static DynamicHook DHook_CreateVirtual(GameData gamedata, const char[] name)
 {
-	Handle hook = DHookCreateFromConf(gamedata, name);
+	DynamicHook hook = DynamicHook.FromConf(gamedata, name);
 	if (!hook)
 		LogError("Failed to create virtual: %s", name);
-	
+
 	return hook;
 }
 
@@ -94,11 +88,11 @@ void DHook_Enable()
 		g_DetourInfo.GetArray(i, info);
 		
 		if (info.callbackPre != INVALID_FUNCTION)
-			if (!DHookEnableDetour(info.detour, false, info.callbackPre))
+			if (!info.detour.Enable(Hook_Pre, info.callbackPre))
 				LogError("Failed to enable pre detour: %s", info.name);
 		
 		if (info.callbackPost != INVALID_FUNCTION)
-			if (!DHookEnableDetour(info.detour, true, info.callbackPost))
+			if (!info.detour.Enable(Hook_Post, info.callbackPost))
 				LogError("Failed to enable post detour: %s", info.name);
 	}
 }
@@ -112,11 +106,11 @@ void DHook_Disable()
 		g_DetourInfo.GetArray(i, info);
 		
 		if (info.callbackPre != INVALID_FUNCTION)
-			if (!DHookDisableDetour(info.detour, false, info.callbackPre))
+			if (!info.detour.Disable(Hook_Pre, info.callbackPre))
 				LogError("Failed to disable pre detour: %s", info.name);
 		
 		if (info.callbackPost != INVALID_FUNCTION)
-			if (!DHookDisableDetour(info.detour, true, info.callbackPost))
+			if (!info.detour.Disable(Hook_Post, info.callbackPost))
 				LogError("Failed to disable post detour: %s", info.name);
 	}
 }
@@ -124,14 +118,14 @@ void DHook_Disable()
 void DHook_HookGiveNamedItem(int client)
 {
 	if (g_DHookGiveNamedItem && !g_TF2Items)
-		g_HookIdGiveNamedItem[client] = DHookEntity(g_DHookGiveNamedItem, false, client, DHook_GiveNamedItemRemoved, DHook_GiveNamedItemPre);
+		g_HookIdGiveNamedItem[client] = g_DHookGiveNamedItem.HookEntity(Hook_Pre, client, DHook_GiveNamedItemPre, DHook_GiveNamedItemRemoved);
 }
 
 void DHook_UnhookGiveNamedItem(int client)
 {
 	if (g_HookIdGiveNamedItem[client])
 	{
-		DHookRemoveHookID(g_HookIdGiveNamedItem[client]);
+		DynamicHook.RemoveHook(g_HookIdGiveNamedItem[client]);
 		g_HookIdGiveNamedItem[client] = 0;
 	}
 }
@@ -147,45 +141,40 @@ bool DHook_IsGiveNamedItemActive()
 
 void DHook_HookClient(int client)
 {
-	g_HookIdGetMaxHealthPre[client] = DHookEntity(g_DHookGetMaxHealth, false, client, _, DHook_GetMaxHealthPre);
-	g_HookIdGetMaxHealthPost[client] = DHookEntity(g_DHookGetMaxHealth, true, client, _, DHook_GetMaxHealthPost);
-	g_HookIdForceRespawnPre[client] = DHookEntity(g_DHookForceRespawn, false, client, _, DHook_ForceRespawnPre);
-	g_HookIdForceRespawnPost[client] = DHookEntity(g_DHookForceRespawn, true, client, _, DHook_ForceRespawnPost);
+	g_HookIdGetMaxHealthPre[client] = g_DHookGetMaxHealth.HookEntity(Hook_Pre, client, DHook_GetMaxHealthPre);
+	g_HookIdGetMaxHealthPost[client] = g_DHookGetMaxHealth.HookEntity(Hook_Post, client, DHook_GetMaxHealthPost);
+	g_HookIdForceRespawnPre[client] = g_DHookForceRespawn.HookEntity(Hook_Pre, client, DHook_ForceRespawnPre);
+	g_HookIdForceRespawnPost[client] = g_DHookForceRespawn.HookEntity(Hook_Post, client, DHook_ForceRespawnPost);
 }
 
 void DHook_UnhookClient(int client)
 {
-	DHookRemoveHookID(g_HookIdGetMaxHealthPre[client]);
-	DHookRemoveHookID(g_HookIdGetMaxHealthPost[client]);
-	DHookRemoveHookID(g_HookIdForceRespawnPre[client]);
-	DHookRemoveHookID(g_HookIdForceRespawnPost[client]);
+	DynamicHook.RemoveHook(g_HookIdGetMaxHealthPre[client]);
+	DynamicHook.RemoveHook(g_HookIdGetMaxHealthPost[client]);
+	DynamicHook.RemoveHook(g_HookIdForceRespawnPre[client]);
+	DynamicHook.RemoveHook(g_HookIdForceRespawnPost[client]);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrContains(classname, "tf_projectile_jar") == 0 || StrEqual(classname, "tf_projectile_spellbats"))
 	{
-		DHookEntity(g_DHookGrenadeExplode, false, entity, _, DHook_GrenadeExplodePre);
-		DHookEntity(g_DHookGrenadeExplode, true, entity, _, DHook_GrenadeExplodePost);
+		g_DHookGrenadeExplode.HookEntity(Hook_Pre, entity, DHook_GrenadeExplodePre);
+		g_DHookGrenadeExplode.HookEntity(Hook_Post, entity, DHook_GrenadeExplodePost);
 	}
 	else if (StrEqual(classname, "tf_projectile_spellfireball"))
 	{
-		DHookEntity(g_DHookFireballExplode, false, entity, _, DHook_FireballExplodePre);
-		DHookEntity(g_DHookFireballExplode, true, entity, _, DHook_FireballExplodePost);
+		g_DHookFireballExplode.HookEntity(Hook_Pre, entity, DHook_FireballExplodePre);
+		g_DHookFireballExplode.HookEntity(Hook_Post, entity, DHook_FireballExplodePost);
 	}
 	else if (StrContains(classname, "tf_projectile_pipe") == 0)
 	{
-		DHookEntity(g_DHookGetLiveTime, false, entity, _, DHook_GetLiveTimePre);
-		DHookEntity(g_DHookGetLiveTime, true, entity, _, DHook_GetLiveTimePost);
-	}
-	else if (StrEqual(classname, "tf_zombie"))
-	{
-		DHookEntity(g_DHookIsEnemy, true, entity, _, DHook_IsEnemyPost);
-		DHookEntity(g_DHookIsFriend, true, entity, _, DHook_IsFriendPost);
+		g_DHookGetLiveTime.HookEntity(Hook_Pre, entity, DHook_GetLiveTimePre);
+		g_DHookGetLiveTime.HookEntity(Hook_Post, entity, DHook_GetLiveTimePost);
 	}
 }
 
-public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
+public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 {
 	//This detour calls everytime an entity was about to call a think function, useful as it only requires 1 gamedata
 	
@@ -288,7 +277,7 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
+public MRESReturn DHook_PhysicsDispatchThinkPost(int entity)
 {
 	switch (g_ThinkFunction)
 	{
@@ -355,38 +344,38 @@ public MRESReturn DHook_PhysicsDispatchThinkPost(int entity, Handle params)
 	g_ThinkFunction = ThinkFunction_None;
 }
 
-public MRESReturn DHook_InSameTeamPre(int entity, Handle returnVal, Handle params)
+public MRESReturn DHook_InSameTeamPre(int entity, DHookReturn ret, DHookParam param)
 {
 	//In friendly fire we only want to return true if both entity owner is the same
 	
-	if (DHookIsNullParam(params, 1))
+	if (param.IsNull(1))
 	{
-		DHookSetReturn(returnVal, false);
+		ret.Value = false;
 		return MRES_Supercede;
 	}
 	
-	int other = DHookGetParam(params, 1);
+	int other = param.Get(1);
 	
 	entity = GetOwnerLoop(entity);
 	other = GetOwnerLoop(other);
 	
-	DHookSetReturn(returnVal, entity == other);
+	ret.Value = entity == other;
 	return MRES_Supercede;
 }
 
-public MRESReturn DHook_CreatePre(Handle returnVal, Handle params)
+public MRESReturn DHook_CreatePre(DHookReturn ret, DHookParam param)
 {
 	//Dont create any dropped weapon created by tf2 (TF2_CreateDroppedWeapon pass client param as NULL)
-	if (!DHookIsNullParam(params, 1))
+	if (!param.IsNull(1))
 	{
-		DHookSetReturn(returnVal, 0);
+		ret.Value = 0;
 		return MRES_Supercede;
 	}
 	
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle returnVal)
+public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client)
 {
 	if (!IsClientInGame(client))
 		return;
@@ -399,23 +388,19 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client, Handle retur
 		SetEntProp(medigun, Prop_Send, "m_bHolstered", false);
 		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", medigun);
 	}
-	
-	g_GetChargeEffectBeingProvidedClient = client;
 }
 
-public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client, Handle returnVal)
+public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client)
 {
-	if (!g_GetChargeEffectBeingProvidedClient)
+	if (!IsClientInGame(client))
 		return;
 	
-	int medigun = TF2_GetItemByClassname(g_GetChargeEffectBeingProvidedClient, "tf_weapon_medigun");
+	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun != -1)
 	{
-		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(g_GetChargeEffectBeingProvidedClient, Prop_Send, "m_hActiveWeapon") != FRPlayer(g_GetChargeEffectBeingProvidedClient).ActiveWeapon);
-		SetEntPropEnt(g_GetChargeEffectBeingProvidedClient, Prop_Send, "m_hActiveWeapon", FRPlayer(g_GetChargeEffectBeingProvidedClient).ActiveWeapon);
+		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
+		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
 	}
-	
-	g_GetChargeEffectBeingProvidedClient = 0;
 }
 
 public MRESReturn DHook_StopHealingOwnerPre(int medigun)
@@ -430,7 +415,7 @@ public MRESReturn DHook_StopHealingOwnerPre(int medigun)
 	return MRES_Ignored;
 }
 
-public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
+public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball)
 {
 	//This function only targets one team, red or blu team
 	//Move owner back to normal team, move everyone else to enemy team
@@ -469,7 +454,7 @@ public MRESReturn DHook_FindClosestVisibleVictimPre(int eyeball, Handle params)
 	}
 }
 
-public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
+public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball)
 {
 	int client = GetEntPropEnt(eyeball, Prop_Send, "m_hOwnerEntity");
 	if (client <= 0 || client > MaxClients)
@@ -490,29 +475,28 @@ public MRESReturn DHook_FindClosestVisibleVictimPost(int eyeball, Handle params)
 		TF2_ChangeTeam(boss, FREntity(boss).Team);
 }
 
-public MRESReturn DHook_StartLagCompensationPre(Address manager, Handle params)
+public MRESReturn DHook_StartLagCompensationPre(Address manager, DHookParam param)
 {
-	g_StartLagCompensationClient = DHookGetParam(params, 1);
-	
 	//Lag compensate teammates
-	// CTFPlayer::WantsLagCompensationOnEntity virtual hook could've been done instead,
-	// but expensive as it called to each clients while this detour only calls once
-	FRPlayer(g_StartLagCompensationClient).ChangeToSpectator();
+	//CTFPlayer::WantsLagCompensationOnEntity virtual hook could've been done instead,
+	//but expensive as it called to each clients while this detour only calls once
+	int client = param.Get(1);
+	FRPlayer(client).ChangeToSpectator();
 }
 
-public MRESReturn DHook_StartLagCompensationPost(Address manager, Handle params)
+public MRESReturn DHook_StartLagCompensationPost(Address manager, DHookParam param)
 {
-	//DHook bug with post hook returning incorrect client address
-	FRPlayer(g_StartLagCompensationClient).ChangeToTeam();
+	int client = param.Get(1);
+	FRPlayer(client).ChangeToTeam();
 }
 
-public MRESReturn DHook_GetMaxHealthPre(int client, Handle returnVal)
+public MRESReturn DHook_GetMaxHealthPre(int client)
 {
 	//Hooks may be changing client class, change class back to what it was
 	FRPlayer(client).ChangeToClass();
 }
 
-public MRESReturn DHook_GetMaxHealthPost(int client, Handle returnVal)
+public MRESReturn DHook_GetMaxHealthPost(int client, DHookReturn ret)
 {
 	TFClassType class = TF2_GetPlayerClass(client);
 	FRPlayer(client).ChangeToUnknown();
@@ -525,7 +509,8 @@ public MRESReturn DHook_GetMaxHealthPost(int client, Handle returnVal)
 		return MRES_Ignored;
 	
 	//Multiply health by convar value
-	DHookSetReturn(returnVal, RoundToNearest(float(DHookGetReturn(returnVal)) * multiplier));
+	float health = float(ret.Value);
+	ret.Value = RoundToNearest(health * multiplier);
 	return MRES_Supercede;
 }
 
@@ -551,21 +536,21 @@ public MRESReturn DHook_ForceRespawnPost(int client)
 	GameRules_SetProp("m_bPowerupMode", false);
 }
 
-public MRESReturn DHook_GiveNamedItemPre(int client, Handle returnVal, Handle params)
+public MRESReturn DHook_GiveNamedItemPre(int client, DHookReturn ret, DHookParam param)
 {
-	if (DHookIsNullParam(params, 1) || DHookIsNullParam(params, 3))
+	if (param.IsNull(1) || param.IsNull(3))
 	{
-		DHookSetReturn(returnVal, 0);
+		ret.Value = 0;
 		return MRES_Supercede;
 	}
 	
 	char classname[256];
-	DHookGetParamString(params, 1, classname, sizeof(classname));
-	int index = DHookGetParamObjectPtrVar(params, 3, g_OffsetItemDefinitionIndex, ObjectValueType_Int) & 0xFFFF;
+	param.GetString(1, classname, sizeof(classname));
+	int index = param.GetObjectVar(3, g_OffsetItemDefinitionIndex, ObjectValueType_Int) & 0xFFFF;
 	
 	if (TF2_OnGiveNamedItem(client, classname, index) >= Plugin_Handled)
 	{
-		DHookSetReturn(returnVal, 0);
+		ret.Value = 0;
 		return MRES_Supercede;
 	}
 	
@@ -584,7 +569,7 @@ public void DHook_GiveNamedItemRemoved(int hookid)
 	}
 }
 
-public MRESReturn DHook_GrenadeExplodePre(int entity, Handle params)
+public MRESReturn DHook_GrenadeExplodePre(int entity)
 {
 	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
@@ -595,7 +580,7 @@ public MRESReturn DHook_GrenadeExplodePre(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_GrenadeExplodePost(int entity, Handle params)
+public MRESReturn DHook_GrenadeExplodePost(int entity)
 {
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
 	if (0 < owner <= MaxClients)
@@ -605,7 +590,7 @@ public MRESReturn DHook_GrenadeExplodePost(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_FireballExplodePre(int entity, Handle params)
+public MRESReturn DHook_FireballExplodePre(int entity)
 {
 	//Change both projectile and owner to spectator, so effect applies to both red and blu, but not owner itself
 	int owner = GetOwnerLoop(entity);
@@ -616,7 +601,7 @@ public MRESReturn DHook_FireballExplodePre(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_FireballExplodePost(int entity, Handle params)
+public MRESReturn DHook_FireballExplodePost(int entity)
 {
 	int owner = GetOwnerLoop(entity);
 	if (0 < owner <= MaxClients)
@@ -626,43 +611,13 @@ public MRESReturn DHook_FireballExplodePost(int entity, Handle params)
 	}
 }
 
-public MRESReturn DHook_GetLiveTimePre(int entity, Handle returnVal)
+public MRESReturn DHook_GetLiveTimePre(int entity)
 {
 	//Haste and King powerup allows sticky to detonate sooner
 	GameRules_SetProp("m_bPowerupMode", true);
 }
 
-public MRESReturn DHook_GetLiveTimePost(int entity, Handle returnVal)
+public MRESReturn DHook_GetLiveTimePost(int entity)
 {
 	GameRules_SetProp("m_bPowerupMode", false);
-}
-
-public MRESReturn DHook_IsEnemyPost(int nextbot, Handle returnVal, Handle params)
-{
-	int them = DHookGetParam(params, 1);
-	int owner = GetEntProp(nextbot, Prop_Send, "m_hOwnerEntity");
-	
-	if (owner == them)
-	{
-		DHookSetReturn(returnVal, false);
-		return MRES_Supercede;
-	}
-	
-	DHookSetReturn(returnVal, true);
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_IsFriendPost(int nextbot, Handle returnVal, Handle params)
-{
-	int them = DHookGetParam(params, 1);
-	int owner = GetEntProp(nextbot, Prop_Send, "m_hOwnerEntity");
-	
-	if (owner == them)
-	{
-		DHookSetReturn(returnVal, true);
-		return MRES_Supercede;
-	}
-	
-	DHookSetReturn(returnVal, false);
-	return MRES_Ignored;
 }

@@ -167,16 +167,6 @@
 				"linux"		"52"
 				"windows"	"51"
 			}
-			"INextBot::IsEnemy"
-			{
-				"linux"		"55"
-				"windows"	"54"
-			}
-			"INextBot::IsFriend"
-			{
-				"linux"		"56"
-				"windows"	"55"
-			}
 			"CEconItemView::m_iItemDefinitionIndex"
 			{
 				"linux"		"4"
@@ -377,34 +367,6 @@
 				"hooktype"	"entity"
 				"return"	"float"
 				"this"		"entity"
-			}
-			"INextBot::IsEnemy"
-			{
-				"offset"	"INextBot::IsEnemy"
-				"hooktype"	"entity"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"them"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"INextBot::IsFriend"
-			{
-				"offset"	"INextBot::IsFriend"
-				"hooktype"	"entity"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"them"
-					{
-						"type"	"cbaseentity"
-					}
-				}
 			}
 		}
 	}
