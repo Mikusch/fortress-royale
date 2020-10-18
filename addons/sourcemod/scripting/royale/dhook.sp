@@ -44,12 +44,12 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
-	g_DHookGetMaxHealth = DynamicHook.FromConf(gamedata, "CBaseEntity::GetMaxHealth");
-	g_DHookForceRespawn = DynamicHook.FromConf(gamedata, "CBasePlayer::ForceRespawn");
-	g_DHookGiveNamedItem = DynamicHook.FromConf(gamedata, "CTFPlayer::GiveNamedItem");
-	g_DHookGrenadeExplode = DynamicHook.FromConf(gamedata, "CBaseGrenade::Explode");
-	g_DHookFireballExplode = DynamicHook.FromConf(gamedata, "CTFProjectile_SpellFireball::Explode");
-	g_DHookGetLiveTime = DynamicHook.FromConf(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
+	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
+	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CBasePlayer::ForceRespawn");
+	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
+	g_DHookGrenadeExplode = DHook_CreateVirtual(gamedata, "CBaseGrenade::Explode");
+	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
+	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
@@ -68,6 +68,15 @@ static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallba
 		info.callbackPost = callbackPost;
 		g_DetourInfo.PushArray(info);
 	}
+}
+
+static DynamicHook DHook_CreateVirtual(GameData gamedata, const char[] name)
+{
+	DynamicHook hook = DynamicHook.FromConf(gamedata, name);
+	if (!hook)
+		LogError("Failed to create virtual: %s", name);
+
+	return hook;
 }
 
 void DHook_Enable()
