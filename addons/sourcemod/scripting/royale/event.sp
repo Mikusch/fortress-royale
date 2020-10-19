@@ -120,6 +120,7 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
 	
+	TF2_CreateGlow(client);
 	TF2_CheckClientWeapons(client);
 	TFClassType class = TF2_GetPlayerClass(client);
 	

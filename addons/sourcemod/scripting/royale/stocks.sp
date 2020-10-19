@@ -1070,6 +1070,28 @@ stock void TF2_SendHudNotification(HudNotification_t type, bool forceShow = fals
 	EndMessage();
 }
 
+stock void TF2_CreateGlow(int entity)
+{
+	int glow = CreateEntityByName("tf_taunt_prop");
+	if (IsValidEntity(glow) && DispatchSpawn(glow))
+	{
+		char model[PLATFORM_MAX_PATH];
+		GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
+		SetEntityModel(glow, model);
+
+		SetEntPropEnt(glow, Prop_Data, "m_hEffectEntity", entity);
+		SetEntProp(glow, Prop_Send, "m_bGlowEnabled", 1);
+
+		int effects = GetEntProp(glow, Prop_Send, "m_fEffects");
+		SetEntProp(glow, Prop_Send, "m_fEffects", effects | EF_BONEMERGE | EF_NOSHADOW | EF_NORECEIVESHADOW);
+
+		SetVariantString("!activator");
+		AcceptEntityInput(glow, "SetParent", entity);
+
+		SDKHook(glow, SDKHook_SetTransmit, Glow_SetTransmit);
+	}
+}
+
 public Action Timer_UpdateClientHud(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
@@ -1086,4 +1108,15 @@ public Action Timer_DestroyItem(Handle timer, int ref)
 {
 	if (IsValidEntity(ref))
 		RemoveEntity(ref);
+}
+
+public Action Glow_SetTransmit(int glow, int client)
+{
+	int target = GetEntPropEnt(glow, Prop_Data, "m_hMoveParent");
+	
+	//Disguised spies get "wallhacks" on the person they're disguised at
+	if (target == GetEntProp(client, Prop_Send, "m_iDisguiseTargetIndex"))
+		return Plugin_Continue;
+	
+	return Plugin_Handled;
 }
