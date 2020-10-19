@@ -713,6 +713,10 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	//knockout dont get forced to melee if have fists as melee weapon (only works properly on heavy)
 	if (condition == TFCond_RuneKnockout)
 		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
+	
+	//Force disguises to be of your own team
+	if (condition == TFCond_Disguising)
+		SetEntProp(client, Prop_Send, "m_nDesiredDisguiseTeam", TF2_GetClientTeam(client));
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
