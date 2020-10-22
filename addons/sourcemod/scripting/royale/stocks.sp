@@ -312,6 +312,21 @@ stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERS
 	return true;
 }
 
+stock void DropSingleInstance(int entity, int owner, float[3] launchVel = NULL_VECTOR)
+{
+	SetEntProp(entity, Prop_Data, "m_spawnflags", GetEntProp(entity, Prop_Data, "m_spawnflags") | SF_NORESPAWN);
+	
+	SetEntPropEnt(entity, Prop_Data, "m_hOwnerEntity", owner);
+	
+	SetEntityMoveType(entity, MOVETYPE_FLYGRAVITY);
+	SetEntProp(entity, Prop_Data, "m_MoveCollide", MOVECOLLIDE_FLY_BOUNCE);
+	SetEntProp(entity, Prop_Data, "m_nSolidType", SOLID_BBOX);
+	
+	DispatchKeyValueFloat(entity, "nextthink", 0.1);
+	
+	TeleportEntity(entity, NULL_VECTOR, NULL_VECTOR, launchVel);
+}
+
 public bool Trace_DontHitEntity(int entity, int mask, any data)
 {
 	return entity != data;
@@ -1022,19 +1037,12 @@ stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0
 	
 	if (IsValidEntity(item))
 	{
-		DispatchKeyValue(item, "OnPlayerTouch", "!self,Kill,,0,-1");
-		
 		if (DispatchSpawn(item))
 		{
-			DispatchKeyValue(item, "nextthink", "0.1");
-			
-			SetEntityMoveType(item, MOVETYPE_FLYGRAVITY);
-			SetEntProp(item, Prop_Data, "m_MoveCollide", MOVECOLLIDE_FLY_BOUNCE);
-			SetEntProp(item, Prop_Data, "m_nSolidType", SOLID_BBOX);
-			SetEntPropEnt(item, Prop_Data, "m_hOwnerEntity", client);
-			
 			float origin[3];
 			WorldSpaceCenter(client, origin);
+			
+			TeleportEntity(item, origin, NULL_VECTOR, NULL_VECTOR);
 			
 			float impulse[3];
 			impulse[0] = GetRandomFloat(-1.0);
@@ -1043,7 +1051,7 @@ stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0
 			NormalizeVector(impulse, impulse);
 			ScaleVector(impulse, 250.0);
 			
-			TeleportEntity(item, origin, NULL_VECTOR, impulse);
+			DropSingleInstance(item, client, impulse);
 			
 			int ref = EntIndexToEntRef(item);
 			

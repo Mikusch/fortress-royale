@@ -42,6 +42,8 @@
 #define INDEX_SPELLBOOK		1070	// Spellbook Magazine
 #define INDEX_BASEJUMPER	1101
 
+#define SF_NORESPAWN	( 1 << 30 )
+
 const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;

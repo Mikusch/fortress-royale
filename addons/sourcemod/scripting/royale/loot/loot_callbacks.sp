@@ -115,8 +115,9 @@ public void LootCallback_CreateSpell(int client, CallbackParams params, const fl
 	{
 		SetEntProp(spell, Prop_Data, "m_nTier", params.GetInt("tier"));
 		TeleportEntity(spell, origin, NULL_VECTOR, NULL_VECTOR);
-		DispatchKeyValue(spell, "OnPlayerTouch", "!self,Kill,,0,-1");
+		
 		DispatchSpawn(spell);
+		DropSingleInstance(spell, client, view_as<float>( { 0.0, 0.0, 350.0 } ));
 	}
 }
 
@@ -137,11 +138,12 @@ public void LootCallback_CreateEntity(int client, CallbackParams params, const f
 	if (entity > MaxClients)
 	{
 		TeleportEntity(entity, origin, NULL_VECTOR, NULL_VECTOR);
-		DispatchKeyValue(entity, "OnPlayerTouch", "!self,Kill,,0,-1");
 		
 		GameRules_SetProp("m_bPowerupMode", true);
 		DispatchSpawn(entity);
 		GameRules_SetProp("m_bPowerupMode", false);
+		
+		DropSingleInstance(entity, client, view_as<float>( { 0.0, 0.0, 350.0 } ));
 	}
 }
 
