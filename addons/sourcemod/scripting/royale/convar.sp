@@ -20,7 +20,7 @@ void ConVar_Init()
 	fr_healthmultiplier[5] = CreateConVar("fr_healthmultiplier_medic", "1.6667", "Max health multiplier for Medic", _, true, 0.0);
 	fr_healthmultiplier[6] = CreateConVar("fr_healthmultiplier_heavy", "1.5", "Max health multiplier for Heavy", _, true, 0.0);
 	fr_healthmultiplier[7] = CreateConVar("fr_healthmultiplier_pyro", "2.0", "Max health multiplier for Pyro", _, true, 0.0);
-	fr_healthmultiplier[8] = CreateConVar("fr_healthmultiplier_spy", "2.8", "Max health multiplier for Spy", _, true, 0.0);
+	fr_healthmultiplier[8] = CreateConVar("fr_healthmultiplier_spy", "2.4", "Max health multiplier for Spy", _, true, 0.0);
 	fr_healthmultiplier[9] = CreateConVar("fr_healthmultiplier_engineer", "2.4", "Max health multiplier for Engineer", _, true, 0.0);
 	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
