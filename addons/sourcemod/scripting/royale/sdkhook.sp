@@ -72,7 +72,7 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	}
 	else if (StrContains(classname, "prop_dynamic") == 0)
 	{
-		SDKHook(entity, SDKHook_Spawn, PropDynamic_Spawn);
+		SDKHook(entity, SDKHook_SpawnPost, PropDynamic_SpawnPost);
 	}
 	else if (StrEqual(classname, "obj_dispenser"))
 	{
@@ -404,7 +404,7 @@ public Action PropPhysics_Spawn(int prop)
 	Vehicles_OnEntitySpawned(prop);
 }
 
-public Action PropDynamic_Spawn(int prop)
+public Action PropDynamic_SpawnPost(int prop)
 {
 	Loot_OnEntitySpawned(prop);
 }
