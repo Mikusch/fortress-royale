@@ -130,6 +130,9 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 
 public Action Console_DropItem(int client, const char[] command, int args)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return Plugin_Continue;
+	
 	if (!IsPlayerAlive(client))
 		return Plugin_Continue;
 	

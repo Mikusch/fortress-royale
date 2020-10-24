@@ -365,8 +365,8 @@ public MRESReturn DHook_InSameTeamPre(int entity, DHookReturn ret, DHookParam pa
 
 public MRESReturn DHook_CreatePre(DHookReturn ret, DHookParam param)
 {
-	//Dont create any dropped weapon created by tf2 (TF2_CreateDroppedWeapon pass client param as NULL)
-	if (!param.IsNull(1))
+	//Don't create any dropped weapon created by TF2 (TF2_CreateDroppedWeapon passes client param as NULL)
+	if (!GameRules_GetProp("m_bInWaitingForPlayers") && !param.IsNull(1))
 	{
 		ret.Value = 0;
 		return MRES_Supercede;
