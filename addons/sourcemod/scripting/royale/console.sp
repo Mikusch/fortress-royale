@@ -70,7 +70,7 @@ public Action Console_JoinTeam(int client, const char[] command, int args)
 		}
 	}
 	
-	if (IsPlayerAlive(client))
+	if (!GameRules_GetProp("m_bInWaitingForPlayers") && IsPlayerAlive(client))
 		return Plugin_Handled;
 	
 	//Force set client to dead team
