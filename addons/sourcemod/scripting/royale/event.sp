@@ -116,6 +116,9 @@ public Action Event_SetupFinished(Event event, const char[] name, bool dontBroad
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 		return;
@@ -165,6 +168,9 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 
 public Action Event_FishNotice(Event event, const char[] name, bool dontBroadcast)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));
@@ -181,6 +187,9 @@ public Action Event_FishNotice(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));
@@ -274,6 +283,9 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 
 public Action Event_ObjectDestroyed(Event event, const char[] name, bool dontBroadcast)
 {
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));

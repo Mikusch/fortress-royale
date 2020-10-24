@@ -593,6 +593,9 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 	if (g_SkipGiveNamedItem)
 		return Plugin_Continue;
 	
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return Plugin_Continue;
+	
 	//Allow keep spellbook
 	if (StrEqual(classname, "tf_weapon_spellbook"))
 		return Plugin_Continue;

@@ -516,12 +516,16 @@ public MRESReturn DHook_GetMaxHealthPost(int client, DHookReturn ret)
 
 public MRESReturn DHook_ForceRespawnPre(int client)
 {
+	//Enable Mannpower uber during waiting for players and allow RuneRegenThink to start
+	GameRules_SetProp("m_bPowerupMode", true);
+	
+	//Don't do all of our custom stuff during waiting for players
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return MRES_Ignored;
+	
 	//Only allow respawn if player is in parachute mode
 	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
 		return MRES_Supercede;
-	
-	//Allow RuneRegenThink to start
-	GameRules_SetProp("m_bPowerupMode", true);
 	
 	//If player havent selected a class, pick random class for em
 	//this is so that player can actually spawn into map, otherwise nothing happens
