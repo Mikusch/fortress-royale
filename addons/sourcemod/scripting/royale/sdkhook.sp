@@ -68,7 +68,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	}
 	else if (StrContains(classname, "prop_physics") == 0)
 	{
-		SDKHook(entity, SDKHook_Spawn, Prop_Spawn);
+		SDKHook(entity, SDKHook_Spawn, PropPhysics_Spawn);
+	}
+	else if (StrContains(classname, "prop_dynamic") == 0)
+	{
+		SDKHook(entity, SDKHook_Spawn, PropDynamic_Spawn);
 	}
 	else if (StrEqual(classname, "obj_dispenser"))
 	{
@@ -395,9 +399,14 @@ public void Projectile_TouchPost(int entity, int other)
 	}
 }
 
-public Action Prop_Spawn(int prop)
+public Action PropPhysics_Spawn(int prop)
 {
 	Vehicles_OnEntitySpawned(prop);
+}
+
+public Action PropDynamic_Spawn(int prop)
+{
+	Loot_OnEntitySpawned(prop);
 }
 
 public Action Dispenser_StartTouch(int dispenser, int toucher)

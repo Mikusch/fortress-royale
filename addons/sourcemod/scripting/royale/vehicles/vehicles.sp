@@ -341,15 +341,22 @@ void Vehicles_OnEntitySpawned(int entity)
 	else if (!VehiclesConfig_GetByTargetname(targetname, vehicle))
 		return;
 	
-	vehicle.Create(EntIndexToEntRef(entity));
-	
-	DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
-	DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
-	
-	SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
-	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
-	
-	g_VehiclesEntity.PushArray(vehicle);
+	if (!GameRules_GetProp("m_bInWaitingForPlayers"))
+	{
+		vehicle.Create(EntIndexToEntRef(entity));
+		
+		DispatchKeyValueFloat(entity, "massScale", vehicle.mass);
+		DispatchKeyValueFloat(entity, "physdamagescale", vehicle.impact);
+		
+		SetEntProp(entity, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
+		SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_NO);
+		
+		g_VehiclesEntity.PushArray(vehicle);
+	}
+	else
+	{
+		RemoveEntity(entity);
+	}
 }
 
 void Vehicles_OnEntityDestroyed(int entity)
