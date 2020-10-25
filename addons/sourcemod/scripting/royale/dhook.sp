@@ -365,8 +365,8 @@ public MRESReturn DHook_InSameTeamPre(int entity, DHookReturn ret, DHookParam pa
 
 public MRESReturn DHook_CreatePre(DHookReturn ret, DHookParam param)
 {
-	//Dont create any dropped weapon created by tf2 (TF2_CreateDroppedWeapon pass client param as NULL)
-	if (!param.IsNull(1))
+	//Don't create any dropped weapon created by TF2 (TF2_CreateDroppedWeapon passes client param as NULL)
+	if (!GameRules_GetProp("m_bInWaitingForPlayers") && !param.IsNull(1))
 	{
 		ret.Value = 0;
 		return MRES_Supercede;
@@ -516,12 +516,16 @@ public MRESReturn DHook_GetMaxHealthPost(int client, DHookReturn ret)
 
 public MRESReturn DHook_ForceRespawnPre(int client)
 {
+	//Enable Mannpower uber during waiting for players and allow RuneRegenThink to start
+	GameRules_SetProp("m_bPowerupMode", true);
+	
+	//Don't do all of our custom stuff during waiting for players
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return MRES_Ignored;
+	
 	//Only allow respawn if player is in parachute mode
 	if (FRPlayer(client).PlayerState != PlayerState_Parachute)
 		return MRES_Supercede;
-	
-	//Allow RuneRegenThink to start
-	GameRules_SetProp("m_bPowerupMode", true);
 	
 	//If player havent selected a class, pick random class for em
 	//this is so that player can actually spawn into map, otherwise nothing happens

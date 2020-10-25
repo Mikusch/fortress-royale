@@ -699,6 +699,16 @@ public void OnEntityDestroyed(int entity)
 	}
 }
 
+public void TF2_OnWaitingForPlayersStart()
+{
+	FindConVar("mp_disable_respawn_times").BoolValue = true;
+}
+
+public void TF2_OnWaitingForPlayersEnd()
+{
+	FindConVar("mp_disable_respawn_times").BoolValue = false;
+}
+
 public void TF2_OnConditionAdded(int client, TFCond condition)
 {
 	if (!g_Enabled)

@@ -10,33 +10,33 @@ void Loot_Init()
 	g_LootTypeMap.SetValue("item_powerup", Loot_Item_Powerup);
 }
 
+void Loot_OnEntitySpawned(int entity)
+{
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	LootCrate loot;
+	if (StrEqual(targetname, "fr_crate"))
+		LootCrate_GetDefault(loot);
+	else if (!LootConfig_GetPrefabByTargetname(targetname, loot))
+		return;
+	
+	
+	if (!GameRules_GetProp("m_bInWaitingForPlayers") && GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
+	{
+		SetEntProp(entity, Prop_Data, "m_iMaxHealth", loot.health);
+		SetEntProp(entity, Prop_Data, "m_iHealth", loot.health);
+		SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_YES);
+		HookSingleEntityOutput(entity, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
+	}
+	else
+	{
+		RemoveEntity(entity);
+	}
+}
+
 void Loot_SetupFinished()
 {
-	int crate = -1;
-	while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
-	{
-		char targetname[CONFIG_MAXCHAR];
-		GetEntPropString(crate, Prop_Data, "m_iName", targetname, sizeof(targetname));
-		
-		LootCrate loot;
-		if (StrEqual(targetname, "fr_crate"))
-			LootCrate_GetDefault(loot);
-		else if (!LootConfig_GetPrefabByTargetname(targetname, loot))
-			continue;
-		
-		if (GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
-		{
-			SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
-			SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
-			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
-			HookSingleEntityOutput(crate, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
-		}
-		else
-		{
-			RemoveEntity(crate);
-		}
-	}
-	
 	int pos;
 	LootCrate loot;
 	while (LootConfig_GetCrate(pos, loot))

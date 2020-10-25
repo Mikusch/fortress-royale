@@ -46,6 +46,7 @@ void ConVar_Init()
 	ConVar_Add("mp_forcecamera", 0.0);
 	ConVar_Add("mp_friendlyfire", 1.0);
 	ConVar_Add("mp_respawnwavetime", 99999.0);
+	ConVar_Add("mp_waitingforplayers_time", 60.0);
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
 	ConVar_Add("tf_helpme_range", -1.0);
