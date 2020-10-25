@@ -164,6 +164,9 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 			TF2_EquipWeapon(client, weapon);
 		}
 	}
+	
+	//Nerf all powerups this player picks up
+	TF2_AddCondition(client, TFCond_PowerupModeDominant, TFCondDuration_Infinite);
 }
 
 public Action Event_FishNotice(Event event, const char[] name, bool dontBroadcast)

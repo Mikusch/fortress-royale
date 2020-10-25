@@ -47,6 +47,7 @@
 const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
+const TFCond TFCond_PowerupModeDominant = view_as<TFCond>(129);	//TODO: Remove when SM 1.11 goes stable
 
 enum
 {
