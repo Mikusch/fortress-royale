@@ -272,6 +272,7 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 			{
 				TF2_AddCondition(client, TFCond_Parachute);
 				PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
+				CreateTimer(1.0, Timer_SecToDeployParachute, serial);
 			}
 		}
 		else
