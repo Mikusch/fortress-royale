@@ -8,7 +8,6 @@ enum struct EventInfo
 }
 
 static ArrayList g_EventInfo;
-static Handle g_TruceEndTimer;
 
 void Event_Init()
 {
@@ -105,13 +104,8 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 
 public Action Event_SetupFinished(Event event, const char[] name, bool dontBroadcast)
 {
-	//Start a truce to allow people to grab weapons in peace
 	if (fr_truce_duration.FloatValue > 0.0)
-	{
-		GameRules_SetProp("m_bTruceActive", true);
-		TF2_SendHudNotification(HUD_NOTIFY_TRUCE_START, true);
-		g_TruceEndTimer = CreateTimer(fr_truce_duration.FloatValue, Timer_EndTruce);
-	}
+		Truce_Start(fr_truce_duration.FloatValue);
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -308,13 +302,4 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
 		TF2_ChangeClientTeam(client, TFTeam_Dead);
-}
-
-public Action Timer_EndTruce(Handle timer)
-{
-	if (timer != g_TruceEndTimer)
-		return;
-	
-	GameRules_SetProp("m_bTruceActive", false);
-	TF2_SendHudNotification(HUD_NOTIFY_TRUCE_END, true);
 }

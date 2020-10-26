@@ -428,6 +428,7 @@ int g_OffsetRuneShouldReposition;
 #include "royale/sdkcall.sp"
 #include "royale/sdkhook.sp"
 #include "royale/stocks.sp"
+#include "royale/truce.sp"
 #include "royale/zone.sp"
 
 public Plugin myinfo = 
@@ -562,6 +563,7 @@ public void OnMapStart()
 	RefreshEnable();
 	
 	BattleBus_Precache();
+	Truce_Precache();
 	Zone_Precache();
 }
 

@@ -994,11 +994,11 @@ stock void TF2_CreateSetupTimer(int duration, EntityOutput callback)
 	DispatchKeyValue(timer, "setup_length", string);
 	
 	DispatchKeyValue(timer, "show_in_hud", "1");
+	DispatchKeyValue(timer, "start_paused", "0");
 	DispatchSpawn(timer);
-	HookSingleEntityOutput(timer, "OnSetupFinished", callback);
+	HookSingleEntityOutput(timer, "OnSetupFinished", callback, true);
 	
 	AcceptEntityInput(timer, "Enable");
-	AcceptEntityInput(timer, "Resume");
 	
 	Event event = CreateEvent("teamplay_update_timer", true);
 	event.Fire();
