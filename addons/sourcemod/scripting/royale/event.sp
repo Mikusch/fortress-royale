@@ -128,7 +128,7 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 	TFClassType class = TF2_GetPlayerClass(client);
 	
 	//Create starting fists weapon
-	int fists = TF2_CreateWeapon(INDEX_FISTS, g_fistsClassname[class]);
+	int fists = TF2_CreateWeapon(INDEX_FISTS, g_FistsClassnames[class]);
 	if (fists > MaxClients)
 	{
 		TF2_EquipWeapon(client, fists);
@@ -164,6 +164,9 @@ public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadca
 			TF2_EquipWeapon(client, weapon);
 		}
 	}
+	
+	//Nerf all powerups this player picks up
+	TF2_AddCondition(client, TFCond_PowerupModeDominant, TFCondDuration_Infinite);
 }
 
 public Action Event_FishNotice(Event event, const char[] name, bool dontBroadcast)

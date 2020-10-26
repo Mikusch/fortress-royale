@@ -52,6 +52,10 @@ void Console_Disable()
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
+	//Client's view entity is set to the bus, prevent switching teams
+	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
+		return Plugin_Handled;
+	
 	//Allow join spectator
 	if (StrContains(command, "spectate") == 0)
 	{
@@ -137,8 +141,8 @@ public Action Console_DropItem(int client, const char[] command, int args)
 		return Plugin_Continue;
 	
 	//Drop weapon, if player dont have rune to drop instead
-	for (int i = 0; i < sizeof(g_runeConds); i++)
-		if (TF2_IsPlayerInCondition(client, g_runeConds[i]))
+	for (int i = 0; i < sizeof(g_RuneConds); i++)
+		if (TF2_IsPlayerInCondition(client, g_RuneConds[i]))
 			return Plugin_Continue;
 	
 	//Order on which weapons to drop if valid:
@@ -188,7 +192,7 @@ public Action Console_DropItem(int client, const char[] command, int args)
 	int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
 	if (melee == -1)	//Dropped melee weapon, give fists back
 	{
-		melee = TF2_CreateWeapon(INDEX_FISTS, g_fistsClassname[TF2_GetPlayerClass(client)]);
+		melee = TF2_CreateWeapon(INDEX_FISTS, g_FistsClassnames[TF2_GetPlayerClass(client)]);
 		if (melee != -1)
 			TF2_EquipWeapon(client, melee);
 	}

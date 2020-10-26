@@ -188,3 +188,15 @@ public bool LootCallback_ShouldCreateHealthKit(int client, CallbackParams params
 	
 	return float(GetEntProp(client, Prop_Send, "m_iHealth")) / float(TF2_GetMaxHealth(client)) <= 0.795;
 }
+
+public bool LootCallback_ShouldCreateRune(int client, CallbackParams params)
+{
+	if (client <= 0 || client > MaxClients)
+		return false;
+	
+	//Only spawn Supernova if player has a Grappling Hook
+	if (params && view_as<TFRuneType>(params.GetInt("type")) == TFRune_Supernova)
+		return TF2_GetItemByClassname(client, "tf_weapon_grapplinghook") != -1;
+	
+	return true;
+}

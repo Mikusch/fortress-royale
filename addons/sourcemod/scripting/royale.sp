@@ -47,6 +47,7 @@
 const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
+const TFCond TFCond_PowerupModeDominant = view_as<TFCond>(129);	//TODO: Remove when SM 1.11 goes stable
 
 enum
 {
@@ -337,7 +338,7 @@ enum LootType
 	Loot_Item_Powerup,		/**< Mannpower powerups */
 }
 
-char g_fistsClassname[][] = {
+char g_FistsClassnames[][] = {
 	"",						//Unknown
 	"tf_weapon_bat",		//Scout
 	"tf_weapon_club",		//Sniper
@@ -350,7 +351,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_robot_arm"	//Engineer
 };
 
-TFCond g_visibleConds[] = {
+TFCond g_VsibleConds[] = {
 	TFCond_Bleeding,
 	TFCond_Jarated,
 	TFCond_Milked,
@@ -358,7 +359,7 @@ TFCond g_visibleConds[] = {
 	TFCond_Gas,
 };
 
-TFCond g_runeConds[] = {
+TFCond g_RuneConds[] = {
 	TFCond_RuneStrength,
 	TFCond_RuneHaste,
 	TFCond_RuneRegen,
@@ -721,17 +722,20 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
 	
-	for (int i = 0; i < sizeof(g_visibleConds); i++)
-		if (condition == g_visibleConds[i])
+	for (int i = 0; i < sizeof(g_VsibleConds); i++)
+		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond++;
 	
-	//knockout dont get forced to melee if have fists as melee weapon (only works properly on heavy)
+	//Knockout doesn't get forced to melee if they have fists as melee weapon (only works properly on Heavy)
 	if (condition == TFCond_RuneKnockout)
 		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
 	
 	//Force disguises to be of your own team
 	if (condition == TFCond_Disguising)
 		SetEntProp(client, Prop_Send, "m_nDesiredDisguiseTeam", TF2_GetClientTeam(client));
+	
+	if (TF2_IsRuneCondition(condition))
+		SetEntProp(client, Prop_Send, "m_bGlowEnabled", true);
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
@@ -746,9 +750,12 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 		FRPlayer(client).PlayerState = PlayerState_Alive;
 	}
 	
-	for (int i = 0; i < sizeof(g_visibleConds); i++)
-		if (condition == g_visibleConds[i])
+	for (int i = 0; i < sizeof(g_VsibleConds); i++)
+		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond--;
+	
+	if (TF2_IsRuneCondition(condition))
+		SetEntProp(client, Prop_Send, "m_bGlowEnabled", false);
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)
