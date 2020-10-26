@@ -338,7 +338,7 @@ enum LootType
 	Loot_Item_Powerup,		/**< Mannpower powerups */
 }
 
-char g_fistsClassname[][] = {
+char g_FistsClassnames[][] = {
 	"",						//Unknown
 	"tf_weapon_bat",		//Scout
 	"tf_weapon_club",		//Sniper
@@ -351,7 +351,7 @@ char g_fistsClassname[][] = {
 	"tf_weapon_robot_arm"	//Engineer
 };
 
-TFCond g_visibleConds[] = {
+TFCond g_VsibleConds[] = {
 	TFCond_Bleeding,
 	TFCond_Jarated,
 	TFCond_Milked,
@@ -359,7 +359,7 @@ TFCond g_visibleConds[] = {
 	TFCond_Gas,
 };
 
-TFCond g_runeConds[] = {
+TFCond g_RuneConds[] = {
 	TFCond_RuneStrength,
 	TFCond_RuneHaste,
 	TFCond_RuneRegen,
@@ -719,8 +719,8 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
 	
-	for (int i = 0; i < sizeof(g_visibleConds); i++)
-		if (condition == g_visibleConds[i])
+	for (int i = 0; i < sizeof(g_VsibleConds); i++)
+		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond++;
 	
 	//knockout dont get forced to melee if have fists as melee weapon (only works properly on heavy)
@@ -744,8 +744,8 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 		FRPlayer(client).PlayerState = PlayerState_Alive;
 	}
 	
-	for (int i = 0; i < sizeof(g_visibleConds); i++)
-		if (condition == g_visibleConds[i])
+	for (int i = 0; i < sizeof(g_VsibleConds); i++)
+		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond--;
 }
 
