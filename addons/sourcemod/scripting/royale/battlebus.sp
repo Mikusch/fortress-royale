@@ -271,14 +271,12 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 			else
 			{
 				TF2_AddCondition(client, TFCond_Parachute);
-				PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
 				CreateTimer(0.1, Timer_SecToDeployParachute, serial);
 			}
 		}
 		else
 		{
 			FRPlayer(client).SecToDeployParachute = 0;
-			PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
 		}
 	}
 }

@@ -714,6 +714,9 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (!g_Enabled)
 		return;
 	
+	if (condition == TFCond_Parachute)
+		PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
+	
 	//Dont give uber on spawn from mannpower
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
