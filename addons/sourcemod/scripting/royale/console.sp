@@ -52,6 +52,10 @@ void Console_Disable()
 
 public Action Console_JoinTeam(int client, const char[] command, int args)
 {
+	//Client's view entity is set to the bus, prevent switching teams
+	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
+		return Plugin_Handled;
+	
 	//Allow join spectator
 	if (StrContains(command, "spectate") == 0)
 	{
