@@ -715,7 +715,7 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (!g_Enabled)
 		return;
 	
-	//Dont give uber on spawn from mannpower
+	//Don't give uber on spawn from Mannpower
 	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
 		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
 	
@@ -723,13 +723,16 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond++;
 	
-	//knockout dont get forced to melee if have fists as melee weapon (only works properly on heavy)
+	//Knockout doesn't get forced to melee if they have fists as melee weapon (only works properly on Heavy)
 	if (condition == TFCond_RuneKnockout)
 		TF2_SwitchActiveWeapon(client, TF2_GetItemInSlot(client, WeaponSlot_Melee));
 	
 	//Force disguises to be of your own team
 	if (condition == TFCond_Disguising)
 		SetEntProp(client, Prop_Send, "m_nDesiredDisguiseTeam", TF2_GetClientTeam(client));
+	
+	if (TF2_IsRuneCondition(condition))
+		SetEntProp(client, Prop_Send, "m_bGlowEnabled", true);
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
@@ -747,6 +750,9 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 	for (int i = 0; i < sizeof(g_VsibleConds); i++)
 		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond--;
+	
+	if (TF2_IsRuneCondition(condition))
+		SetEntProp(client, Prop_Send, "m_bGlowEnabled", false);
 }
 
 public Action TF2_OnPlayerTeleport(int client, int teleporter, bool &result)

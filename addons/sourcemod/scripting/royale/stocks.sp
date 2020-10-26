@@ -411,6 +411,17 @@ stock int TF2_CreateRune(TFRuneType type, const float origin[3] = NULL_VECTOR, c
 	return -1;
 }
 
+stock bool TF2_IsRuneCondition(TFCond condition)
+{
+	for (int i = 0; i < sizeof(g_RuneConds); i++)
+	{
+		if (condition == g_RuneConds[i])
+			return true;
+	}
+	
+	return false;
+}
+
 stock void TF2_CheckClientWeapons(int client)
 {
 	//Weapons
@@ -1091,7 +1102,7 @@ stock void TF2_CreateGlow(int entity)
 		SetEntityModel(glow, model);
 
 		SetEntPropEnt(glow, Prop_Data, "m_hEffectEntity", entity);
-		SetEntProp(glow, Prop_Send, "m_bGlowEnabled", 1);
+		SetEntProp(glow, Prop_Send, "m_bGlowEnabled", true);
 
 		int effects = GetEntProp(glow, Prop_Send, "m_fEffects");
 		SetEntProp(glow, Prop_Send, "m_fEffects", effects | EF_BONEMERGE | EF_NOSHADOW | EF_NORECEIVESHADOW);
