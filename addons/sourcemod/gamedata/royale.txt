@@ -94,6 +94,12 @@
 				"linux"		"@_Z13GetGlobalTeami"
 				"windows"	"\x55\x8B\xEC\x8B\x4D\x08\x85\xC9\x78\x2A\x3B\x0D\x2A\x2A\x2A\x2A\x7D\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x04\x88\x5D\xC3"
 			}
+			"GetPlayerClassData"
+			{
+				"library"	"server"
+				"linux"		"@_Z18GetPlayerClassDataj"
+				"windows"	"\x55\x8B\xEC\x69\x4D\x08\xF0\x08\x00\x00"
+			}
 		}
 		"Offsets"
 		{
@@ -186,6 +192,11 @@
 			{
 				"linux"		"1308"
 				"windows"	"1288"
+			}
+			"TFPlayerClassData_t::m_nMaxHealth"
+			{
+				"linux"		"644"
+				"windows"	"644"
 			}
 		}
 		"Functions"

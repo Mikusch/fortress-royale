@@ -8,6 +8,7 @@ static Handle g_SDKCallGetMaxAmmo;
 static Handle g_SDKCallFindAndHealTargets;
 static Handle g_SDKCallStopHealingOwner;
 static Handle g_SDKCallGetGlobalTeam;
+static Handle g_SDKCallGetPlayerClassData;
 static Handle g_SDKCallChangeTeam;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
 static Handle g_SDKCallGiveNamedItem;
@@ -30,6 +31,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 	g_SDKCallStopHealingOwner = PrepSDKCall_StopHealingOwner(gamedata);
 	g_SDKCallGetGlobalTeam = PrepSDKCall_GetGlobalTeam(gamedata);
+	g_SDKCallGetPlayerClassData = PrepSDKCall_GetPlayerClassData(gamedata);
 	g_SDKCallChangeTeam = PrepSDKCall_ChangeTeam(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
@@ -183,6 +185,20 @@ static Handle PrepSDKCall_GetGlobalTeam(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: GetGlobalTeam");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_GetPlayerClassData(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Static);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "GetPlayerClassData");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: GetPlayerClassData");
 	
 	return call;
 }
@@ -360,6 +376,11 @@ void SDKCall_StopHealingOwner(int medigun)
 Address SDKCall_GetGlobalTeam(TFTeam team)
 {
 	return SDKCall(g_SDKCallGetGlobalTeam, team);
+}
+
+Address SDKCall_GetPlayerClassData(TFClassType class)
+{
+	return SDKCall(g_SDKCallGetPlayerClassData, class);
 }
 
 void SDKCall_ChangeTeam(int entity, TFTeam team)

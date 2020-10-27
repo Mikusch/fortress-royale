@@ -498,20 +498,7 @@ public MRESReturn DHook_GetMaxHealthPre(int client)
 
 public MRESReturn DHook_GetMaxHealthPost(int client, DHookReturn ret)
 {
-	TFClassType class = TF2_GetPlayerClass(client);
 	FRPlayer(client).ChangeToUnknown();
-	
-	if (class == TFClass_Unknown)
-		return MRES_Ignored;
-	
-	float multiplier = fr_healthmultiplier[class].FloatValue;
-	if (multiplier == 1.0)
-		return MRES_Ignored;
-	
-	//Multiply health by convar value
-	float health = float(ret.Value);
-	ret.Value = RoundToNearest(health * multiplier);
-	return MRES_Supercede;
 }
 
 public MRESReturn DHook_ForceRespawnPre(int client)

@@ -382,7 +382,7 @@ int g_PlayerCount;
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
 ConVar fr_enable;
-ConVar fr_healthmultiplier[view_as<int>(TFClass_Engineer)+1];
+ConVar fr_health[view_as<int>(TFClass_Engineer)+1];
 ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
 ConVar fr_classfilter;
@@ -403,6 +403,7 @@ int g_OffsetItemDefinitionIndex;
 int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
+int g_OffsetMaxHealth;
 
 #include "royale/config.sp"
 #include "royale/entity.sp"
@@ -425,6 +426,7 @@ int g_OffsetRuneShouldReposition;
 #include "royale/dhook.sp"
 #include "royale/editor.sp"
 #include "royale/event.sp"
+#include "royale/patch.sp"
 #include "royale/sdkcall.sp"
 #include "royale/sdkhook.sp"
 #include "royale/stocks.sp"
@@ -460,6 +462,7 @@ public void OnPluginStart()
 	g_OffsetRuneType = gamedata.GetOffset("CTFRune::m_nRuneType");
 	g_OffsetRuneTeam = gamedata.GetOffset("CTFRune::m_nTeam");
 	g_OffsetRuneShouldReposition = gamedata.GetOffset("CTFRune::m_bShouldReposition");
+	g_OffsetMaxHealth = gamedata.GetOffset("TFPlayerClassData_t::m_nMaxHealth");
 	
 	delete gamedata;
 	
@@ -497,6 +500,7 @@ void Enable()
 	ConVar_Enable();
 	Event_Enable();
 	DHook_Enable();
+	Patch_Enable();
 }
 
 void Disable()
@@ -522,6 +526,7 @@ void Disable()
 	ConVar_Disable();
 	Event_Disable();
 	DHook_Disable();
+	Patch_Disable();
 	
 	FREntity.ClearList();
 	
