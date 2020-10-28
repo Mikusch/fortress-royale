@@ -1,3 +1,6 @@
+#define GAMESOUND_WIN_MUSIC		"MatchMaking.MatchEndWinMusicCasual"
+#define GAMESOUND_LOSE_MUSIC	"MatchMaking.MatchEndLoseMusicCasual"
+
 enum struct EventInfo
 {
 	char name[64];
@@ -15,6 +18,7 @@ void Event_Init()
 	
 	Event_Add("teamplay_round_start", Event_RoundStart);
 	Event_Add("teamplay_setup_finished", Event_SetupFinished);
+	Event_Add("teamplay_broadcast_audio", Event_BroadcastAudio, EventHookMode_Pre);
 	Event_Add("player_spawn", Event_PlayerSpawn);
 	Event_Add("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	Event_Add("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
@@ -79,6 +83,10 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	if (GameRules_GetProp("m_bInWaitingForPlayers"))
 		return;
 	
+	//Stop previous round end music
+	EmitGameSoundToAll(GAMESOUND_WIN_MUSIC, _, SND_STOPLOOPING);
+	EmitGameSoundToAll(GAMESOUND_LOSE_MUSIC, _, SND_STOPLOOPING);
+	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		FRPlayer(client).PlayerState = PlayerState_Waiting;
@@ -106,6 +114,25 @@ public Action Event_SetupFinished(Event event, const char[] name, bool dontBroad
 {
 	if (fr_truce_duration.FloatValue > 0.0)
 		Truce_Start(fr_truce_duration.FloatValue);
+}
+
+public Action Event_BroadcastAudio(Event event, const char[] name, bool dontBroadcast)
+{
+	char sound[PLATFORM_MAX_PATH];
+	event.GetString("sound", sound, sizeof(sound));
+	
+	if (StrEqual(sound, "Game.YourTeamWon"))
+	{
+		event.SetString("sound", GAMESOUND_WIN_MUSIC);
+		return Plugin_Changed;
+	}
+	else if (StrEqual(sound, "Game.YourTeamLost"))
+	{
+		event.SetString("sound", GAMESOUND_LOSE_MUSIC);
+		return Plugin_Changed;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
