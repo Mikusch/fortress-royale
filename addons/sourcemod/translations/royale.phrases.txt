@@ -7,7 +7,7 @@
 	"BattleBus_SecToDeployParachute"
 	{
 		"#format"	"{1:d}"
-		"en"		"{1} seconds to auto deploy parachute"
+		"en"		"{1} seconds until auto-deploying parachute"
 	}
 	"BattleBus_ParachuteDeployed"
 	{
@@ -15,13 +15,9 @@
 	}
 	"BattleBus_IncomingCrate"
 	{
-		"en"		"Incoming Mannpower loot crate!"
+		"en"		"Incoming Mannpower supply crate!"
 	}
 	
-	"Command_NotInGame"
-	{
-		"en"		"This Command can only be used ingame"
-	}
 	"Command_VehicleUsage"
 	{
 		"en"		"Usage: sm_vehicle [config name]"
@@ -76,21 +72,22 @@
 	
 	"RoundState_NoWinner"
 	{
-		"en"		"Nobody won this round!"
+		"en"		"Stalemate! You are all losers!"
 	}
 	"RoundState_Winner"
 	{
 		"#format"	"{1:N},{2:d}"
 		"en"		"{1} won this round with {2} kills!"
 	}
-	"RoundState_MostKills"
+	"RoundState_MostKills_One"
 	{
-		"#format"	"{1:s},{2:d}"
-		"en"		"{1} is the top killer with {2} kills this round!"
+		"#format"	"{1:N},{2:d}"
+		"en"		"{1} is the top killer with {2} eliminations this round!"
 	}
-	"RoundState_MostKillsAnd"
+	"RoundState_MostKills_Many"
 	{
-		"en"		"and"
+		"#format"	"{1:s},{2:N},{3:d}"
+		"en"		"{1} and {2} are the top killers with {3} eliminations this round!"
 	}
 	
 	"Vehicle_HowToEnter"

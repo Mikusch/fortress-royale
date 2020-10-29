@@ -11,7 +11,7 @@ public Action Command_Editor(int client, int args)
 	
 	if (client == 0)
 	{
-		ReplyToCommand(client, "%t", "Command_NotInGame");
+		ReplyToCommand(client, "%t", "Command is in-game only");
 		return Plugin_Handled;
 	}
 
@@ -26,7 +26,7 @@ public Action Command_Vehicle(int client, int args)
 	
 	if (client == 0)
 	{
-		ReplyToCommand(client, "%t", "Command_NotInGame");
+		ReplyToCommand(client, "%t", "Command is in-game only");
 		return Plugin_Handled;
 	}
 	

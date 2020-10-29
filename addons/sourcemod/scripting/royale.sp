@@ -14,6 +14,8 @@
 
 #define TF_MAXPLAYERS	32
 
+#define MAX_MESSAGE_LENGTH	192
+
 #define CONTENTS_REDTEAM	CONTENTS_TEAM1
 #define CONTENTS_BLUETEAM	CONTENTS_TEAM2
 
@@ -848,7 +850,7 @@ void TryToEndRound()
 		PrintToChatAll("%t", "RoundState_Winner", winner, FRPlayer(winner).Killstreak);
 	}
 	
-	ArrayList mostKills = new ArrayList();
+	ArrayList topKillers = new ArrayList();
 	int killStreak;
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -857,35 +859,35 @@ void TryToEndRound()
 		{
 			if (FRPlayer(client).Killstreak > killStreak)
 			{
-				mostKills.Clear();
+				topKillers.Clear();
 				killStreak = FRPlayer(client).Killstreak;
-				mostKills.Push(client);
+				topKillers.Push(client);
 			}
 			else if (FRPlayer(client).Killstreak == killStreak)
 			{
-				mostKills.Push(client);
+				topKillers.Push(client);
 			}
 		}
 	}
 	
-	int length = mostKills.Length;
-	if (length == 0)
+	int length = topKillers.Length;
+	if (length == 1)
 	{
-		delete mostKills;
-		return;
+		PrintToChatAll("%t", "RoundState_MostKills_One", topKillers.Get(0), killStreak);
+	}
+	else if (length > 1)
+	{
+		char names[MAX_MESSAGE_LENGTH];
+		for (int i = 0; i < length; i++)
+		{
+			if (i == 0)
+				Format(names, sizeof(names), "%N", topKillers.Get(i));
+			else if (i < length - 1)
+				Format(names, sizeof(names), "%s, %N", names, topKillers.Get(i));
+			else
+				PrintToChatAll("%t", "RoundState_MostKills_Many", names, topKillers.Get(i), killStreak);
+		}
 	}
 	
-	char message[256];
-	for (int i = 0; i < length; i++)
-	{
-		if (length > 1 && 0 < i < length - 1)
-			Format(message, sizeof(message), "%s, %N", message, mostKills.Get(i));
-		else if (length > 1 && i == length - 1)
-			Format(message, sizeof(message), "%s %t %N", message, "RoundState_MostKillsAnd", mostKills.Get(i));
-		else
-			Format(message, sizeof(message), "%N", mostKills.Get(i));
-	}
-	
-	PrintToChatAll("%t", "RoundState_MostKills", message, killStreak);
-	delete mostKills;
+	delete topKillers;
 }
