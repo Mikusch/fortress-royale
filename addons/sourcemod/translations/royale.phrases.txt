@@ -77,17 +77,17 @@
 	"RoundState_Winner"
 	{
 		"#format"	"{1:N},{2:d}"
-		"en"		"{1} won this round with {2} kills!"
+		"en"		"{1} won this round with {2} elimination(s)!"
 	}
 	"RoundState_MostKills_One"
 	{
 		"#format"	"{1:N},{2:d}"
-		"en"		"{1} is the top killer with {2} eliminations this round!"
+		"en"		"{1} is the top killer with {2} elimination(s) this round!"
 	}
 	"RoundState_MostKills_Many"
 	{
 		"#format"	"{1:s},{2:N},{3:d}"
-		"en"		"{1} and {2} are the top killers with {3} eliminations this round!"
+		"en"		"{1} and {2} are the top killers with {3} elimination(s) this round!"
 	}
 	
 	"Vehicle_HowToEnter"
