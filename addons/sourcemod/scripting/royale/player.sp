@@ -225,6 +225,17 @@ methodmap FRPlayer
 		}
 	}
 	
+	public void SwapToTeam(TFTeam team)
+	{
+		if (++g_ClientSwap[this] == 1)
+		{
+			if (g_ClientSpectator[this] <= 0)
+				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			
+			TF2_ChangeTeam(this.Client, team);
+		}
+	}
+	
 	public void SwapToEnemyTeam()
 	{
 		if (++g_ClientSwap[this] == 1)

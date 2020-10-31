@@ -214,9 +214,16 @@ public void Client_PostThink(int client)
 	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
 	{
-		//Allow taunt kill work on both teams
-		g_PostThink = PostThink_Spectator;
-		FRPlayer(client).ChangeToSpectator();
+		//Allow taunt kill work on both teams, moving client to spectator wont work perfectly due to taunt kill stuns during truce
+		g_PostThink = PostThink_EnemyTeam;
+		TFTeam team = TF2_GetEnemyTeam(FRPlayer(client).Team);
+		
+		for (int i = 1; i <= MaxClients; i++)
+		{
+			if (IsClientInGame(i) && i != client)
+				FRPlayer(i).SwapToTeam(team);
+		}
+		
 		return;
 	}
 	
