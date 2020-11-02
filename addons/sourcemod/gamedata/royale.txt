@@ -76,6 +76,12 @@
 				"linux"		"@_ZN14CWeaponMedigun16StopHealingOwnerEv"
 				"windows"	"\x57\x8B\xF9\x80\xBF\x30\x08\x00\x00\x00"
 			}
+			"CWeaponMedigun::RecalcEffectOnTarget"
+			{
+				"library"	"server"
+				"linux"		"@_ZN14CWeaponMedigun20RecalcEffectOnTargetEP9CTFPlayerb"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x38\x53\x56\x57\x8B\xF9\xC7\x45\xCC\x00\x00\x00\x00"
+			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
 				"library"	"server"
@@ -274,6 +280,24 @@
 				"callconv"	"thiscall"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"CWeaponMedigun::RecalcEffectOnTarget"
+			{
+				"signature"	"CWeaponMedigun::RecalcEffectOnTarget"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
+				"arguments"
+				{
+					"pPlayer"
+					{
+						"type"	"cbaseentity"
+					}
+					"bInstantRemove"
+					{
+						"type"	"bool"
+					}
+				}
 			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
