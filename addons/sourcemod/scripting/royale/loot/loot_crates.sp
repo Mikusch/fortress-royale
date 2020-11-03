@@ -1,8 +1,9 @@
 enum struct LootCrateContent
 {
-	LootType type;
-	int tier;
-	float percentage;
+	LootType type;		/**< Loot type */
+	int tier;			/**< Loot tier */
+	float percentage;	/**< The chance for this loot to spawn in */
+	bool forceSpawn;	/**< Whether the callback_shouldcreate should be skipped */
 }
 
 enum struct LootCrate
@@ -53,6 +54,7 @@ enum struct LootCrate
 					
 					content.tier = kv.GetNum("tier", -1);
 					content.percentage = kv.GetFloat("percentage", 1.0);
+					content.forceSpawn = view_as<bool>(kv.GetNum("force_spawn"));
 					
 					this.contents.PushArray(content);
 				}

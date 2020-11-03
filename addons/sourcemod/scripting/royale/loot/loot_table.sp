@@ -142,8 +142,11 @@ void LootTable_ReadConfig(KeyValues kv)
 	kv.GoBack();
 }
 
-bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootType type, int tier, TFClassType class)
+bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootCrateContent content, TFClassType class)
 {
+	LootType type = content.type;
+	int tier = content.tier;
+	
 	ArrayList list;
 	
 	if (fr_classfilter.BoolValue)
@@ -194,7 +197,7 @@ bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootType type, int
 	}
 	
 	//Conditional callback to determine if this loot should spawn
-	if (lootTable.callback_shouldcreate != INVALID_FUNCTION)
+	if (!content.forceSpawn && lootTable.callback_shouldcreate != INVALID_FUNCTION)
 	{
 		Call_StartFunction(null, lootTable.callback_shouldcreate);
 		Call_PushCell(client);

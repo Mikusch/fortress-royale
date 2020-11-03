@@ -180,7 +180,7 @@ public void Loot_BreakCrate(int entity, int crate, LootCrate loot)
 	{
 		loot.GetRandomLootCrateContent(content);
 	}
-	while (GetRandomFloat() > content.percentage || !LootTable_GetRandomLoot(lootTable, client, content.type, content.tier, class));
+	while (GetRandomFloat() > content.percentage || !LootTable_GetRandomLoot(lootTable, client, content, class));
 	
 	float origin[3];
 	WorldSpaceCenter(crate, origin);
