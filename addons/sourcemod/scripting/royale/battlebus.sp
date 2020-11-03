@@ -262,9 +262,9 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 	{
 		if (FRPlayer(client).PlayerState == PlayerState_Parachute && !TF2_IsPlayerInCondition(client, TFCond_Parachute))
 		{
+			FRPlayer(client).SecToDeployParachute--;
 			if (FRPlayer(client).SecToDeployParachute > 0)
 			{
-				FRPlayer(client).SecToDeployParachute--;
 				PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
 				CreateTimer(1.0, Timer_SecToDeployParachute, serial);
 			}
