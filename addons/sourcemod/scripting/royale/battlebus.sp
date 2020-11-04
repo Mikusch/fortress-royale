@@ -156,7 +156,7 @@ void BattleBus_SpawnPlayerBus()
 	//Teleport bus after camera, so camera can follow where bus is teleporting
 	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
 	
-	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, g_BattleBusPropRef);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, g_BattleBusPropRef, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action BattleBus_EndPlayerBus(Handle timer, int bus)
@@ -311,8 +311,8 @@ void BattleBus_SpawnLootBus()
 	Format(message, sizeof(message), "%T", "BattleBus_IncomingCrate", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_build");
 	
-	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus);
-	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus);
+	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action BattleBus_SpawnLootCrate(Handle timer, int bus)

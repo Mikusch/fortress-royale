@@ -172,8 +172,8 @@ void Zone_RoundStart()
 
 void Zone_SetupFinished()
 {
-	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay);
-	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
+	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_StartDisplay(Handle timer)
@@ -220,7 +220,7 @@ public Action Timer_StartDisplay(Handle timer)
 		SetEntityRenderMode(g_ZoneGhostRef, RENDER_TRANSCOLOR);
 	}
 	
-	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_StartShrink(Handle timer)
@@ -236,7 +236,7 @@ public Action Timer_StartShrink(Handle timer)
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 	
 	g_ZoneShrinkStart = GetGameTime();
-	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_FinishShrink(Handle timer)
@@ -254,7 +254,7 @@ public Action Timer_FinishShrink(Handle timer)
 	BattleBus_SpawnLootBus();
 	
 	if (g_ZoneShrinkLevel > 0)
-		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay);
+		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void Frame_UpdateZone(int ref)
