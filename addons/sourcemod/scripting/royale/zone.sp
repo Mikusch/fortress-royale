@@ -1,4 +1,4 @@
-#define ZONE_MODEL			"models/kirillian/brsphere_huge.mdl"
+#define ZONE_MODEL			"models/kirillian/brsphere_huge_v3.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
 #define ZONE_DIAMETER		20000.0
 
@@ -63,14 +63,14 @@ void Zone_Precache()
 {
 	PrecacheScriptSound(ZONE_SHRINK_SOUND);
 	
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx80.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx90.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.mdl");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.sw.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.vvd");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx80.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx90.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.mdl");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.sw.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.vvd");
 
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vmt");
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vtf");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vmt");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vtf");
 }
 
 bool Zone_GetHeight(float origin[3])
