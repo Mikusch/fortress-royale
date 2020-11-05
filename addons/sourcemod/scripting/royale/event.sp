@@ -280,25 +280,23 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
 	}
 	
-	if (!deadringer)
+	//Drop all weapons
+	int weapon, pos;
+	while (TF2_GetItem(victim, weapon, pos))
 	{
-		float origin[3], angles[3];
-		GetClientEyePosition(victim, origin);
-		GetClientEyeAngles(victim, angles);
-		
-		origin[2] -= 20.0;
-		
-		//Drop all weapons
-		int weapon, pos;
-		while (TF2_GetItem(victim, weapon, pos))
+		if (TF2_ShouldDropWeapon(victim, weapon))
 		{
-			if (TF2_ShouldDropWeapon(victim, weapon))
+			float origin[3], angles[3];
+			if (SDKCall_CalculateAmmoPackPositionAndAngles(victim, weapon, origin, angles))
 				TF2_CreateDroppedWeapon(victim, weapon, false, origin, angles);
 		}
-		
-		//Drop small health kit
-		TF2_DropItem(victim, "item_healthkit_small");
-		
+	}
+	
+	//Drop small health kit
+	TF2_DropItem(victim, "item_healthkit_small");
+	
+	if (!deadringer)
+	{
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));

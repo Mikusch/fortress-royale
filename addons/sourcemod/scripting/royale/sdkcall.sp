@@ -5,6 +5,7 @@ static Handle g_SDKCallInitPickedUpWeapon;
 static Handle g_SDKCallGetLoadoutItem;
 static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallGetMaxAmmo;
+static Handle g_SDKCallCalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCallFindAndHealTargets;
 static Handle g_SDKCallStopHealingOwner;
 static Handle g_SDKCallGetGlobalTeam;
@@ -28,6 +29,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetLoadoutItem = PrepSDKCall_GetLoadoutItem(gamedata);
 	g_SDKCallGetEquippedWearableForLoadoutSlot = PrepSDKCall_GetEquippedWearableForLoadoutSlot(gamedata);
 	g_SDKCallGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
+	g_SDKCallCalculateAmmoPackPositionAndAngles = PrepSDKCall_CalculateAmmoPackPositionAndAngles(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
 	g_SDKCallStopHealingOwner = PrepSDKCall_StopHealingOwner(gamedata);
 	g_SDKCallGetGlobalTeam = PrepSDKCall_GetGlobalTeam(gamedata);
@@ -146,6 +148,22 @@ static Handle PrepSDKCall_GetMaxAmmo(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::GetMaxAmmo");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CalculateAmmoPackPositionAndAngles(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CalculateAmmoPackPositionAndAngles");
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
+	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::CalculateAmmoPackPositionAndAngles");
 	
 	return call;
 }
@@ -361,6 +379,11 @@ int SDKCall_GetEquippedWearableForLoadoutSlot(int client, int slot)
 int SDKCall_GetMaxAmmo(int client, int ammoType)
 {
 	return SDKCall(g_SDKCallGetMaxAmmo, client, ammoType, -1);
+}
+
+bool SDKCall_CalculateAmmoPackPositionAndAngles(int client, int weapon, float[3] origin, float[3] angles)
+{
+	return SDKCall(g_SDKCallCalculateAmmoPackPositionAndAngles, client, weapon, origin, angles);
 }
 
 bool SDKCall_FindAndHealTargets(int medigun)

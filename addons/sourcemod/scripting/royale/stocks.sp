@@ -852,17 +852,17 @@ stock int TF2_GetItemSlot(int defindex, TFClassType class)
 	int slot = TF2Econ_GetItemLoadoutSlot(defindex, class);
 	if (WeaponSlot_Primary <= slot)
 	{
-		// Econ reports wrong slots for Engineer and Spy
+		//Econ reports wrong slots for Engineer and Spy
 		switch (class)
 		{
 			case TFClass_Spy:
 			{
 				switch (slot)
 				{
-					case 1: slot = WeaponSlot_Primary; // Revolver
-					case 4: slot = WeaponSlot_Secondary; // Sapper
-					case 5: slot = WeaponSlot_PDADisguise; // Disguise Kit
-					case 6: slot = WeaponSlot_InvisWatch; // Invis Watch
+					case 1: slot = WeaponSlot_Primary;		//Revolver
+					case 4: slot = WeaponSlot_Secondary;	//Sapper
+					case 5: slot = WeaponSlot_PDADisguise;	//Disguise Kit
+					case 6: slot = WeaponSlot_InvisWatch;	//Invis Watch
 				}
 			}
 			
@@ -870,14 +870,14 @@ stock int TF2_GetItemSlot(int defindex, TFClassType class)
 			{
 				switch (slot)
 				{
-					case 4: slot = WeaponSlot_BuilderEngie; // Toolbox
-					case 5: slot = WeaponSlot_PDABuild; // Construction PDA
-					case 6: slot = WeaponSlot_PDADestroy; // Destruction PDA
+					case 4: slot = WeaponSlot_BuilderEngie;	//Toolbox
+					case 5: slot = WeaponSlot_PDABuild;		//Construction PDA
+					case 6: slot = WeaponSlot_PDADestroy;	//Destruction PDA
 				}
 			}
 		}
 		
-		// Action weapons share toolbox slot
+		//Action weapons share toolbox slot
 		if (slot == WeaponSlot_Action)
 			slot = WeaponSlot_BuilderEngie;
 	}
