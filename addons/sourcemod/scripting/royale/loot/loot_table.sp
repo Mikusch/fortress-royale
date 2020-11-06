@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 enum struct LootTable
 {
 	LootType type;
@@ -142,8 +159,11 @@ void LootTable_ReadConfig(KeyValues kv)
 	kv.GoBack();
 }
 
-bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootType type, int tier, TFClassType class)
+bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootCrateContent content, TFClassType class)
 {
+	LootType type = content.type;
+	int tier = content.tier;
+	
 	ArrayList list;
 	
 	if (fr_classfilter.BoolValue)
@@ -194,7 +214,7 @@ bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootType type, int
 	}
 	
 	//Conditional callback to determine if this loot should spawn
-	if (lootTable.callback_shouldcreate != INVALID_FUNCTION)
+	if (!content.forceSpawn && lootTable.callback_shouldcreate != INVALID_FUNCTION)
 	{
 		Call_StartFunction(null, lootTable.callback_shouldcreate);
 		Call_PushCell(client);

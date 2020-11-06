@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #define GAMESOUND_WIN_MUSIC		"MatchMaking.MatchEndWinMusicCasual"
 #define GAMESOUND_LOSE_MUSIC	"MatchMaking.MatchEndLoseMusicCasual"
 
@@ -280,25 +297,23 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
 	}
 	
-	if (!deadringer)
+	//Drop all weapons
+	int weapon, pos;
+	while (TF2_GetItem(victim, weapon, pos))
 	{
-		float origin[3], angles[3];
-		GetClientEyePosition(victim, origin);
-		GetClientEyeAngles(victim, angles);
-		
-		origin[2] -= 20.0;
-		
-		//Drop all weapons
-		int weapon, pos;
-		while (TF2_GetItem(victim, weapon, pos))
+		if (TF2_ShouldDropWeapon(victim, weapon))
 		{
-			if (TF2_ShouldDropWeapon(victim, weapon))
+			float origin[3], angles[3];
+			if (SDKCall_CalculateAmmoPackPositionAndAngles(victim, weapon, origin, angles))
 				TF2_CreateDroppedWeapon(victim, weapon, false, origin, angles);
 		}
-		
-		//Drop small health kit
-		TF2_DropItem(victim, "item_healthkit_small");
-		
+	}
+	
+	//Drop small health kit
+	TF2_DropItem(victim, "item_healthkit_small");
+	
+	if (!deadringer)
+	{
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));

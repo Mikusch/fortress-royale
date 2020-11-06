@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 enum struct ConsoleInfo
 {
 	CommandListener callback;
@@ -183,25 +200,26 @@ public Action Console_DropItem(int client, const char[] command, int args)
 		return Plugin_Continue;
 	
 	float origin[3], angles[3];
-	GetClientEyePosition(client, origin);
-	GetClientEyeAngles(client, angles);
-	
-	TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
-	TF2_RemoveItem(client, weapon);
-	
-	int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
-	if (melee == -1)	//Dropped melee weapon, give fists back
+	if (SDKCall_CalculateAmmoPackPositionAndAngles(client, weapon, origin, angles))
 	{
-		melee = TF2_CreateWeapon(INDEX_FISTS, g_FistsClassnames[TF2_GetPlayerClass(client)]);
-		if (melee != -1)
-			TF2_EquipWeapon(client, melee);
+		TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
+		TF2_RemoveItem(client, weapon);
+		
+		int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
+		if (melee == -1)	//Dropped melee weapon, give fists back
+		{
+			melee = TF2_CreateWeapon(INDEX_FISTS, g_FistsClassnames[TF2_GetPlayerClass(client)]);
+			if (melee != -1)
+				TF2_EquipWeapon(client, melee);
+		}
+		
+		//Set new active weapon to melee
+		if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
+			TF2_SwitchActiveWeapon(client, melee);
+		
+		CreateTimer(0.1, Timer_UpdateClientHud, GetClientSerial(client));
 	}
 	
-	//Set new active weapon to melee
-	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
-		TF2_SwitchActiveWeapon(client, melee);
-	
-	CreateTimer(0.1, Timer_UpdateClientHud, GetClientSerial(client));
 	return Plugin_Continue;
 }
 

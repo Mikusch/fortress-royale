@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 enum struct BattleBusConfig
 {
 	char model[PLATFORM_MAX_PATH];
@@ -156,7 +173,7 @@ void BattleBus_SpawnPlayerBus()
 	//Teleport bus after camera, so camera can follow where bus is teleporting
 	TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
 	
-	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, g_BattleBusPropRef);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, g_BattleBusPropRef, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action BattleBus_EndPlayerBus(Handle timer, int bus)
@@ -271,13 +288,12 @@ public Action Timer_SecToDeployParachute(Handle timer, int serial)
 			else
 			{
 				TF2_AddCondition(client, TFCond_Parachute);
-				PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
+				CreateTimer(0.1, Timer_SecToDeployParachute, serial);
 			}
 		}
 		else
 		{
 			FRPlayer(client).SecToDeployParachute = 0;
-			PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
 		}
 	}
 }
@@ -311,8 +327,8 @@ void BattleBus_SpawnLootBus()
 	Format(message, sizeof(message), "%T", "BattleBus_IncomingCrate", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_build");
 	
-	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus);
-	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus);
+	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus, TIMER_FLAG_NO_MAPCHANGE);
+	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action BattleBus_SpawnLootCrate(Handle timer, int bus)

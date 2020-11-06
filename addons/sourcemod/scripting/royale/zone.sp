@@ -1,4 +1,21 @@
-#define ZONE_MODEL			"models/kirillian/brsphere_huge.mdl"
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#define ZONE_MODEL			"models/kirillian/brsphere_huge_v3.mdl"
 #define ZONE_SHRINK_SOUND	"MVM.Siren"
 #define ZONE_DIAMETER		20000.0
 
@@ -63,14 +80,14 @@ void Zone_Precache()
 {
 	PrecacheScriptSound(ZONE_SHRINK_SOUND);
 	
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx80.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.dx90.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.mdl");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.sw.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge.vvd");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx80.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx90.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.mdl");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.sw.vtx");
+	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.vvd");
 
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vmt");
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vtf");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vmt");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vtf");
 }
 
 bool Zone_GetHeight(float origin[3])
@@ -172,8 +189,8 @@ void Zone_RoundStart()
 
 void Zone_SetupFinished()
 {
-	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay);
-	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT);
+	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_StartDisplay(Handle timer)
@@ -220,7 +237,7 @@ public Action Timer_StartDisplay(Handle timer)
 		SetEntityRenderMode(g_ZoneGhostRef, RENDER_TRANSCOLOR);
 	}
 	
-	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_StartShrink(Handle timer)
@@ -236,7 +253,7 @@ public Action Timer_StartShrink(Handle timer)
 	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
 	
 	g_ZoneShrinkStart = GetGameTime();
-	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink);
+	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public Action Timer_FinishShrink(Handle timer)
@@ -254,7 +271,7 @@ public Action Timer_FinishShrink(Handle timer)
 	BattleBus_SpawnLootBus();
 	
 	if (g_ZoneShrinkLevel > 0)
-		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay);
+		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 public void Frame_UpdateZone(int ref)

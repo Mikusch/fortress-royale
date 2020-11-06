@@ -64,6 +64,12 @@
 				"linux"		"@_ZN9CTFPlayer28GetChargeEffectBeingProvidedEv"
 				"windows"	"\x55\x8B\xEC\x51\x56\x8B\xF1\x8D\x86\x0C\x21\x00\x00"
 			}
+			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer34CalculateAmmoPackPositionAndAnglesEP13CTFWeaponBaseR6VectorR6QAngle"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x68\x2A\x2A\x2A\x2A"
+			}
 			"CWeaponMedigun::FindAndHealTargets"
 			{
 				"library"	"server"

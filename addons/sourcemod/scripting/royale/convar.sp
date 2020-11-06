@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2020  Mikusch & 42
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 enum struct ConVarInfo
 {
 	ConVar convar;
@@ -49,6 +66,7 @@ void ConVar_Init()
 	ConVar_Add("mp_waitingforplayers_time", 60.0);
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
+	ConVar_Add("tf_fastbuild", 1.0);
 	ConVar_Add("tf_helpme_range", -1.0);
 	ConVar_Add("tf_max_health_boost", 4.0);
 	ConVar_Add("tf_parachute_maxspeed_xy", 600.0);
