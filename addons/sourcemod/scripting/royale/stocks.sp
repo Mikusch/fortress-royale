@@ -1070,7 +1070,7 @@ stock int TF2_DropItem(int client, const char[] classname, float lifeTime = 30.0
 			int ref = EntIndexToEntRef(item);
 			
 			if (lifeTime > 0.0)
-				CreateTimer(lifeTime, Timer_DestroyItem, ref);
+				CreateTimer(lifeTime, Timer_DestroyItem, ref, TIMER_FLAG_NO_MAPCHANGE);
 			
 			return ref;
 		}
