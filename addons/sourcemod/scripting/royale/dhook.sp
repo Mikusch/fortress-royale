@@ -57,8 +57,8 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
 	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
+	DHook_CreateDetour(gamedata, "CTFPlayerShared::RecalculateChargeEffects", DHook_RecalculateChargeEffectsPre, _);
 	DHook_CreateDetour(gamedata, "CWeaponMedigun::StopHealingOwner", DHook_StopHealingOwnerPre, _);
-	DHook_CreateDetour(gamedata, "CWeaponMedigun::RecalcEffectOnTarget", DHook_RecalcEffectOnTargetPre, _);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	
@@ -421,6 +421,18 @@ public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client)
 	}
 }
 
+public MRESReturn DHook_RecalculateChargeEffectsPre(Address shared, DHookParam param)
+{
+	//Prevent Vaccinator uber condition being removed on medigun holster
+	if (g_WeaponSwitch)
+	{
+		param.Set(1, false);	//bInstantRemove
+		return MRES_ChangedOverride;
+	}
+	
+	return MRES_Ignored;
+}
+
 public MRESReturn DHook_StopHealingOwnerPre(int medigun)
 {
 	if (medigun == -1)	//this happens
@@ -429,18 +441,6 @@ public MRESReturn DHook_StopHealingOwnerPre(int medigun)
 	//Dont remove self heals while still ubered, so quick-fix heal can apply while switched out
 	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease"))
 		return MRES_Supercede;
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_RecalcEffectOnTargetPre(int medigun, DHookParam param)
-{
-	//Prevent Vaccinator uber condition being removed on medigun holster
-	if (g_WeaponSwitch)
-	{
-		param.Set(2, false);	//bInstantRemove
-		return MRES_ChangedOverride;
-	}
 	
 	return MRES_Ignored;
 }
