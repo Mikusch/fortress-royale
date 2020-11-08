@@ -29,6 +29,7 @@ static Handle g_SDKCallGetGlobalTeam;
 static Handle g_SDKCallGetPlayerClassData;
 static Handle g_SDKCallChangeTeam;
 static Handle g_SDKCallGetDefaultItemChargeMeterValue;
+static Handle g_SDKCallWeaponCanSwitchTo;
 static Handle g_SDKCallGiveNamedItem;
 static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
@@ -53,6 +54,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetPlayerClassData = PrepSDKCall_GetPlayerClassData(gamedata);
 	g_SDKCallChangeTeam = PrepSDKCall_ChangeTeam(gamedata);
 	g_SDKCallGetDefaultItemChargeMeterValue = PrepSDKCall_GetDefaultItemChargeMeterValue(gamedata);
+	g_SDKCallWeaponCanSwitchTo = PrepSDKCall_WeaponCanSwitchTo(gamedata);
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallGetSlot = PrepSDKCall_GetSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
@@ -264,6 +266,20 @@ static Handle PrepSDKCall_GetDefaultItemChargeMeterValue(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_WeaponCanSwitchTo(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseCombatCharacter::Weapon_CanSwitchTo");
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseCombatCharacter::Weapon_CanSwitchTo");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_GiveNamedItem(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
@@ -431,6 +447,11 @@ void SDKCall_ChangeTeam(int entity, TFTeam team)
 float SDKCall_GetDefaultItemChargeMeterValue(int weapon)
 {
 	return SDKCall(g_SDKCallGetDefaultItemChargeMeterValue, weapon);
+}
+
+bool SDKCall_WeaponCanSwitchTo(int client, int weapon)
+{
+	return SDKCall(g_SDKCallWeaponCanSwitchTo, client, weapon);
 }
 
 int SDKCall_GiveNamedItem(int client, const char[] classname, int subtype, Address item, bool force)

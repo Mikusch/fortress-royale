@@ -157,15 +157,15 @@ public Action Console_DropItem(int client, const char[] command, int args)
 	if (!IsPlayerAlive(client))
 		return Plugin_Continue;
 	
-	//Drop weapon, if player dont have rune to drop instead
+	//Drop weapon, if player doesn't have a rune to drop instead
 	for (int i = 0; i < sizeof(g_RuneConds); i++)
 		if (TF2_IsPlayerInCondition(client, g_RuneConds[i]))
 			return Plugin_Continue;
 	
-	//Order on which weapons to drop if valid:
+	//The following will be dropped (in that order):
 	//- current active weapon
 	//- wearables (can't be used as active weapon)
-	//- weapons (can't be used as active weapon if ammo is empty)
+	//- weapons that can't be switched to (as determined by TF2)
 	
 	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 	bool found = weapon != -1 && TF2_ShouldDropWeapon(client, weapon);
@@ -188,7 +188,7 @@ public Action Console_DropItem(int client, const char[] command, int args)
 		for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
 		{
 			weapon = GetPlayerWeaponSlot(client, slot);
-			if (weapon != -1 && TF2_ShouldDropWeapon(client, weapon))
+			if (weapon != -1 && TF2_ShouldDropWeapon(client, weapon) && !SDKCall_WeaponCanSwitchTo(client, weapon))
 			{
 				found = true;
 				break;

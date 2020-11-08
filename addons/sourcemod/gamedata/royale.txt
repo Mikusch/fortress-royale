@@ -124,6 +124,11 @@
 				"linux"		"191"
 				"windows"	"190"
 			}
+			"CBaseCombatCharacter::Weapon_CanSwitchTo"
+			{
+				"linux"		"270"
+				"windows"	"269"
+			}
 			"CBasePlayer::ForceRespawn"
 			{
 				"linux"		"330"
