@@ -66,6 +66,7 @@ static Handle g_ZoneTimerBleed;
 
 static int g_ZonePropRef = INVALID_ENT_REFERENCE;	//Zone prop model
 static int g_ZoneGhostRef = INVALID_ENT_REFERENCE;	//Ghost zone prop model
+static int g_TriggerHurtRef = INVALID_ENT_REFERENCE;	//trigger_hurt to allow zone to bypass invulnerability
 static float g_ZonePropcenterOld[3];	//Where the zone will start moving
 static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
 static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
@@ -183,6 +184,10 @@ void Zone_RoundStart()
 	
 	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
 	SetEntityRenderColor(g_ZoneGhostRef, g_ZoneConfig.color_ghost[0], g_ZoneConfig.color_ghost[1], g_ZoneConfig.color_ghost[2], g_ZoneConfig.color_ghost[3]);
+	
+	//Create trigger_hurt, no need to spawn it
+	g_TriggerHurtRef = EntIndexToEntRef(CreateEntityByName("trigger_hurt"));
+	SetEntProp(g_TriggerHurtRef, Prop_Data, "m_usSolidFlags", FSOLID_TRIGGER);
 	
 	RequestFrame(Frame_UpdateZone, g_ZonePropRef);
 }
@@ -392,7 +397,10 @@ public Action Timer_Bleed(Handle timer)
 		if (IsClientInGame(client) && IsPlayerAlive(client) && player.OutsideZone && player.PlayerState != PlayerState_Winning)
 		{
 			player.ZoneDamageTicks++;
-			SDKHooks_TakeDamage(client, 0, client, Zone_GetCurrentDamage() * player.ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
+			
+			//CTFPlayer::OnTakeDamage has a local bool that allows damage to bypass invulnerability
+			//It is only set to true for telefrags and if the attacker is a trigger_hurt entity with FSOLID_TRIGGER, so we pass our own trigger
+			SDKHooks_TakeDamage(client, 0, g_TriggerHurtRef, Zone_GetCurrentDamage() * player.ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
 		}
 	}
 	
