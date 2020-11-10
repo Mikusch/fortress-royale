@@ -661,6 +661,20 @@ stock int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClas
 	g_SkipGiveNamedItem = true;
 	int weapon = SDKCall_GiveNamedItem(client, classname, subtype, item, true);
 	g_SkipGiveNamedItem = false;
+	
+	if (GetEntProp(weapon, Prop_Send, "m_iItemIDHigh") == -1 && GetEntProp(weapon, Prop_Send, "m_iItemIDLow") == -1)
+	{
+		//Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) to 0
+		char netClass[32];
+		GetEntityNetClass(weapon, netClass, sizeof(netClass));
+		int offset = FindSendPropInfo(netClass, "m_iItemIDHigh");
+		
+		SetEntData(weapon, offset - 8, 0);	// m_iItemID
+		SetEntData(weapon, offset - 4, 0);	// m_iItemID
+		SetEntData(weapon, offset, 0);	// m_iItemIDHigh
+		SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
+	}
+	
 	return weapon;
 }
 
@@ -710,6 +724,16 @@ stock int TF2_CreateWeapon(int defindex, const char[] classnameTemp = NULL_STRIN
 			SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
 			SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
 		}
+		
+		//Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) to 0
+		char netClass[32];
+		GetEntityNetClass(weapon, netClass, sizeof(netClass));
+		int offset = FindSendPropInfo(netClass, "m_iItemIDHigh");
+		
+		SetEntData(weapon, offset - 8, 0);	// m_iItemID
+		SetEntData(weapon, offset - 4, 0);	// m_iItemID
+		SetEntData(weapon, offset, 0);	// m_iItemIDHigh
+		SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
 		
 		DispatchSpawn(weapon);
 	}
