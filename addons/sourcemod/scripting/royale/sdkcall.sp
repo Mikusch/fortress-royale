@@ -491,7 +491,7 @@ void SDKCall_SetVelocity(int entity, const float velocity[3], const float angVel
 		return;
 	}
 	
-	Address phyObj = view_as<Address>(LoadFromAddress(GetEntityAddress(entity) + view_as<Address>(offset), NumberType_Int32));
+	Address phyObj = view_as<Address>(GetEntData(entity, offset));
 	if (!phyObj)
 	{
 		LogError("Unable to find offset 'm_pPhysicsObject'");

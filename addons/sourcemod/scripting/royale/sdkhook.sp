@@ -533,15 +533,13 @@ public void PumpkinBomb_OnTakeDamagePost(int pumpkin, int attacker, int inflicto
 
 public Action Rune_Spawn(int rune)
 {
-	//Always set rune team to any
-	Address address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneTeam);
-	StoreToAddress(address, view_as<int>(TFTeam_Any), NumberType_Int32);
-	
 	SetEntProp(rune, Prop_Send, "m_nSkin", 0);
 	
+	//Always set rune team to any
+	SetEntData(rune, g_OffsetRuneTeam, view_as<int>(TFTeam_Any));
+	
 	//Never let rune despawn
-	address = GetEntityAddress(rune) + view_as<Address>(g_OffsetRuneShouldReposition);
-	StoreToAddress(address, false, NumberType_Int8);
+	SetEntData(rune, g_OffsetRuneShouldReposition, false);
 }
 
 public Action MeteorShowerSpawner_Spawn(int entity)
@@ -562,11 +560,10 @@ public Action SpellPickup_TouchPost(int entity, int toucher)
 			int tier = GetEntProp(entity, Prop_Data, "m_nTier");
 			if (tier == 1)
 			{
-				Address address = GetEntityAddress(spellbook) + view_as<Address>(g_OffsetNextSpell);
-				int nextSpell = LoadFromAddress(address, NumberType_Int8);
+				int nextSpell = GetEntData(spellbook, g_OffsetNextSpell);
 				
 				if (nextSpell == TFSpell_SkeletonHorde)
-					StoreToAddress(address, GetRandomInt(TFSpell_LightningBall, TFSpell_Meteor), NumberType_Int8);
+					SetEntData(spellbook, g_OffsetNextSpell, GetRandomInt(TFSpell_LightningBall, TFSpell_Meteor));
 			}
 		}
 	}
