@@ -85,6 +85,22 @@ enum
 	WeaponSlot_Misc2
 };
 
+//TF2 Spells
+enum
+{
+	TFSpell_Fireball = 1,
+	TFSpell_Bats,
+	TFSpell_OverHeal,
+	TFSpell_MIRV,
+	TFSpell_BlastJump,
+	TFSpell_Stealth,
+	TFSpell_Teleport,
+	TFSpell_LightningBall,
+	TFSpell_Athletic,
+	TFSpell_Meteor,
+	TFSpell_SkeletonHorde
+}
+
 //TF2 Mannpower Powerups
 enum TFRuneType
 {
@@ -441,6 +457,7 @@ int g_OffsetRuneType;
 int g_OffsetRuneTeam;
 int g_OffsetRuneShouldReposition;
 int g_OffsetMaxHealth;
+int g_OffsetNextSpell;
 
 #include "royale/config.sp"
 #include "royale/entity.sp"
@@ -500,6 +517,7 @@ public void OnPluginStart()
 	g_OffsetRuneTeam = gamedata.GetOffset("CTFRune::m_nTeam");
 	g_OffsetRuneShouldReposition = gamedata.GetOffset("CTFRune::m_bShouldReposition");
 	g_OffsetMaxHealth = gamedata.GetOffset("TFPlayerClassData_t::m_nMaxHealth");
+	g_OffsetNextSpell = gamedata.GetOffset("CTFSpellBook::m_iNextSpell");
 	
 	delete gamedata;
 	

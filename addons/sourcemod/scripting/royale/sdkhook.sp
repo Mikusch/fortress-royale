@@ -127,6 +127,10 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, MeteorShowerSpawner_Spawn);
 	}
+	else if (StrEqual(classname, "tf_spell_pickup"))
+	{
+		SDKHook(entity, SDKHook_TouchPost, SpellPickup_TouchPost);
+	}
 }
 
 public bool Entity_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
@@ -545,4 +549,25 @@ public Action MeteorShowerSpawner_Spawn(int entity)
 	//Set team back to owner team, otherwise TF2 will destroy itself
 	int owner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
 	TF2_ChangeTeam(entity, FRPlayer(owner).Team);
+}
+
+public Action SpellPickup_TouchPost(int entity, int toucher)
+{
+	if (0 < toucher <= MaxClients)
+	{
+		//Skeleton spell requires a nav mesh which most maps do not have, reroll if it was picked
+		int spellbook = TF2_GetItemByClassname(toucher, "tf_weapon_spellbook");
+		if (spellbook != INVALID_ENT_REFERENCE)
+		{
+			int tier = GetEntProp(entity, Prop_Data, "m_nTier");
+			if (tier == 1)
+			{
+				Address address = GetEntityAddress(spellbook) + view_as<Address>(g_OffsetNextSpell);
+				int nextSpell = LoadFromAddress(address, NumberType_Int8);
+				
+				if (nextSpell == TFSpell_SkeletonHorde)
+					StoreToAddress(address, GetRandomInt(TFSpell_LightningBall, TFSpell_Meteor), NumberType_Int8);
+			}
+		}
+	}
 }

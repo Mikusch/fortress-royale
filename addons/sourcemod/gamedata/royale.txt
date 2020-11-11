@@ -215,6 +215,11 @@
 				"linux"		"644"
 				"windows"	"644"
 			}
+			"CTFSpellBook::m_iNextSpell"
+			{
+				"linux"		"2028"
+				"windows"	"2028"
+			}
 		}
 		"Functions"
 		{
