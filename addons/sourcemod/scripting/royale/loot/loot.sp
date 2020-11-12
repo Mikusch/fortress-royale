@@ -33,9 +33,9 @@ void Loot_OnEntitySpawned(int entity)
 	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
 	
 	LootCrate loot;
-	if (StrEqual(targetname, "fr_crate"))
-		LootCrate_GetDefault(loot);
-	else if (!LootConfig_GetPrefabByTargetname(targetname, loot))
+	LootCrate_GetDefault(loot);
+	
+	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
 		return;
 	
 	
