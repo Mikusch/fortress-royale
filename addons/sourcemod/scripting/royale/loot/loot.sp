@@ -38,11 +38,14 @@ void Loot_OnEntitySpawned(int entity)
 	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
 		return;
 	
-	
 	if (!GameRules_GetProp("m_bInWaitingForPlayers") && GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
 	{
-		SetEntProp(entity, Prop_Data, "m_iMaxHealth", loot.health);
-		SetEntProp(entity, Prop_Data, "m_iHealth", loot.health);
+		if (GetEntProp(entity, Prop_Data, "m_iHealth") <= 0)
+		{
+			SetEntProp(entity, Prop_Data, "m_iMaxHealth", loot.health);
+			SetEntProp(entity, Prop_Data, "m_iHealth", loot.health);
+		}
+		
 		SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_YES);
 		HookSingleEntityOutput(entity, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
 	}
@@ -78,7 +81,9 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 	
 	if (IsValidEntity(crate))
 	{
+		DispatchKeyValue(crate, "targetname", loot.targetname);
 		SetEntityModel(crate, loot.model);
+		SetEntProp(crate, Prop_Data, "m_nSkin", loot.skin);
 		SetEntProp(crate, Prop_Send, "m_nSolidType", SOLID_VPHYSICS);
 		
 		if (physics)
@@ -87,9 +92,13 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 			DispatchKeyValueFloat(crate, "physdamagescale", loot.impact);
 		}
 		
+		//Avoid hooking the same crate twice
+		SDKUnhook(crate, SDKHook_SpawnPost, PropDynamic_SpawnPost);
+		
 		if (DispatchSpawn(crate))
 		{
-			Loot_SetCratePrefab(crate, loot);
+			SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
+			SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 			SetEntProp(crate, Prop_Data, "m_takedamage", DAMAGE_YES);
 			
 			//origin and angles in config is saved as string, convert to vector
@@ -111,14 +120,6 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 	}
 	
 	return INVALID_ENT_REFERENCE;
-}
-
-void Loot_SetCratePrefab(int crate, LootCrate loot)
-{
-	SetEntityModel(crate, loot.model);
-	SetEntProp(crate, Prop_Data, "m_nSkin", loot.skin);
-	SetEntProp(crate, Prop_Data, "m_iMaxHealth", loot.health);
-	SetEntProp(crate, Prop_Data, "m_iHealth", loot.health);
 }
 
 stock LootType Loot_StrToLootType(const char[] str)
@@ -153,10 +154,10 @@ public Action EntityOutput_OnBreakCrateTargetname(const char[] output, int calle
 	GetEntPropString(caller, Prop_Data, "m_iName", targetname, sizeof(targetname));
 	
 	LootCrate loot;
-	if (StrEqual(targetname, "fr_crate"))
-		LootCrate_GetDefault(loot);
-	else
-		LootConfig_GetPrefabByTargetname(targetname, loot);
+	LootCrate_GetDefault(loot);
+	
+	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
+		return;
 	
 	Loot_BreakCrate(activator, EntIndexToEntRef(caller), loot);
 }
