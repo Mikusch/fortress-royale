@@ -354,6 +354,13 @@ public bool Trace_OnlyHitWorld(int entity, int mask)
 	return entity == 0;	// 0 as worldspawn
 }
 
+public bool Trace_OnlyHitDroppedWeapon(int entity, int mask)
+{
+	char classname[256];
+	GetEntityClassname(entity, classname, sizeof(classname));
+	return StrEqual(classname, "tf_dropped_weapon");
+}
+
 stock void TF2_ChangeTeam(int entity, TFTeam team)
 {
 	SetEntProp(entity, Prop_Send, "m_iTeamNum", view_as<int>(team));
@@ -494,15 +501,19 @@ stock bool TF2_TryToPickupDroppedWeapon(int client)
 	ScaleVector(endPos, TF_WEAPON_PICKUP_RANGE);
 	AddVectors(endPos, origin, endPos);
 	
-	TR_TraceRayFilter(origin, endPos, MASK_SOLID|CONTENTS_DEBRIS, RayType_EndPoint, Trace_DontHitEntity, client);
-	if (!TR_DidHit())
-		return false;
+	int droppedWeapon = INVALID_ENT_REFERENCE;
+	TR_TraceRayFilter(origin, endPos, MASK_SOLID|CONTENTS_DEBRIS, RayType_EndPoint, Trace_OnlyHitDroppedWeapon);
+	if (TR_DidHit())
+		droppedWeapon = TR_GetEntityIndex();
 	
-	int droppedWeapon = TR_GetEntityIndex();
+	if (droppedWeapon == INVALID_ENT_REFERENCE || droppedWeapon == 0)
+	{
+		TR_TraceHullFilter(origin, endPos, view_as<float>({-12.0, -12.0, -12.0}), view_as<float>({12.0, 12.0, 12.0}), MASK_SOLID|CONTENTS_DEBRIS, Trace_OnlyHitDroppedWeapon);
+		if (TR_DidHit())
+			droppedWeapon = TR_GetEntityIndex();
+	}
 	
-	char classname[256];
-	GetEntityClassname(droppedWeapon, classname, sizeof(classname));
-	if (!StrEqual(classname, "tf_dropped_weapon"))
+	if (droppedWeapon == INVALID_ENT_REFERENCE || droppedWeapon == 0)
 		return false;
 	
 	int defindex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
