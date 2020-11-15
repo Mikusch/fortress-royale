@@ -446,9 +446,9 @@ public Action PropPhysics_Spawn(int prop)
 	Vehicles_OnEntitySpawned(prop);
 }
 
-public Action PropDynamic_SpawnPost(int prop)
+public void PropDynamic_SpawnPost(int prop)
 {
-	Loot_OnEntitySpawned(prop);
+	Loot_UpdateEntity(prop);
 }
 
 public Action Dispenser_StartTouch(int dispenser, int toucher)

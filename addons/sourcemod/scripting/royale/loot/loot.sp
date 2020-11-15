@@ -27,34 +27,6 @@ void Loot_Init()
 	g_LootTypeMap.SetValue("item_powerup", Loot_Item_Powerup);
 }
 
-void Loot_OnEntitySpawned(int entity)
-{
-	char targetname[CONFIG_MAXCHAR];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-	
-	LootCrate loot;
-	LootCrate_GetDefault(loot);
-	
-	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
-		return;
-	
-	if (!GameRules_GetProp("m_bInWaitingForPlayers") && GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
-	{
-		if (GetEntProp(entity, Prop_Data, "m_iHealth") <= 0)
-		{
-			SetEntProp(entity, Prop_Data, "m_iMaxHealth", loot.health);
-			SetEntProp(entity, Prop_Data, "m_iHealth", loot.health);
-		}
-		
-		SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_YES);
-		HookSingleEntityOutput(entity, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
-	}
-	else
-	{
-		RemoveEntity(entity);
-	}
-}
-
 void Loot_SetupFinished()
 {
 	int pos;
@@ -69,6 +41,37 @@ void Loot_SetupFinished()
 		
 		pos++;
 	}
+	
+	int crate = -1;
+	while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
+		Loot_UpdateEntity(crate);
+}
+
+void Loot_UpdateEntity(int entity)
+{
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	LootCrate loot;
+	LootCrate_GetDefault(loot);
+	
+	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
+		return;
+	
+	if (GameRules_GetProp("m_bInWaitingForPlayers") || (g_RoundState == FRRoundState_Active && GetRandomFloat() > float(GetPlayerCount()) / float(TF_MAXPLAYERS)))
+	{
+		RemoveEntity(entity);
+		return;
+	}
+	
+	if (GetEntProp(entity, Prop_Data, "m_iHealth") <= 0)
+	{
+		SetEntProp(entity, Prop_Data, "m_iMaxHealth", loot.health);
+		SetEntProp(entity, Prop_Data, "m_iHealth", loot.health);
+	}
+	
+	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_YES);
+	HookSingleEntityOutput(entity, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
 }
 
 int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics = false)
