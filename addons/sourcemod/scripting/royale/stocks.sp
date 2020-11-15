@@ -483,7 +483,7 @@ stock void TF2_CheckClientWeapons(int client)
 
 stock bool TF2_TryToPickupDroppedWeapon(int client)
 {
-	if (FRPlayer(client).LastWeaponPickupTime > GetGameTime() - 1.0 || (FRPlayer(client).PlayerState != PlayerState_Alive && FRPlayer(client).PlayerState != PlayerState_Winning) || TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	if (FRPlayer(client).LastWeaponPickupTime > GetGameTime() - 0.75 || (FRPlayer(client).PlayerState != PlayerState_Alive && FRPlayer(client).PlayerState != PlayerState_Winning) || TF2_IsPlayerInCondition(client, TFCond_Disguised) || TF2_IsPlayerInCondition(client, TFCond_Taunting))
 		return false;
 	
 	float origin[3], angles[3], endPos[3];
