@@ -646,11 +646,17 @@ stock Action TF2_OnGiveNamedItem(int client, const char[] classname, int index)
 
 stock int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClass_Unknown)
 {
+	int defindex = LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16);
+	
 	char classname[256];
-	TF2Econ_GetItemClassName(LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16), classname, sizeof(classname));
+	TF2Econ_GetItemClassName(defindex, classname, sizeof(classname));
 	
 	if (class == TFClass_Unknown)
-		class = TF2_GetPlayerClass(client);
+	{
+		for (class = TFClass_Scout; class <= TFClass_Engineer; class++)
+			if (TF2_GetItemSlot(defindex, class) >= WeaponSlot_Primary)
+				break;
+	}
 	
 	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
 	
