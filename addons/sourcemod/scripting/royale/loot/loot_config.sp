@@ -51,17 +51,17 @@ methodmap LootPrefabs < ArrayList
 		}
 	}
 	
-	public bool FindPrefab(const char[] name, LootCrate lootBuffer)
+	public bool GetByName(const char[] name, LootCrate loot)
 	{
 		int length = this.Length;
 		for (int i = 0; i < length; i++)
 		{
-			LootCrate Loot;
-			this.GetArray(i, Loot);
+			LootCrate lootBuffer;
+			this.GetArray(i, lootBuffer);
 			
-			if (StrEqual(Loot.targetname, name, false))
+			if (StrEqual(lootBuffer.name, name, false))
 			{
-				lootBuffer = Loot;
+				loot = lootBuffer;
 				return true;
 			}
 		}
@@ -88,9 +88,9 @@ methodmap LootConfig < ArrayList
 			{
 				LootCrate loot;
 				
-				//Attempt use targetname, otherwise use default
-				kv.GetString("targetname", loot.targetname, sizeof(loot.targetname));
-				if (!g_LootPrefabs.FindPrefab(loot.targetname, loot))
+				//Attempt use name, otherwise use default
+				kv.GetString("name", loot.name, sizeof(loot.name));
+				if (!g_LootPrefabs.GetByName(loot.name, loot))
 					loot = g_LootCrateDefault;
 				
 				loot.ReadConfig(kv);
@@ -203,6 +203,17 @@ void LootConfig_DeleteCrateByEntity(int entity)
 		g_LootConfig.Erase(pos);
 }
 
+bool LootConfig_GetByName(const char[] name, LootCrate loot)
+{
+	if (StrEqual(name, "LootDefault", false))
+	{
+		loot = g_LootCrateDefault;
+		return true;
+	}
+	
+	return g_LootPrefabs.GetByName(name, loot);
+}
+
 bool LootConfig_GetPrefab(int pos, LootCrate loot)
 {
 	if (pos < 0 || pos >= g_LootPrefabs.Length)
@@ -212,9 +223,22 @@ bool LootConfig_GetPrefab(int pos, LootCrate loot)
 	return true;
 }
 
-bool LootConfig_GetPrefabByTargetname(const char[] name, LootCrate loot)
+bool LootConfig_GetPrefabByTargetname(const char[] targetname, LootCrate loot)
 {
-	return g_LootPrefabs.FindPrefab(name, loot);
+	int length = g_LootPrefabs.Length;
+	for (int i = 0; i < length; i++)
+	{
+		LootCrate lootBuffer;
+		g_LootPrefabs.GetArray(i, lootBuffer);
+		
+		if (StrEqual(lootBuffer.targetname, targetname, false))
+		{
+			loot = lootBuffer;
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 void LootCrate_GetDefault(LootCrate loot)

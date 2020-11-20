@@ -20,13 +20,14 @@ enum struct LootCrateContent
 	LootType type;		/**< Loot type */
 	int tier;			/**< Loot tier */
 	float percentage;	/**< The chance for this loot to spawn in */
-	bool forceSpawn;	/**< Whether the callback_shouldcreate should be skipped */
 }
 
 enum struct LootCrate
 {
 	int entity; 					/**< Entity crate ref */
-	char targetname[CONFIG_MAXCHAR];/**< Name of prefab if any */
+	char name[CONFIG_MAXCHAR];		/**< Name of LootCrate */
+	char fallback[CONFIG_MAXCHAR];	/**< Fallback name to use if can't find any loots to use from callback_shouldcreate */
+	char targetname[CONFIG_MAXCHAR];/**< Name for map targetname */
 	
 	// Loots
 	char origin[CONFIG_MAXCHAR];	/**< Spawn origin */
@@ -45,6 +46,9 @@ enum struct LootCrate
 	
 	void ReadConfig(KeyValues kv)
 	{
+		kv.GetSectionName(this.name, CONFIG_MAXCHAR);
+		
+		kv.GetString("fallback", this.fallback, CONFIG_MAXCHAR, this.fallback);
 		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
 		
 		//Get vectors as string so we dont worry float precision when converting back to kv
@@ -73,7 +77,6 @@ enum struct LootCrate
 					
 					content.tier = kv.GetNum("tier", -1);
 					content.percentage = kv.GetFloat("percentage", 1.0);
-					content.forceSpawn = view_as<bool>(kv.GetNum("force_spawn"));
 					
 					this.contents.PushArray(content);
 				}
@@ -95,8 +98,21 @@ enum struct LootCrate
 		kv.SetString("angles", this.angles);
 	}
 	
-	void GetRandomLootCrateContent(LootCrateContent buffer)
+	ArrayList GetListOfLootCrateContent()
 	{
-		this.contents.GetArray(GetRandomInt(0, this.contents.Length - 1), buffer, sizeof(buffer));
+		ArrayList list = new ArrayList(sizeof(LootCrateContent));
+		
+		int length = this.contents.Length;
+		for (int i = 0; i < length; i++)
+		{
+			LootCrateContent content;
+			this.contents.GetArray(i, content, sizeof(content));
+			if (GetRandomFloat() > content.percentage)
+				continue;
+			
+			list.PushArray(content);
+		}
+		
+		return list;
 	}
 }

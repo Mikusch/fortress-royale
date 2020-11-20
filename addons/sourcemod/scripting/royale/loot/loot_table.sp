@@ -159,7 +159,7 @@ void LootTable_ReadConfig(KeyValues kv)
 	kv.GoBack();
 }
 
-bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootCrateContent content, TFClassType class)
+bool LootTable_GetRandomLoot(LootTable buffer, int client, LootCrateContent content, TFClassType class)
 {
 	LootType type = content.type;
 	int tier = content.tier;
@@ -183,54 +183,60 @@ bool LootTable_GetRandomLoot(LootTable lootTable, int client, LootCrateContent c
 			return false;
 	}
 	
+	ArrayList loots;
+	
 	if (tier == -1)
 	{
-		list.GetArray(GetRandomInt(0, list.Length - 1), lootTable, sizeof(lootTable));
+		loots = list.Clone();
 	}
 	else
 	{
 		//Collect all loot with the specified tier
-		ArrayList loot = new ArrayList(sizeof(LootTable));
+		loots = new ArrayList(sizeof(LootTable));
 		
 		LootTable temp;
 		for (int i = 0; i < list.Length; i++)
 		{
 			list.GetArray(i, temp, sizeof(temp));
 			if (temp.tier == tier)
-				loot.PushArray(temp, sizeof(temp));
-		}
-		
-		//Check if this loot table has loot of that type and tier, reroll otherwise
-		if (loot.Length > 0)
-		{
-			loot.GetArray(GetRandomInt(0, loot.Length - 1), lootTable, sizeof(lootTable));
-			delete loot;
-		}
-		else
-		{
-			delete loot;
-			return false;
+				loots.PushArray(temp, sizeof(temp));
 		}
 	}
 	
-	//Conditional callback to determine if this loot should spawn
-	if (!content.forceSpawn && lootTable.callback_shouldcreate != INVALID_FUNCTION)
+	int length = loots.Length;
+	for (int i = length - 1; i >= 0; i--)
 	{
-		Call_StartFunction(null, lootTable.callback_shouldcreate);
-		Call_PushCell(client);
-		Call_PushCell(lootTable.callbackParams);
+		LootTable lootTable;
+		loots.GetArray(i, lootTable, sizeof(lootTable));
 		
-		bool result;
-		if (Call_Finish(result) == SP_ERROR_NONE)
+		//Conditional callback to determine if this loot should spawn
+		if (lootTable.callback_shouldcreate != INVALID_FUNCTION)
 		{
-			return result;
-		}
-		else
-		{
-			LogError("Unable to call shouldcreate callback for type '%d' and tier '%d'", type, tier);
-			return false;
+			Call_StartFunction(null, lootTable.callback_shouldcreate);
+			Call_PushCell(client);
+			Call_PushCell(lootTable.callbackParams);
+			
+			bool result;
+			if (Call_Finish(result) != SP_ERROR_NONE)
+			{
+				LogError("Unable to call shouldcreate callback for type '%d' and tier '%d'", type, tier);
+				loots.Erase(i);
+			}
+			else if (!result)
+			{
+				loots.Erase(i);
+			}
 		}
 	}
 	
+	length = loots.Length;
+	if (length == 0)
+	{
+		delete loots;
+		return false;
+	}
+	
+	loots.GetArray(GetRandomInt(0, length - 1), buffer, sizeof(buffer));
+	delete loots;
 	return true;
 }

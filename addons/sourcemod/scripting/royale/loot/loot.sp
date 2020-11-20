@@ -194,14 +194,53 @@ public void Loot_BreakCrate(int entity, int crate, LootCrate loot)
 	if (0 < client <= MaxClients && IsClientInGame(client))
 		class = TF2_GetPlayerClass(client);
 	
-	//Search the contents table of this crate while rolling for percentage chance
 	LootTable lootTable;
-	LootCrateContent content;
+	bool found;
+	
 	do
 	{
-		loot.GetRandomLootCrateContent(content);
+		//Search the contents table of this crate while rolling for percentage chance
+		ArrayList listContent = loot.GetListOfLootCrateContent();
+		int length = listContent.Length;
+		if (length == 0)
+		{
+			delete listContent;
+			LogError("Unable to find any contents from LootCrate '%s' (Make sure there atleast one content with 100%% chance!)", loot.name);
+			return;
+		}
+		
+		for (int i = 0; i < length; i++)
+		{
+			LootCrateContent content;
+			listContent.GetArray(i, content);
+			if (LootTable_GetRandomLoot(lootTable, client, content, class))
+			{
+				found = true;
+				break;
+			}
+		}
+		
+		delete listContent;
+		
+		if (!found)
+		{
+			//Cant find any loots due to callback_shouldcreate, use fallback
+			if (loot.fallback[0])
+			{
+				if (!LootConfig_GetByName(loot.fallback, loot))
+				{
+					LogError("Unable to find fallback name '%s' from LootCrate '%s'", loot.fallback, loot.name);
+					return;
+				}
+			}
+			else
+			{
+				LogError("Unable to find any items to spawn from LootCrate '%s' (Add a fallback!)", loot.name);
+				return;
+			}
+		}
 	}
-	while (GetRandomFloat() > content.percentage || !LootTable_GetRandomLoot(lootTable, client, content, class));
+	while (!found);
 	
 	float origin[3];
 	WorldSpaceCenter(crate, origin);
