@@ -523,7 +523,8 @@ stock bool TF2_TryToPickupDroppedWeapon(int client)
 	if (fr_classfilter.BoolValue)
 	{
 		//Only allow pickup weapon if class can normally use
-		slot = TF2_GetItemSlot(defindex, TF2_GetPlayerClass(client));
+		class = TF2_GetPlayerClass(client);
+		slot = TF2_GetItemSlot(defindex, class);
 		if (slot < WeaponSlot_Primary)
 			return false;
 	}
