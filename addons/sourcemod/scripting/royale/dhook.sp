@@ -62,6 +62,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CWeaponMedigun::StopHealingOwner", DHook_StopHealingOwnerPre, _);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
+	DHook_CreateDetour(gamedata, "CTFPlayerMove::SetupMove", DHook_SetupMovePre, _);
 	
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CBasePlayer::ForceRespawn");
@@ -525,6 +526,24 @@ public MRESReturn DHook_StartLagCompensationPost(Address manager, DHookParam par
 {
 	int client = param.Get(1);
 	FRPlayer(client).ChangeToTeam();
+}
+
+public MRESReturn DHook_SetupMovePre(DHookParam param)
+{
+	int client = param.Get(1);
+	
+	if (IsClientInGame(client))
+	{
+		int vehicle = GetEntPropEnt(client, Prop_Send, "m_hVehicle");
+		if (vehicle != INVALID_ENT_REFERENCE)
+		{
+			int ucmd = param.Get(2);
+			int helper = param.Get(3);
+			int move = param.Get(4);
+			
+			SDKCall_VehicleSetupMove(vehicle, client, ucmd, helper, move);
+		}
+	}
 }
 
 public MRESReturn DHook_GetMaxHealthPre(int client)

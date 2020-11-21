@@ -278,6 +278,9 @@ static ArrayList g_VehiclesEntity;
 void Vehicles_Init()
 {
 	g_VehiclesEntity = new ArrayList(sizeof(Vehicle));
+	
+	//TODO: Remove me
+	RegConsoleCmd("createvehicle", ConCmd_CreateVehicle);
 }
 
 int Vehicles_CreateEntity(Vehicle vehicle)
@@ -792,4 +795,33 @@ void Vehicles_SetByEntity(Vehicle vehicle)
 		return;
 	
 	g_VehiclesEntity.SetArray(pos, vehicle);
+}
+
+public Action ConCmd_CreateVehicle(int client, int args)
+{
+	int vehicle = CreateEntityByName("prop_vehicle_driveable");
+	if (vehicle != -1)
+	{
+		DispatchKeyValue(vehicle, "model", "models/source_vehicles/camper.mdl");
+		DispatchKeyValue(vehicle, "vehiclescript", "scripts/vehicles/tf2_camper.txt");
+		
+		if (DispatchSpawn(vehicle))
+		{
+			float pos[3];
+			GetClientAbsOrigin(client, pos);
+			
+			TeleportEntity(vehicle, pos, NULL_VECTOR, NULL_VECTOR);
+			
+			SDKHook(vehicle, SDKHook_Think, VehicleThink);
+			AcceptEntityInput(vehicle, "TurnOn");
+		}
+	}
+	
+	return Plugin_Handled;
+}
+
+public void VehicleThink(int vehicle)
+{
+	SetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn", false);
+	SetEntProp(vehicle, Prop_Data, "m_bExitAnimOn", false);
 }
