@@ -537,9 +537,9 @@ public MRESReturn DHook_SetupMovePre(DHookParam param)
 		int vehicle = GetEntPropEnt(client, Prop_Send, "m_hVehicle");
 		if (vehicle != INVALID_ENT_REFERENCE)
 		{
-			int ucmd = param.Get(2);
-			int helper = param.Get(3);
-			int move = param.Get(4);
+			Address ucmd = param.Get(2);
+			Address helper = param.Get(3);
+			Address move = param.Get(4);
 			
 			SDKCall_VehicleSetupMove(vehicle, client, ucmd, helper, move);
 		}

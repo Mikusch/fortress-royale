@@ -381,7 +381,7 @@ static Handle PrepSDKCall_GetVelocity(GameData gamedata)
 static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::SetupMove");
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CPropVehicleDriveable::SetupMove");
 	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
@@ -389,7 +389,7 @@ static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
-		LogMessage("Failed to create SDKCall: CBaseServerVehicle::SetupMove");
+		LogMessage("Failed to create SDKCall: CPropVehicleDriveable::SetupMove");
 	
 	return call;
 }
@@ -541,7 +541,7 @@ void SDKCall_GetVelocity(int entity, float velocity[3], float angVelocity[3])
 	SDKCall(g_SDKCallGetVelocity, phyObj, velocity, angVelocity);
 }
 
-void SDKCall_VehicleSetupMove(int vehicle, int client, int ucmd, int helper, int move)
+void SDKCall_VehicleSetupMove(int vehicle, int client, Address ucmd, Address helper, Address move)
 {
 	SDKCall(g_SDKCallVehicleSetupMove, vehicle, client, ucmd, helper, move);
 }
