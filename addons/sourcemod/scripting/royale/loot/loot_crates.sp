@@ -113,6 +113,7 @@ enum struct LootCrate
 			list.PushArray(content);
 		}
 		
+		list.Sort(Sort_Random, Sort_Integer);
 		return list;
 	}
 }
