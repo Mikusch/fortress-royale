@@ -30,15 +30,15 @@ void ConVar_Init()
 	fr_enable.AddChangeHook(ConVar_EnableChanged);
 	
 	//tag mismatch haha
-	fr_health[1] = CreateConVar("fr_health_scout", "200", "Max health for Scout", _, true, 1.0);
-	fr_health[2] = CreateConVar("fr_health_sniper", "300", "Max health for Sniper", _, true, 1.0);
+	fr_health[1] = CreateConVar("fr_health_scout", "250", "Max health for Scout", _, true, 1.0);
+	fr_health[2] = CreateConVar("fr_health_sniper", "250", "Max health for Sniper", _, true, 1.0);
 	fr_health[3] = CreateConVar("fr_health_soldier", "400", "Max health for Soldier", _, true, 1.0);
 	fr_health[4] = CreateConVar("fr_health_demoman", "350", "Max health for Demoman", _, true, 1.0);
-	fr_health[5] = CreateConVar("fr_health_medic", "250", "Max health for Medic", _, true, 1.0);
-	fr_health[6] = CreateConVar("fr_health_heavy", "450", "Max health for Heavy", _, true, 1.0);
+	fr_health[5] = CreateConVar("fr_health_medic", "300", "Max health for Medic", _, true, 1.0);
+	fr_health[6] = CreateConVar("fr_health_heavy", "600", "Max health for Heavy", _, true, 1.0);
 	fr_health[7] = CreateConVar("fr_health_pyro", "350", "Max health for Pyro", _, true, 1.0);
-	fr_health[8] = CreateConVar("fr_health_spy", "300", "Max health for Spy", _, true, 1.0);
-	fr_health[9] = CreateConVar("fr_health_engineer", "300", "Max health for Engineer", _, true, 1.0);
+	fr_health[8] = CreateConVar("fr_health_spy", "250", "Max health for Spy", _, true, 1.0);
+	fr_health[9] = CreateConVar("fr_health_engineer", "250", "Max health for Engineer", _, true, 1.0);
 	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
