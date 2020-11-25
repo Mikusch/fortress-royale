@@ -361,6 +361,13 @@ public bool Trace_OnlyHitDroppedWeapon(int entity, int mask)
 	return StrEqual(classname, "tf_dropped_weapon");
 }
 
+stock void TF2_ChangeClientTeamSilent(int client, TFTeam team)
+{
+	g_ChangeTeamSilent = true;
+	TF2_ChangeClientTeam(client, team);
+	g_ChangeTeamSilent = false;
+}
+
 stock void TF2_ChangeTeam(int entity, TFTeam team)
 {
 	SetEntProp(entity, Prop_Send, "m_iTeamNum", view_as<int>(team));

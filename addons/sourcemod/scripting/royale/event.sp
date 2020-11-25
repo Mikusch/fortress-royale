@@ -36,6 +36,7 @@ void Event_Init()
 	Event_Add("teamplay_round_start", Event_RoundStart);
 	Event_Add("teamplay_setup_finished", Event_SetupFinished);
 	Event_Add("teamplay_broadcast_audio", Event_BroadcastAudio, EventHookMode_Pre);
+	Event_Add("player_team", Event_PlayerTeam, EventHookMode_Pre);
 	Event_Add("player_spawn", Event_PlayerSpawn);
 	Event_Add("fish_notice", Event_FishNotice, EventHookMode_Pre);
 	Event_Add("fish_notice__arm", Event_FishNotice, EventHookMode_Pre);
@@ -114,11 +115,11 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 			if (IsPlayerAlive(client))
 			{
 				SetEntProp(client, Prop_Send, "m_lifeState", LIFE_DEAD);
-				TF2_ChangeClientTeam(client, TFTeam_Spectator);	// Just to make client actually dead
+				TF2_ChangeClientTeamSilent(client, TFTeam_Spectator);	// Just to make client actually dead
 			}
 			
 			//Move all non-spectators to dead team
-			TF2_ChangeClientTeam(client, TFTeam_Dead);
+			TF2_ChangeClientTeamSilent(client, TFTeam_Dead);
 		}
 	}
 	
@@ -150,6 +151,12 @@ public Action Event_BroadcastAudio(Event event, const char[] name, bool dontBroa
 	}
 	
 	return Plugin_Continue;
+}
+
+public Action Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
+{
+	if (g_ChangeTeamSilent)
+		event.BroadcastDisabled = true;
 }
 
 public Action Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
@@ -358,5 +365,5 @@ public Action Timer_SetClientDead(Handle timer, int serial)
 {
 	int client = GetClientFromSerial(serial);
 	if (0 < client <=  MaxClients && IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator && FRPlayer(client).PlayerState == PlayerState_Dead)
-		TF2_ChangeClientTeam(client, TFTeam_Dead);
+		TF2_ChangeClientTeamSilent(client, TFTeam_Dead);
 }
