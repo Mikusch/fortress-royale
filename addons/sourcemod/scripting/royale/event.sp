@@ -309,11 +309,11 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		}
 	}
 	
-	//Drop small health kit
-	TF2_DropItem(victim, "item_healthkit_small");
-	
 	if (!deadringer)
 	{
+		//Drop small health kit
+		TF2_DropItem(victim, "item_healthkit_small");
+		
 		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
