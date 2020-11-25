@@ -234,7 +234,16 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));
-	bool deadringer = !!(event.GetInt("death_flags") & TF_DEATHFLAG_DEADRINGER);
+	int deathflags = event.GetInt("death_flags");
+	bool silentkill = event.GetBool("silent_kill");
+	
+	//Remove silent kill stuff
+	bool deadringer = !!(deathflags & TF_DEATHFLAG_DEADRINGER);
+	if (deadringer)
+		event.SetInt("death_flags", deathflags &= ~TF_DEATHFLAG_DEADRINGER);
+	
+	if (silentkill)
+		event.SetBool("silent_kill", false);
 	
 	if (attacker != victim && event.GetInt("weapon_def_index") == INDEX_FISTS && attacker == event.GetInt("inflictor_entindex"))
 	{
@@ -267,28 +276,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 			event.SetInt("kill_streak_total", FRPlayer(attacker).Killstreak + 1);
 			event.SetInt("kill_streak_wep", FRPlayer(attacker).Killstreak + 1);
 		}
-		
-		event.BroadcastDisabled = true;
-		
-		//Create event for some clients to only show victim
-		Event unknown = CreateEvent("player_death", true);
-		unknown.SetInt("userid", GetClientUserId(victim));
-		unknown.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
-		unknown.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
-		unknown.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
-		
-		for (int client = 1; client <= MaxClients; client++)
-		{
-			if (IsClientInGame(client))
-			{
-				if (client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
-					event.FireToClient(client);		//Allow see full killfeed
-				else
-					unknown.FireToClient(client);	//Only show who victim died
-			}
-		}
-		
-		unknown.Cancel();
 	}
 	else
 	{
@@ -296,6 +283,34 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		event.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
 		event.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
 	}
+	
+	//Override events so we can display to whoever clients
+	event.BroadcastDisabled = true;
+	
+	Event unknown = CreateEvent("player_death", true);
+	unknown.SetInt("userid", GetClientUserId(victim));
+	unknown.SetInt("kill_streak_victim", FRPlayer(victim).Killstreak);
+	unknown.SetInt("kill_streak_total", FRPlayer(victim).Killstreak);
+	unknown.SetInt("kill_streak_wep", FRPlayer(victim).Killstreak);
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+		{
+			if (attacker <= 0 || client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
+			{
+				//If deadringer, dont show any killfeed to victim and dead players
+				if (!deadringer || (client != victim && IsPlayerAlive(client)))
+					event.FireToClient(client);		//Allow see full killfeed
+			}
+			else if (!silentkill)
+			{
+				unknown.FireToClient(client);	//Only show who victim died
+			}
+		}
+	}
+	
+	unknown.Cancel();
 	
 	//Drop all weapons
 	int weapon, pos;
