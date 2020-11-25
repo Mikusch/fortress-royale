@@ -777,12 +777,15 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (!g_Enabled)
 		return;
 	
-	if (condition == TFCond_Parachute)
-		PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
-	
-	//Don't give uber on spawn from Mannpower
-	if (condition == TFCond_UberchargedCanteen && FRPlayer(client).PlayerState == PlayerState_Parachute)
-		TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
+	if (FRPlayer(client).PlayerState == PlayerState_Parachute)
+	{
+		if (condition == TFCond_Parachute)
+			PrintHintText(client, "%t", "BattleBus_ParachuteDeployed");
+		
+		//Don't give uber on spawn from Mannpower
+		if (condition == TFCond_UberchargedCanteen)
+			TF2_RemoveCondition(client, TFCond_UberchargedCanteen);
+	}
 	
 	for (int i = 0; i < sizeof(g_VsibleConds); i++)
 		if (condition == g_VsibleConds[i])
