@@ -121,10 +121,15 @@
 		}
 		"Offsets"
 		{
-			"CPropVehicleDriveable::SetupMove"
+			"CBaseServerVehicle::SetupMove"
 			{
-				"linux"		"232"
-//				"windows"	""
+				"linux"		"4"
+				"windows"	"4"
+			}
+			"CBaseServerVehicle::HandlePassengerExit"
+			{
+				"linux"		"18"
+				"windows"	"18"
 			}
 			"CBaseEntity::ChangeTeam"
 			{

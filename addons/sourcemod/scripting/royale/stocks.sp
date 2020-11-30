@@ -329,6 +329,21 @@ stock bool MoveEntityToClientEye(int entity, int client, int mask = MASK_PLAYERS
 	return true;
 }
 
+stock Address GetServerVehicle(int vehicle)
+{
+	static int offset = -1;
+	if (offset == -1)
+		FindDataMapInfo(vehicle, "m_pServerVehicle", _, _, offset);
+	
+	if (offset == -1)
+	{
+		LogError("Unable to find offset 'm_pServerVehicle'");
+		return Address_Null;
+	}
+	
+	return view_as<Address>(LoadFromAddress(GetEntityAddress(vehicle) + view_as<Address>(offset), NumberType_Int32));
+}
+
 stock void DropSingleInstance(int entity, int owner, float[3] launchVel = NULL_VECTOR)
 {
 	SetEntProp(entity, Prop_Data, "m_spawnflags", GetEntProp(entity, Prop_Data, "m_spawnflags") | SF_NORESPAWN);

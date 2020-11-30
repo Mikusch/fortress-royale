@@ -38,6 +38,7 @@ static Handle g_SDKCallRemovePlayer;
 static Handle g_SDKCallSetVelocity;
 static Handle g_SDKCallGetVelocity;
 static Handle g_SDKCallVehicleSetupMove;
+static Handle g_SDKCallHandlePassengerExit;
 
 void SDKCall_Init(GameData gamedata)
 {
@@ -64,6 +65,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
 	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
 	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
+	g_SDKCallHandlePassengerExit = PrepSDKCall_HandlePassengerExit(gamedata);
 }
 
 static Handle PrepSDKCall_GetNextThink(GameData gamedata)
@@ -90,11 +92,11 @@ static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
-
+	
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
-
+	
 	return call;
 }
 
@@ -380,8 +382,8 @@ static Handle PrepSDKCall_GetVelocity(GameData gamedata)
 
 static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 {
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CPropVehicleDriveable::SetupMove");
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::SetupMove");
 	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
@@ -389,7 +391,21 @@ static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
-		LogMessage("Failed to create SDKCall: CPropVehicleDriveable::SetupMove");
+		LogMessage("Failed to create SDKCall: CBaseServerVehicle::SetupMove");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_HandlePassengerExit(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::HandlePassengerExit");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogMessage("Failed to create SDKCall: CBaseServerVehicle::HandlePassengerExit");
 	
 	return call;
 }
@@ -541,7 +557,18 @@ void SDKCall_GetVelocity(int entity, float velocity[3], float angVelocity[3])
 	SDKCall(g_SDKCallGetVelocity, phyObj, velocity, angVelocity);
 }
 
+bool SDKCall_HandlePassengerExit(int vehicle, int client)
+{
+	Address serverVehicle = GetServerVehicle(vehicle);
+	if (serverVehicle != Address_Null)
+		return SDKCall(g_SDKCallHandlePassengerExit, serverVehicle, client);
+	
+	return false;
+}
+
 void SDKCall_VehicleSetupMove(int vehicle, int client, Address ucmd, Address helper, Address move)
 {
-	SDKCall(g_SDKCallVehicleSetupMove, vehicle, client, ucmd, helper, move);
+	Address serverVehicle = GetServerVehicle(vehicle);
+	if (serverVehicle != Address_Null)
+		SDKCall(g_SDKCallVehicleSetupMove, serverVehicle, client, ucmd, helper, move);
 }
