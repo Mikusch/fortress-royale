@@ -693,9 +693,16 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		else
 			buttons = 0;	//Don't allow client in battle bus process any other buttons
 	}
-	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
+	else if (buttons & IN_ATTACK || buttons & IN_ATTACK2)
 	{
 		TF2_TryToPickupDroppedWeapon(client);
+	}
+	
+	if (buttons & IN_ATTACK)	//TODO: Temporary +attack bind, change to +use and prevent it from instantly exiting vehicle on enter
+	{
+		int vehicle = GetEntPropEnt(client, Prop_Send, "m_hVehicle");
+		if (vehicle != INVALID_ENT_REFERENCE)
+			SDKCall_HandlePassengerExit(vehicle, client);
 	}
 }
 
