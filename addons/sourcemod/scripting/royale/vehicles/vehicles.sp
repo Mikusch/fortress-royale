@@ -392,6 +392,15 @@ void Vehicles_OnEntityDestroyed(int entity)
 		
 		Vehicles_RemoveByEntity(ref);
 	}
+	
+	char classname[256];
+	GetEntityClassname(entity, classname, sizeof(classname));
+	if (StrEqual(classname, "prop_vehicle_driveable"))
+	{
+		int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
+		if (0 < client <= MaxClients)
+			SDKCall_HandlePassengerExit(entity, client);
+	}
 }
 
 void Vehicles_EnterVehicle(int entity, int toucher)
