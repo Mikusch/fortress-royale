@@ -281,6 +281,10 @@ void Vehicles_Init()
 	
 	//TODO: Remove me
 	RegConsoleCmd("createvehicle", ConCmd_CreateVehicle);
+	
+	//Load common vehicle sounds
+	if (g_LoadSoundscript)
+		LoadSoundScript("scripts/game_sounds_vehicles.txt");
 }
 
 int Vehicles_CreateEntity(Vehicle vehicle)
