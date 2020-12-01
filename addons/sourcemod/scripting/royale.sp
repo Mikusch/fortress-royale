@@ -24,6 +24,7 @@
 
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
+#tryinclude <loadsoundscript>
 #define REQUIRE_EXTENSIONS
 
 #pragma semicolon 1
@@ -428,6 +429,7 @@ TFCond g_RuneConds[] = {
 
 bool g_Enabled;
 bool g_TF2Items;
+bool g_LoadSoundscript;
 bool g_WeaponSwitch;
 bool g_ChangeTeamSilent;
 FRRoundState g_RoundState;
@@ -503,6 +505,7 @@ public void OnPluginStart()
 	LoadTranslations("royale.phrases");
 	
 	g_TF2Items = LibraryExists("TF2Items");
+	g_LoadSoundscript = LibraryExists("LoadSoundscript");
 	
 	g_PrecacheWeapon = new StringMap();
 	
@@ -537,6 +540,11 @@ public void OnPluginStart()
 		if (IsClientInGame(client))
 			OnClientPutInServer(client);
 	}
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	MarkNativeAsOptional("LoadSoundScript");
 }
 
 void Enable()
@@ -642,6 +650,10 @@ public void OnLibraryAdded(const char[] name)
 		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
 		if (DHook_IsGiveNamedItemActive())
 			SetFailState("Do not load TF2Items midgame while Royale is already loaded!");
+	} 
+	else if (StrEqual(name, "LoadSoundscript"))
+	{
+		g_LoadSoundscript = true;
 	}
 }
 
@@ -656,6 +668,10 @@ public void OnLibraryRemoved(const char[] name)
 			for (int iClient = 1; iClient <= MaxClients; iClient++)
 				if (IsClientInGame(iClient))
 					DHook_HookGiveNamedItem(iClient);
+	}
+	else if (StrEqual(name, "LoadSoundscript"))
+	{
+		g_LoadSoundscript = false;
 	}
 }
 
