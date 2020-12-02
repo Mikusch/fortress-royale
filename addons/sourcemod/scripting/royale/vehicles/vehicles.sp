@@ -814,6 +814,8 @@ public Action ConCmd_CreateVehicle(int client, int args)
 			
 			TeleportEntity(vehicle, pos, NULL_VECTOR, NULL_VECTOR);
 			
+			HookSingleEntityOutput(vehicle, "PlayerOn", Vehicle_PlayerOn);
+			
 			SDKHook(vehicle, SDKHook_Think, Vehicles_Think);
 			SDKHook(vehicle, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 		}
@@ -822,16 +824,15 @@ public Action ConCmd_CreateVehicle(int client, int args)
 	return Plugin_Handled;
 }
 
+public Action Vehicle_PlayerOn(const char[] output, int caller, int activator, float delay)
+{
+	AcceptEntityInput(caller, "TurnOn");
+}
+
 public void Vehicles_Think(int vehicle)
 {
 	SetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn", false);
 	SetEntProp(vehicle, Prop_Data, "m_bExitAnimOn", false);
-	
-	//FIXME: We should really be doing something similar to,
-	//CPropJeep::Think which respects entry/exit animations
-	int client = GetEntPropEnt(vehicle, Prop_Send, "m_hPlayer");
-	if (0 < client <= MaxClients)
-		AcceptEntityInput(vehicle, "TurnOn");
 }
 
 public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
