@@ -711,18 +711,6 @@ public void Vehicles_UpdateHUD(Vehicle vehicle)
 	}
 }
 
-public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
-{
-	//Driver receives 1/4 of damage done to vehicle
-	Vehicle vehicle;
-	if (Vehicles_GetByEntity(EntIndexToEntRef(entity), vehicle) && !vehicle.HasClient(attacker))
-	{
-		int client;
-		while (vehicle.GetClients(client))
-			SDKHooks_TakeDamage(client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
-	}
-}
-
 public void Vehicles_StartTouchPost(int entity, int toucher)
 {
 	if (0 < toucher <= MaxClients)
@@ -826,16 +814,30 @@ public Action ConCmd_CreateVehicle(int client, int args)
 			
 			TeleportEntity(vehicle, pos, NULL_VECTOR, NULL_VECTOR);
 			
-			SDKHook(vehicle, SDKHook_Think, VehicleThink);
-			AcceptEntityInput(vehicle, "TurnOn");
+			SDKHook(vehicle, SDKHook_Think, Vehicles_Think);
+			SDKHook(vehicle, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 		}
 	}
 	
 	return Plugin_Handled;
 }
 
-public void VehicleThink(int vehicle)
+public void Vehicles_Think(int vehicle)
 {
 	SetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn", false);
 	SetEntProp(vehicle, Prop_Data, "m_bExitAnimOn", false);
+	
+	//FIXME: We should really be doing something similar to,
+	//CPropJeep::Think which respects entry/exit animations
+	int client = GetEntPropEnt(vehicle, Prop_Send, "m_hPlayer");
+	if (0 < client <= MaxClients)
+		AcceptEntityInput(vehicle, "TurnOn");
+}
+
+public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+{
+	//Driver receives 1/4 of damage done to vehicle
+	int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
+	if (0 < client <= MaxClients)
+		SDKHooks_TakeDamage(client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
 }
