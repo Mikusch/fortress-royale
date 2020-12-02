@@ -817,6 +817,7 @@ public Action ConCmd_CreateVehicle(int client, int args)
 	{
 		DispatchKeyValue(vehicle, "model", "models/source_vehicles/camper.mdl");
 		DispatchKeyValue(vehicle, "vehiclescript", "scripts/vehicles/tf2_camper.txt");
+		DispatchKeyValue(vehicle, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK
 		
 		if (DispatchSpawn(vehicle))
 		{
