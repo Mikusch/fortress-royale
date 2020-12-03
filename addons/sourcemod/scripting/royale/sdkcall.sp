@@ -35,8 +35,6 @@ static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
 static Handle g_SDKCallAddPlayer;
 static Handle g_SDKCallRemovePlayer;
-static Handle g_SDKCallSetVelocity;
-static Handle g_SDKCallGetVelocity;
 static Handle g_SDKCallVehicleSetupMove;
 static Handle g_SDKCallHandlePassengerExit;
 
@@ -62,8 +60,6 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
 	g_SDKCallAddPlayer = PrepSDKCall_AddPlayer(gamedata);
 	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
-	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
-	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
 	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
 	g_SDKCallHandlePassengerExit = PrepSDKCall_HandlePassengerExit(gamedata);
 }
@@ -352,34 +348,6 @@ static Handle PrepSDKCall_RemovePlayer(GameData gamedata)
 	return call;
 }
 
-static Handle PrepSDKCall_SetVelocity(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "IPhysicsObject::SetVelocity");
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogMessage("Failed to create SDKCall: IPhysicsObject::SetVelocity");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_GetVelocity(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "IPhysicsObject::GetVelocity");
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogMessage("Failed to create SDKCall: IPhysicsObject::GetVelocity");
-	
-	return call;
-}
-
 static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Raw);
@@ -511,50 +479,6 @@ void SDKCall_AddPlayer(Address team, int client)
 void SDKCall_RemovePlayer(Address team, int client)
 {
 	SDKCall(g_SDKCallRemovePlayer, team, client);
-}
-
-void SDKCall_SetVelocity(int entity, const float velocity[3], const float angVelocity[3])
-{
-	static int offset = -1;
-	if (offset == -1)
-		FindDataMapInfo(entity, "m_pPhysicsObject", _, _, offset);
-	
-	if (offset == -1)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	Address phyObj = view_as<Address>(GetEntData(entity, offset));
-	if (!phyObj)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	SDKCall(g_SDKCallSetVelocity, phyObj, velocity, angVelocity);
-}
-
-void SDKCall_GetVelocity(int entity, float velocity[3], float angVelocity[3])
-{
-	static int offset = -1;
-	if (offset == -1)
-		FindDataMapInfo(entity, "m_pPhysicsObject", _, _, offset);
-	
-	if (offset == -1)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	Address phyObj = view_as<Address>(LoadFromAddress(GetEntityAddress(entity) + view_as<Address>(offset), NumberType_Int32));
-	if (!phyObj)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	SDKCall(g_SDKCallGetVelocity, phyObj, velocity, angVelocity);
 }
 
 bool SDKCall_HandlePassengerExit(int vehicle, int client)

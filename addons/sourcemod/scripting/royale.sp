@@ -579,8 +579,6 @@ void Disable()
 			DHook_UnhookClient(client);
 			DHook_UnhookGiveNamedItem(client);
 			SDKHook_UnhookClient(client);
-			
-			Vehicles_ExitVehicle(client);
 		}
 	}
 	
@@ -689,14 +687,6 @@ public void OnClientPutInServer(int client)
 	FRPlayer(client).VisibleCond = 0;
 }
 
-public void OnClientDisconnect(int client)
-{
-	if (!g_Enabled)
-		return;
-	
-	Vehicles_ExitVehicle(client);
-}
-
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!g_Enabled)
@@ -754,8 +744,6 @@ public void OnGameFrame()
 {
 	if (!g_Enabled)
 		return;
-	
-	Vehicles_OnGameFrame();
 	
 	switch (g_RoundState)
 	{
@@ -899,8 +887,10 @@ public Action EntOutput_SetupFinished(const char[] output, int caller, int activ
 	
 	g_PlayerCount = GetAlivePlayersCount();
 	
-	Zone_SetupFinished();
+	
 	Loot_SetupFinished();
+	Vehicles_SetupFinished();
+	Zone_SetupFinished();
 }
 
 void TryToEndRound()

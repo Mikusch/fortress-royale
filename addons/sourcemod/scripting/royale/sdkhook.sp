@@ -87,9 +87,9 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
 	}
-	else if (StrContains(classname, "prop_physics") == 0)
+	else if (StrContains(classname, "prop_vehicle") == 0)
 	{
-		SDKHook(entity, SDKHook_Spawn, PropPhysics_Spawn);
+		SDKHook(entity, SDKHook_Spawn, PropVehicle_Spawn);
 	}
 	else if (StrContains(classname, "prop_dynamic") == 0)
 	{
@@ -205,36 +205,6 @@ public void Client_PostThink(int client)
 		SDKCall_FindAndHealTargets(medigun);
 		GameRules_SetProp("m_bPowerupMode", false);
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
-	}
-	
-	if (IsPlayerAlive(client))
-	{
-		static int hintTextMode[TF_MAXPLAYERS+1];
-		
-		if (Vehicles_IsClientInVehicle(client))
-		{
-			if (hintTextMode[client] != 2)
-			{
-				ShowKeyHintText(client, "%t", "Vehicle_HowToExit");
-				hintTextMode[client] = 2;
-			}
-		}
-		else
-		{
-			int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
-			if (entity != -1 && Vehicles_IsVehicle(EntIndexToEntRef(entity)))
-			{
-				if (hintTextMode[client] != 1)
-				{
-					ShowKeyHintText(client, "%t", "Vehicle_HowToEnter");
-					hintTextMode[client] = 1;
-				}
-			}
-			else
-			{
-				hintTextMode[client] = 0;
-			}
-		}
 	}
 	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
@@ -441,9 +411,9 @@ public void Projectile_TouchPost(int entity, int other)
 	}
 }
 
-public Action PropPhysics_Spawn(int prop)
+public Action PropVehicle_Spawn(int vehicle)
 {
-	Vehicles_OnEntitySpawned(prop);
+	Vehicles_UpdateEntity(vehicle);
 }
 
 public void PropDynamic_SpawnPost(int prop)
