@@ -105,7 +105,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 				switch (itemType)
 				{
 					case EditorItem_Crate: LootConfig_DeleteCrateByEntity(entity);
-					case EditorItem_Vehicle: VehiclesConfig_DeleteByEntity(entity);
+					//case EditorItem_Vehicle: VehiclesConfig_DeleteByEntity(entity);
 				}
 				
 				RemoveEntity(entity);
@@ -143,14 +143,14 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 					case EditorItem_Vehicle:
 					{
 						Vehicle vehicle;
-						Vehicles_GetByEntity(ghost, vehicle);
+						//Vehicles_GetByEntity(ghost, vehicle);
 						VectorToString(origin, vehicle.origin, sizeof(vehicle.origin));
 						VectorToString(angles, vehicle.angles, sizeof(vehicle.angles));
 						
-						entity = Vehicles_CreateEntity(vehicle);
+						//entity = Vehicles_CreateEntity(vehicle);
 						
-						vehicle.entity = entity;
-						VehiclesConfig_AddVehicle(vehicle);
+						//vehicle.entity = entity;
+						//VehiclesConfig_AddVehicle(vehicle);
 					}
 				}
 				
@@ -306,16 +306,16 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 			if (!prefab[0] || StrEqual(prefab, "__default__"))
 				VehiclesConfig_GetDefault(vehicle);
 			else
-				VehiclesConfig_GetByTargetname(prefab, vehicle);
+				VehiclesConfig_GetPrefabByTargetname(prefab, vehicle);
 			
 			//Create new vehicle
-			ghost = Vehicles_CreateEntity(vehicle);
+			//ghost = Vehicles_CreateEntity(vehicle);
 		}
 	}
 	
-	SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
-	SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
-	SetEntityRenderColor(ghost, 255, 255, 255, 127);
+	//SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
+	//SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
+	//SetEntityRenderColor(ghost, 255, 255, 255, 127);
 	
 	return ghost;
 }
@@ -371,8 +371,8 @@ EditorItem Editor_GetItemType(int entity)
 {
 	if (Loot_IsCrate(entity))
 		return EditorItem_Crate;
-	else if (Vehicles_IsVehicle(entity))
-		return EditorItem_Vehicle;
+	//else if (Vehicles_IsVehicle(entity))
+		//return EditorItem_Vehicle;
 	else
 		return EditorItem_None;
 }
@@ -391,7 +391,7 @@ void Editor_GetItemPrefab(int entity, char[] name, int length)
 		case EditorItem_Vehicle:
 		{
 			Vehicle vehicle;
-			Vehicles_GetByEntity(entity, vehicle);
+			//VehiclesConfig_GetVehicleByEntity(entity, vehicle);
 			strcopy(name, length, vehicle.targetname);
 		}
 	}

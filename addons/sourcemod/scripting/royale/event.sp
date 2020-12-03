@@ -125,7 +125,6 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	
 	Zone_RoundStart();	//Reset zone pos
 	BattleBus_NewPos();	//Calculate pos from zone's restarted pos
-	Vehicles_RoundStart();
 }
 
 public Action Event_SetupFinished(Event event, const char[] name, bool dontBroadcast)
@@ -336,7 +335,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		//Drop small health kit
 		TF2_DropItem(victim, "item_healthkit_small");
 		
-		Vehicles_ExitVehicle(victim);
 		FRPlayer(victim).PlayerState = PlayerState_Dead;
 		CreateTimer(0.5, Timer_SetClientDead, GetClientSerial(victim));
 	}

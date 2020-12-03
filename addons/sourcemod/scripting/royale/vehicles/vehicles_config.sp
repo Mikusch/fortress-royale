@@ -29,14 +29,12 @@ void VehiclesConfig_Clear()
 {
 	Vehicle nothing;
 	g_VehiclesDefault = nothing;
-	g_VehiclesDefault.entity = INVALID_ENT_REFERENCE;
 	
 	int length = g_VehiclesPrefabs.Length;
 	for (int i = 0; i < length; i++)
 	{
 		Vehicle vehicle;
 		g_VehiclesPrefabs.GetArray(i, vehicle);
-		vehicle.Delete();
 	}
 	
 	g_VehiclesPrefabs.Clear();
@@ -46,7 +44,6 @@ void VehiclesConfig_Clear()
 	{
 		Vehicle vehicle;
 		g_VehiclesConfig.GetArray(i, vehicle);
-		vehicle.Delete();
 	}
 	
 	g_VehiclesConfig.Clear();
@@ -62,7 +59,7 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 	
 	if (kv.JumpToKey("VehiclePrefabs", false))
 	{
-		//Read through every Vehicles
+		//Read through every VehiclePrefab
 		if (kv.GotoFirstSubKey(false))
 		{
 			do
@@ -80,7 +77,7 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 	
 	if (kv.JumpToKey("Vehicles", false))
 	{
-		//Read through every Vehicles
+		//Read through every Vehicle
 		if (kv.GotoFirstSubKey(false))
 		{
 			do
@@ -89,7 +86,7 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 				
 				//Attempt use prefab, otherwise use default
 				kv.GetString("targetname", vehicle.targetname, sizeof(vehicle.targetname));
-				if (!VehiclesConfig_GetByTargetname(vehicle.targetname, vehicle))
+				if (!VehiclesConfig_GetPrefabByTargetname(vehicle.targetname, vehicle))
 					vehicle = g_VehiclesDefault;
 				
 				vehicle.ReadConfig(kv);
@@ -126,7 +123,7 @@ bool VehiclesConfig_GetPrefab(int pos, Vehicle buffer)
 	return true;
 }
 
-bool VehiclesConfig_GetByTargetname(const char[] name, Vehicle buffer)
+bool VehiclesConfig_GetPrefabByTargetname(const char[] name, Vehicle buffer)
 {
 	int length = g_VehiclesPrefabs.Length;
 	for (int i = 0; i < length; i++)
@@ -151,23 +148,6 @@ bool VehiclesConfig_GetVehicle(int pos, Vehicle vehicle)
 	
 	g_VehiclesConfig.GetArray(pos, vehicle);
 	return true;
-}
-
-void VehiclesConfig_SetVehicle(int pos, Vehicle vehicle)
-{
-	g_VehiclesConfig.SetArray(pos, vehicle);
-}
-
-void VehiclesConfig_AddVehicle(Vehicle vehicle)
-{
-	g_VehiclesConfig.PushArray(vehicle);
-}
-
-void VehiclesConfig_DeleteByEntity(int entity)
-{
-	int pos = g_VehiclesConfig.FindValue(entity, Vehicle::entity);
-	if (pos >= 0)
-		g_VehiclesConfig.Erase(pos);
 }
 
 void VehiclesConfig_GetDefault(Vehicle vehicle)
