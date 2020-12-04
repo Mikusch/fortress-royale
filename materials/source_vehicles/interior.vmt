@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"source_vehicles/interior"
+	"$bumpmap"	"source_vehicles/interior_normal"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[.5 .5 .5]"
+	
+	"$phong" "1"
+	"$phongexponenttexture" "source_vehicles/interior_exp"
+	"$phongboost" ".3"	
+	//"$lightwarptexture" "source_vehicles/pickup_lightwarp"
+	"$phongfresnelranges"	"[1 1.5 1]"
+
+	"$ambientocclusion" "1"
+}
