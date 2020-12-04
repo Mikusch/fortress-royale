@@ -707,7 +707,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (FRPlayer(client).InUse)
 	{
 		FRPlayer(client).InUse = false;
-		buttons |= IN_USE;
+		
+		if (!(GetEntProp(client, Prop_Data, "m_nOldButtons") & IN_USE))
+			buttons |= IN_USE;
 	}
 	
 	//FIXME: This is a real band-aid solution, we should find the code where HL2 vehicles ACTUALLY exit and call that instead
