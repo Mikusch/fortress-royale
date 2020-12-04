@@ -27,6 +27,7 @@ static EditorItem g_ClientEditorItem[TF_MAXPLAYERS + 1];
 static int g_ClientEditorItemRef[TF_MAXPLAYERS + 1];
 static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
 static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
+static bool g_ClientInUse[TF_MAXPLAYERS + 1];
 
 static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
 static int g_ClientSpectator[TF_MAXPLAYERS + 1];
@@ -202,6 +203,19 @@ methodmap FRPlayer
 		public set(int val)
 		{
 			g_ClientActiveWeapon[this] = val;
+		}
+	}
+	
+	property bool InUse
+	{
+		public get()
+		{
+			return g_ClientInUse[this];
+		}
+		
+		public set(bool val)
+		{
+			g_ClientInUse[this] = val;
 		}
 	}
 	

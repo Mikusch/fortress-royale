@@ -710,6 +710,12 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		if (vehicle != INVALID_ENT_REFERENCE)
 			SDKCall_HandlePassengerExit(vehicle, client);
 	}
+	
+	if (FRPlayer(client).InUse)
+	{
+		FRPlayer(client).InUse = false;
+		buttons |= IN_USE;
+	}
 }
 
 public Action OnClientCommandKeyValues(int client, KeyValues kv)

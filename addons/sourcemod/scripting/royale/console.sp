@@ -132,7 +132,10 @@ public Action Console_VoiceMenu(int client, const char[] command, int args)
 	
 	if (arg1[0] == '0' && arg2[0] == '0')	//MEDIC!
 	{
-		TF2_TryToPickupDroppedWeapon(client);
+		if (TF2_TryToPickupDroppedWeapon(client))
+			return Plugin_Handled;
+		
+		FRPlayer(client).InUse = true;
 		return Plugin_Handled;
 	}
 	
