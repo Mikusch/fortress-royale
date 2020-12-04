@@ -15,48 +15,60 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-static Vehicle g_VehiclesDefault;
+enum struct VehicleConfig
+{
+	/**< Info for each prefab config */
+	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
+	char targetname[CONFIG_MAXCHAR];/**< Targetname of vehicle */
+	char model[PLATFORM_MAX_PATH];	/**< Vehicle model */
+	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
+	
+	/**< Info for each entity placed by map config */
+	int entity;						/**< Entity index for editor */
+	char origin[CONFIG_MAXCHAR];	/**< Positon to spawn entity in world */
+	char angles[CONFIG_MAXCHAR];	/**< Angles to spawn entity in world */
+	
+	void ReadConfig(KeyValues kv)
+	{
+		kv.GetSectionName(this.name, CONFIG_MAXCHAR);
+		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
+		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
+		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
+		PrecacheModel(this.model);
+		
+		this.entity = INVALID_ENT_REFERENCE;
+		
+		//origin and angles is saved as string so we dont get float precision problem
+		kv.GetString("origin", this.origin, CONFIG_MAXCHAR, this.origin);
+		kv.GetString("angles", this.angles, CONFIG_MAXCHAR, this.angles);
+	}
+	
+	void SetConfig(KeyValues kv)
+	{
+		//We only care name, origin and angles to save, for map config
+		kv.SetSectionName(this.name);
+		kv.SetString("origin", this.origin);
+		kv.SetString("angles", this.angles);
+	}
+}
+
 static ArrayList g_VehiclesPrefabs;
-static ArrayList g_VehiclesConfig;
+static ArrayList g_VehiclesMap;
 
 void VehiclesConfig_Init()
 {
-	g_VehiclesPrefabs = new ArrayList(sizeof(Vehicle));
-	g_VehiclesConfig = new ArrayList(sizeof(Vehicle));
+	g_VehiclesPrefabs = new ArrayList(sizeof(VehicleConfig));
+	g_VehiclesMap = new ArrayList(sizeof(VehicleConfig));
 }
 
 void VehiclesConfig_Clear()
 {
-	Vehicle nothing;
-	g_VehiclesDefault = nothing;
-	
-	int length = g_VehiclesPrefabs.Length;
-	for (int i = 0; i < length; i++)
-	{
-		Vehicle vehicle;
-		g_VehiclesPrefabs.GetArray(i, vehicle);
-	}
-	
 	g_VehiclesPrefabs.Clear();
-	
-	length = g_VehiclesConfig.Length;
-	for (int i = 0; i < length; i++)
-	{
-		Vehicle vehicle;
-		g_VehiclesConfig.GetArray(i, vehicle);
-	}
-	
-	g_VehiclesConfig.Clear();
+	g_VehiclesMap.Clear();
 }
 
 void VehiclesConfig_ReadConfig(KeyValues kv)
 {
-	if (kv.JumpToKey("VehicleDefault", false))
-	{
-		g_VehiclesDefault.ReadConfig(kv);
-		kv.GoBack();
-	}
-	
 	if (kv.JumpToKey("VehiclePrefabs", false))
 	{
 		//Read through every VehiclePrefab
@@ -64,10 +76,9 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 		{
 			do
 			{
-				Vehicle vehicle;
-				vehicle = g_VehiclesDefault;
-				vehicle.ReadConfig(kv);
-				g_VehiclesPrefabs.PushArray(vehicle);
+				VehicleConfig config;
+				config.ReadConfig(kv);
+				g_VehiclesPrefabs.PushArray(config);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -82,15 +93,16 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 		{
 			do
 			{
-				Vehicle vehicle;
+				VehicleConfig config;
+				kv.GetSectionName(config.name, sizeof(config.name));
+				if (!VehiclesConfig_GetPrefabByName(config.name, config))
+				{
+					LogError("Unknown vehicle name for prefab '%s'", config.name);
+					continue;
+				}
 				
-				//Attempt use prefab, otherwise use default
-				kv.GetString("targetname", vehicle.targetname, sizeof(vehicle.targetname));
-				if (!VehiclesConfig_GetPrefabByTargetname(vehicle.targetname, vehicle))
-					vehicle = g_VehiclesDefault;
-				
-				vehicle.ReadConfig(kv);
-				g_VehiclesConfig.PushArray(vehicle);
+				config.ReadConfig(kv);
+				g_VehiclesMap.PushArray(config);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -101,20 +113,20 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 
 void VehiclesConfig_SetConfig(KeyValues kv)
 {
-	int length = g_VehiclesConfig.Length;
+	int length = g_VehiclesMap.Length;
 	for (int configIndex = 0; configIndex < length; configIndex++)
 	{
-		Vehicle vehicle;
-		g_VehiclesConfig.GetArray(configIndex, vehicle);
+		VehicleConfig config;
+		g_VehiclesMap.GetArray(configIndex, config);
 		
 		kv.JumpToKey("322", true);	//Just so we can create new key without jumping to existing Loot
 		kv.SetSectionName("Vehicle");
-		vehicle.SetConfig(kv);
+		config.SetConfig(kv);
 		kv.GoBack();
 	}
 }
 
-bool VehiclesConfig_GetPrefab(int pos, Vehicle buffer)
+bool VehiclesConfig_GetPrefab(int pos, VehicleConfig buffer)
 {
 	if (pos < 0 || pos >= g_VehiclesPrefabs.Length)
 		return false;
@@ -123,17 +135,17 @@ bool VehiclesConfig_GetPrefab(int pos, Vehicle buffer)
 	return true;
 }
 
-bool VehiclesConfig_GetPrefabByTargetname(const char[] name, Vehicle buffer)
+bool VehiclesConfig_GetPrefabByName(const char[] name, VehicleConfig buffer)
 {
 	int length = g_VehiclesPrefabs.Length;
 	for (int i = 0; i < length; i++)
 	{
-		Vehicle vehicle;
-		g_VehiclesPrefabs.GetArray(i, vehicle);
+		VehicleConfig config;
+		g_VehiclesPrefabs.GetArray(i, config);
 		
-		if (StrEqual(vehicle.targetname, name, false))
+		if (StrEqual(config.name, name, false))
 		{
-			buffer = vehicle;
+			buffer = config;
 			return true;
 		}
 	}
@@ -141,16 +153,46 @@ bool VehiclesConfig_GetPrefabByTargetname(const char[] name, Vehicle buffer)
 	return false;
 }
 
-bool VehiclesConfig_GetVehicle(int pos, Vehicle vehicle)
+bool VehiclesConfig_GetPrefabByTargetname(const char[] name, VehicleConfig buffer)
 {
-	if (pos < 0 || pos >= g_VehiclesConfig.Length)
-		return false;
+	int length = g_VehiclesPrefabs.Length;
+	for (int i = 0; i < length; i++)
+	{
+		VehicleConfig config;
+		g_VehiclesPrefabs.GetArray(i, config);
+		
+		if (StrEqual(config.targetname, name, false))
+		{
+			buffer = config;
+			return true;
+		}
+	}
 	
-	g_VehiclesConfig.GetArray(pos, vehicle);
-	return true;
+	return false;
 }
 
-void VehiclesConfig_GetDefault(Vehicle vehicle)
+void VehiclesConfig_AddMapVehicle(VehicleConfig config)
 {
-	vehicle = g_VehiclesDefault;
+	g_VehiclesMap.PushArray(config);
+}
+
+void VehiclesConfig_SetMapVehicle(int pos, VehicleConfig config)
+{
+	g_VehiclesMap.SetArray(pos, config);
+}
+
+int VehiclesConfig_GetMapVehicleByEntity(int entity, VehicleConfig buffer)
+{
+	int pos = g_VehiclesMap.FindValue(entity, VehicleConfig::entity);
+	if (pos >= 0)
+		g_VehiclesMap.GetArray(pos, buffer);
+	
+	return pos;
+}
+
+void VehiclesConfig_DeleteMapVehicleByEntity(int entity)
+{
+	int pos = g_VehiclesMap.FindValue(entity, VehicleConfig::entity);
+	if (pos >= 0)
+		g_VehiclesMap.Erase(pos);
 }

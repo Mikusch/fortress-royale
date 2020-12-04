@@ -105,7 +105,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 				switch (itemType)
 				{
 					case EditorItem_Crate: LootConfig_DeleteCrateByEntity(entity);
-					//case EditorItem_Vehicle: VehiclesConfig_DeleteByEntity(entity);
+					case EditorItem_Vehicle: VehiclesConfig_DeleteMapVehicleByEntity(entity);
 				}
 				
 				RemoveEntity(entity);
@@ -142,15 +142,16 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 					}
 					case EditorItem_Vehicle:
 					{
-						Vehicle vehicle;
-						//Vehicles_GetByEntity(ghost, vehicle);
-						VectorToString(origin, vehicle.origin, sizeof(vehicle.origin));
-						VectorToString(angles, vehicle.angles, sizeof(vehicle.angles));
+						char targetname[CONFIG_MAXCHAR];
+						GetEntPropString(ghost, Prop_Data, "m_iName", targetname, sizeof(targetname));
 						
-						//entity = Vehicles_CreateEntity(vehicle);
+						VehicleConfig config;
+						VehiclesConfig_GetPrefabByName(targetname, config);
+						VectorToString(origin, config.origin, sizeof(config.origin));
+						VectorToString(angles, config.angles, sizeof(config.angles));
 						
-						//vehicle.entity = entity;
-						//VehiclesConfig_AddVehicle(vehicle);
+						entity = Vehicles_CreateEntity(config);
+						VehiclesConfig_AddMapVehicle(config);
 					}
 				}
 				
@@ -167,7 +168,12 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 				
 				char name[CONFIG_MAXCHAR];
 				Editor_GetItemPrefab(entity, name, sizeof(name));
-				LootConfig_DeleteCrateByEntity(entity);	//Should have EditorItem_Crate check but meh
+				
+				switch (itemType)
+				{
+					case EditorItem_Crate: LootConfig_DeleteCrateByEntity(entity);
+					case EditorItem_Vehicle: VehiclesConfig_DeleteMapVehicleByEntity(entity);
+				}
 				
 				FRPlayer(param1).EditorItemRef = Editor_CreateGhostEntity(itemType, name);
 				FRPlayer(param1).EditorState = EditorState_Placing;
@@ -224,17 +230,17 @@ void Editor_DisplayPrefab(int client, EditorItem itemType)
 			LootCrate lootPrefab;
 			while (LootConfig_GetPrefab(pos, lootPrefab))
 			{
-				menu.AddItem(lootPrefab.targetname, lootPrefab.targetname);
+				menu.AddItem(lootPrefab.name, lootPrefab.name);
 				pos++;
 			}
 		}
 		case EditorItem_Vehicle:
 		{
 			int pos;
-			Vehicle vehicle;
-			while (VehiclesConfig_GetPrefab(pos, vehicle))
+			VehicleConfig config;
+			while (VehiclesConfig_GetPrefab(pos, config))
 			{
-				menu.AddItem(vehicle.targetname, vehicle.targetname);
+				menu.AddItem(config.name, config.name);
 				pos++;
 			}
 		}
@@ -291,9 +297,9 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 		{
 			LootCrate loot;
 			if (!prefab[0] || StrEqual(prefab, "__default__"))
-				LootCrate_GetDefault(loot);
+				LootCrate_GetDefault(loot);	//TODO this default crate still needed?
 			else
-				LootConfig_GetPrefabByTargetname(prefab, loot);
+				LootConfig_GetByName(prefab, loot);
 			
 			//Create new crate
 			ghost = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
@@ -302,20 +308,17 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 		}
 		case EditorItem_Vehicle:
 		{
-			Vehicle vehicle;
-			if (!prefab[0] || StrEqual(prefab, "__default__"))
-				VehiclesConfig_GetDefault(vehicle);
-			else
-				VehiclesConfig_GetPrefabByTargetname(prefab, vehicle);
+			VehicleConfig config;
+			VehiclesConfig_GetPrefabByName(prefab, config);
 			
 			//Create new vehicle
-			//ghost = Vehicles_CreateEntity(vehicle);
+			ghost = Vehicles_CreateEntity(config);
 		}
 	}
 	
-	//SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
-	//SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
-	//SetEntityRenderColor(ghost, 255, 255, 255, 127);
+	SetEntProp(ghost, Prop_Send, "m_nSolidType", SOLID_NONE);
+	SetEntityRenderMode(ghost, RENDER_TRANSCOLOR);
+	SetEntityRenderColor(ghost, 255, 255, 255, 127);
 	
 	return ghost;
 }
@@ -371,8 +374,8 @@ EditorItem Editor_GetItemType(int entity)
 {
 	if (Loot_IsCrate(entity))
 		return EditorItem_Crate;
-	//else if (Vehicles_IsVehicle(entity))
-		//return EditorItem_Vehicle;
+	else if (Vehicles_IsVehicle(entity))
+		return EditorItem_Vehicle;
 	else
 		return EditorItem_None;
 }
@@ -386,13 +389,13 @@ void Editor_GetItemPrefab(int entity, char[] name, int length)
 			//Copy crate from target and delete
 			LootCrate loot;
 			LootConfig_GetCrateByEntity(entity, loot);
-			strcopy(name, length, loot.targetname);
+			strcopy(name, length, loot.name);
 		}
 		case EditorItem_Vehicle:
 		{
-			Vehicle vehicle;
-			//VehiclesConfig_GetVehicleByEntity(entity, vehicle);
-			strcopy(name, length, vehicle.targetname);
+			VehicleConfig config;
+			VehiclesConfig_GetMapVehicleByEntity(entity, config);
+			strcopy(name, length, config.name);
 		}
 	}
 }

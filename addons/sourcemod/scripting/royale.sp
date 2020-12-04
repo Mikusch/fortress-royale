@@ -473,8 +473,8 @@ int g_OffsetNextSpell;
 #include "royale/loot/loot_callbacks.sp"
 #include "royale/loot/loot.sp"
 
-#include "royale/vehicles/vehicles.sp"
 #include "royale/vehicles/vehicles_config.sp"
+#include "royale/vehicles/vehicles.sp"
 
 #include "royale/battlebus.sp"
 #include "royale/command.sp"

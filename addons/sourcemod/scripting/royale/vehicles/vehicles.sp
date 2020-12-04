@@ -15,40 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-enum struct Vehicle
-{
-	int entity;	/**< Entity index */
-	
-	/**< Config prefab */
-	char targetname[CONFIG_MAXCHAR];/**< Name of vehicle */
-	char model[PLATFORM_MAX_PATH];	/**< Vehicle model */
-	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
-	
-	/**< Config map */
-	char origin[CONFIG_MAXCHAR];/**< Positon to spawn entity in world */
-	char angles[CONFIG_MAXCHAR];/**< Angles to spawn entity in world */
-	
-	void ReadConfig(KeyValues kv)
-	{
-		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
-		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
-		PrecacheModel(this.model);
-		
-		//origin and angles is saved as string so we dont get float precision problem
-		kv.GetString("origin", this.origin, CONFIG_MAXCHAR, this.origin);
-		kv.GetString("angles", this.angles, CONFIG_MAXCHAR, this.angles);
-	}
-	
-	void SetConfig(KeyValues kv)
-	{
-		//We only care targetname, origin and angles to save to "Vehicles" section, for now
-		kv.SetString("targetname", this.targetname);
-		kv.SetString("origin", this.origin);
-		kv.SetString("angles", this.angles);
-	}
-}
-
 void Vehicles_Init()
 {
 	//Load common vehicle sounds
@@ -59,40 +25,30 @@ void Vehicles_Init()
 void Vehicles_SetupFinished()
 {
 	int pos;
-	Vehicle config;
-	while (VehiclesConfig_GetVehicle(pos, config))
+	VehicleConfig config;
+	while (VehiclesConfig_GetPrefab(pos, config))
 	{
-		float origin[3], angles[3];
-		StringToVector(config.origin, origin);
-		StringToVector(config.angles, angles);
-		
-		Vehicles_CreateEntity(config.model, config.vehiclescript, origin, angles);
+		Vehicles_CreateEntity(config);
 		pos++;
 	}
-	
-	int vehicle = -1;
-	while ((vehicle = FindEntityByClassname(vehicle, "prop_vehicle*")) != -1)
-		Vehicles_UpdateEntity(vehicle);
 }
 
-void Vehicles_UpdateEntity(int entity)
+void Vehicles_Spawn(int entity)
 {
-	char targetname[CONFIG_MAXCHAR];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
-	
-	Vehicle vehicle;
-	VehiclesConfig_GetDefault(vehicle);
-	
-	if (!StrEqual(targetname, vehicle.targetname) && !VehiclesConfig_GetPrefabByTargetname(targetname, vehicle))
-		return;
-	
-	if (GameRules_GetProp("m_bInWaitingForPlayers") || g_RoundState == FRRoundState_Active)
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
 	{
 		RemoveEntity(entity);
 		return;
 	}
 	
-	DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	VehicleConfig vehicle;
+	if (VehiclesConfig_GetPrefabByTargetname(targetname, vehicle))
+		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
+	
+	HookSingleEntityOutput(entity, "PlayerOn", Vehicles_PlayerOn);
 	
 	SDKHook(entity, SDKHook_Think, Vehicles_Think);
 	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
@@ -108,32 +64,62 @@ void Vehicles_OnEntityDestroyed(int entity)
 		if (0 < client <= MaxClients)
 			SDKCall_HandlePassengerExit(entity, client);
 	}
+	
+	VehicleConfig config;
+	int pos = VehiclesConfig_GetMapVehicleByEntity(entity, config);
+	if (pos >= 0)
+	{
+		config.entity = INVALID_ENT_REFERENCE;
+		VehiclesConfig_SetMapVehicle(pos, config);
+	}
 }
 
-public Action Vehicles_CreateEntity(const char[] model, const char[] vehiclescript, const float origin[3], const float angles[3])
+public int Vehicles_CreateEntity(VehicleConfig config)
 {
 	int vehicle = CreateEntityByName("prop_vehicle_driveable");
-	if (vehicle != -1)
+	if (vehicle != INVALID_ENT_REFERENCE)
 	{
-		DispatchKeyValue(vehicle, "model", model);
-		DispatchKeyValue(vehicle, "vehiclescript", vehiclescript);
+		DispatchKeyValue(vehicle, "model", config.model);
+		DispatchKeyValue(vehicle, "vehiclescript", config.vehiclescript);
 		DispatchKeyValue(vehicle, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK
 		
 		if (DispatchSpawn(vehicle))
 		{
+			float origin[3], angles[3];
+			StringToVector(config.origin, origin);
+			StringToVector(config.angles, angles);
 			TeleportEntity(vehicle, origin, angles, NULL_VECTOR);
-			
-			HookSingleEntityOutput(vehicle, "PlayerOn", Vehicle_PlayerOn);
-			
-			SDKHook(vehicle, SDKHook_Think, Vehicles_Think);
-			SDKHook(vehicle, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 		}
+		
+		return EntIndexToEntRef(vehicle);
 	}
 	
-	return Plugin_Handled;
+	return INVALID_ENT_REFERENCE;
 }
 
-public Action Vehicle_PlayerOn(const char[] output, int caller, int activator, float delay)
+void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
+{
+	int entity = Vehicles_CreateEntity(config);
+	if (entity != -1)
+	{
+		float position[3];
+		GetClientEyePosition(client, position);
+		if (TR_PointOutsideWorld(position) || !MoveEntityToClientEye(entity, client, MASK_SOLID | MASK_WATER))
+		{
+			RemoveEntity(entity);
+			return;
+		}
+	}
+}
+
+bool Vehicles_IsVehicle(int entity)
+{
+	char classname[256];
+	GetEntityClassname(entity, classname, sizeof(classname));
+	return StrEqual(classname, "prop_vehicle_driveable");
+}
+
+public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)
 {
 	AcceptEntityInput(caller, "TurnOn");
 }
