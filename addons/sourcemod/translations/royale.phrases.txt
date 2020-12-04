@@ -90,19 +90,6 @@
 		"en"		"{1} and {2} are the top killers with {3} elimination(s) this round!"
 	}
 	
-	"Vehicle_HowToEnter"
-	{
-		"en"		"%%voicemenu 0 0%% TO ENTER VEHICLE"
-	}
-	"Vehicle_HowToExit"
-	{
-		"en"		"%%voicemenu 0 0%% TO EXIT VEHICLE"
-	}
-	"Vehicle_OutOfFuel"
-	{
-		"en"		"Out of Fuel"
-	}
-	
 	"Zone_ShrinkAlert"
 	{
 		"en"		"The death zone is shrinking, get moving!"
