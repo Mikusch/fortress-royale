@@ -1,0 +1,7 @@
+"vertexlitgeneric" {
+    "$basetexture" "source_vehicles/amb_red"
+    "$envmapmask" "source_vehicles/amb_spec"
+    "$envmap" "env_cubemap"
+    "$envmaptint" "[ 0.5020 0.5020 0.5020 ]"
+    "$surfaceprop" "metal"
+}
