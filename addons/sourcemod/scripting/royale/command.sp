@@ -57,7 +57,7 @@ public Action Command_Vehicle(int client, int args)
 	GetCmdArgString(name, sizeof(name));
 	
 	VehicleConfig config;
-	if (!VehiclesConfig_GetPrefabByTargetname(name, config))
+	if (!VehiclesConfig_GetPrefabByName(name, config))
 	{
 		ReplyToCommand(client, "%t", "Command_VehicleCantFindName", name);
 		return Plugin_Handled;

@@ -100,7 +100,9 @@ void Config_Save()
 	kv.GoBack();
 	
 	kv.JumpToKey("Vehicles", true);
-	while (kv.DeleteKey("Vehicle")) {}
+	if (kv.GotoFirstSubKey(false))
+		while (kv.DeleteThis() == 1) {}
+	
 	VehiclesConfig_SetConfig(kv);
 	kv.GoBack();
 	
