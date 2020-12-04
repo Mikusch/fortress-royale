@@ -134,8 +134,11 @@ public void Vehicles_Think(int vehicle)
 
 public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	//Driver receives 1/4 of damage done to vehicle
+	if (damagetype & DMG_CRUSH)
+		return;
+	
+	//Damage to the vehicle gets propagated to the driver
 	int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
 	if (0 < client <= MaxClients)
-		SDKHooks_TakeDamage(client, inflictor, attacker, damage / 4, damagetype, weapon, damageForce, damagePosition);
+		SDKHooks_TakeDamage(client, inflictor, attacker, damage, damagetype | DMG_VEHICLE, weapon, damageForce, damagePosition);
 }
