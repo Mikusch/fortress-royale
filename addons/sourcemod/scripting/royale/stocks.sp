@@ -341,7 +341,7 @@ stock Address GetServerVehicle(int vehicle)
 		return Address_Null;
 	}
 	
-	return view_as<Address>(LoadFromAddress(GetEntityAddress(vehicle) + view_as<Address>(offset), NumberType_Int32));
+	return view_as<Address>(GetEntData(vehicle, offset));
 }
 
 stock void DropSingleInstance(int entity, int owner, float[3] launchVel = NULL_VECTOR)
