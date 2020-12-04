@@ -115,6 +115,12 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 	}
 }
 
+bool Vehicles_CanExit(int vehicle)
+{
+	//Copied from CPropVehicleDriveable::CanExitVehicle
+	return !GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn") && !GetEntProp(vehicle, Prop_Data, "m_bExitAnimOn") && !GetEntProp(vehicle, Prop_Data, "m_bLocked") && (GetEntProp(vehicle, Prop_Data, "m_nSpeed") <= GetEntPropFloat(vehicle, Prop_Data, "m_flMinimumSpeedToEnterExit"));
+} 
+
 public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)
 {
 	AcceptEntityInput(caller, "TurnOn");
