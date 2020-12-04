@@ -71,7 +71,6 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 {
 	if (kv.JumpToKey("VehiclePrefabs", false))
 	{
-		//Read through every VehiclePrefab
 		if (kv.GotoFirstSubKey(false))
 		{
 			do
@@ -120,7 +119,6 @@ void VehiclesConfig_SetConfig(KeyValues kv)
 		g_VehiclesMap.GetArray(configIndex, config);
 		
 		kv.JumpToKey("322", true);	//Just so we can create new key without jumping to existing Loot
-		kv.SetSectionName("Vehicle");
 		config.SetConfig(kv);
 		kv.GoBack();
 	}
@@ -181,6 +179,15 @@ void VehiclesConfig_SetMapVehicle(int pos, VehicleConfig config)
 	g_VehiclesMap.SetArray(pos, config);
 }
 
+bool VehiclesConfig_GetMapVehicle(int pos, VehicleConfig buffer)
+{
+	if (pos < 0 || pos >= g_VehiclesMap.Length)
+		return false;
+	
+	g_VehiclesMap.GetArray(pos, buffer);
+	return true;
+}
+
 int VehiclesConfig_GetMapVehicleByEntity(int entity, VehicleConfig buffer)
 {
 	int pos = g_VehiclesMap.FindValue(entity, VehicleConfig::entity);
@@ -188,6 +195,11 @@ int VehiclesConfig_GetMapVehicleByEntity(int entity, VehicleConfig buffer)
 		g_VehiclesMap.GetArray(pos, buffer);
 	
 	return pos;
+}
+
+bool VehiclesConfig_IsMapVehicle(int entity)
+{
+	return g_VehiclesMap.FindValue(entity, VehicleConfig::entity) >= 0;
 }
 
 void VehiclesConfig_DeleteMapVehicleByEntity(int entity)

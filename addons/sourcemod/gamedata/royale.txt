@@ -201,16 +201,6 @@
 				"linux"		"203"
 				"windows"	"202"
 			}
-			"IPhysicsObject::SetVelocity"
-			{
-				"linux"		"50"
-				"windows"	"49"
-			}
-			"IPhysicsObject::GetVelocity"
-			{
-				"linux"		"52"
-				"windows"	"51"
-			}
 			"CEconItemView::m_iItemDefinitionIndex"
 			{
 				"linux"		"4"

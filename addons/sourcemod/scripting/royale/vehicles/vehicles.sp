@@ -26,9 +26,10 @@ void Vehicles_SetupFinished()
 {
 	int pos;
 	VehicleConfig config;
-	while (VehiclesConfig_GetPrefab(pos, config))
+	while (VehiclesConfig_GetMapVehicle(pos, config))
 	{
-		Vehicles_CreateEntity(config);
+		config.entity = Vehicles_CreateEntity(config);
+		VehiclesConfig_SetMapVehicle(pos, config);
 		pos++;
 	}
 }
@@ -79,6 +80,8 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 	int vehicle = CreateEntityByName("prop_vehicle_driveable");
 	if (vehicle != INVALID_ENT_REFERENCE)
 	{
+		SetEntPropString(vehicle, Prop_Data, "m_iName", config.targetname);
+		
 		DispatchKeyValue(vehicle, "model", config.model);
 		DispatchKeyValue(vehicle, "vehiclescript", config.vehiclescript);
 		DispatchKeyValue(vehicle, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK
@@ -110,13 +113,6 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 			return;
 		}
 	}
-}
-
-bool Vehicles_IsVehicle(int entity)
-{
-	char classname[256];
-	GetEntityClassname(entity, classname, sizeof(classname));
-	return StrEqual(classname, "prop_vehicle_driveable");
 }
 
 public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)

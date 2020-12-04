@@ -146,11 +146,12 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 						GetEntPropString(ghost, Prop_Data, "m_iName", targetname, sizeof(targetname));
 						
 						VehicleConfig config;
-						VehiclesConfig_GetPrefabByName(targetname, config);
+						VehiclesConfig_GetPrefabByTargetname(targetname, config);
 						VectorToString(origin, config.origin, sizeof(config.origin));
 						VectorToString(angles, config.angles, sizeof(config.angles));
 						
 						entity = Vehicles_CreateEntity(config);
+						config.entity = entity;
 						VehiclesConfig_AddMapVehicle(config);
 					}
 				}
@@ -220,12 +221,13 @@ void Editor_DisplayPrefab(int client, EditorItem itemType)
 {
 	Menu menu = new Menu(Editor_MenuSelectedPrefab, MenuAction_Select | MenuAction_Cancel | MenuAction_End);
 	menu.SetTitle("%T", "Editor_Prefab_Title", LANG_SERVER);
-	menu.AddItem("__default__", "Default");
 	
 	switch (itemType)
 	{
 		case EditorItem_Crate:
 		{
+			menu.AddItem("__default__", "Default");
+			
 			int pos;
 			LootCrate lootPrefab;
 			while (LootConfig_GetPrefab(pos, lootPrefab))
@@ -374,7 +376,7 @@ EditorItem Editor_GetItemType(int entity)
 {
 	if (Loot_IsCrate(entity))
 		return EditorItem_Crate;
-	else if (Vehicles_IsVehicle(entity))
+	else if (VehiclesConfig_IsMapVehicle(entity))
 		return EditorItem_Vehicle;
 	else
 		return EditorItem_None;
