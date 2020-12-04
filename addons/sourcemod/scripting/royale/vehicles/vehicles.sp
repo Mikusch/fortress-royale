@@ -140,5 +140,5 @@ public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, f
 	//Damage to the vehicle gets propagated to the driver
 	int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
 	if (0 < client <= MaxClients)
-		SDKHooks_TakeDamage(client, inflictor, attacker, damage, damagetype | DMG_VEHICLE, weapon, damageForce, damagePosition);
+		SDKHooks_TakeDamage(client, inflictor, attacker, damage, damagetype / 4, weapon, damageForce, damagePosition);
 }
