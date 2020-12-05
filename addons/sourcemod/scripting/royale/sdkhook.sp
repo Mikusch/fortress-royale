@@ -196,6 +196,13 @@ public void Client_PreThinkPost(int client)
 
 public void Client_PostThink(int client)
 {
+	//Due to a bug, m_afButtonPressed never has IN_USE inside vehicles, preventing exiting, so let's add it ourselves with a delay
+	if (GetEntPropEnt(client, Prop_Send, "m_hVehicle") && GetClientButtons(client) & IN_USE && GetGameTime() >= FRPlayer(client).LastUsePressedTime + 1.0)
+	{
+		FRPlayer(client).LastUsePressedTime = GetGameTime();
+		SetEntProp(client, Prop_Data, "m_afButtonPressed", GetEntProp(client, Prop_Data, "m_afButtonPressed") | IN_USE);
+	}
+	
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun > MaxClients)
 	{
