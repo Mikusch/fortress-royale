@@ -118,6 +118,7 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)
 {
 	AcceptEntityInput(caller, "TurnOn");
+	ShowKeyHintText(activator, "%t", "Vehicle_HowToDrive");
 }
 
 public void Vehicles_Think(int vehicle)

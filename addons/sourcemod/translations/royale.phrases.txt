@@ -70,6 +70,11 @@
 		"en"		"Editor Prefabs"
 	}
 	
+	"Vehicle_HowToDrive"
+	{
+		"en"		"%%+speed%% TURBO %%+jump%% HANDBRAKE"
+	}
+	
 	"RoundState_NoWinner"
 	{
 		"en"		"Stalemate! You are all losers!"
