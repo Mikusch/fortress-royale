@@ -37,6 +37,7 @@ static Handle g_SDKCallAddPlayer;
 static Handle g_SDKCallRemovePlayer;
 static Handle g_SDKCallVehicleSetupMove;
 static Handle g_SDKCallHandlePassengerExit;
+static Handle g_SDKCallHandleEntryExitFinish;
 
 void SDKCall_Init(GameData gamedata)
 {
@@ -62,6 +63,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
 	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
 	g_SDKCallHandlePassengerExit = PrepSDKCall_HandlePassengerExit(gamedata);
+	g_SDKCallHandleEntryExitFinish = PrepSDKCall_HandleEntryExitFinish(gamedata);
 }
 
 static Handle PrepSDKCall_GetNextThink(GameData gamedata)
@@ -378,6 +380,20 @@ static Handle PrepSDKCall_HandlePassengerExit(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_HandleEntryExitFinish(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Raw);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::HandleEntryExitFinish");
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogMessage("Failed to create SDKCall: CBaseServerVehicle::HandleEntryExitFinish");
+	
+	return call;
+}
+
 float SDKCall_GetNextThink(int entity, const char[] context = "")
 {
 	if (context[0])
@@ -495,4 +511,11 @@ void SDKCall_VehicleSetupMove(int vehicle, int client, Address ucmd, Address hel
 	Address serverVehicle = GetServerVehicle(vehicle);
 	if (serverVehicle != Address_Null)
 		SDKCall(g_SDKCallVehicleSetupMove, serverVehicle, client, ucmd, helper, move);
+}
+
+void SDKCall_HandleEntryExitFinish(int vehicle, bool exitAnimOn, bool resetAnim)
+{
+	Address serverVehicle = GetServerVehicle(vehicle);
+	if (serverVehicle != Address_Null)
+		SDKCall(g_SDKCallHandleEntryExitFinish, serverVehicle, exitAnimOn, resetAnim);
 }
