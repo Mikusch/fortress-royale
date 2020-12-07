@@ -46,7 +46,7 @@ void Vehicles_Spawn(int entity)
 	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
 	
 	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByTargetname(targetname, vehicle))
+	if (VehiclesConfig_GetPrefabByName(targetname, vehicle))
 		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
 	
 	HookSingleEntityOutput(entity, "PlayerOn", Vehicles_PlayerOn);
@@ -80,7 +80,7 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 	int vehicle = CreateEntityByName("prop_vehicle_driveable");
 	if (vehicle != INVALID_ENT_REFERENCE)
 	{
-		SetEntPropString(vehicle, Prop_Data, "m_iName", config.targetname);
+		SetEntPropString(vehicle, Prop_Data, "m_iName", config.name);
 		
 		DispatchKeyValue(vehicle, "model", config.model);
 		DispatchKeyValue(vehicle, "vehiclescript", config.vehiclescript);

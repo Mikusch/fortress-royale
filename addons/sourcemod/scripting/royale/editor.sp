@@ -146,7 +146,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 						GetEntPropString(ghost, Prop_Data, "m_iName", targetname, sizeof(targetname));
 						
 						VehicleConfig config;
-						VehiclesConfig_GetPrefabByTargetname(targetname, config);
+						VehiclesConfig_GetPrefabByName(targetname, config);
 						VectorToString(origin, config.origin, sizeof(config.origin));
 						VectorToString(angles, config.angles, sizeof(config.angles));
 						
