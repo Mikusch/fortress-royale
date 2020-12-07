@@ -140,7 +140,7 @@ public int Editor_MenuSelected(Menu menu, MenuAction action, int param1, int par
 						loot.entity = entity;
 						LootConfig_SetCrate(configIndex, loot);
 					}
-					case EditorItem_Vehicle:
+					default:	//Ghost vehicle is not a valid map vehicle from config until placed
 					{
 						char targetname[CONFIG_MAXCHAR];
 						GetEntPropString(ghost, Prop_Data, "m_iName", targetname, sizeof(targetname));
