@@ -19,7 +19,6 @@ enum struct VehicleConfig
 {
 	/**< Info for each prefab config */
 	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
-	char targetname[CONFIG_MAXCHAR];/**< Targetname of vehicle */
 	char model[PLATFORM_MAX_PATH];	/**< Vehicle model */
 	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
 	
@@ -30,8 +29,7 @@ enum struct VehicleConfig
 	
 	void ReadConfig(KeyValues kv)
 	{
-		kv.GetSectionName(this.name, CONFIG_MAXCHAR);
-		kv.GetString("targetname", this.targetname, CONFIG_MAXCHAR, this.targetname);
+		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
 		PrecacheModel(this.model);
@@ -46,7 +44,7 @@ enum struct VehicleConfig
 	void SetConfig(KeyValues kv)
 	{
 		//We only care name, origin and angles to save, for map config
-		kv.SetSectionName(this.name);
+		kv.SetString("name", this.name);
 		kv.SetString("origin", this.origin);
 		kv.SetString("angles", this.angles);
 	}
@@ -93,7 +91,7 @@ void VehiclesConfig_ReadConfig(KeyValues kv)
 			do
 			{
 				VehicleConfig config;
-				kv.GetSectionName(config.name, sizeof(config.name));
+				kv.GetString("name", config.name, sizeof(config.name));
 				if (!VehiclesConfig_GetPrefabByName(config.name, config))
 				{
 					LogError("Unknown vehicle name for prefab '%s'", config.name);
@@ -142,24 +140,6 @@ bool VehiclesConfig_GetPrefabByName(const char[] name, VehicleConfig buffer)
 		g_VehiclesPrefabs.GetArray(i, config);
 		
 		if (StrEqual(config.name, name, false))
-		{
-			buffer = config;
-			return true;
-		}
-	}
-	
-	return false;
-}
-
-bool VehiclesConfig_GetPrefabByTargetname(const char[] name, VehicleConfig buffer)
-{
-	int length = g_VehiclesPrefabs.Length;
-	for (int i = 0; i < length; i++)
-	{
-		VehicleConfig config;
-		g_VehiclesPrefabs.GetArray(i, config);
-		
-		if (StrEqual(config.targetname, name, false))
 		{
 			buffer = config;
 			return true;
