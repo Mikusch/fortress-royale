@@ -15,6 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define MIN_CRATE_SPAWN_CHANCE	25.0
+
 static StringMap g_LootTypeMap;
 
 void Loot_Init()
@@ -33,7 +35,7 @@ void Loot_SetupFinished()
 	LootCrate loot;
 	while (LootConfig_GetCrate(pos, loot))
 	{
-		if (GetRandomFloat() <= float(GetPlayerCount()) / float(TF_MAXPLAYERS))
+		if (Loot_CanSpawn())
 		{
 			loot.entity = Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateConfig);
 			LootConfig_SetCrate(pos, loot);
@@ -58,7 +60,7 @@ void Loot_UpdateEntity(int entity)
 	if (!StrEqual(targetname, loot.targetname) && !LootConfig_GetPrefabByTargetname(targetname, loot))
 		return;
 	
-	if (GameRules_GetProp("m_bInWaitingForPlayers") || (g_RoundState == FRRoundState_Active && GetRandomFloat() > float(GetPlayerCount()) / float(TF_MAXPLAYERS)))
+	if (GameRules_GetProp("m_bInWaitingForPlayers") || (g_RoundState == FRRoundState_Active && !Loot_CanSpawn()))
 	{
 		RemoveEntity(entity);
 		return;
@@ -72,6 +74,11 @@ void Loot_UpdateEntity(int entity)
 	
 	SetEntProp(entity, Prop_Data, "m_takedamage", DAMAGE_YES);
 	HookSingleEntityOutput(entity, "OnBreak", EntityOutput_OnBreakCrateTargetname, true);
+}
+
+bool Loot_CanSpawn()
+{
+	return GetRandomFloat() <= fMax(MIN_CRATE_SPAWN_CHANCE, float(GetPlayerCount() / TF_MAXPLAYERS));
 }
 
 int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics = false)
