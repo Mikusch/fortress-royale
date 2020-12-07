@@ -18,9 +18,10 @@
 enum struct VehicleConfig
 {
 	/**< Info for each prefab config */
-	char name[CONFIG_MAXCHAR];		/**< Name of vehicle */
-	char model[PLATFORM_MAX_PATH];	/**< Vehicle model */
+	char name[CONFIG_MAXCHAR];				/**< Name of vehicle */
+	char model[PLATFORM_MAX_PATH];			/**< Vehicle model */
 	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
+	float minimum_speed_to_enter_exit;		/**< Minimum speed before entering and exiting is disallowed */
 	
 	/**< Info for each entity placed by map config */
 	int entity;						/**< Entity index for editor */
@@ -32,6 +33,7 @@ enum struct VehicleConfig
 		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
+		this.minimum_speed_to_enter_exit = kv.GetFloat("minimum_speed_to_enter_exit", this.minimum_speed_to_enter_exit);
 		PrecacheModel(this.model);
 		
 		this.entity = INVALID_ENT_REFERENCE;

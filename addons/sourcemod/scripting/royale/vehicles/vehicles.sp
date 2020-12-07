@@ -88,6 +88,8 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 		
 		if (DispatchSpawn(vehicle))
 		{
+			SetEntPropFloat(vehicle, Prop_Data, "m_flMinimumSpeedToEnterExit", config.minimum_speed_to_enter_exit);
+			
 			float origin[3], angles[3];
 			StringToVector(config.origin, origin);
 			StringToVector(config.angles, angles);
