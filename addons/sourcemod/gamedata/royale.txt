@@ -131,6 +131,11 @@
 				"linux"		"18"
 				"windows"	"18"
 			}
+			"CBaseServerVehicle::HandleEntryExitFinish"
+			{
+				"linux"		"22"
+				"windows"	"22"
+			}
 			"CBaseEntity::ChangeTeam"
 			{
 				"linux"		"92"

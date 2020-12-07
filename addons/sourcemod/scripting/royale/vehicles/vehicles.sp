@@ -119,14 +119,31 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 
 public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)
 {
-	AcceptEntityInput(caller, "TurnOn");
 	ShowKeyHintText(activator, "%t", "Vehicle_HowToDrive");
 }
 
 public void Vehicles_Think(int vehicle)
 {
-	SetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn", false);
-	SetEntProp(vehicle, Prop_Data, "m_bExitAnimOn", false);
+	int client = GetEntPropEnt(vehicle, Prop_Send, "m_hPlayer");
+	if (client == INVALID_ENT_REFERENCE)
+		return;
+	
+	//HACK HACK HACK:
+	//Somehow the entry animation never finishes and thus m_bSequenceFinished will always return false
+	//This will cause the vehicle code to never let the player properly enter and exit
+	//Find out why, fix it, and remove the below line because it is terrible!
+	SetEntProp(vehicle, Prop_Data, "m_bSequenceFinished", true);
+	
+	bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
+	bool exitAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bExitAnimOn"));
+	bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
+	
+	//Taken from CPropJeep::Think
+	if (sequenceFinished && (enterAnimOn || exitAnimOn))
+	{
+		AcceptEntityInput(vehicle, "TurnOn");
+		SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, true);
+	}
 }
 
 public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
