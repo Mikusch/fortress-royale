@@ -532,17 +532,14 @@ public MRESReturn DHook_SetupMovePre(DHookParam param)
 {
 	int client = param.Get(1);
 	
-	if (IsClientInGame(client))
+	int vehicle = GetEntPropEnt(client, Prop_Send, "m_hVehicle");
+	if (vehicle != INVALID_ENT_REFERENCE)
 	{
-		int vehicle = GetEntPropEnt(client, Prop_Send, "m_hVehicle");
-		if (vehicle != INVALID_ENT_REFERENCE)
-		{
-			Address ucmd = param.Get(2);
-			Address helper = param.Get(3);
-			Address move = param.Get(4);
-			
-			SDKCall_VehicleSetupMove(vehicle, client, ucmd, helper, move);
-		}
+		Address ucmd = param.Get(2);
+		Address helper = param.Get(3);
+		Address move = param.Get(4);
+		
+		SDKCall_VehicleSetupMove(vehicle, client, ucmd, helper, move);
 	}
 }
 
