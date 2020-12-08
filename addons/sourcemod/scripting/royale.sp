@@ -180,6 +180,14 @@ enum HudNotification_t
 	NUM_STOCK_NOTIFICATIONS
 }
 
+enum VehicleType
+{
+	VEHICLE_TYPE_CAR_WHEELS = (1 << 0), 
+	VEHICLE_TYPE_CAR_RAYCAST = (1 << 1), 
+	VEHICLE_TYPE_JETSKI_RAYCAST = (1 << 2), 
+	VEHICLE_TYPE_AIRBOAT_RAYCAST = (1 << 3)
+}
+
 enum FRRoundState
 {
 	FRRoundState_Waiting,
