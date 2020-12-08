@@ -21,6 +21,7 @@ enum struct VehicleConfig
 	char name[CONFIG_MAXCHAR];				/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];			/**< Vehicle model */
 	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
+	VehicleType type;						/**< The type of vehicle */
 	float minimum_speed_to_enter_exit;		/**< Minimum speed before entering and exiting is disallowed */
 	
 	/**< Info for each entity placed by map config */
@@ -33,8 +34,21 @@ enum struct VehicleConfig
 		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
+		
+		char type[CONFIG_MAXCHAR];
+		kv.GetString("type", type, sizeof(type), type);
+		if (StrEqual(type, "car_wheels"))
+			this.type = VEHICLE_TYPE_CAR_WHEELS;
+		else if (StrEqual(type, "car_raycast"))
+			this.type = VEHICLE_TYPE_JETSKI_RAYCAST;
+		else if (StrEqual(type, "jetski_raycast"))
+			this.type = VEHICLE_TYPE_JETSKI_RAYCAST;
+		else if (StrEqual(type, "airboat_raycast"))
+			this.type = VEHICLE_TYPE_AIRBOAT_RAYCAST;
+		else
+			LogError("Invalid vehicle type '%s'", type);
+		
 		this.minimum_speed_to_enter_exit = kv.GetFloat("minimum_speed_to_enter_exit", this.minimum_speed_to_enter_exit);
-		PrecacheModel(this.model);
 		
 		this.entity = INVALID_ENT_REFERENCE;
 		
