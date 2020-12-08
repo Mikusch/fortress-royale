@@ -36,7 +36,7 @@ enum struct VehicleConfig
 		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
 		
 		char type[CONFIG_MAXCHAR];
-		kv.GetString("type", type, sizeof(type), type);
+		kv.GetString("type", type, sizeof(type));
 		if (StrEqual(type, "car_wheels"))
 			this.type = VEHICLE_TYPE_CAR_WHEELS;
 		else if (StrEqual(type, "car_raycast"))
@@ -45,7 +45,7 @@ enum struct VehicleConfig
 			this.type = VEHICLE_TYPE_JETSKI_RAYCAST;
 		else if (StrEqual(type, "airboat_raycast"))
 			this.type = VEHICLE_TYPE_AIRBOAT_RAYCAST;
-		else
+		else if (type[0] != '\0')
 			LogError("Invalid vehicle type '%s'", type);
 		
 		this.minimum_speed_to_enter_exit = kv.GetFloat("minimum_speed_to_enter_exit", this.minimum_speed_to_enter_exit);
