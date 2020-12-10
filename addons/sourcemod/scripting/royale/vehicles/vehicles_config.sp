@@ -20,6 +20,7 @@ enum struct VehicleConfig
 	/**< Info for each prefab config */
 	char name[CONFIG_MAXCHAR];				/**< Name of vehicle */
 	char model[PLATFORM_MAX_PATH];			/**< Vehicle model */
+	int skin;								/**< Model skin */
 	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
 	VehicleType type;						/**< The type of vehicle */
 	float minimum_speed_to_enter_exit;		/**< Minimum speed before entering and exiting is disallowed */
@@ -33,6 +34,7 @@ enum struct VehicleConfig
 	{
 		kv.GetString("name", this.name, CONFIG_MAXCHAR, this.name);
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
+		this.skin = kv.GetNum("skin", this.skin);
 		kv.GetString("vehiclescript", this.vehiclescript, PLATFORM_MAX_PATH, this.vehiclescript);
 		
 		char type[CONFIG_MAXCHAR];

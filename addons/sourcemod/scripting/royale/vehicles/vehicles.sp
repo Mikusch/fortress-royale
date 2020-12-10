@@ -85,6 +85,7 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 		DispatchKeyValue(vehicle, "model", config.model);
 		DispatchKeyValue(vehicle, "vehiclescript", config.vehiclescript);
 		DispatchKeyValue(vehicle, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK
+		SetEntProp(vehicle, Prop_Data, "m_nSkin", config.skin);
 		SetEntProp(vehicle, Prop_Data, "m_nVehicleType", config.type);
 		
 		if (DispatchSpawn(vehicle))
