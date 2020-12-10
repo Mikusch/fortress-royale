@@ -299,7 +299,7 @@ int Editor_CreateGhostEntity(EditorItem itemType, const char[] prefab)
 		{
 			LootCrate loot;
 			if (!prefab[0] || StrEqual(prefab, "__default__"))
-				LootCrate_GetDefault(loot);	//TODO this default crate still needed?
+				LootCrate_GetDefault(loot);
 			else
 				LootConfig_GetByName(prefab, loot);
 			
