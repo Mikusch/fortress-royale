@@ -47,7 +47,11 @@ void Vehicles_Spawn(int entity)
 	
 	VehicleConfig vehicle;
 	if (VehiclesConfig_GetPrefabByName(targetname, vehicle))
+	{
 		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
+		SetEntProp(entity, Prop_Data, "m_nVehicleType", vehicle.type);
+		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", vehicle.minimum_speed_to_enter_exit);
+	}
 	
 	HookSingleEntityOutput(entity, "PlayerOn", Vehicles_PlayerOn);
 	
