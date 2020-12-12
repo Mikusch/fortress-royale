@@ -53,6 +53,8 @@ void Vehicles_Spawn(int entity)
 		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", vehicle.minimum_speed_to_enter_exit);
 	}
 	
+	AcceptEntityInput(entity, "HandBrakeOn");
+	
 	HookSingleEntityOutput(entity, "PlayerOn", Vehicles_PlayerOn);
 	
 	SDKHook(entity, SDKHook_Think, Vehicles_Think);
@@ -95,6 +97,8 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 		if (DispatchSpawn(vehicle))
 		{
 			SetEntPropFloat(vehicle, Prop_Data, "m_flMinimumSpeedToEnterExit", config.minimum_speed_to_enter_exit);
+			
+			AcceptEntityInput(vehicle, "HandBrakeOn");
 			
 			float origin[3], angles[3];
 			StringToVector(config.origin, origin);
