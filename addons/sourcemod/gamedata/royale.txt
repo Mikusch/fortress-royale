@@ -196,6 +196,11 @@
 				"linux"		"431"
 				"windows"	"430"
 			}
+			"CBaseAnimating::StudioFrameAdvance"
+			{
+				"linux"		"194"
+				"windows"	"193"
+			}
 			"CTeam::AddPlayer"
 			{
 				"linux"		"202"

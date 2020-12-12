@@ -55,8 +55,6 @@ void Vehicles_Spawn(int entity)
 	
 	AcceptEntityInput(entity, "HandBrakeOn");
 	
-	HookSingleEntityOutput(entity, "PlayerOn", Vehicles_PlayerOn);
-	
 	SDKHook(entity, SDKHook_Think, Vehicles_Think);
 	SDKHook(entity, SDKHook_OnTakeDamage, Vehicles_OnTakeDamage);
 }
@@ -127,32 +125,34 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 	}
 }
 
-public Action Vehicles_PlayerOn(const char[] output, int caller, int activator, float delay)
-{
-	ShowKeyHintText(activator, "%t", "Vehicle_HowToDrive");
-}
-
 public void Vehicles_Think(int vehicle)
 {
-	int client = GetEntPropEnt(vehicle, Prop_Send, "m_hPlayer");
-	if (client == INVALID_ENT_REFERENCE)
-		return;
-	
-	//HACK HACK HACK:
-	//Somehow the entry animation never finishes and thus m_bSequenceFinished will always return false
-	//This will cause the vehicle code to never let the player properly enter and exit
-	//Find out why, fix it, and remove the below line because it is terrible!
-	SetEntProp(vehicle, Prop_Data, "m_bSequenceFinished", true);
-	
-	bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
+	int client = GetEntPropEnt(vehicle, Prop_Data, "m_hPlayer");
+	int sequence = GetEntProp(vehicle, Prop_Data, "m_nSequence");
 	bool exitAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bExitAnimOn"));
-	bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
 	
-	//Taken from CPropJeep::Think
-	if (sequenceFinished && (enterAnimOn || exitAnimOn))
+	bool handleEntryExit;
+	
+	if (sequence == 10 && 0 < client <= MaxClients)
 	{
+		//HACK: Certain vehicles use sequence with ID 10, which fails to properly play and softlocks the player
+		//Don't bother with any of the animation stuff, just let the client into the vehicle
+		handleEntryExit = true;
+	}
+	else
+	{
+		bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
+		bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
+		
+		SDKCall_StudioFrameAdvance(vehicle);
+		handleEntryExit = sequenceFinished && (enterAnimOn || exitAnimOn);
+	}
+	
+	if (handleEntryExit)
+	{
+		ShowKeyHintText(client, "%t", "Vehicle_HowToDrive");
 		AcceptEntityInput(vehicle, "TurnOn");
-		SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, true);
+		SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, !exitAnimOn);
 	}
 }
 

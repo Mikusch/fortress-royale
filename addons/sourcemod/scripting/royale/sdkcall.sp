@@ -33,6 +33,7 @@ static Handle g_SDKCallWeaponCanSwitchTo;
 static Handle g_SDKCallGiveNamedItem;
 static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
+static Handle g_SDKCallStudioFrameAdvance;
 static Handle g_SDKCallAddPlayer;
 static Handle g_SDKCallRemovePlayer;
 static Handle g_SDKCallVehicleSetupMove;
@@ -59,6 +60,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallGetSlot = PrepSDKCall_GetSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+	g_SDKCallStudioFrameAdvance = PrepSDKCall_StudioFrameAdvance(gamedata);
 	g_SDKCallAddPlayer = PrepSDKCall_AddPlayer(gamedata);
 	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
 	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
@@ -324,6 +326,18 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_StudioFrameAdvance(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseAnimating::StudioFrameAdvance");
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseAnimating::StudioFrameAdvance");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_AddPlayer(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Raw);
@@ -485,6 +499,11 @@ int SDKCall_GetSlot(int weapon)
 void SDKCall_EquipWearable(int client, int wearable)
 {
 	SDKCall(g_SDKCallEquipWearable, client, wearable);
+}
+
+void SDKCall_StudioFrameAdvance(int entity)
+{
+	SDKCall(g_SDKCallStudioFrameAdvance, entity);
 }
 
 void SDKCall_AddPlayer(Address team, int client)
