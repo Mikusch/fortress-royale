@@ -23,7 +23,6 @@ enum struct VehicleConfig
 	int skin;								/**< Model skin */
 	char vehiclescript[PLATFORM_MAX_PATH];	/**< Vehicle script path */
 	VehicleType type;						/**< The type of vehicle */
-	float minimum_speed_to_enter_exit;		/**< Minimum speed before entering and exiting is disallowed */
 	
 	/**< Info for each entity placed by map config */
 	int entity;						/**< Entity index for editor */
@@ -49,8 +48,6 @@ enum struct VehicleConfig
 			this.type = VEHICLE_TYPE_AIRBOAT_RAYCAST;
 		else if (type[0] != '\0')
 			LogError("Invalid vehicle type '%s'", type);
-		
-		this.minimum_speed_to_enter_exit = kv.GetFloat("minimum_speed_to_enter_exit", this.minimum_speed_to_enter_exit);
 		
 		this.entity = INVALID_ENT_REFERENCE;
 		

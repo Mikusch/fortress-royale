@@ -50,7 +50,7 @@ void Vehicles_Spawn(int entity)
 	{
 		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
 		SetEntProp(entity, Prop_Data, "m_nVehicleType", vehicle.type);
-		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", vehicle.minimum_speed_to_enter_exit);
+		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 	}
 	
 	AcceptEntityInput(entity, "HandBrakeOn");
@@ -94,7 +94,7 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 		
 		if (DispatchSpawn(vehicle))
 		{
-			SetEntPropFloat(vehicle, Prop_Data, "m_flMinimumSpeedToEnterExit", config.minimum_speed_to_enter_exit);
+			SetEntPropFloat(vehicle, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 			
 			AcceptEntityInput(vehicle, "HandBrakeOn");
 			
@@ -164,5 +164,5 @@ public Action Vehicles_OnTakeDamage(int entity, int &attacker, int &inflictor, f
 	//Damage to the vehicle gets propagated to the driver
 	int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
 	if (0 < client <= MaxClients)
-		SDKHooks_TakeDamage(client, inflictor, attacker, damage, damagetype / 4, weapon, damageForce, damagePosition);
+		SDKHooks_TakeDamage(client, inflictor, attacker, damage * fr_vehicle_passenger_damagemultiplier.FloatValue, damagetype, weapon, damageForce, damagePosition);
 }

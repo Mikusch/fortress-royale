@@ -461,6 +461,9 @@ ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damagemultiplier;
 
+ConVar fr_vehicle_passenger_damagemultiplier;
+ConVar fr_vehicle_lock_speed;
+
 ConVar fr_truce_duration;
 
 int g_OffsetItemDefinitionIndex;
