@@ -41,7 +41,7 @@ enum struct VehicleConfig
 		if (StrEqual(type, "car_wheels"))
 			this.type = VEHICLE_TYPE_CAR_WHEELS;
 		else if (StrEqual(type, "car_raycast"))
-			this.type = VEHICLE_TYPE_JETSKI_RAYCAST;
+			this.type = VEHICLE_TYPE_CAR_RAYCAST;
 		else if (StrEqual(type, "jetski_raycast"))
 			this.type = VEHICLE_TYPE_JETSKI_RAYCAST;
 		else if (StrEqual(type, "airboat_raycast"))
