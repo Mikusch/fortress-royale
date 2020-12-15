@@ -55,7 +55,7 @@ void ConVar_Init()
 	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "Damage multiplier of the zone", _, true, 0.0);
 	
 	fr_vehicle_passenger_damagemultiplier = CreateConVar("fr_vehicle_passenger_damagemultiplier", "0.25", "Damage multiplier to passengers of a vehicle", _, true, 0.0);
-	fr_vehicle_lock_speed = CreateConVar("fr_vehicle_lock_speed", "10", "Vehicle must be going slower than this for player to enter or exit, in in/sec", _, true, 0.0);
+	fr_vehicle_lock_speed = CreateConVar("fr_vehicle_lock_speed", "10.0", "Vehicle must be going slower than this for player to enter or exit, in in/sec", _, true, 0.0);
 	
 	fr_truce_duration = CreateConVar("fr_truce_duration", "60.0", "How long the truce at the start of each round should last. Set to 0 to disable truce", _, true, 0.0);
 	
