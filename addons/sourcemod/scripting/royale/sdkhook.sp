@@ -90,6 +90,7 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	else if (StrContains(classname, "prop_vehicle") == 0)
 	{
 		SDKHook(entity, SDKHook_Spawn, PropVehicle_Spawn);
+		SDKHook(entity, SDKHook_SpawnPost, PropVehicle_SpawnPost);
 	}
 	else if (StrContains(classname, "prop_dynamic") == 0)
 	{
@@ -420,6 +421,11 @@ public void Projectile_TouchPost(int entity, int other)
 public Action PropVehicle_Spawn(int vehicle)
 {
 	Vehicles_Spawn(vehicle);
+}
+
+public Action PropVehicle_SpawnPost(int vehicle)
+{
+	Vehicles_SpawnPost(vehicle);
 }
 
 public void PropDynamic_SpawnPost(int prop)
