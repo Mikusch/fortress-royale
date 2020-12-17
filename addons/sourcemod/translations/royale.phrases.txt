@@ -70,9 +70,14 @@
 		"en"		"Editor Prefabs"
 	}
 	
-	"Vehicle_HowToDrive"
+	"Hint_VehicleKeys_Car"
 	{
 		"en"		"%%+speed%% TURBO %%+jump%% HANDBRAKE"
+	}
+	
+	"Hint_VehicleKeys_Airboat"
+	{
+		"en"		"%%+forward%% SPEED UP %%+back%% SLOW DOWN %%+moveleft%% TURN LEFT %%+moveright%% TURN RIGHT"
 	}
 	
 	"RoundState_NoWinner"

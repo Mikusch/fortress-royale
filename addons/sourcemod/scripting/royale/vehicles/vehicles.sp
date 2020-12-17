@@ -140,32 +140,31 @@ void Vehicles_CreateEntityAtCrosshair(VehicleConfig config, int client)
 
 public void Vehicles_Think(int vehicle)
 {
-	int client = GetEntPropEnt(vehicle, Prop_Data, "m_hPlayer");
-	int sequence = GetEntProp(vehicle, Prop_Data, "m_nSequence");
+	SDKCall_StudioFrameAdvance(vehicle);
+	
+	bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
+	bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
 	bool exitAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bExitAnimOn"));
 	
-	bool handleEntryExit;
-	
-	if (sequence == 10 && 0 < client <= MaxClients)
+	if (sequenceFinished && (enterAnimOn || exitAnimOn))
 	{
-		//HACK: Certain vehicles use sequence with ID 10, which fails to properly play and softlocks the player
-		//Don't bother with any of the animation stuff, just let the client into the vehicle
-		handleEntryExit = true;
-	}
-	else
-	{
-		bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
-		bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
-		
-		SDKCall_StudioFrameAdvance(vehicle);
-		handleEntryExit = sequenceFinished && (enterAnimOn || exitAnimOn);
-	}
-	
-	if (handleEntryExit)
-	{
-		ShowKeyHintText(client, "%t", "Vehicle_HowToDrive");
-		AcceptEntityInput(vehicle, "TurnOn");
-		SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, !exitAnimOn);
+		int client = GetEntPropEnt(vehicle, Prop_Data, "m_hPlayer");
+		if (client != INVALID_ENT_REFERENCE)
+		{
+			if (enterAnimOn)
+			{
+				//Show different key hints based on vehicle type
+				switch (GetEntProp(vehicle, Prop_Data, "m_nVehicleType"))
+				{
+					case VEHICLE_TYPE_CAR_WHEELS, VEHICLE_TYPE_CAR_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Car");
+					case VEHICLE_TYPE_JETSKI_RAYCAST, VEHICLE_TYPE_AIRBOAT_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Airboat");
+				}
+				
+				AcceptEntityInput(vehicle, "TurnOn");
+			}
+			
+			SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, !exitAnimOn);
+		}
 	}
 }
 
