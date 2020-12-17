@@ -59,7 +59,17 @@ void Vehicles_SpawnPost(int entity)
 {
 	//This needs to be done in SpawnPost, otherwise the vehicle is not properly initialized and will crash the server on removal
 	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+	{
 		RemoveEntity(entity);
+		return;
+	}
+	
+	char targetname[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	
+	VehicleConfig vehicle;
+	if (VehiclesConfig_GetPrefabByName(targetname, vehicle))
+		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 }
 
 void Vehicles_OnEntityDestroyed(int entity)
