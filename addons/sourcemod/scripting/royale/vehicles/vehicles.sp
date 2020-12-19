@@ -80,7 +80,7 @@ void Vehicles_OnEntityDestroyed(int entity)
 	{
 		int client = GetEntPropEnt(entity, Prop_Send, "m_hPlayer");
 		if (0 < client <= MaxClients)
-			SDKCall_HandlePassengerExit(entity, client);
+			AcceptEntityInput(client, "ClearParent");
 	}
 	
 	VehicleConfig config;

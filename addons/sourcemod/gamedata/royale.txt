@@ -126,11 +126,6 @@
 				"linux"		"4"
 				"windows"	"4"
 			}
-			"CBaseServerVehicle::HandlePassengerExit"
-			{
-				"linux"		"18"
-				"windows"	"18"
-			}
 			"CBaseServerVehicle::HandleEntryExitFinish"
 			{
 				"linux"		"22"
