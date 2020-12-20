@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/vehicles/rear_sticker"
+	"$surfaceprop"	"default"
+	"$basemapalphaphongmask" 1
+	//phong properties
+	"$phong"	"1"
+	"$phongboost"	"1"
+	"$phongexponent"	"10"
+	"$phongfresnelranges"	"[1 2 2.5]"
+}
