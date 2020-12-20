@@ -157,11 +157,7 @@ public Action Client_SetTransmit(int entity, int client)
 
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	//attacker may be already in spec, change attacker team so we don't get both victim and attacker in spectator
-	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
-		FRPlayer(attacker).ChangeToSpectator();
-	else
-		FRPlayer(victim).ChangeToSpectator();
+	Action action = Plugin_Changed;
 	
 	if (damagecustom == 0 && weapon > MaxClients && HasEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
@@ -169,11 +165,32 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 		if (multiplier != 1.0)
 		{
 			damage *= multiplier;
-			return Plugin_Changed;
+			action = Plugin_Changed;
 		}
 	}
 	
-	return Plugin_Continue;
+	if (damagetype & DMG_VEHICLE)
+	{
+		char classname[256];
+		GetEntityClassname(inflictor, classname, sizeof(classname));
+		if (StrEqual("prop_vehicle_driveable", classname))
+		{
+			int driver = GetEntPropEnt(inflictor, Prop_Send, "m_hPlayer");
+			if (0 < driver <= MaxClients && victim != driver)
+			{
+				attacker = driver;
+				action = Plugin_Changed;
+			}
+		}
+	}
+	
+	//attacker may be already in spec, change attacker team so we don't get both victim and attacker in spectator
+	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
+		FRPlayer(attacker).ChangeToSpectator();
+	else
+		FRPlayer(victim).ChangeToSpectator();
+	
+	return action;
 }
 
 public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom)
