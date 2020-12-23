@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/vehicles/wheels"
+	"$surfaceprop"	"default"
+	"$bumpmap"	"models/vehicles/wheels_normal"
+	
+	//phong properties
+	"$phong"	"1"
+	"$phongboost"	"[.5]"
+	"$phongexponenttexture"	"models/vehicles/wheels_exp"
+	"$phongfresnelranges"	"[1 2 5]"
+	//"$lightwarptexture" "models/vehicles/pickup_lightwarp"
+	//"$rimlight"	"1"
+	//"$rimlightexponent"	"1"
+}

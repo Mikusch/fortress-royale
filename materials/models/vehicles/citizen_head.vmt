@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/vehicles/citizen_head"
+	"$basemapalphaphongmask" "1"
+	"$phong" "1"
+	"$phongexponent" "60"
+	"$phongboost" "1"	
+	//"$lightwarptexture" "models/vehicles/pickup_lightwarp"
+	"$phongfresnelranges"	"[1 1.5 1]"
+	
+	"$rimlight" 1
+
+	"$ambientocclusion" "1"
+}
