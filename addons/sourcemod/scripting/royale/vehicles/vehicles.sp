@@ -71,11 +71,12 @@ void Vehicles_SpawnPost(int entity)
 		return;
 	}
 	
-	char model[CONFIG_MAXCHAR];
+	char model[PLATFORM_MAX_PATH], vehiclescript[PLATFORM_MAX_PATH];
 	GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
+	GetEntPropString(entity, Prop_Data, "m_vehicleScript", vehiclescript, sizeof(vehiclescript));
 	
 	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByModel(model, vehicle))
+	if (VehiclesConfig_GetPrefabByModelAndVehicleScript(model, vehiclescript, vehicle))
 		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 }
 
