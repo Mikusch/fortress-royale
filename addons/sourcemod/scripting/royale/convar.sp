@@ -41,7 +41,7 @@ void ConVar_Init()
 	fr_health[9] = CreateConVar("fr_health_engineer", "250", "Max health for Engineer", _, true, 1.0);
 	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
-	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Whole second to deploy parachute after ejecting from battle bus", _, true, 1.0);
+	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Time in seconds to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	fr_classfilter = CreateConVar("fr_classfilter", "1", "Enable class filtering, restricting weapon loots by classes. Disabling may cause several issues", _, true, 0.0, true, 1.0);
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "Seconds from round start to start zone display", _, true, 0.0);
@@ -52,7 +52,10 @@ void ConVar_Init()
 	fr_zone_shrink_player = CreateConVar("fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "Seconds after shrink to display next zone", _, true, 0.0);
 	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0.0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
-	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "", _, true, 0.0);
+	fr_zone_damagemultiplier = CreateConVar("fr_zone_damagemultiplier", "0.25", "Damage multiplier of the zone", _, true, 0.0);
+	
+	fr_vehicle_passenger_damagemultiplier = CreateConVar("fr_vehicle_passenger_damagemultiplier", "0.25", "Damage multiplier to passengers of a vehicle", _, true, 0.0);
+	fr_vehicle_lock_speed = CreateConVar("fr_vehicle_lock_speed", "10.0", "Vehicle must be going slower than this for player to enter or exit, in in/sec", _, true, 0.0);
 	
 	fr_truce_duration = CreateConVar("fr_truce_duration", "60.0", "How long the truce at the start of each round should last. Set to 0 to disable truce", _, true, 0.0);
 	
@@ -64,6 +67,8 @@ void ConVar_Init()
 	ConVar_Add("mp_friendlyfire", 1.0);
 	ConVar_Add("mp_respawnwavetime", 99999.0);
 	ConVar_Add("mp_waitingforplayers_time", 60.0);
+	ConVar_Add("sv_turbophysics", 0.0);
+	ConVar_Add("tf_allow_player_use", 1.0);
 	ConVar_Add("tf_avoidteammates", 0.0);
 	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
 	ConVar_Add("tf_max_health_boost", 4.0);

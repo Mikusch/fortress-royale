@@ -7,6 +7,7 @@ A battle royale game mode for Team Fortress 2, created by [Mikusch](https://gith
 * SourceMod 1.10
 * [DHooks with Detour Support](https://forums.alliedmods.net/showpost.php?p=2588686&postcount=589)
 * [TF2 Econ Data](https://forums.alliedmods.net/showthread.php?t=315011)
+* [LoadSoundScript](https://github.com/haxtonsale/LoadSoundScript) (optional, used for vehicle sounds)
 
 ## Configuration
 There are various [configuration files](https://github.com/Mikusch/fortress-royale/tree/master/addons/sourcemod/configs/royale) available to edit:

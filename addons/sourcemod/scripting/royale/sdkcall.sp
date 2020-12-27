@@ -33,10 +33,11 @@ static Handle g_SDKCallWeaponCanSwitchTo;
 static Handle g_SDKCallGiveNamedItem;
 static Handle g_SDKCallGetSlot;
 static Handle g_SDKCallEquipWearable;
+static Handle g_SDKCallStudioFrameAdvance;
 static Handle g_SDKCallAddPlayer;
 static Handle g_SDKCallRemovePlayer;
-static Handle g_SDKCallSetVelocity;
-static Handle g_SDKCallGetVelocity;
+static Handle g_SDKCallVehicleSetupMove;
+static Handle g_SDKCallHandleEntryExitFinish;
 
 void SDKCall_Init(GameData gamedata)
 {
@@ -58,10 +59,11 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGiveNamedItem = PrepSDKCall_GiveNamedItem(gamedata);
 	g_SDKCallGetSlot = PrepSDKCall_GetSlot(gamedata);
 	g_SDKCallEquipWearable = PrepSDKCall_EquipWearable(gamedata);
+	g_SDKCallStudioFrameAdvance = PrepSDKCall_StudioFrameAdvance(gamedata);
 	g_SDKCallAddPlayer = PrepSDKCall_AddPlayer(gamedata);
 	g_SDKCallRemovePlayer = PrepSDKCall_RemovePlayer(gamedata);
-	g_SDKCallSetVelocity = PrepSDKCall_SetVelocity(gamedata);
-	g_SDKCallGetVelocity = PrepSDKCall_GetVelocity(gamedata);
+	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
+	g_SDKCallHandleEntryExitFinish = PrepSDKCall_HandleEntryExitFinish(gamedata);
 }
 
 static Handle PrepSDKCall_GetNextThink(GameData gamedata)
@@ -88,11 +90,11 @@ static Handle PrepSDKCall_CreateDroppedWeapon(GameData gamedata)
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
-
+	
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::Create");
-
+	
 	return call;
 }
 
@@ -322,6 +324,18 @@ static Handle PrepSDKCall_EquipWearable(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_StudioFrameAdvance(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseAnimating::StudioFrameAdvance");
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseAnimating::StudioFrameAdvance");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_AddPlayer(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Raw);
@@ -348,30 +362,32 @@ static Handle PrepSDKCall_RemovePlayer(GameData gamedata)
 	return call;
 }
 
-static Handle PrepSDKCall_SetVelocity(GameData gamedata)
+static Handle PrepSDKCall_VehicleSetupMove(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "IPhysicsObject::SetVelocity");
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::SetupMove");
+	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
-		LogMessage("Failed to create SDKCall: IPhysicsObject::SetVelocity");
+		LogMessage("Failed to create SDKCall: CBaseServerVehicle::SetupMove");
 	
 	return call;
 }
 
-static Handle PrepSDKCall_GetVelocity(GameData gamedata)
+static Handle PrepSDKCall_HandleEntryExitFinish(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Raw);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "IPhysicsObject::GetVelocity");
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_Pointer, VDECODE_FLAG_ALLOWNULL, VENCODE_FLAG_COPYBACK);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseServerVehicle::HandleEntryExitFinish");
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
-		LogMessage("Failed to create SDKCall: IPhysicsObject::GetVelocity");
+		LogMessage("Failed to create SDKCall: CBaseServerVehicle::HandleEntryExitFinish");
 	
 	return call;
 }
@@ -469,6 +485,11 @@ void SDKCall_EquipWearable(int client, int wearable)
 	SDKCall(g_SDKCallEquipWearable, client, wearable);
 }
 
+void SDKCall_StudioFrameAdvance(int entity)
+{
+	SDKCall(g_SDKCallStudioFrameAdvance, entity);
+}
+
 void SDKCall_AddPlayer(Address team, int client)
 {
 	SDKCall(g_SDKCallAddPlayer, team, client);
@@ -479,46 +500,16 @@ void SDKCall_RemovePlayer(Address team, int client)
 	SDKCall(g_SDKCallRemovePlayer, team, client);
 }
 
-void SDKCall_SetVelocity(int entity, const float velocity[3], const float angVelocity[3])
+void SDKCall_VehicleSetupMove(int vehicle, int client, Address ucmd, Address helper, Address move)
 {
-	static int offset = -1;
-	if (offset == -1)
-		FindDataMapInfo(entity, "m_pPhysicsObject", _, _, offset);
-	
-	if (offset == -1)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	Address phyObj = view_as<Address>(GetEntData(entity, offset));
-	if (!phyObj)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	SDKCall(g_SDKCallSetVelocity, phyObj, velocity, angVelocity);
+	Address serverVehicle = GetServerVehicle(vehicle);
+	if (serverVehicle != Address_Null)
+		SDKCall(g_SDKCallVehicleSetupMove, serverVehicle, client, ucmd, helper, move);
 }
 
-void SDKCall_GetVelocity(int entity, float velocity[3], float angVelocity[3])
+void SDKCall_HandleEntryExitFinish(int vehicle, bool exitAnimOn, bool resetAnim)
 {
-	static int offset = -1;
-	if (offset == -1)
-		FindDataMapInfo(entity, "m_pPhysicsObject", _, _, offset);
-	
-	if (offset == -1)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	Address phyObj = view_as<Address>(LoadFromAddress(GetEntityAddress(entity) + view_as<Address>(offset), NumberType_Int32));
-	if (!phyObj)
-	{
-		LogError("Unable to find offset 'm_pPhysicsObject'");
-		return;
-	}
-	
-	SDKCall(g_SDKCallGetVelocity, phyObj, velocity, angVelocity);
+	Address serverVehicle = GetServerVehicle(vehicle);
+	if (serverVehicle != Address_Null)
+		SDKCall(g_SDKCallHandleEntryExitFinish, serverVehicle, exitAnimOn, resetAnim);
 }

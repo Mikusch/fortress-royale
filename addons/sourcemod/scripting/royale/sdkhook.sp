@@ -87,9 +87,10 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
 	}
-	else if (StrContains(classname, "prop_physics") == 0)
+	else if (StrContains(classname, "prop_vehicle") == 0)
 	{
-		SDKHook(entity, SDKHook_Spawn, PropPhysics_Spawn);
+		SDKHook(entity, SDKHook_Spawn, PropVehicle_Spawn);
+		SDKHook(entity, SDKHook_SpawnPost, PropVehicle_SpawnPost);
 	}
 	else if (StrContains(classname, "prop_dynamic") == 0)
 	{
@@ -156,11 +157,7 @@ public Action Client_SetTransmit(int entity, int client)
 
 public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	//attacker may be already in spec, change attacker team so we don't get both victim and attacker in spectator
-	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
-		FRPlayer(attacker).ChangeToSpectator();
-	else
-		FRPlayer(victim).ChangeToSpectator();
+	Action action = Plugin_Changed;
 	
 	if (damagecustom == 0 && weapon > MaxClients && HasEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 	{
@@ -168,11 +165,32 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 		if (multiplier != 1.0)
 		{
 			damage *= multiplier;
-			return Plugin_Changed;
+			action = Plugin_Changed;
 		}
 	}
 	
-	return Plugin_Continue;
+	if (damagetype & DMG_VEHICLE)
+	{
+		char classname[256];
+		GetEntityClassname(inflictor, classname, sizeof(classname));
+		if (StrEqual("prop_vehicle_driveable", classname))
+		{
+			int driver = GetEntPropEnt(inflictor, Prop_Send, "m_hPlayer");
+			if (0 < driver <= MaxClients && victim != driver)
+			{
+				attacker = driver;
+				action = Plugin_Changed;
+			}
+		}
+	}
+	
+	//attacker may be already in spec, change attacker team so we don't get both victim and attacker in spectator
+	if (0 < attacker <= MaxClients && IsClientInGame(attacker))
+		FRPlayer(attacker).ChangeToSpectator();
+	else
+		FRPlayer(victim).ChangeToSpectator();
+	
+	return action;
 }
 
 public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, float damage, int damagetype, int weapon, const float damageForce[3], const float damagePosition[3], int damagecustom)
@@ -196,6 +214,12 @@ public void Client_PreThinkPost(int client)
 
 public void Client_PostThink(int client)
 {
+	//For some reason IN_USE never gets assigned to m_afButtonPressed inside vehicles, preventing exiting, so let's add it ourselves
+	if (GetEntPropEnt(client, Prop_Send, "m_hVehicle") && GetClientButtons(client) & IN_USE)
+	{
+		SetEntProp(client, Prop_Data, "m_afButtonPressed", GetEntProp(client, Prop_Data, "m_afButtonPressed") | IN_USE);
+	}
+	
 	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
 	if (medigun > MaxClients)
 	{
@@ -205,36 +229,6 @@ public void Client_PostThink(int client)
 		SDKCall_FindAndHealTargets(medigun);
 		GameRules_SetProp("m_bPowerupMode", false);
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
-	}
-	
-	if (IsPlayerAlive(client))
-	{
-		static int hintTextMode[TF_MAXPLAYERS+1];
-		
-		if (Vehicles_IsClientInVehicle(client))
-		{
-			if (hintTextMode[client] != 2)
-			{
-				ShowKeyHintText(client, "%t", "Vehicle_HowToExit");
-				hintTextMode[client] = 2;
-			}
-		}
-		else
-		{
-			int entity = GetClientPointVisible(client, VEHICLE_ENTER_RANGE);
-			if (entity != -1 && Vehicles_IsVehicle(EntIndexToEntRef(entity)))
-			{
-				if (hintTextMode[client] != 1)
-				{
-					ShowKeyHintText(client, "%t", "Vehicle_HowToEnter");
-					hintTextMode[client] = 1;
-				}
-			}
-			else
-			{
-				hintTextMode[client] = 0;
-			}
-		}
 	}
 	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
@@ -441,9 +435,14 @@ public void Projectile_TouchPost(int entity, int other)
 	}
 }
 
-public Action PropPhysics_Spawn(int prop)
+public Action PropVehicle_Spawn(int vehicle)
 {
-	Vehicles_OnEntitySpawned(prop);
+	Vehicles_Spawn(vehicle);
+}
+
+public Action PropVehicle_SpawnPost(int vehicle)
+{
+	Vehicles_SpawnPost(vehicle);
 }
 
 public void PropDynamic_SpawnPost(int prop)

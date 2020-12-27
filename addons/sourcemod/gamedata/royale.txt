@@ -100,6 +100,12 @@
 				"linux"		"@_ZN23CLagCompensationManager20StartLagCompensationEP11CBasePlayerP8CUserCmd"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x57\x8B\xF9\x89\x7D\xE8"
 			}
+			"CTFPlayerMove::SetupMove"
+			{
+				"library"	"server"
+				"linux"		"@_ZN13CTFPlayerMove9SetupMoveEP11CBasePlayerP8CUserCmdP11IMoveHelperP9CMoveData"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x10\x56\x8B\x75\x08\x89\x4D\xFC"
+			}
 			"GetGlobalTeam"
 			{
 				"library"	"server"
@@ -115,6 +121,16 @@
 		}
 		"Offsets"
 		{
+			"CBaseServerVehicle::SetupMove"
+			{
+				"linux"		"4"
+				"windows"	"4"
+			}
+			"CBaseServerVehicle::HandleEntryExitFinish"
+			{
+				"linux"		"22"
+				"windows"	"22"
+			}
 			"CBaseEntity::ChangeTeam"
 			{
 				"linux"		"92"
@@ -175,6 +191,11 @@
 				"linux"		"431"
 				"windows"	"430"
 			}
+			"CBaseAnimating::StudioFrameAdvance"
+			{
+				"linux"		"194"
+				"windows"	"193"
+			}
 			"CTeam::AddPlayer"
 			{
 				"linux"		"202"
@@ -184,16 +205,6 @@
 			{
 				"linux"		"203"
 				"windows"	"202"
-			}
-			"IPhysicsObject::SetVelocity"
-			{
-				"linux"		"50"
-				"windows"	"49"
-			}
-			"IPhysicsObject::GetVelocity"
-			{
-				"linux"		"52"
-				"windows"	"51"
 			}
 			"CEconItemView::m_iItemDefinitionIndex"
 			{
@@ -338,6 +349,32 @@
 					"cmd"
 					{
 						"type"	"objectptr"
+					}
+				}
+			}
+			"CTFPlayerMove::SetupMove"
+			{
+				"signature"	"CTFPlayerMove::SetupMove"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"ignore"
+				"arguments"
+				{
+					"player"
+					{
+						"type"	"cbaseentity"
+					}
+					"ucmd"
+					{
+						"type"	"int"
+					}
+					"pHelper"
+					{
+						"type"	"int"
+					}
+					"move"
+					{
+						"type"	"int"
 					}
 				}
 			}

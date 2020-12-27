@@ -24,6 +24,7 @@
 
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
+#tryinclude <loadsoundscript>
 #define REQUIRE_EXTENSIONS
 
 #pragma semicolon 1
@@ -177,6 +178,14 @@ enum HudNotification_t
 	//
 
 	NUM_STOCK_NOTIFICATIONS
+}
+
+enum VehicleType
+{
+	VEHICLE_TYPE_CAR_WHEELS = (1 << 0), 
+	VEHICLE_TYPE_CAR_RAYCAST = (1 << 1), 
+	VEHICLE_TYPE_JETSKI_RAYCAST = (1 << 2), 
+	VEHICLE_TYPE_AIRBOAT_RAYCAST = (1 << 3)
 }
 
 enum FRRoundState
@@ -428,6 +437,7 @@ TFCond g_RuneConds[] = {
 
 bool g_Enabled;
 bool g_TF2Items;
+bool g_LoadSoundscript;
 bool g_WeaponSwitch;
 bool g_ChangeTeamSilent;
 FRRoundState g_RoundState;
@@ -451,6 +461,9 @@ ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damagemultiplier;
 
+ConVar fr_vehicle_passenger_damagemultiplier;
+ConVar fr_vehicle_lock_speed;
+
 ConVar fr_truce_duration;
 
 int g_OffsetItemDefinitionIndex;
@@ -471,8 +484,8 @@ int g_OffsetNextSpell;
 #include "royale/loot/loot_callbacks.sp"
 #include "royale/loot/loot.sp"
 
-#include "royale/vehicles/vehicles.sp"
 #include "royale/vehicles/vehicles_config.sp"
+#include "royale/vehicles/vehicles.sp"
 
 #include "royale/battlebus.sp"
 #include "royale/command.sp"
@@ -503,6 +516,7 @@ public void OnPluginStart()
 	LoadTranslations("royale.phrases");
 	
 	g_TF2Items = LibraryExists("TF2Items");
+	g_LoadSoundscript = LibraryExists("LoadSoundscript");
 	
 	g_PrecacheWeapon = new StringMap();
 	
@@ -539,6 +553,11 @@ public void OnPluginStart()
 	}
 }
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	MarkNativeAsOptional("LoadSoundScript");
+}
+
 void Enable()
 {
 	Config_Refresh();
@@ -571,8 +590,6 @@ void Disable()
 			DHook_UnhookClient(client);
 			DHook_UnhookGiveNamedItem(client);
 			SDKHook_UnhookClient(client);
-			
-			Vehicles_ExitVehicle(client);
 		}
 	}
 	
@@ -642,6 +659,10 @@ public void OnLibraryAdded(const char[] name)
 		//We cant allow TF2Items load while GiveNamedItem already hooked due to crash
 		if (DHook_IsGiveNamedItemActive())
 			SetFailState("Do not load TF2Items midgame while Royale is already loaded!");
+	} 
+	else if (StrEqual(name, "LoadSoundscript"))
+	{
+		g_LoadSoundscript = true;
 	}
 }
 
@@ -656,6 +677,10 @@ public void OnLibraryRemoved(const char[] name)
 			for (int iClient = 1; iClient <= MaxClients; iClient++)
 				if (IsClientInGame(iClient))
 					DHook_HookGiveNamedItem(iClient);
+	}
+	else if (StrEqual(name, "LoadSoundscript"))
+	{
+		g_LoadSoundscript = false;
 	}
 }
 
@@ -673,14 +698,6 @@ public void OnClientPutInServer(int client)
 	FRPlayer(client).VisibleCond = 0;
 }
 
-public void OnClientDisconnect(int client)
-{
-	if (!g_Enabled)
-		return;
-	
-	Vehicles_ExitVehicle(client);
-}
-
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!g_Enabled)
@@ -693,9 +710,15 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		else
 			buttons = 0;	//Don't allow client in battle bus process any other buttons
 	}
-	else if ((buttons & IN_ATTACK || buttons & IN_ATTACK2))
+	else if (buttons & IN_ATTACK || buttons & IN_ATTACK2)
 	{
 		TF2_TryToPickupDroppedWeapon(client);
+	}
+	
+	if (FRPlayer(client).InUse)
+	{
+		FRPlayer(client).InUse = false;
+		buttons |= IN_USE;
 	}
 }
 
@@ -731,8 +754,6 @@ public void OnGameFrame()
 {
 	if (!g_Enabled)
 		return;
-	
-	Vehicles_OnGameFrame();
 	
 	switch (g_RoundState)
 	{
@@ -876,8 +897,10 @@ public Action EntOutput_SetupFinished(const char[] output, int caller, int activ
 	
 	g_PlayerCount = GetAlivePlayersCount();
 	
-	Zone_SetupFinished();
+	
 	Loot_SetupFinished();
+	Vehicles_SetupFinished();
+	Zone_SetupFinished();
 }
 
 void TryToEndRound()

@@ -56,13 +56,13 @@ public Action Command_Vehicle(int client, int args)
 	char name[CONFIG_MAXCHAR];
 	GetCmdArgString(name, sizeof(name));
 	
-	Vehicle vehicle;
-	if (!VehiclesConfig_GetByTargetname(name, vehicle))
+	VehicleConfig config;
+	if (!VehiclesConfig_GetPrefabByName(name, config))
 	{
 		ReplyToCommand(client, "%t", "Command_VehicleCantFindName", name);
 		return Plugin_Handled;
 	}
 	
-	Vehicles_CreateEntityAtCrosshair(vehicle, client);
+	Vehicles_CreateEntityAtCrosshair(config, client);
 	return Plugin_Handled;
 }
