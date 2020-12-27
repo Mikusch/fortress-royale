@@ -36,11 +36,11 @@ void Vehicles_SetupFinished()
 
 void Vehicles_Spawn(int entity)
 {
-	char targetname[CONFIG_MAXCHAR];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	char model[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
 	
 	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByName(targetname, vehicle))
+	if (VehiclesConfig_GetPrefabByModel(model, vehicle))
 	{
 		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
 		SetEntProp(entity, Prop_Data, "m_nVehicleType", vehicle.type);
@@ -64,11 +64,11 @@ void Vehicles_SpawnPost(int entity)
 		return;
 	}
 	
-	char targetname[CONFIG_MAXCHAR];
-	GetEntPropString(entity, Prop_Data, "m_iName", targetname, sizeof(targetname));
+	char model[CONFIG_MAXCHAR];
+	GetEntPropString(entity, Prop_Data, "m_iName", model, sizeof(model));
 	
 	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByName(targetname, vehicle))
+	if (VehiclesConfig_GetPrefabByModel(model, vehicle))
 		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 }
 
@@ -97,8 +97,7 @@ public int Vehicles_CreateEntity(VehicleConfig config)
 	int vehicle = CreateEntityByName("prop_vehicle_driveable");
 	if (vehicle != INVALID_ENT_REFERENCE)
 	{
-		SetEntPropString(vehicle, Prop_Data, "m_iName", config.name);
-		
+		DispatchKeyValue(vehicle, "targetname", config.name);
 		DispatchKeyValue(vehicle, "model", config.model);
 		DispatchKeyValue(vehicle, "vehiclescript", config.vehiclescript);
 		DispatchKeyValue(vehicle, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK

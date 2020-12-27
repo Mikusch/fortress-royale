@@ -142,8 +142,7 @@ bool VehiclesConfig_GetPrefab(int pos, VehicleConfig buffer)
 	if (pos < 0 || pos >= g_VehiclesPrefabs.Length)
 		return false;
 	
-	g_VehiclesPrefabs.GetArray(pos, buffer);
-	return true;
+	return g_VehiclesPrefabs.GetArray(pos, buffer) > 0;
 }
 
 bool VehiclesConfig_GetPrefabByName(const char[] name, VehicleConfig buffer)
@@ -152,9 +151,23 @@ bool VehiclesConfig_GetPrefabByName(const char[] name, VehicleConfig buffer)
 	for (int i = 0; i < length; i++)
 	{
 		VehicleConfig config;
-		g_VehiclesPrefabs.GetArray(i, config);
-		
-		if (StrEqual(config.name, name, false))
+		if (g_VehiclesPrefabs.GetArray(i, config) > 0 && StrEqual(config.name, name, false))
+		{
+			buffer = config;
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+bool VehiclesConfig_GetPrefabByModel(const char[] model, VehicleConfig buffer)
+{
+	int length = g_VehiclesPrefabs.Length;
+	for (int i = 0; i < length; i++)
+	{
+		VehicleConfig config;
+		if (g_VehiclesPrefabs.GetArray(i, config) > 0 && StrEqual(config.model, model, false))
 		{
 			buffer = config;
 			return true;
@@ -179,8 +192,7 @@ bool VehiclesConfig_GetMapVehicle(int pos, VehicleConfig buffer)
 	if (pos < 0 || pos >= g_VehiclesMap.Length)
 		return false;
 	
-	g_VehiclesMap.GetArray(pos, buffer);
-	return true;
+	return g_VehiclesMap.GetArray(pos, buffer) > 0;
 }
 
 int VehiclesConfig_GetMapVehicleByEntity(int entity, VehicleConfig buffer)
