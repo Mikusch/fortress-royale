@@ -36,15 +36,22 @@ void Vehicles_SetupFinished()
 
 void Vehicles_Spawn(int entity)
 {
-	char model[CONFIG_MAXCHAR];
+	char model[PLATFORM_MAX_PATH], vehiclescript[PLATFORM_MAX_PATH];
 	GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
+	GetEntPropString(entity, Prop_Data, "m_vehicleScript", vehiclescript, sizeof(vehiclescript));
 	
 	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByModel(model, vehicle))
+	
+	//If no script is set, try to find a matching config entry and set it ourselves
+	if (vehiclescript[0] == '\0' && VehiclesConfig_GetPrefabByModel(model, vehicle))
 	{
-		DispatchKeyValue(entity, "vehiclescript", vehicle.vehiclescript);
+		vehiclescript = vehicle.vehiclescript;
+		DispatchKeyValue(entity, "VehicleScript", vehicle.vehiclescript);
+	}
+	
+	if (VehiclesConfig_GetPrefabByModelAndVehicleScript(model, vehiclescript, vehicle))
+	{
 		SetEntProp(entity, Prop_Data, "m_nVehicleType", vehicle.type);
-		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 	}
 	
 	DispatchKeyValue(entity, "spawnflags", "1"); //SF_PROP_VEHICLE_ALWAYSTHINK

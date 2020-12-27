@@ -167,10 +167,32 @@ bool VehiclesConfig_GetPrefabByModel(const char[] model, VehicleConfig buffer)
 	for (int i = 0; i < length; i++)
 	{
 		VehicleConfig config;
-		if (g_VehiclesPrefabs.GetArray(i, config) > 0 && StrEqual(config.model, model, false))
+		if (g_VehiclesPrefabs.GetArray(i, config) > 0)
 		{
-			buffer = config;
-			return true;
+			if (StrEqual(config.model, model, false))
+			{
+				buffer = config;
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+bool VehiclesConfig_GetPrefabByModelAndVehicleScript(const char[] model, const char[] vehiclescript, VehicleConfig buffer)
+{
+	int length = g_VehiclesPrefabs.Length;
+	for (int i = 0; i < length; i++)
+	{
+		VehicleConfig config;
+		if (g_VehiclesPrefabs.GetArray(i, config) > 0)
+		{
+			if (StrEqual(config.model, model, false) && StrEqual(config.vehiclescript, vehiclescript, false))
+			{
+				buffer = config;
+				return true;
+			}
 		}
 	}
 	
