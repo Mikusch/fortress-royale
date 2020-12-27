@@ -65,7 +65,7 @@ void Vehicles_SpawnPost(int entity)
 	}
 	
 	char model[CONFIG_MAXCHAR];
-	GetEntPropString(entity, Prop_Data, "m_iName", model, sizeof(model));
+	GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
 	
 	VehicleConfig vehicle;
 	if (VehiclesConfig_GetPrefabByModel(model, vehicle))
