@@ -29,7 +29,6 @@ void ConVar_Init()
 	fr_enable = CreateConVar("fr_enable", "-1", "-1 to enable based on map config existance, 0 to force disable, 1 to force enable", _, true, -1.0, true, 1.0);
 	fr_enable.AddChangeHook(ConVar_EnableChanged);
 	
-	//tag mismatch haha
 	fr_health[1] = CreateConVar("fr_health_scout", "250", "Max health for Scout", _, true, 1.0);
 	fr_health[2] = CreateConVar("fr_health_sniper", "250", "Max health for Sniper", _, true, 1.0);
 	fr_health[3] = CreateConVar("fr_health_soldier", "400", "Max health for Soldier", _, true, 1.0);
@@ -39,6 +38,8 @@ void ConVar_Init()
 	fr_health[7] = CreateConVar("fr_health_pyro", "350", "Max health for Pyro", _, true, 1.0);
 	fr_health[8] = CreateConVar("fr_health_spy", "250", "Max health for Spy", _, true, 1.0);
 	fr_health[9] = CreateConVar("fr_health_engineer", "250", "Max health for Engineer", _, true, 1.0);
+	
+	fr_obj_healthmultiplier = CreateConVar("fr_obj_healthmultiplier", "2.0", "Base building health multiplier", _, true, 0.0);
 	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Time in seconds to deploy parachute after ejecting from battle bus", _, true, 1.0);

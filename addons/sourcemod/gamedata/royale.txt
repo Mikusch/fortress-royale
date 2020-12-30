@@ -186,6 +186,11 @@
 				"linux"		"336"
 				"windows"	"334"
 			}
+			"CBaseObject::GetBaseHealth"
+			{
+				"linux"		"380"
+				"windows"	"378"
+			}
 			"CBasePlayer::EquipWearable"
 			{
 				"linux"		"431"
@@ -470,6 +475,13 @@
 						"type"	"cbaseentity"
 					}
 				}
+			}
+			"CBaseObject::GetBaseHealth"
+			{
+				"offset"	"CBaseObject::GetBaseHealth"
+				"hooktype"	"entity"
+				"return"	"int"
+				"this"		"entity"
 			}
 		}
 	}

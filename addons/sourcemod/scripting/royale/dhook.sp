@@ -40,6 +40,7 @@ static DynamicHook g_DHookGrenadeExplode;
 static DynamicHook g_DHookFireballExplode;
 static DynamicHook g_DHookGetLiveTime;
 static DynamicHook g_DHookStartBuilding;
+static DynamicHook g_DHookGetBaseHealth;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
@@ -71,6 +72,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookFireballExplode = DHook_CreateVirtual(gamedata, "CTFProjectile_SpellFireball::Explode");
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookStartBuilding = DHook_CreateVirtual(gamedata, "CBaseObject::StartBuilding");
+	g_DHookGetBaseHealth = DHook_CreateVirtual(gamedata, "CBaseObject::GetBaseHealth");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
@@ -197,6 +199,7 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		g_DHookStartBuilding.HookEntity(Hook_Pre, entity, DHook_StartBuildingPre);
 		g_DHookStartBuilding.HookEntity(Hook_Post, entity, DHook_StartBuildingPost);
+		g_DHookGetBaseHealth.HookEntity(Hook_Post, entity, DHook_GetBaseHealthPost);
 	}
 }
 
@@ -549,7 +552,7 @@ public MRESReturn DHook_GetMaxHealthPre(int client)
 	FRPlayer(client).ChangeToClass();
 }
 
-public MRESReturn DHook_GetMaxHealthPost(int client, DHookReturn ret)
+public MRESReturn DHook_GetMaxHealthPost(int client)
 {
 	FRPlayer(client).ChangeToUnknown();
 }
@@ -675,4 +678,11 @@ public MRESReturn DHook_StartBuildingPre(int entity)
 public MRESReturn DHook_StartBuildingPost(int entity)
 {
 	GameRules_SetProp("m_bPowerupMode", false);
+}
+
+public MRESReturn DHook_GetBaseHealthPost(int entity, DHookReturn ret)
+{
+	int health = ret.Value;
+	ret.Value = RoundFloat(health * fr_obj_healthmultiplier.FloatValue);
+	return MRES_Supercede;
 }
