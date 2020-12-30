@@ -189,7 +189,7 @@
 			"CBaseObject::GetBaseHealth"
 			{
 				"linux"		"380"
-				"windows"	"378"
+				"windows"	"379"
 			}
 			"CBasePlayer::EquipWearable"
 			{
