@@ -41,6 +41,7 @@ static DynamicHook g_DHookFireballExplode;
 static DynamicHook g_DHookGetLiveTime;
 static DynamicHook g_DHookStartBuilding;
 static DynamicHook g_DHookGetBaseHealth;
+static DynamicHook g_DHookSetPassenger;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
@@ -73,6 +74,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookGetLiveTime = DHook_CreateVirtual(gamedata, "CTFGrenadePipebombProjectile::GetLiveTime");
 	g_DHookStartBuilding = DHook_CreateVirtual(gamedata, "CBaseObject::StartBuilding");
 	g_DHookGetBaseHealth = DHook_CreateVirtual(gamedata, "CBaseObject::GetBaseHealth");
+	g_DHookSetPassenger = DHook_CreateVirtual(gamedata, "CBaseServerVehicle::SetPassenger");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
@@ -176,6 +178,11 @@ void DHook_UnhookClient(int client)
 	DynamicHook.RemoveHook(g_HookIdGetMaxHealthPost[client]);
 	DynamicHook.RemoveHook(g_HookIdForceRespawnPre[client]);
 	DynamicHook.RemoveHook(g_HookIdForceRespawnPost[client]);
+}
+
+void DHook_HookVehicle(int vehicle)
+{
+	g_DHookSetPassenger.HookRaw(Hook_Pre, GetServerVehicle(vehicle), DHook_SetPassenger);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
@@ -685,4 +692,18 @@ public MRESReturn DHook_GetBaseHealthPost(int entity, DHookReturn ret)
 	int health = ret.Value;
 	ret.Value = RoundFloat(health * fr_obj_healthmultiplier.FloatValue);
 	return MRES_Supercede;
+}
+
+public MRESReturn DHook_SetPassenger(Address vehicle, DHookParam params)
+{
+	if (!params.IsNull(2))
+	{
+		SetEntProp(params.Get(2), Prop_Data, "m_bDrawViewmodel", false);
+	}
+	else
+	{
+		int client = SDKCall_GetDriver(vehicle);
+		if (client != -1)
+			SetEntProp(client, Prop_Data, "m_bDrawViewmodel", true);
+	}
 }

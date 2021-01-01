@@ -71,13 +71,9 @@ void Vehicles_SpawnPost(int entity)
 		return;
 	}
 	
-	char model[PLATFORM_MAX_PATH], vehiclescript[PLATFORM_MAX_PATH];
-	GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model));
-	GetEntPropString(entity, Prop_Data, "m_vehicleScript", vehiclescript, sizeof(vehiclescript));
+	DHook_HookVehicle(entity);
 	
-	VehicleConfig vehicle;
-	if (VehiclesConfig_GetPrefabByModelAndVehicleScript(model, vehiclescript, vehicle))
-		SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
+	SetEntPropFloat(entity, Prop_Data, "m_flMinimumSpeedToEnterExit", fr_vehicle_lock_speed.FloatValue);
 }
 
 void Vehicles_OnEntityDestroyed(int entity)
@@ -149,29 +145,26 @@ public void Vehicles_Think(int vehicle)
 {
 	SDKCall_StudioFrameAdvance(vehicle);
 	
+	int client = GetEntPropEnt(vehicle, Prop_Data, "m_hPlayer");
 	bool sequenceFinished = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bSequenceFinished"));
 	bool enterAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bEnterAnimOn"));
 	bool exitAnimOn = view_as<bool>(GetEntProp(vehicle, Prop_Data, "m_bExitAnimOn"));
 	
 	if (sequenceFinished && (enterAnimOn || exitAnimOn))
 	{
-		int client = GetEntPropEnt(vehicle, Prop_Data, "m_hPlayer");
-		if (client != INVALID_ENT_REFERENCE)
+		if (enterAnimOn)
 		{
-			if (enterAnimOn)
-			{
-				//Show different key hints based on vehicle type
-				switch (GetEntProp(vehicle, Prop_Data, "m_nVehicleType"))
-				{
-					case VEHICLE_TYPE_CAR_WHEELS, VEHICLE_TYPE_CAR_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Car");
-					case VEHICLE_TYPE_JETSKI_RAYCAST, VEHICLE_TYPE_AIRBOAT_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Airboat");
-				}
-				
-				AcceptEntityInput(vehicle, "TurnOn");
-			}
+			AcceptEntityInput(vehicle, "TurnOn");
 			
-			SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, !exitAnimOn);
+			//Show different key hints based on vehicle type
+			switch (GetEntProp(vehicle, Prop_Data, "m_nVehicleType"))
+			{
+				case VEHICLE_TYPE_CAR_WHEELS, VEHICLE_TYPE_CAR_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Car");
+				case VEHICLE_TYPE_JETSKI_RAYCAST, VEHICLE_TYPE_AIRBOAT_RAYCAST: ShowKeyHintText(client, "%t", "Hint_VehicleKeys_Airboat");
+			}
 		}
+		
+		SDKCall_HandleEntryExitFinish(vehicle, exitAnimOn, !exitAnimOn);
 	}
 }
 

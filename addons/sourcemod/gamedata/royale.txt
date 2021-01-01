@@ -126,10 +126,20 @@
 				"linux"		"4"
 				"windows"	"4"
 			}
+			"CBaseServerVehicle::SetPassenger"
+			{
+				"linux"		"9"
+				"windows"	"9"
+			}
 			"CBaseServerVehicle::HandleEntryExitFinish"
 			{
 				"linux"		"22"
 				"windows"	"22"
+			}
+			"CBaseServerVehicle::GetDriver"
+			{
+				"linux"		"60"
+				"windows"	"60"
 			}
 			"CBaseEntity::ChangeTeam"
 			{
@@ -380,6 +390,24 @@
 					"move"
 					{
 						"type"	"int"
+					}
+				}
+			}
+			"CBaseServerVehicle::SetPassenger"
+			{
+				"offset"	"CBaseServerVehicle::SetPassenger"
+				"hooktype"	"raw"
+				"return"	"void"
+				"this"		"address"
+				"arguments"
+				{
+					"nRole"
+					{
+						"type"	"int"
+					}
+					"pPassenger"
+					{
+						"type"	"cbaseentity"
 					}
 				}
 			}
