@@ -23,7 +23,7 @@ void Patch_Enable()
 	{
 		Address playerClassData = SDKCall_GetPlayerClassData(class);
 		g_OriginalClassHealth[class] = LoadFromAddress(playerClassData + view_as<Address>(g_OffsetMaxHealth), NumberType_Int32);
-		StoreToAddress(playerClassData + view_as<Address>(g_OffsetMaxHealth), fr_health[class].IntValue, NumberType_Int32);
+		StoreToAddress(playerClassData + view_as<Address>(g_OffsetMaxHealth), fr_class_health[class].IntValue, NumberType_Int32);
 	}
 }
 

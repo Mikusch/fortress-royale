@@ -446,8 +446,8 @@ int g_PlayerCount;
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
 ConVar fr_enable;
-ConVar fr_health[view_as<int>(TFClass_Engineer)+1];
-ConVar fr_obj_healthmultiplier;
+ConVar fr_class_health[view_as<int>(TFClass_Engineer) + 1];
+ConVar fr_obj_health[view_as<int>(TFObject_Sapper) + 1];
 ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
 ConVar fr_classfilter;

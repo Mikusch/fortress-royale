@@ -29,17 +29,20 @@ void ConVar_Init()
 	fr_enable = CreateConVar("fr_enable", "-1", "-1 to enable based on map config existance, 0 to force disable, 1 to force enable", _, true, -1.0, true, 1.0);
 	fr_enable.AddChangeHook(ConVar_EnableChanged);
 	
-	fr_health[1] = CreateConVar("fr_health_scout", "250", "Max health for Scout", _, true, 1.0);
-	fr_health[2] = CreateConVar("fr_health_sniper", "250", "Max health for Sniper", _, true, 1.0);
-	fr_health[3] = CreateConVar("fr_health_soldier", "400", "Max health for Soldier", _, true, 1.0);
-	fr_health[4] = CreateConVar("fr_health_demoman", "350", "Max health for Demoman", _, true, 1.0);
-	fr_health[5] = CreateConVar("fr_health_medic", "300", "Max health for Medic", _, true, 1.0);
-	fr_health[6] = CreateConVar("fr_health_heavy", "600", "Max health for Heavy", _, true, 1.0);
-	fr_health[7] = CreateConVar("fr_health_pyro", "350", "Max health for Pyro", _, true, 1.0);
-	fr_health[8] = CreateConVar("fr_health_spy", "250", "Max health for Spy", _, true, 1.0);
-	fr_health[9] = CreateConVar("fr_health_engineer", "250", "Max health for Engineer", _, true, 1.0);
+	fr_class_health[1] = CreateConVar("fr_class_health_scout", "250", "Max health for Scout", _, true, 1.0);
+	fr_class_health[2] = CreateConVar("fr_class_health_sniper", "250", "Max health for Sniper", _, true, 1.0);
+	fr_class_health[3] = CreateConVar("fr_class_health_soldier", "400", "Max health for Soldier", _, true, 1.0);
+	fr_class_health[4] = CreateConVar("fr_class_health_demoman", "350", "Max health for Demoman", _, true, 1.0);
+	fr_class_health[5] = CreateConVar("fr_class_health_medic", "300", "Max health for Medic", _, true, 1.0);
+	fr_class_health[6] = CreateConVar("fr_class_health_heavy", "600", "Max health for Heavy", _, true, 1.0);
+	fr_class_health[7] = CreateConVar("fr_class_health_pyro", "350", "Max health for Pyro", _, true, 1.0);
+	fr_class_health[8] = CreateConVar("fr_class_health_spy", "250", "Max health for Spy", _, true, 1.0);
+	fr_class_health[9] = CreateConVar("fr_class_health_engineer", "250", "Max health for Engineer", _, true, 1.0);
 	
-	fr_obj_healthmultiplier = CreateConVar("fr_obj_healthmultiplier", "2.0", "Base building health multiplier", _, true, 0.0);
+	fr_obj_health[0] = CreateConVar("fr_obj_health_dispenser", "300", "Base building health for Dispensers", _, true, 1.0);
+	fr_obj_health[1] = CreateConVar("fr_obj_health_teleporter", "300", "Base building health for Teleporters", _, true, 1.0);
+	fr_obj_health[2] = CreateConVar("fr_obj_health_sentrygun", "300", "Base building health for Sentry Guns", _, true, 1.0);
+	fr_obj_health[3] = CreateConVar("fr_obj_health_sapper", "200", "Base building health for Sappers", _, true, 1.0);
 	
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Time in seconds to deploy parachute after ejecting from battle bus", _, true, 1.0);

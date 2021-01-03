@@ -689,8 +689,7 @@ public MRESReturn DHook_StartBuildingPost(int entity)
 
 public MRESReturn DHook_GetBaseHealthPost(int entity, DHookReturn ret)
 {
-	int health = ret.Value;
-	ret.Value = RoundFloat(health * fr_obj_healthmultiplier.FloatValue);
+	ret.Value = fr_obj_health[TF2_GetObjectType(entity)].IntValue;
 	return MRES_Supercede;
 }
 
