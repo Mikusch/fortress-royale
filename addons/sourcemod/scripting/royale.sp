@@ -451,6 +451,7 @@ ConVar fr_obj_health[view_as<int>(TFObject_Sapper) + 1];
 ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
 ConVar fr_classfilter;
+ConVar fr_randomclass;
 
 ConVar fr_zone_startdisplay;
 ConVar fr_zone_startdisplay_player;
