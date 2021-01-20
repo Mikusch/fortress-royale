@@ -20,6 +20,7 @@
 #include <sdkhooks>
 #include <tf2_stocks>
 #include <tf_econ_data>
+#include <tf2attributes>
 #include <dhooks>
 
 #undef REQUIRE_EXTENSIONS
