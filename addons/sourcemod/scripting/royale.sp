@@ -439,7 +439,6 @@ TFCond g_RuneConds[] = {
 bool g_Enabled;
 bool g_TF2Items;
 bool g_LoadSoundscript;
-bool g_WeaponSwitch;
 bool g_ChangeTeamSilent;
 FRRoundState g_RoundState;
 int g_PlayerCount;

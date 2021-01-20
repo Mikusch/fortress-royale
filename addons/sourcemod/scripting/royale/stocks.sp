@@ -1044,15 +1044,6 @@ stock void TF2_RemoveItem(int client, int weapon)
 	if (iExtraWearable != -1)
 		TF2_RemoveWearable(client, iExtraWearable);
 	
-	char classname[256];
-	GetEntityClassname(weapon, classname, sizeof(classname));
-	if (StrEqual(classname, "tf_weapon_medigun"))
-	{
-		//Remove self-heal due to DHook_StopHealingOwnerPre fix
-		SetEntProp(weapon, Prop_Send, "m_bChargeRelease", false);
-		SDKCall_StopHealingOwner(weapon);
-	}
-	
 	RemovePlayerItem(client, weapon);
 	RemoveEntity(weapon);
 }

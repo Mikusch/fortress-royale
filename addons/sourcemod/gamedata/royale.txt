@@ -58,35 +58,17 @@
 				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
 				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF\x75\x2A\xFF\xB7\x2A\x2A\x2A\x2A\xEB\x01\x50\xE8"
 			}
-			"CTFPlayer::GetChargeEffectBeingProvided"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer28GetChargeEffectBeingProvidedEv"
-				"windows"	"\x55\x8B\xEC\x51\x56\x8B\xF1\x8D\x86\x0C\x21\x00\x00"
-			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer34CalculateAmmoPackPositionAndAnglesEP13CTFWeaponBaseR6VectorR6QAngle"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x68\x2A\x2A\x2A\x2A"
 			}
-			"CTFPlayerShared::RecalculateChargeEffects"
-			{
-				"library"	"server"
-				"linux"		"@_ZN15CTFPlayerShared24RecalculateChargeEffectsEb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x38\x53\x56\x57\x8B\xF9\xC7\x45\xCC\x00\x00\x00\x00"
-			}
 			"CWeaponMedigun::FindAndHealTargets"
 			{
 				"library"	"server"
 				"linux"		"@_ZN14CWeaponMedigun18FindAndHealTargetsEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x57\x8B\xF9"
-			}
-			"CWeaponMedigun::StopHealingOwner"
-			{
-				"library"	"server"
-				"linux"		"@_ZN14CWeaponMedigun16StopHealingOwnerEv"
-				"windows"	"\x57\x8B\xF9\x80\xBF\x30\x08\x00\x00\x00"
 			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
@@ -313,34 +295,6 @@
 						"type"	"objectptr"
 					}
 				}
-			}
-			"CTFPlayer::GetChargeEffectBeingProvided"
-			{
-				"signature"	"CTFPlayer::GetChargeEffectBeingProvided"
-				"callconv"	"thiscall"
-				"return"	"int"
-				"this"		"entity"
-			}
-			"CTFPlayerShared::RecalculateChargeEffects"
-			{
-				"signature"	"CTFPlayerShared::RecalculateChargeEffects"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"bInstantRemove"
-					{
-						"type"	"bool"
-					}
-				}
-			}
-			"CWeaponMedigun::StopHealingOwner"
-			{
-				"signature"	"CWeaponMedigun::StopHealingOwner"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
 			}
 			"CEyeballBoss::FindClosestVisibleVictim"
 			{
