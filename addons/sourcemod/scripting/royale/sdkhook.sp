@@ -225,6 +225,13 @@ public void Client_PostThink(int client)
 		SDKCall_FindAndHealTargets(medigun);
 		GameRules_SetProp("m_bPowerupMode", false);
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
+		
+		//Passively build projectile shield
+		if (TF2Attrib_GetByName(medigun, "generate rage on heal") != Address_Null && !GetEntProp(client, Prop_Send, "m_bRageDraining"))
+		{
+			float rage = GetEntPropFloat(client, Prop_Send, "m_flRageMeter");
+			SetEntPropFloat(client, Prop_Send, "m_flRageMeter", fMin(100.0, rage + (GetGameFrameTime() / SDKCall_GetHealRate(medigun)) * 100.0));
+		}
 	}
 	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack

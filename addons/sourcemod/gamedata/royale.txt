@@ -123,6 +123,11 @@
 				"linux"		"60"
 				"windows"	"60"
 			}
+			"CWeaponMedigun::GetHealRate"
+			{
+				"linux"		"492"
+				"windows"	"485"
+			}
 			"CBaseEntity::ChangeTeam"
 			{
 				"linux"		"92"
