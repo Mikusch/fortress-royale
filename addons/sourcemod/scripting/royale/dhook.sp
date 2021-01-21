@@ -227,7 +227,7 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 		//Vampire powerup heals owner on damaging building
 		GameRules_SetProp("m_bPowerupMode", true);
 	}
-	else if (StrEqual(classname, "obj_dispenser"))
+	else if (StrEqual(classname, "obj_dispenser") || StrEqual(classname, "pd_dispenser"))
 	{
 		if (!GetEntProp(entity, Prop_Send, "m_bPlacing") && !GetEntProp(entity, Prop_Send, "m_bBuilding") && SDKCall_GetNextThink(entity, "DispenseThink") == TICK_NEVER_THINK)	// CObjectDispenser::DispenseThink
 		{

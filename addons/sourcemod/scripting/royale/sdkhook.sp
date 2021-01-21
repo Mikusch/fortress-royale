@@ -96,7 +96,7 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_SpawnPost, PropDynamic_SpawnPost);
 	}
-	else if (StrEqual(classname, "obj_dispenser"))
+	else if (StrEqual(classname, "obj_dispenser") || StrEqual(classname, "pd_dispenser"))
 	{
 		SDKHook(entity, SDKHook_StartTouch, Dispenser_StartTouch);
 		SDKHook(entity, SDKHook_StartTouchPost, Dispenser_StartTouchPost);

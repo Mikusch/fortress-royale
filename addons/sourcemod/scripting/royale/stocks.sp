@@ -407,7 +407,9 @@ stock bool TF2_IsObjectFriendly(int obj, int entity)
 {
 	if (0 < entity <= MaxClients)
 	{
-		if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == entity)
+		if (GetEntPropEnt(obj, Prop_Send, "m_hBuilder") == entity)	//obj_dispenser
+			return true;
+		else if (GetEntPropEnt(obj, Prop_Data, "m_hParent") == entity)	//pd_dispenser
 			return true;
 	}
 	else if (entity > MaxClients)
