@@ -16,7 +16,7 @@
  */
 
 #define ZONE_MODEL			"models/kirillian/brsphere_huge_v3.mdl"
-#define ZONE_SHRINK_SOUND	"MVM.Siren"
+#define ZONE_SHRINK_SOUND	"MVM.Warning"
 #define ZONE_DIAMETER		20000.0
 
 #define ZONE_FADE_START_RATIO	0.95

@@ -23,6 +23,7 @@
 #define SOUND_TRUCE_ON30SECREMAIN	"vo/announcer_dec_missionbegins30s%02i.mp3"
 #define SOUND_TRUCE_ON10SECREMAIN	"vo/announcer_dec_missionbegins10s%02i.mp3"
 
+#define GAMESOUND_TRUCE_MUSIC		"MatchMaking.RoundStartCasual"
 #define GAMESOUND_TRUCE_COUNTDOWN	"Announcer.CompGameBegins%02iSeconds"
 #define GAMESOUND_TRUCE_FINISH		"Announcer.CompGameBeginsFight"
 #define GAMESOUND_TRUCE_SIREN		"Ambient.Siren"
@@ -76,6 +77,7 @@ public Action EntOutput_OnTruce30SecRemain(const char[] output, int caller, int 
 public Action EntOutput_OnTruce10SecRemain(const char[] output, int caller, int activator, float delay)
 {
 	PlayRandomParameterizedSound(SOUND_TRUCE_ON10SECREMAIN, MAX_SOUNDS_ON10SECREMAIN);
+	EmitGameSoundToAll(GAMESOUND_TRUCE_MUSIC);
 }
 
 public Action EntOutput_OnTruce5SecRemain(const char[] output, int caller, int activator, float delay)

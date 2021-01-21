@@ -15,6 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define GAMESOUND_BUS_DROP	"MVM.Robot_Teleporter_Deliver"
+
 enum struct BattleBusConfig
 {
 	char model[PLATFORM_MAX_PATH];
@@ -43,18 +45,6 @@ static int g_BattleBusPropRef = INVALID_ENT_REFERENCE;
 static int g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
 static BattleBusConfig g_CurrentBattleBusConfig;
 
-static char g_BattleBusMusic[][] =  {
-	")ui/cyoa_musicdrunkenpipebomb.mp3", 
-	")ui/cyoa_musicfasterthanaspeedingbullet.mp3", 
-	")ui/cyoa_musicintruderalert.mp3", 
-	")ui/cyoa_musicmedic.mp3", 
-	")ui/cyoa_musicmoregun.mp3", 
-	")ui/cyoa_musicmoregun2.mp3", 
-	")ui/cyoa_musicplayingwithdanger.mp3", 
-	")ui/cyoa_musicrightbehindyou.mp3", 
-	")ui/cyoa_musicteamfortress2.mp3"
-};
-
 static char g_BattleBusHornSounds[][] =  {
 	")ambient_mp3/mvm_warehouse/car_horn_01.mp3", 
 	")ambient_mp3/mvm_warehouse/car_horn_02.mp3", 
@@ -62,8 +52,6 @@ static char g_BattleBusHornSounds[][] =  {
 	")ambient_mp3/mvm_warehouse/car_horn_04.mp3", 
 	")ambient_mp3/mvm_warehouse/car_horn_05.mp3"
 };
-
-static char g_BattleBusClientDropSound[] = ")mvm/mvm_tele_deliver.wav";
 
 //Eject offsets to pick one at random
 static float g_BattleBusEjectOffset[][3] =  {
@@ -84,17 +72,8 @@ static float g_BattleBusVelocity[3];	//Bus starting velocity
 
 void BattleBus_Precache()
 {
-	for (int i = 0; i < sizeof(g_BattleBusMusic); i++)
-	{
-		PrecacheSound(g_BattleBusMusic[i]);
-	}
-	
 	for (int i = 0; i < sizeof(g_BattleBusHornSounds); i++)
-	{
 		PrecacheSound(g_BattleBusHornSounds[i]);
-	}
-	
-	PrecacheSound(g_BattleBusClientDropSound);
 }
 
 void BattleBus_ReadConfig(KeyValues kv)
@@ -265,7 +244,7 @@ void BattleBus_EjectClient(int client)
 	
 	TeleportEntity(client, ejectOrigin, NULL_VECTOR, NULL_VECTOR);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 8.0);
-	EmitSoundToAll(g_BattleBusClientDropSound, bus);
+	EmitGameSoundToAll(GAMESOUND_BUS_DROP, bus);
 	
 	FRPlayer(client).SecToDeployParachute = fr_sectodeployparachute.IntValue;
 	PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
@@ -326,6 +305,7 @@ void BattleBus_SpawnLootBus()
 	char message[256];
 	Format(message, sizeof(message), "%T", "BattleBus_IncomingCrate", LANG_SERVER);
 	TF2_ShowGameMessage(message, "ico_build");
+	EmitSoundToAll(g_BattleBusHornSounds[GetRandomInt(0, sizeof(g_BattleBusHornSounds) - 1)], bus, SNDCHAN_STATIC, 150);
 	
 	CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus, TIMER_FLAG_NO_MAPCHANGE);
 	CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus, TIMER_FLAG_NO_MAPCHANGE);
