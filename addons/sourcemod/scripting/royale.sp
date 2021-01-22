@@ -40,6 +40,12 @@
 
 #define MODEL_EMPTY			"models/empty.mdl"
 
+#define BOTTLE_PICKUP_MODEL		"models/props_watergate/bottle_pickup.mdl"
+#define BOTTLE_PICKUP_MATERIAL	"materials/models/props_watergate/alien_beer_bottle.vmt"
+#define BOTTLE_PICKUP_TEXTURE	"materials/models/props_watergate/alien_beer_bottle.vtf"
+#define BOTTLE_DROP_SOUND		"vo/watergate/drop_beer.mp3"
+#define BOTTLE_PICKUP_SOUND		"vo/watergate/pickup_beer.mp3"
+
 #define CONFIG_MAXCHAR		256
 
 #define TICK_NEVER_THINK		-1.0
@@ -64,12 +70,6 @@
 #define INDEX_BASEJUMPER	1101
 
 #define SF_NORESPAWN	( 1 << 30 )
-
-#define BOTTLE_PICKUP_MODEL		"models/props_watergate/bottle_pickup.mdl"
-#define BOTTLE_PICKUP_MATERIAL	"materials/models/props_watergate/alien_beer_bottle.vmt"
-#define BOTTLE_PICKUP_TEXTURE	"materials/models/props_watergate/alien_beer_bottle.vtf"
-#define BOTTLE_DROP_SOUND		"vo/watergate/drop_beer.mp3"
-#define BOTTLE_PICKUP_SOUND		"vo/watergate/pickup_beer.mp3"
 
 const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;

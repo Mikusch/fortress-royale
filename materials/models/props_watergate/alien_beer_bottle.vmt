@@ -12,7 +12,6 @@
 	"$phongboost" "1"	
 	"$lightwarptexture" "models\player\pyro\pyro_lightwarp"
 	"$phongfresnelranges"	"[2 0 2]"
-	"$basemapalphaphongmask" "1"
 
 	// Rim lighting parameters
 	"$rimlight" "1"												// To enable rim lighting (requires phong)
