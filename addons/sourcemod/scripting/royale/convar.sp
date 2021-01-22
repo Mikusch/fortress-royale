@@ -78,7 +78,6 @@ void ConVar_Init()
 	ConVar_Add("tf_allow_player_use", "1");
 	ConVar_Add("tf_avoidteammates", "0");
 	ConVar_Add("tf_dropped_weapon_lifetime", "99999");
-	ConVar_Add("tf_max_health_boost", "3.0");
 	ConVar_Add("tf_parachute_maxspeed_xy", "600.0f");
 	ConVar_Add("tf_parachute_maxspeed_z", "-200.0f");
 	ConVar_Add("tf_spawn_glows_duration", "0");
