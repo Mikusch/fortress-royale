@@ -59,9 +59,6 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CBaseEntity::PhysicsDispatchThink", DHook_PhysicsDispatchThinkPre, DHook_PhysicsDispatchThinkPost);
 	DHook_CreateDetour(gamedata, "CBaseEntity::InSameTeam", DHook_InSameTeamPre, _);
 	DHook_CreateDetour(gamedata, "CTFDroppedWeapon::Create", DHook_CreatePre, _);
-	DHook_CreateDetour(gamedata, "CTFPlayer::GetChargeEffectBeingProvided", DHook_GetChargeEffectBeingProvidedPre, DHook_GetChargeEffectBeingProvidedPost);
-	DHook_CreateDetour(gamedata, "CTFPlayerShared::RecalculateChargeEffects", DHook_RecalculateChargeEffectsPre, _);
-	DHook_CreateDetour(gamedata, "CWeaponMedigun::StopHealingOwner", DHook_StopHealingOwnerPre, _);
 	DHook_CreateDetour(gamedata, "CEyeballBoss::FindClosestVisibleVictim", DHook_FindClosestVisibleVictimPre, DHook_FindClosestVisibleVictimPost);
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	DHook_CreateDetour(gamedata, "CTFPlayerMove::SetupMove", DHook_SetupMovePre, _);
@@ -407,58 +404,6 @@ public MRESReturn DHook_CreatePre(DHookReturn ret, DHookParam param)
 		ret.Value = 0;
 		return MRES_Supercede;
 	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_GetChargeEffectBeingProvidedPre(int client)
-{
-	if (!IsClientInGame(client))
-		return;
-	
-	//Allow return medigun effects while client switched away from active weapon
-	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
-	if (medigun != -1)
-	{
-		FRPlayer(client).ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		SetEntProp(medigun, Prop_Send, "m_bHolstered", false);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", medigun);
-	}
-}
-
-public MRESReturn DHook_GetChargeEffectBeingProvidedPost(int client)
-{
-	if (!IsClientInGame(client))
-		return;
-	
-	int medigun = TF2_GetItemByClassname(client, "tf_weapon_medigun");
-	if (medigun != -1)
-	{
-		SetEntProp(medigun, Prop_Send, "m_bHolstered", GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") != FRPlayer(client).ActiveWeapon);
-		SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", FRPlayer(client).ActiveWeapon);
-	}
-}
-
-public MRESReturn DHook_RecalculateChargeEffectsPre(Address shared, DHookParam param)
-{
-	//Prevent Vaccinator uber condition being removed on medigun holster
-	if (g_WeaponSwitch)
-	{
-		param.Set(1, false);	//bInstantRemove
-		return MRES_ChangedOverride;
-	}
-	
-	return MRES_Ignored;
-}
-
-public MRESReturn DHook_StopHealingOwnerPre(int medigun)
-{
-	if (medigun == -1)	//this happens
-		return MRES_Ignored;
-	
-	//Dont remove self heals while still ubered, so quick-fix heal can apply while switched out
-	if (GetEntProp(medigun, Prop_Send, "m_bChargeRelease"))
-		return MRES_Supercede;
 	
 	return MRES_Ignored;
 }

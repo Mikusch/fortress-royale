@@ -24,7 +24,6 @@ static Handle g_SDKCallGetEquippedWearableForLoadoutSlot;
 static Handle g_SDKCallGetMaxAmmo;
 static Handle g_SDKCallCalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCallFindAndHealTargets;
-static Handle g_SDKCallStopHealingOwner;
 static Handle g_SDKCallGetGlobalTeam;
 static Handle g_SDKCallGetPlayerClassData;
 static Handle g_SDKCallChangeTeam;
@@ -39,6 +38,7 @@ static Handle g_SDKCallRemovePlayer;
 static Handle g_SDKCallVehicleSetupMove;
 static Handle g_SDKCallHandleEntryExitFinish;
 static Handle g_SDKCallGetDriver;
+static Handle g_SDKCallGetHealRate;
 
 void SDKCall_Init(GameData gamedata)
 {
@@ -51,7 +51,6 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallGetMaxAmmo = PrepSDKCall_GetMaxAmmo(gamedata);
 	g_SDKCallCalculateAmmoPackPositionAndAngles = PrepSDKCall_CalculateAmmoPackPositionAndAngles(gamedata);
 	g_SDKCallFindAndHealTargets = PrepSDKCall_FindAndHealTargets(gamedata);
-	g_SDKCallStopHealingOwner = PrepSDKCall_StopHealingOwner(gamedata);
 	g_SDKCallGetGlobalTeam = PrepSDKCall_GetGlobalTeam(gamedata);
 	g_SDKCallGetPlayerClassData = PrepSDKCall_GetPlayerClassData(gamedata);
 	g_SDKCallChangeTeam = PrepSDKCall_ChangeTeam(gamedata);
@@ -66,6 +65,7 @@ void SDKCall_Init(GameData gamedata)
 	g_SDKCallVehicleSetupMove = PrepSDKCall_VehicleSetupMove(gamedata);
 	g_SDKCallHandleEntryExitFinish = PrepSDKCall_HandleEntryExitFinish(gamedata);
 	g_SDKCallGetDriver = PrepSDKCall_GetDriver(gamedata);
+	g_SDKCallGetHealRate = PrepSDKCall_GetHealRate(gamedata);
 }
 
 static Handle PrepSDKCall_GetNextThink(GameData gamedata)
@@ -200,18 +200,6 @@ static Handle PrepSDKCall_FindAndHealTargets(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CWeaponMedigun::FindAndHealTargets");
-	
-	return call;
-}
-
-static Handle PrepSDKCall_StopHealingOwner(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CWeaponMedigun::StopHealingOwner");
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CWeaponMedigun::StopHealingOwner");
 	
 	return call;
 }
@@ -407,6 +395,19 @@ static Handle PrepSDKCall_GetDriver(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_GetHealRate(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CWeaponMedigun::GetHealRate");
+	PrepSDKCall_SetReturnInfo(SDKType_Float, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (call == null)
+		LogMessage("Failed to create SDKCall: CWeaponMedigun::GetHealRate");
+	
+	return call;
+}
+
 float SDKCall_GetNextThink(int entity, const char[] context = "")
 {
 	if (context[0])
@@ -453,11 +454,6 @@ bool SDKCall_CalculateAmmoPackPositionAndAngles(int client, int weapon, float[3]
 bool SDKCall_FindAndHealTargets(int medigun)
 {
 	return SDKCall(g_SDKCallFindAndHealTargets, medigun);
-}
-
-void SDKCall_StopHealingOwner(int medigun)
-{
-	SDKCall(g_SDKCallStopHealingOwner, medigun);
 }
 
 Address SDKCall_GetGlobalTeam(TFTeam team)
@@ -535,4 +531,12 @@ int SDKCall_GetDriver(Address serverVehicle)
 		return SDKCall(g_SDKCallGetDriver, serverVehicle);
 	
 	return -1;
+}
+
+float SDKCall_GetHealRate(int medigun)
+{
+	if (g_SDKCallGetHealRate != null)
+		return SDKCall(g_SDKCallGetHealRate, medigun);
+	
+	return 0.0;
 }

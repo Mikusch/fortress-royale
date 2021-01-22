@@ -65,7 +65,7 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 	if (weapon == -1)
 	{
 		weapon = TF2_CreateWeapon(defindex);
-		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client));
+		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
 	}
 	
 	if (weapon > MaxClients)
@@ -77,6 +77,22 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 			
 			ammo = TF2_GetWeaponAmmo(client, weapon);
 			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
+		}
+		
+		char buffer[256];
+		if (params.GetString("attributes", buffer, sizeof(buffer)))
+		{
+			char attribBuffer[15][64];
+			int numAttribs = ExplodeString(buffer, ";", attribBuffer, sizeof(attribBuffer), sizeof(attribBuffer[]));
+			for (int i = 0; i < numAttribs; i++)
+			{
+				char singleAttribBuffer[2][64];
+				int count = ExplodeString(attribBuffer[i], ":", singleAttribBuffer, sizeof(singleAttribBuffer), sizeof(singleAttribBuffer[]));
+				if (count == 2)
+					TF2Attrib_SetByName(weapon, singleAttribBuffer[0], StringToFloat(singleAttribBuffer[1]));
+				else
+					LogError("Malformed attribute string '%s'", attribBuffer[i]);
+			}
 		}
 		
 		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false, origin);

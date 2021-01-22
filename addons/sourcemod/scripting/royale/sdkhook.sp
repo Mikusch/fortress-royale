@@ -53,8 +53,6 @@ void SDKHook_HookClient(int client)
 	SDKHook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKHook(client, SDKHook_Touch, Client_Touch);
 	SDKHook(client, SDKHook_TouchPost, Client_TouchPost);
-	SDKHook(client, SDKHook_WeaponSwitch, Client_WeaponSwitch);
-	SDKHook(client, SDKHook_WeaponSwitchPost, Client_WeaponSwitchPost);
 }
 
 void SDKHook_UnhookClient(int client)
@@ -70,8 +68,6 @@ void SDKHook_UnhookClient(int client)
 	SDKUnhook(client, SDKHook_PostThinkPost, Client_PostThinkPost);
 	SDKUnhook(client, SDKHook_Touch, Client_Touch);
 	SDKUnhook(client, SDKHook_TouchPost, Client_TouchPost);
-	SDKUnhook(client, SDKHook_WeaponSwitch, Client_WeaponSwitch);
-	SDKUnhook(client, SDKHook_WeaponSwitchPost, Client_WeaponSwitchPost);
 }
 
 void SDKHook_OnEntityCreated(int entity, const char[] classname)
@@ -229,6 +225,13 @@ public void Client_PostThink(int client)
 		SDKCall_FindAndHealTargets(medigun);
 		GameRules_SetProp("m_bPowerupMode", false);
 		SetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget", -1);
+		
+		//Passively build projectile shield
+		if (TF2Attrib_GetByName(medigun, "generate rage on heal") != Address_Null && !GetEntProp(client, Prop_Send, "m_bRageDraining"))
+		{
+			float rage = GetEntPropFloat(client, Prop_Send, "m_flRageMeter");
+			SetEntPropFloat(client, Prop_Send, "m_flRageMeter", fMin(100.0, rage + (GetGameFrameTime() / SDKCall_GetHealRate(medigun)) * 100.0));
+		}
 	}
 	
 	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))	// CTFPlayer::DoTauntAttack
@@ -379,16 +382,6 @@ public void Client_TouchPost(int client, int toucher)
 		FRPlayer(client).ChangeToTeam();
 		SetEntProp(client, Prop_Send, "m_lifeState", LIFE_ALIVE);
 	}
-}
-
-public void Client_WeaponSwitch(int client, int weapon)
-{
-	g_WeaponSwitch = true;
-}
-
-public void Client_WeaponSwitchPost(int client, int weapon)
-{
-	g_WeaponSwitch = false;
 }
 
 public void Building_SpawnPost(int building)
