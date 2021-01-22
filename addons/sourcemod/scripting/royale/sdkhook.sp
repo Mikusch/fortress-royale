@@ -83,6 +83,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
 	}
+	else if (StrEqual(classname, "item_teamflag"))
+	{
+		SDKHook(entity, SDKHook_StartTouch, CaptureFlag_StartTouch);
+		SDKHook(entity, SDKHook_Touch, CaptureFlag_Touch);
+	}
 	else if (StrContains(classname, "prop_vehicle") == 0)
 	{
 		SDKHook(entity, SDKHook_Spawn, PropVehicle_Spawn);
@@ -532,6 +537,28 @@ public Action Rune_Spawn(int rune)
 	
 	//Never let rune despawn
 	SetEntData(rune, g_OffsetRuneShouldReposition, false);
+}
+
+public Action CaptureFlag_StartTouch(int entity, int toucher)
+{
+	char model[PLATFORM_MAX_PATH];
+	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
+	{
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+			PrintCenterText(toucher, "%t", "Hint_BottlePickup_WrongClass");
+	}
+}
+
+public Action CaptureFlag_Touch(int entity, int toucher)
+{
+	char model[PLATFORM_MAX_PATH];
+	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
+	{
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+			return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action MeteorShowerSpawner_Spawn(int entity)

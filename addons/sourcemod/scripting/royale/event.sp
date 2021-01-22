@@ -101,6 +101,18 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 	if (GameRules_GetProp("m_bInWaitingForPlayers"))
 		return;
 	
+	//Create player destruction logic for Demoman beer mechanic
+	int logic = CreateEntityByName("tf_logic_player_destruction");
+	if (IsValidEntity(logic))
+	{
+		DispatchKeyValue(logic, "prop_model_name", BOTTLE_PICKUP_MODEL);
+		DispatchKeyValue(logic, "prop_drop_sound", BOTTLE_DROP_SOUND);
+		DispatchKeyValue(logic, "prop_pickup_sound", BOTTLE_PICKUP_SOUND);
+		DispatchKeyValue(logic, "min_points", "32");
+		DispatchKeyValue(logic, "flag_reset_delay", "30");
+		DispatchSpawn(logic);
+	}
+	
 	//Stop previous round end music
 	EmitGameSoundToAll(GAMESOUND_WIN_MUSIC, _, SND_STOPLOOPING);
 	EmitGameSoundToAll(GAMESOUND_LOSE_MUSIC, _, SND_STOPLOOPING);

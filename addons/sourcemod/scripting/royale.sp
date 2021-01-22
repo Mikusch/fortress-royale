@@ -65,6 +65,12 @@
 
 #define SF_NORESPAWN	( 1 << 30 )
 
+#define BOTTLE_PICKUP_MODEL		"models/props_watergate/bottle_pickup.mdl"
+#define BOTTLE_PICKUP_MATERIAL	"materials/models/props_watergate/alien_beer_bottle.vmt"
+#define BOTTLE_PICKUP_TEXTURE	"materials/models/props_watergate/alien_beer_bottle.vtf"
+#define BOTTLE_DROP_SOUND		"vo/watergate/pickup_beer.mp3"
+#define BOTTLE_PICKUP_SOUND		"vo/watergate/drop_beer.mp3"
+
 const TFTeam TFTeam_Any = view_as<TFTeam>(-2);
 const TFTeam TFTeam_Alive = TFTeam_Red;
 const TFTeam TFTeam_Dead = TFTeam_Blue;
@@ -641,6 +647,13 @@ public void OnMapStart()
 	g_RoundState = FRRoundState_Waiting;
 	
 	RefreshEnable();
+	
+	//Player destruction logic handles precaching
+	AddModelToDownloadsTable(BOTTLE_PICKUP_MODEL);
+	AddFileToDownloadsTable(BOTTLE_PICKUP_MATERIAL);
+	AddFileToDownloadsTable(BOTTLE_PICKUP_TEXTURE);
+	AddFileToDownloadsTable(BOTTLE_DROP_SOUND);
+	AddFileToDownloadsTable(BOTTLE_PICKUP_SOUND);
 	
 	BattleBus_Precache();
 	Truce_Precache();

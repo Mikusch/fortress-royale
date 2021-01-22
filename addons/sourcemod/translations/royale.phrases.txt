@@ -80,6 +80,11 @@
 		"en"		"%%+forward%% SPEED UP %%+back%% SLOW DOWN %%+moveleft%% TURN LEFT %%+moveright%% TURN RIGHT"
 	}
 	
+	"Hint_BottlePickup_WrongClass"
+	{
+		"en"		"You need to be a Demoman to drink this!"
+	}
+	
 	"RoundState_NoWinner"
 	{
 		"en"		"Stalemate! You are all losers!"
