@@ -15,11 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#define MAX_COMMAND_LENGTH 1024
+
 enum struct ConVarInfo
 {
 	ConVar convar;
-	float value;
-	float defaultValue;
+	char value[MAX_COMMAND_LENGTH];
+	char initialValue[MAX_COMMAND_LENGTH];
 }
 
 static ArrayList g_ConVarInfo;
@@ -66,29 +68,29 @@ void ConVar_Init()
 	
 	g_ConVarInfo = new ArrayList(sizeof(ConVarInfo));
 	
-	ConVar_Add("mp_autoteambalance", 0.0);
-	ConVar_Add("mp_teams_unbalance_limit", 0.0);
-	ConVar_Add("mp_forcecamera", 0.0);
-	ConVar_Add("mp_friendlyfire", 1.0);
-	ConVar_Add("mp_respawnwavetime", 99999.0);
-	ConVar_Add("mp_waitingforplayers_time", 60.0);
-	ConVar_Add("sv_turbophysics", 0.0);
-	ConVar_Add("tf_allow_player_use", 1.0);
-	ConVar_Add("tf_avoidteammates", 0.0);
-	ConVar_Add("tf_dropped_weapon_lifetime", 99999.0);
-	ConVar_Add("tf_max_health_boost", 4.0);
-	ConVar_Add("tf_parachute_maxspeed_xy", 600.0);
-	ConVar_Add("tf_parachute_maxspeed_z", -200.0);
-	ConVar_Add("tf_spawn_glows_duration", 0.0);
-	ConVar_Add("tf_spells_enabled", 1.0);
-	ConVar_Add("tf_weapon_criticals", 0.0);
+	ConVar_Add("mp_autoteambalance", "0");
+	ConVar_Add("mp_teams_unbalance_limit", "0");
+	ConVar_Add("mp_forcecamera", "0");
+	ConVar_Add("mp_friendlyfire", "1");
+	ConVar_Add("mp_respawnwavetime", "99999.9");
+	ConVar_Add("mp_waitingforplayers_time", "60");
+	ConVar_Add("sv_turbophysics", "0");
+	ConVar_Add("tf_allow_player_use", "1");
+	ConVar_Add("tf_avoidteammates", "0");
+	ConVar_Add("tf_dropped_weapon_lifetime", "99999");
+	ConVar_Add("tf_max_health_boost", "3.0");
+	ConVar_Add("tf_parachute_maxspeed_xy", "600.0f");
+	ConVar_Add("tf_parachute_maxspeed_z", "-200.0f");
+	ConVar_Add("tf_spawn_glows_duration", "0");
+	ConVar_Add("tf_spells_enabled", "1");
+	ConVar_Add("tf_weapon_criticals", "0");
 }
 
-void ConVar_Add(const char[] name, float value)
+void ConVar_Add(const char[] name, const char[] value)
 {
 	ConVarInfo info;
 	info.convar = FindConVar(name);
-	info.value = value;
+	strcopy(info.value, sizeof(info.value), value);
 	g_ConVarInfo.PushArray(info);
 }
 
@@ -98,10 +100,10 @@ void ConVar_Enable()
 	{
 		ConVarInfo info;
 		g_ConVarInfo.GetArray(i, info);
-		info.defaultValue = info.convar.FloatValue;
+		info.convar.GetString(info.initialValue, sizeof(info.initialValue));
 		g_ConVarInfo.SetArray(i, info);
 		
-		info.convar.SetFloat(info.value);
+		info.convar.SetString(info.value);
 		info.convar.AddChangeHook(ConVar_OnChanged);
 	}
 }
@@ -114,7 +116,7 @@ void ConVar_Disable()
 		g_ConVarInfo.GetArray(i, info);
 		
 		info.convar.RemoveChangeHook(ConVar_OnChanged);
-		info.convar.SetFloat(info.defaultValue);
+		info.convar.SetString(info.initialValue);
 	}
 }
 
@@ -125,10 +127,9 @@ void ConVar_OnChanged(ConVar convar, const char[] oldValue, const char[] newValu
 	{
 		ConVarInfo info;
 		g_ConVarInfo.GetArray(index, info);
-		float value = StringToFloat(newValue);
 		
-		if (value != info.value)
-			info.convar.SetFloat(info.value);
+		if (!StrEqual(newValue, info.value))
+			info.convar.SetString(info.value);
 	}
 }
 
