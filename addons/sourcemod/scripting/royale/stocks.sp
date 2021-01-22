@@ -350,6 +350,13 @@ public void AddModelToDownloadsTable(const char[] model)
 	AddFileToDownloadsTable(fullPath);
 }
 
+public void AddSoundToDownloadsTable(const char[] sound)
+{
+	char fullPath[PLATFORM_MAX_PATH];
+	Format(fullPath, sizeof(fullPath), "sound/%s", sound);
+	AddFileToDownloadsTable(fullPath);
+}
+
 public bool Trace_DontHitEntity(int entity, int mask, any data)
 {
 	return entity != data;

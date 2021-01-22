@@ -652,8 +652,8 @@ public void OnMapStart()
 	AddModelToDownloadsTable(BOTTLE_PICKUP_MODEL);
 	AddFileToDownloadsTable(BOTTLE_PICKUP_MATERIAL);
 	AddFileToDownloadsTable(BOTTLE_PICKUP_TEXTURE);
-	AddFileToDownloadsTable(BOTTLE_DROP_SOUND);
-	AddFileToDownloadsTable(BOTTLE_PICKUP_SOUND);
+	AddSoundToDownloadsTable(BOTTLE_DROP_SOUND);
+	AddSoundToDownloadsTable(BOTTLE_PICKUP_SOUND);
 	
 	BattleBus_Precache();
 	Truce_Precache();
