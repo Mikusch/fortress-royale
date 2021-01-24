@@ -448,6 +448,7 @@ bool g_LoadSoundscript;
 bool g_ChangeTeamSilent;
 FRRoundState g_RoundState;
 int g_PlayerCount;
+int g_PlayerDestructionLogic = INVALID_ENT_REFERENCE;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 

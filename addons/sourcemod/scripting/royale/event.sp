@@ -110,7 +110,9 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		DispatchKeyValue(logic, "prop_pickup_sound", BOTTLE_PICKUP_SOUND);
 		DispatchKeyValue(logic, "min_points", "32");
 		DispatchKeyValue(logic, "flag_reset_delay", "30");
-		DispatchSpawn(logic);
+		
+		if (DispatchSpawn(logic))
+			g_PlayerDestructionLogic = EntIndexToEntRef(logic);
 	}
 	
 	//Stop previous round end music
