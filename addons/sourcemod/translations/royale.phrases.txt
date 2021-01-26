@@ -82,7 +82,7 @@
 	
 	"Hint_BottlePickup_WrongClass"
 	{
-		"en"		"You need to be a Demoman to drink this!"
+		"en"		"You need to be a Demoman to pick this up!"
 	}
 	
 	"RoundState_NoWinner"

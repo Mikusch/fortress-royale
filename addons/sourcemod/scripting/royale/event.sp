@@ -108,11 +108,16 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		DispatchKeyValue(logic, "prop_model_name", BOTTLE_PICKUP_MODEL);
 		DispatchKeyValue(logic, "prop_drop_sound", BOTTLE_DROP_SOUND);
 		DispatchKeyValue(logic, "prop_pickup_sound", BOTTLE_PICKUP_SOUND);
-		DispatchKeyValue(logic, "min_points", "32");
 		DispatchKeyValue(logic, "flag_reset_delay", "30");
+		SetEntProp(logic, Prop_Data, "m_nPointsPerPlayer", fr_bottle_points.IntValue + 1);	//Make sure the logic never fires PD win condition
 		
 		if (DispatchSpawn(logic))
+		{
+			SetVariantInt(fr_bottle_points.IntValue);
+			AcceptEntityInput(logic, "SetPointsOnPlayerDeath");
+			
 			g_PlayerDestructionLogic = EntIndexToEntRef(logic);
+		}
 	}
 	
 	//Stop previous round end music
