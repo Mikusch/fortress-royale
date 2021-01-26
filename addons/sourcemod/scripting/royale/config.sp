@@ -132,6 +132,8 @@ void Confg_GetMapFilepath(char[] filePath, int length)
 	//Start to stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
 	Format(tidyMapName, PLATFORM_MAX_PATH, "%s", nameParts[0]);
+	//Fail-safe
+	BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", tidyMapName);
 	
 	char filePathBuffer[PLATFORM_MAX_PATH];
 	
