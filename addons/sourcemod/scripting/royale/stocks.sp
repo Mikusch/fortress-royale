@@ -1216,3 +1216,22 @@ public Action Glow_SetTransmit(int glow, int client)
 	
 	return Plugin_Handled;
 }
+
+/**
+ * Counts the number of occurences of a character in a string.
+ *
+ * @param string        String.
+ * @param letter            Character to count.
+ * @return            The number of occurences of the character in the string.
+ */
+
+stock int CountCharInString(const char[] string, char letter) 
+{
+	int i = 0, count = 0;
+	
+	while (string[i] != '\0') 
+		if (string[i++] == letter)
+			count++;
+	
+	return count;
+} 

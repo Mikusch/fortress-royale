@@ -117,16 +117,35 @@ void Confg_GetMapFilepath(char[] filePath, int length)
 	GetCurrentMap(mapName, sizeof(mapName));
 	GetMapDisplayName(mapName, mapName, sizeof(mapName));
 	
+	int partsCount = CountCharInString(mapName, '_') + 1;
+	//The map has no prefix/suffix?
+	if (partsCount < 2)
+	{
+		BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", mapName);
+		return;
+	}
+	
 	//Split map prefix and first part of its name (e.g. pl_hightower)
-	char nameParts[2][PLATFORM_MAX_PATH];
-	ExplodeString(mapName, "_", nameParts, sizeof(nameParts), sizeof(nameParts[]));
+	char[][] nameParts = new char[partsCount][PLATFORM_MAX_PATH];
+	ExplodeString(mapName, "_", nameParts, partsCount, PLATFORM_MAX_PATH);
 	
-	//Stitch name parts together
+	//Start to stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
-	Format(tidyMapName, sizeof(tidyMapName), "%s_%s", nameParts[0], nameParts[1]);
+	Format(tidyMapName, PLATFORM_MAX_PATH, "%s", nameParts[0]);
 	
-	//Build file path
-	BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", tidyMapName);
+	char filePathBuffer[PLATFORM_MAX_PATH];
+	
+	for (int i = 1; i < partsCount; i++)
+	{
+		Format(tidyMapName, sizeof(tidyMapName), "%s_%s", tidyMapName, nameParts[i]);
+		
+		//Build file path
+		BuildPath(Path_SM, filePathBuffer, length, "configs/royale/maps/%s.cfg", tidyMapName);
+		
+		//We are trying to find the most specific config
+		if (FileExists(filePathBuffer))
+			Format(filePath, PLATFORM_MAX_PATH, "%s", filePathBuffer);
+	}
 }
 
 bool Config_HasMapFilepath()
