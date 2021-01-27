@@ -112,7 +112,7 @@ void Config_Save()
 }
 
 bool Config_GetMapFilepath(char[] filePath, int length)
-{	
+{
 	char mapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(mapName, sizeof(mapName));
 	GetMapDisplayName(mapName, mapName, sizeof(mapName));
