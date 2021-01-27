@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
- 
+ */ 
+
 void Config_Refresh()
 {
 	g_PrecacheWeapon.Clear();
@@ -27,7 +27,8 @@ void Config_Refresh()
 	Config_ReadMapConfig(filePath);
 	
 	//Load map specific config
-	if(Config_GetMapFilepath(filePath, sizeof(filePath)))
+	filePath[0] = '\0';
+	if (Config_GetMapFilepath(filePath, sizeof(filePath)))
 		Config_ReadMapConfig(filePath);
 	
 	//Build filepath for list of loot tables
@@ -140,7 +141,7 @@ bool Config_GetMapFilepath(char[] filePath, int length)
 			strcopy(filePath, length, filePathBuffer);
 	}
 	
-	if(!FileExists(filePath))
+	if (!FileExists(filePath))
 	{
 		LogError("Configuration file for map could not be found at '%s.cfg'", tidyMapName);
 		return false;
