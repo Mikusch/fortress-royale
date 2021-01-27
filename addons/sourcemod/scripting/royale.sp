@@ -40,6 +40,12 @@
 
 #define MODEL_EMPTY			"models/empty.mdl"
 
+#define BOTTLE_PICKUP_MODEL		"models/props_watergate/bottle_pickup.mdl"
+#define BOTTLE_PICKUP_MATERIAL	"materials/models/props_watergate/alien_beer_bottle.vmt"
+#define BOTTLE_PICKUP_TEXTURE	"materials/models/props_watergate/alien_beer_bottle.vtf"
+#define BOTTLE_DROP_SOUND		"vo/watergate/drop_beer.mp3"
+#define BOTTLE_PICKUP_SOUND		"vo/watergate/pickup_beer.mp3"
+
 #define CONFIG_MAXCHAR		256
 
 #define TICK_NEVER_THINK		-1.0
@@ -442,6 +448,7 @@ bool g_LoadSoundscript;
 bool g_ChangeTeamSilent;
 FRRoundState g_RoundState;
 int g_PlayerCount;
+int g_PlayerDestructionLogic = INVALID_ENT_REFERENCE;
 
 StringMap g_PrecacheWeapon;	//List of custom models precached by defindex
 
@@ -452,6 +459,7 @@ ConVar fr_fistsdamagemultiplier;
 ConVar fr_sectodeployparachute;
 ConVar fr_classfilter;
 ConVar fr_randomclass;
+ConVar fr_bottle_points;
 
 ConVar fr_zone_startdisplay;
 ConVar fr_zone_startdisplay_player;
@@ -641,6 +649,13 @@ public void OnMapStart()
 	g_RoundState = FRRoundState_Waiting;
 	
 	RefreshEnable();
+	
+	//Player destruction logic handles precaching
+	AddModelToDownloadsTable(BOTTLE_PICKUP_MODEL);
+	AddFileToDownloadsTable(BOTTLE_PICKUP_MATERIAL);
+	AddFileToDownloadsTable(BOTTLE_PICKUP_TEXTURE);
+	AddSoundToDownloadsTable(BOTTLE_DROP_SOUND);
+	AddSoundToDownloadsTable(BOTTLE_PICKUP_SOUND);
 	
 	BattleBus_Precache();
 	Truce_Precache();

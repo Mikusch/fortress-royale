@@ -49,7 +49,8 @@ void ConVar_Init()
 	fr_fistsdamagemultiplier = CreateConVar("fr_fistsdamagemultiplier", "0.62", "Starting fists damage multiplier", _, true, 0.0);
 	fr_sectodeployparachute = CreateConVar("fr_sectodeployparachute", "2", "Time in seconds to deploy parachute after ejecting from battle bus", _, true, 1.0);
 	fr_classfilter = CreateConVar("fr_classfilter", "1", "Enable class filtering, restricting weapon loots by classes. Disabling may cause several issues", _, true, 0.0, true, 1.0);
-	fr_randomclass = CreateConVar("fr_randomclass", "1", "If enabled, players will spawn as a random class", _, true, 0.0, true, 1.0);
+	fr_randomclass = CreateConVar("fr_randomclass", "0", "If enabled, players will spawn as a random class", _, true, 0.0, true, 1.0);
+	fr_bottle_points = CreateConVar("fr_bottle_points", "1", "How many points a bottle from fallen enemies contains, set to 0 to disable bottle drops");
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "Seconds from round start to start zone display", _, true, 0.0);
 	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1.0", "Extra seconds on every player from round start to start zone display", _, true, 0.0);

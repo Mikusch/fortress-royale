@@ -155,6 +155,10 @@ public Action Console_DropItem(int client, const char[] command, int args)
 		if (TF2_IsPlayerInCondition(client, g_RuneConds[i]))
 			return Plugin_Continue;
 	
+	//Drop item if the player has one
+	if (GetEntPropEnt(client, Prop_Send, "m_hItem") != -1)
+		return Plugin_Continue;
+	
 	//The following will be dropped (in that order):
 	//- current active weapon
 	//- wearables (can't be used as active weapon)

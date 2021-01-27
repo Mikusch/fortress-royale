@@ -83,6 +83,11 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_Spawn, Rune_Spawn);
 	}
+	else if (StrEqual(classname, "item_teamflag"))
+	{
+		SDKHook(entity, SDKHook_StartTouch, CaptureFlag_StartTouch);
+		SDKHook(entity, SDKHook_Touch, CaptureFlag_Touch);
+	}
 	else if (StrContains(classname, "prop_vehicle") == 0)
 	{
 		SDKHook(entity, SDKHook_Spawn, PropVehicle_Spawn);
@@ -186,6 +191,17 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	else
 		FRPlayer(victim).ChangeToSpectator();
 	
+	//Don't drop a beer bottle on death if the attacker wasn't a Demoman
+	//Done in OnTakeDamage because a player_death event hook fires too late (after CTFPlayer::Event_Killed)
+	if (0 < attacker <= MaxClients && IsClientInGame(attacker) && TF2_GetPlayerClass(attacker) != TFClass_DemoMan)
+	{
+		if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
+		{
+			SetVariantInt(0);
+			AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
+		}
+	}
+	
 	return action;
 }
 
@@ -195,6 +211,13 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 		FRPlayer(attacker).ChangeToTeam();
 	else
 		FRPlayer(victim).ChangeToTeam();
+	
+	//Reset any potential changes from pre-hook
+	if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
+	{
+		SetVariantInt(fr_bottle_points.IntValue);
+		AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
+	}
 }
 
 public void Client_PreThink(int client)
@@ -532,6 +555,28 @@ public Action Rune_Spawn(int rune)
 	
 	//Never let rune despawn
 	SetEntData(rune, g_OffsetRuneShouldReposition, false);
+}
+
+public Action CaptureFlag_StartTouch(int entity, int toucher)
+{
+	char model[PLATFORM_MAX_PATH];
+	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
+	{
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+			PrintCenterText(toucher, "%t", "Hint_BottlePickup_WrongClass");
+	}
+}
+
+public Action CaptureFlag_Touch(int entity, int toucher)
+{
+	char model[PLATFORM_MAX_PATH];
+	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
+	{
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+			return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }
 
 public Action MeteorShowerSpawner_Spawn(int entity)
