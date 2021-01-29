@@ -110,13 +110,13 @@ void BattleBus_NewPos(float diameter = 0.0)
 	g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
 	
 	//Check if it safe to go this path with nothing in the way
-	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_SOLID, RayType_Infinite);
+	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_PLAYERSOLID, RayType_Infinite);
 	if (TR_DidHit(trace))
 	{
 		float endPos[3];
 		TR_GetEndPosition(endPos, trace);
 		
-		//Something is in the way, try agian find new path
+		//Something is in the way, try again and find a new path
 		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentBattleBusConfig.diameter)
 			BattleBus_NewPos();
 	}
@@ -217,7 +217,7 @@ void BattleBus_EjectClient(int client)
 			float searchOrigin[3];
 			AddVectors(ejectOrigin, g_BattleBusEjectOffset[i], searchOrigin);
 			
-			TR_TraceHull(searchOrigin, searchOrigin, clientMins, clientMaxs, MASK_SOLID);
+			TR_TraceHull(searchOrigin, searchOrigin, clientMins, clientMaxs, MASK_PLAYERSOLID);
 			if (!TR_DidHit(null))
 			{
 				//Nothing was hit, safe to launch here
