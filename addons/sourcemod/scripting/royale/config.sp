@@ -27,8 +27,9 @@ void Config_Refresh()
 	Config_ReadMapConfig(filePath);
 	
 	//Load map specific config
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
-	Config_ReadMapConfig(filePath);
+	filePath[0] = '\0';
+	if (Config_GetMapFilepath(filePath, sizeof(filePath)))
+		Config_ReadMapConfig(filePath);
 	
 	//Build filepath for list of loot tables
 	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
@@ -79,7 +80,7 @@ void Config_ReadMapConfig(const char[] filePath)
 	}
 	else
 	{
-		LogError("Configuration file for map could not be found at '%s'", filePath);
+		LogError("Failed to read configuration file at '%s'", filePath);
 	}
 	
 	delete kv;
@@ -88,7 +89,7 @@ void Config_ReadMapConfig(const char[] filePath)
 void Config_Save()
 {
 	char filePath[PLATFORM_MAX_PATH];
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	Config_GetMapFilepath(filePath, sizeof(filePath));
 	
 	KeyValues kv = new KeyValues("MapConfig");
 	kv.ImportFromFile(filePath);
@@ -111,28 +112,50 @@ void Config_Save()
 	delete kv;
 }
 
-void Confg_GetMapFilepath(char[] filePath, int length)
+bool Config_GetMapFilepath(char[] filePath, int length)
 {
 	char mapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(mapName, sizeof(mapName));
 	GetMapDisplayName(mapName, mapName, sizeof(mapName));
 	
+	int partsCount = CountCharInString(mapName, '_') + 1;
+	
 	//Split map prefix and first part of its name (e.g. pl_hightower)
-	char nameParts[2][PLATFORM_MAX_PATH];
-	ExplodeString(mapName, "_", nameParts, sizeof(nameParts), sizeof(nameParts[]));
+	char[][] nameParts = new char[partsCount][PLATFORM_MAX_PATH];
+	ExplodeString(mapName, "_", nameParts, partsCount, PLATFORM_MAX_PATH);
 	
-	//Stitch name parts together
+	//Start to stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
-	Format(tidyMapName, sizeof(tidyMapName), "%s_%s", nameParts[0], nameParts[1]);
-	
+	char filePathBuffer[PLATFORM_MAX_PATH];
+	strcopy(tidyMapName, sizeof(tidyMapName), nameParts[0]);
 	//Build file path
-	BuildPath(Path_SM, filePath, length, "configs/royale/maps/%s.cfg", tidyMapName);
+	BuildPath(Path_SM, tidyMapName, sizeof(tidyMapName), "configs/royale/maps/%s", tidyMapName);
+	
+	for (int i = 1; i < partsCount; i++)
+	{
+		Format(tidyMapName, sizeof(tidyMapName), "%s_%s", tidyMapName, nameParts[i]);
+		
+		Format(filePathBuffer, sizeof(filePathBuffer), "%s.cfg", tidyMapName);
+		//We are trying to find the most specific config
+		if (FileExists(filePathBuffer))
+			strcopy(filePath, length, filePathBuffer);
+	}
+	
+	if (!FileExists(filePath))
+	{
+		LogError("Configuration file for map could not be found at '%s.cfg'", tidyMapName);
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 bool Config_HasMapFilepath()
 {
 	char filePath[PLATFORM_MAX_PATH];
-	Confg_GetMapFilepath(filePath, sizeof(filePath));
+	Config_GetMapFilepath(filePath, sizeof(filePath));
 	
 	KeyValues kv = new KeyValues("MapConfig");
 	bool result = kv.ImportFromFile(filePath);

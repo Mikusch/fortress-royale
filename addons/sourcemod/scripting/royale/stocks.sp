@@ -1214,3 +1214,14 @@ public Action Glow_SetTransmit(int glow, int client)
 	
 	return Plugin_Handled;
 }
+
+stock int CountCharInString(const char[] string, char letter) 
+{
+	int i, count;
+	
+	while (string[i] != '\0') 
+		if (string[i++] == letter)
+			count++;
+	
+	return count;
+} 
