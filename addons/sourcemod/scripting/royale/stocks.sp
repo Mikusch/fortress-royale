@@ -751,33 +751,35 @@ stock int TF2_CreateWeapon(int defindex, const char[] classnameTemp = NULL_STRIN
 	}
 	
 	int weapon = CreateEntityByName(classname);
-	if (IsValidEntity(weapon))
+	if (weapon == INVALID_ENT_REFERENCE)
 	{
-		SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", defindex);
-		SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
-		
-		SetEntProp(weapon, Prop_Send, "m_iEntityQuality", 6);
-		SetEntProp(weapon, Prop_Send, "m_iEntityLevel", 1);
-		
-		if (sapper)
-		{
-			SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
-			SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
-		}
-		
-		//Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) to 0
-		char netClass[32];
-		GetEntityNetClass(weapon, netClass, sizeof(netClass));
-		int offset = FindSendPropInfo(netClass, "m_iItemIDHigh");
-		
-		SetEntData(weapon, offset - 8, 0);	// m_iItemID
-		SetEntData(weapon, offset - 4, 0);	// m_iItemID
-		SetEntData(weapon, offset, 0);	// m_iItemIDHigh
-		SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
-		
-		DispatchSpawn(weapon);
+		LogError("Unable to create weapon defindex '%d' by classname '%s'", defindex, classname);
+		return INVALID_ENT_REFERENCE;
 	}
 	
+	SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", defindex);
+	SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
+	
+	SetEntProp(weapon, Prop_Send, "m_iEntityQuality", 6);
+	SetEntProp(weapon, Prop_Send, "m_iEntityLevel", 1);
+	
+	if (sapper)
+	{
+		SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
+		SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
+	}
+	
+	//Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) to 0
+	char netClass[32];
+	GetEntityNetClass(weapon, netClass, sizeof(netClass));
+	int offset = FindSendPropInfo(netClass, "m_iItemIDHigh");
+	
+	SetEntData(weapon, offset - 8, 0);	// m_iItemID
+	SetEntData(weapon, offset - 4, 0);	// m_iItemID
+	SetEntData(weapon, offset, 0);	// m_iItemIDHigh
+	SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
+	
+	DispatchSpawn(weapon);
 	return weapon;
 }
 
@@ -818,7 +820,10 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	//Dropped weapon doesn't like being spawn high in air, create on ground then teleport back after DispatchSpawn
 	TR_TraceRayFilter(origin, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_OnlyHitWorld);
 	if (!TR_DidHit())	//Outside of map
+	{
+		LogError("Attempted to create dropped weapon while outside of map");
 		return INVALID_ENT_REFERENCE;
+	}
 	
 	float originSpawn[3];
 	TR_GetEndPosition(originSpawn);
@@ -851,14 +856,17 @@ stock int TF2_CreateDroppedWeapon(int client, int fromWeapon, bool swap, const f
 	delete droppedWeapons;
 	
 	if (droppedWeapon == INVALID_ENT_REFERENCE)
+	{
+		LogError("Unable to create dropped weapon with model '%s' and defindex '%d'", model, index);
 		return INVALID_ENT_REFERENCE;
+	}
 	
 	DispatchSpawn(droppedWeapon);
 	
 	//Check if weapon is not marked for deletion after spawn, otherwise we may get bad physics model leading to a crash
 	if (GetEntProp(droppedWeapon, Prop_Data, "m_iEFlags") & EFL_KILLME)
 	{
-		LogError("Unable to create dropped weapon with model '%s' and def index '%d'", model, index);
+		LogError("Dropped weapon created with model '%s' and defindex '%d' may have bad physics model due to mark for deletion", model, index);
 		return INVALID_ENT_REFERENCE;
 	}
 	

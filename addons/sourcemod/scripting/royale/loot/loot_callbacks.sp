@@ -17,12 +17,17 @@
 
 public void LootCallback_CreateWeapon(int client, CallbackParams params, const float origin[3])
 {
-	int defindex = params.GetInt("defindex");
+	int defindex;
+	if (!params.GetIntEx("defindex", defindex))
+	{
+		LogError("Unable to find param 'defindex'");
+		return;
+	}
 	
 	//Make sure client is in correct team for weapon to have correct skin from CTFWeaponBase::GetSkin
 	FRPlayer(client).ChangeToTeam();
 	
-	int weapon = -1;
+	int weapon = INVALID_ENT_REFERENCE;
 	
 	//Find possible reskin to use
 	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
@@ -34,6 +39,7 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 		Address item = SDKCall_GetLoadoutItem(client, class, slot);
 		if (!item)
 			continue;
+		
 		int reskin = LoadFromAddress(item + view_as<Address>(g_OffsetItemDefinitionIndex), NumberType_Int16);
 		if (reskin == defindex)
 		{
@@ -57,56 +63,64 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 			}
 		}
 		
-		if (weapon != -1)
+		if (weapon != INVALID_ENT_REFERENCE)
 			break;
 	}
 	
 	//Can't find reskin, create default weapon
-	if (weapon == -1)
+	if (weapon == INVALID_ENT_REFERENCE)
 	{
 		weapon = TF2_CreateWeapon(defindex);
-		SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
+		if (weapon != INVALID_ENT_REFERENCE)
+			SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
 	}
 	
-	if (weapon > MaxClients)
+	if (weapon == INVALID_ENT_REFERENCE)
 	{
-		int ammo = -1;
-		if (!TF2_IsWearable(weapon))
-		{
-			SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
-			
-			ammo = TF2_GetWeaponAmmo(client, weapon);
-			TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
-		}
-		
-		char buffer[256];
-		if (params.GetString("attributes", buffer, sizeof(buffer)))
-		{
-			char attribBuffer[15][64];
-			int numAttribs = ExplodeString(buffer, ";", attribBuffer, sizeof(attribBuffer), sizeof(attribBuffer[]));
-			for (int i = 0; i < numAttribs; i++)
-			{
-				char singleAttribBuffer[2][64];
-				int count = ExplodeString(attribBuffer[i], ":", singleAttribBuffer, sizeof(singleAttribBuffer), sizeof(singleAttribBuffer[]));
-				if (count == 2)
-					TF2Attrib_SetByName(weapon, singleAttribBuffer[0], StringToFloat(singleAttribBuffer[1]));
-				else
-					LogError("Malformed attribute string '%s'", attribBuffer[i]);
-			}
-		}
-		
-		int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false, origin);
-		if (droppedWeapon == INVALID_ENT_REFERENCE)
-			LogError("Unable to create dropped weapon for def index '%d'", defindex);
-		
-		if (!TF2_IsWearable(weapon))
-			TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
-		
-		TeleportEntity(droppedWeapon, NULL_VECTOR, NULL_VECTOR, view_as<float>({ 0.0, 0.0, 0.0 }) );
-		RemoveEntity(weapon);
+		FRPlayer(client).ChangeToSpectator();
+		return;
 	}
+	
+	int ammo = -1;
+	if (!TF2_IsWearable(weapon))
+	{
+		SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
+		
+		ammo = TF2_GetWeaponAmmo(client, weapon);
+		TF2_SetWeaponAmmo(client, weapon, -1);	//Max ammo will be calculated later, need to be equipped from client
+	}
+	
+	char buffer[256];
+	if (params.GetString("attributes", buffer, sizeof(buffer)))
+	{
+		char attribBuffer[15][64];
+		int numAttribs = ExplodeString(buffer, ";", attribBuffer, sizeof(attribBuffer), sizeof(attribBuffer[]));
+		for (int i = 0; i < numAttribs; i++)
+		{
+			char singleAttribBuffer[2][64];
+			int count = ExplodeString(attribBuffer[i], ":", singleAttribBuffer, sizeof(singleAttribBuffer), sizeof(singleAttribBuffer[]));
+			if (count == 2)
+				TF2Attrib_SetByName(weapon, singleAttribBuffer[0], StringToFloat(singleAttribBuffer[1]));
+			else
+				LogError("Malformed attribute string '%s'", attribBuffer[i]);
+		}
+	}
+	
+	int droppedWeapon = TF2_CreateDroppedWeapon(client, weapon, false, origin);
 	
 	FRPlayer(client).ChangeToSpectator();
+	
+	if (droppedWeapon == INVALID_ENT_REFERENCE)
+	{
+		RemoveEntity(weapon);
+		return;
+	}
+	
+	if (!TF2_IsWearable(weapon))
+		TF2_SetWeaponAmmo(client, weapon, ammo);	//Set client ammo back to what it was
+	
+	TeleportEntity(droppedWeapon, NULL_VECTOR, NULL_VECTOR, view_as<float>({ 0.0, 0.0, 0.0 }) );
+	RemoveEntity(weapon);
 }
 
 public bool LootCallback_ClassWeapon(CallbackParams params, TFClassType class)
