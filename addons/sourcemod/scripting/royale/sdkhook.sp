@@ -562,7 +562,7 @@ public Action CaptureFlag_StartTouch(int entity, int toucher)
 	char model[PLATFORM_MAX_PATH];
 	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
 	{
-		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") == -1)
 			PrintCenterText(toucher, "%t", "Hint_BottlePickup_WrongClass");
 	}
 }
