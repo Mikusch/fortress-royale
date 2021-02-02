@@ -29,6 +29,7 @@ static char g_SpectatorClassnames[][] = {
 	"tf_weapon_rocketlauncher_fireball",//CBaseCombatWeapon::SecondaryAttack
 	"tf_weapon_sniperrifle",			//CTFPlayer::FireBullet
 	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
+	"tf_weapon_fists"					//CTFWeaponBaseMelee::DoMeleeDamage
 };
 
 static char g_EnemyTeamClassnames[][] = {
