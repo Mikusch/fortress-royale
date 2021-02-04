@@ -122,9 +122,6 @@ int Loot_SpawnCrateInWorld(LootCrate loot, EntityOutput callback, bool physics =
 			if (physics)
 				AcceptEntityInput(crate, "EnableMotion");
 			
-			if (IsEntityStuck(crate))
-				LogError("Entity crate at origin '%.0f %.0f %.0f' is stuck inside world or entity, possible crash incoming", loot.origin[0], loot.origin[1], loot.origin[2]);
-			
 			return EntIndexToEntRef(crate);
 		}
 	}
