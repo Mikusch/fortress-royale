@@ -118,7 +118,7 @@ void BattleBus_NewPos(float diameter = 0.0)
 		TR_GetEndPosition(endPos, trace);
 		
 		//Something is in the way, try again and find a new path
-		if (GetVectorDistance(g_BattleBusOrigin, endPos) < g_CurrentBattleBusConfig.diameter)
+		if (GetVectorDistance(g_BattleBusOrigin, endPos) < diameter)
 			BattleBus_NewPos(diameter);
 	}
 	
