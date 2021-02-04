@@ -720,12 +720,12 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (!g_Enabled)
 		return;
 	
-	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
+	if (BattleBus_PlayerAllowedToDrop(client))
 	{
 		if (buttons & IN_ATTACK3)
 			BattleBus_EjectClient(client);
 		else
-			buttons = 0;	//Don't allow client in battle bus process any other buttons
+			buttons = 0;	//Don't allow player in battle bus to press any other buttons
 	}
 	else if (buttons & IN_ATTACK || buttons & IN_ATTACK2)
 	{
