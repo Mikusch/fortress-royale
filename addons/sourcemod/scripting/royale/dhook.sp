@@ -287,7 +287,6 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 		//eyeball_boss uses InSameTeam check but obj_sentrygun owner is itself
 		SetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity", GetEntPropEnt(entity, Prop_Send, "m_hBuilder"));
 	}
-	
 	else if (StrEqual(classname, "player"))
 	{
 		if (IsPlayerAlive(entity) && SDKCall_GetNextThink(entity, "RegenThink") == TICK_NEVER_THINK)	// CTFPlayer::RegenThink
@@ -298,7 +297,6 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 			FRPlayer(entity).ChangeToUnknown();
 		}
 	}
-	
 	else if (StrEqual(classname, "tf_weapon_spellbook"))	// CTFJar::TossJarThink
 	{
 		g_ThinkFunction = ThinkFunction_TossJarThink;

@@ -287,20 +287,29 @@ public void Client_PostThink(int client)
 		//Mannpower have increased melee damage, and even bigger for knockout powerup
 		GameRules_SetProp("m_bPowerupMode", true);
 		
-		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		int building = MaxClients + 1;
+		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
 		{
-			//Dont allow repair and upgrade his building if using bare hands
-			FRPlayer(client).ChangeBuildingsToSpectator();
-			
-			if (StrEqual(classname, "tf_weapon_robot_arm"))
+			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") != client)
 			{
-				//Dont allow triple combo punch from gunslinger hand
-				static int offsetComboCount = -1;
-				if (offsetComboCount == -1)
-					offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
-				
-				SetEntData(weapon, offsetComboCount, 0);
+				//Move enemy buildings to spectator to deal damage
+				FREntity(building).ChangeToSpectator();
 			}
+			else if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+			{
+				//Dont allow repair and upgrade his building if using bare hands
+				FREntity(building).ChangeToSpectator();
+			}
+		}
+		
+		if (StrEqual(classname, "tf_weapon_robot_arm") && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		{
+			//Dont allow triple combo punch from gunslinger hand
+			static int offsetComboCount = -1;
+			if (offsetComboCount == -1)
+				offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
+			
+			SetEntData(weapon, offsetComboCount, 0);
 		}
 	}
 	
@@ -385,8 +394,21 @@ public void Client_PostThinkPost(int client)
 		GameRules_SetProp("m_bPowerupMode", false);
 		
 		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		if (weapon != -1 && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-			FRPlayer(client).ChangeBuildingsToTeam();
+		
+		int building = MaxClients + 1;
+		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		{
+			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") != client)
+			{
+				//Move enemy buildings to spectator to deal damage
+				FREntity(building).ChangeToTeam();
+			}
+			else if (weapon != INVALID_ENT_REFERENCE && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+			{
+				//Dont allow repair and upgrade his building if using bare hands
+				FREntity(building).ChangeToTeam();
+			}
+		}
 	}
 }
 
