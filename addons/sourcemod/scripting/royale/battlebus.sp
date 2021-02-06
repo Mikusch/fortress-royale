@@ -326,9 +326,14 @@ void BattleBus_SpawnLootBus()
 	}
 }
 
-bool BattleBus_PlayerAllowedToDrop(int client)
+bool BattleBus_AllowedToDrop()
 {
-	return FRPlayer(client).PlayerState == PlayerState_BattleBus && GetGameTime() > g_BattleBusSpawnTime + 0.7;
+	return GetGameTime() > g_BattleBusSpawnTime + 0.7;
+}
+
+bool BattleBus_IsActive()
+{
+	return GetGameTime() <= g_BattleBusSpawnTime + g_CurrentBattleBusConfig.time;
 }
 
 public Action BattleBus_SpawnLootCrate(Handle timer, int bus)

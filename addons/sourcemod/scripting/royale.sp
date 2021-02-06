@@ -720,12 +720,20 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (!g_Enabled)
 		return;
 	
-	if (BattleBus_PlayerAllowedToDrop(client))
+	//Scout falling damage immunity
+	GameRules_SetProp("m_bPowerupMode", true);
+	
+	if (FRPlayer(client).PlayerState == PlayerState_BattleBus && BattleBus_AllowedToDrop())
 	{
 		if (buttons & IN_ATTACK3)
 			BattleBus_EjectClient(client);
 		else
 			buttons = 0;	//Don't allow player in battle bus to press any other buttons
+	}
+	else if (buttons & IN_JUMP && FRPlayer(client).PlayerState == PlayerState_Parachute && TF2_IsPlayerInCondition(client, TFCond_Parachute) && BattleBus_IsActive())
+	{
+		//Don't allow closing parachute while battle bus is still active
+		buttons &= ~IN_JUMP;
 	}
 	else if (buttons & IN_ATTACK || buttons & IN_ATTACK2)
 	{
@@ -737,6 +745,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		FRPlayer(client).InUse = false;
 		buttons |= IN_USE;
 	}
+}
+
+public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float vel[3], const float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, const int mouse[2])
+{
+	if (!g_Enabled)
+		return;
+	
+	GameRules_SetProp("m_bPowerupMode", false);
 }
 
 public Action OnClientCommandKeyValues(int client, KeyValues kv)
