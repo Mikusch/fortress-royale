@@ -113,6 +113,11 @@
 				"linux"		"9"
 				"windows"	"9"
 			}
+			"CBaseServerVehicle::IsPassengerVisible"
+			{
+				"linux"		"10"
+				"windows"	"10"
+			}
 			"CBaseServerVehicle::HandleEntryExitFinish"
 			{
 				"linux"		"22"
@@ -367,6 +372,20 @@
 					"pPassenger"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CBaseServerVehicle::IsPassengerVisible"
+			{
+				"offset"	"CBaseServerVehicle::IsPassengerVisible"
+				"hooktype"	"raw"
+				"return"	"bool"
+				"this"		"address"
+				"arguments"
+				{
+					"nRole"
+					{
+						"type"	"int"
 					}
 				}
 			}
