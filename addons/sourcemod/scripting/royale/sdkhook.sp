@@ -194,14 +194,8 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	
 	//Don't drop a beer bottle on death if the attacker wasn't a Demoman
 	//Done in OnTakeDamage because a player_death event hook fires too late (after CTFPlayer::Event_Killed)
-	if (0 < attacker <= MaxClients && IsClientInGame(attacker) && TF2_GetPlayerClass(attacker) != TFClass_DemoMan)
-	{
-		if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
-		{
-			SetVariantInt(0);
-			AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
-		}
-	}
+	if (!(0 < attacker <= MaxClients && IsClientInGame(attacker)) || TF2_GetPlayerClass(attacker) != TFClass_DemoMan)
+		SetBottlePoints(0);
 	
 	return action;
 }
@@ -214,11 +208,7 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 		FRPlayer(victim).ChangeToTeam();
 	
 	//Reset any potential changes from pre-hook
-	if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
-	{
-		SetVariantInt(fr_bottle_points.IntValue);
-		AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
-	}
+	SetBottlePoints(fr_bottle_points.IntValue);
 }
 
 public void Client_PreThink(int client)

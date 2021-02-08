@@ -910,6 +910,15 @@ bool TryToStartRound()
 	return true;
 }
 
+void SetBottlePoints(int value)
+{
+	if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
+	{
+		SetVariantInt(value);
+		AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
+	}
+}
+
 public Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
 {
 	RemoveEntity(caller);
