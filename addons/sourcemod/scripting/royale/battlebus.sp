@@ -207,11 +207,6 @@ void BattleBus_EjectClient(int client)
 	if (bus == INVALID_ENT_REFERENCE)
 		return;
 	
-	//If player havent selected a class, pick random class for em
-	//this is so that player can actually spawn into map, otherwise nothing happens
-	if (view_as<TFClassType>(GetEntProp(client, Prop_Send, "m_iDesiredPlayerClass")) == TFClass_Unknown)
-		SetEntProp(client, Prop_Send, "m_iDesiredPlayerClass", GetRandomInt(view_as<int>(TFClass_Scout), view_as<int>(TFClass_Engineer)));
-	
 	//Respawn into alive team
 	FRPlayer(client).PlayerState = PlayerState_Parachute;
 	TF2_ChangeClientTeamSilent(client, TFTeam_Alive);
