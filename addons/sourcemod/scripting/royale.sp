@@ -912,7 +912,7 @@ bool TryToStartRound()
 
 void SetBottlePoints(int value)
 {
-	if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
+	if (IsValidEntity(g_PlayerDestructionLogic))
 	{
 		SetVariantInt(value);
 		AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
