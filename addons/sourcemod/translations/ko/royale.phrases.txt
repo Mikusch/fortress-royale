@@ -2,12 +2,12 @@
 {
 	"BattleBus_HowToDrop"
 	{
-		"ko"		"%%+attack3%% 를 눌러 전투에 참가하십시오!"
+		"ko"		"%%+attack3%% 키(기본 마우스 휠 클릭)을 눌러 버스에서 내리고 착지하세요."
 	}
 	"BattleBus_SecToDeployParachute"
 	{
 		"#format"	"{1:d}"
-		"ko"		"{1} 초 후에 자동으로 낙하산이 펴집니다."
+		"ko"		"{1} 초 후에 자동으로 낙하산이 펼쳐집니다."
 	}
 	"BattleBus_ParachuteDeployed"
 	{
@@ -15,7 +15,7 @@
 	}
 	"BattleBus_IncomingCrate"
 	{
-		"ko"		"보급상자 투하중!"
+		"ko"		"보급상자가 투하 중 입니다!"
 	}
 	
 	"Command_VehicleUsage"
@@ -25,7 +25,7 @@
 	"Command_VehicleCantFindName"
 	{
 		"#format"	"{1:s}"
-		"ko"		"'{1}' 이름으로 된 차량을 찾을 수 없습니다."
+		"ko"		"'{1}' 이라는 이름의 차량을 찾을 수 없습니다."
 	}
 	
 	"Editor_Title"
@@ -34,7 +34,7 @@
 	}
 	"Editor_NotLookingAtAny"
 	{
-		"ko"		"이 기능은 아무 아이템이나 차량을 바라보고 사용해야합니다."
+		"ko"		"아이템이나 차량을 바라보고 사용해야합니다."
 	}
 	"Editor_Delete"
 	{
@@ -72,41 +72,41 @@
 	
 	"Hint_VehicleKeys_Car"
 	{
-		"ko"		"%%+speed%% 부스터 %%+jump%% 핸드브레이크"
+		"ko"		"%%+speed%% 키로 가속 하고  %%+jump%% 키로 브레이크 합니다."
 	}
 	
 	"Hint_VehicleKeys_Airboat"
 	{
-		"ko"		"%%+forward%% 속력 상승 %%+back%% 속력 감소 %%+moveleft%% 좌회전 %%+moveright%% 우회전"
+		"ko"		"%%+forward%% 키로 가속 하고 %%+back%% 키로 감속 합니다. %%+moveleft%% 키와 %%+moveright%% 키로 좌우 방향을 조절합니다."
 	}
 	
 	"Hint_BottlePickup_WrongClass"
 	{
-		"ko"		"이 아이템을 들기 위해서는 데모맨 클래스여야 합니다!"
+		"ko"		"이 아이템은 데모맨만 획득 할 수 있습니다!"
 	}
 	
 	"RoundState_NoWinner"
 	{
-		"ko"		"무승부! 모두가 패배자 입니다!"
+		"ko"		"무승부! 모두가 패배!"
 	}
 	"RoundState_Winner"
 	{
 		"#format"	"{1:N},{2:d}"
-		"ko"		"{1} 이(가) {2} 명을 제거하며 이번 라운드에서 우승했습니다!"
+		"ko"		"라운드 승리: {1} | {2} 명의 플레이어를 죽이고 승리했습니다!"
 	}
 	"RoundState_MostKills_One"
 	{
 		"#format"	"{1:N},{2:d}"
-		"ko"		"{1} 이(가) {2} 명을 제거하며 이번 라운드의 최고의 킬러가 되었습니다!"
+		"ko"		"최다 킬: {1} | {2} 명을 죽이고 이번 라운드의 최다 킬 수를 기록했습니다!"
 	}
 	"RoundState_MostKills_Many"
 	{
 		"#format"	"{1:s},{2:N},{3:d}"
-		"ko"		"{1} 와(과) {2} 이(가) {3} 명을 제거하며 이번 라운드의 최고의 킬러가 되었습니다!"
+		"ko"		"최다 킬: {1} , {2} | {3} 명을 죽이고 이번 라운드의 최다 킬 수를 기록했습니다!"
 	}
 	
 	"Zone_ShrinkAlert"
 	{
-		"ko"		"자기장이 줄어들고 있습니다, 어서 움직이세요!"
+		"ko"		"자기장이 좁혀지기 시작했습니다. 자기장 범위 밖에 있으면 큰 피해를 입습니다."
 	}
 }
