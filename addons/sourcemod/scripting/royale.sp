@@ -854,7 +854,7 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	if (condition == TFCond_Disguising)
 		SetEntProp(client, Prop_Send, "m_nDesiredDisguiseTeam", TF2_GetClientTeam(client));
 	
-	if (TF2_IsRuneCondition(condition))
+	if (TF2_IsRuneCondition(condition) && TF2_GetPlayerClass(client) != TFClass_Spy)
 		SetEntProp(client, Prop_Send, "m_bGlowEnabled", true);
 }
 
@@ -874,7 +874,7 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 		if (condition == g_VsibleConds[i])
 			FRPlayer(client).VisibleCond--;
 	
-	if (TF2_IsRuneCondition(condition))
+	if (TF2_IsRuneCondition(condition) && TF2_GetPlayerClass(client) != TFClass_Spy)
 		SetEntProp(client, Prop_Send, "m_bGlowEnabled", false);
 }
 
