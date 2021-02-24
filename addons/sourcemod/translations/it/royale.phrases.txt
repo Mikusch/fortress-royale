@@ -1,1 +1,112 @@
-
+"Phrases"
+{
+	"BattleBus_HowToDrop"
+	{
+		"it"		"%%+attack3%% SALTA IN BATTAGLIA"
+	}
+	"BattleBus_SecToDeployParachute"
+	{
+		"#format"	"{1:d}"
+		"it"		"{1} secondi fino al rilascio automatico del paracadute"
+	}
+	"BattleBus_ParachuteDeployed"
+	{
+		"it"		"Aperto il paracadute"
+	}
+	"BattleBus_IncomingCrate"
+	{
+		"it"		"Cassa di rifornimenti Mannpower in arrivo!"
+	}
+	
+	"Command_VehicleUsage"
+	{
+		"it"		"Utilizzo: sm_vehicle [config name]"
+	}
+	"Command_VehicleCantFindName"
+	{
+		"#format"	"{1:s}"
+		"it"		"Impossibile trovare il nome del veiocolo '{1}'"
+	}
+	
+	"Editor_Title"
+	{
+		"it"		"Menu Editor"
+	}
+	"Editor_NotLookingAtAny"
+	{
+		"it"		"Al momento non stai guardando a nessuna cassa o veicolo"
+	}
+	"Editor_Delete"
+	{
+		"it"		"Elimina questo elemento"
+	}
+	"Editor_Move"
+	{
+		"it"		"Muovi questo elemento"
+	}
+	"Editor_CreateCrate"
+	{
+		"it"		"Crea una cassa"
+	}
+	"Editor_CreateVehicle"
+	{
+		"it"		"Crea un nuovo veicolo"
+	}
+	"Editor_Place"
+	{
+		"it"		"Posiziona questo oggetto"
+	}
+	"Editor_Save"
+	{
+		"it"		"Salva ad un file KeyValues"
+	}
+	"Editor_Prefab"
+	{
+		"#format"	"{1:s}"
+		"it"		"Prefab: {1}"
+	}
+	"Editor_Prefab_Title"
+	{
+		"it"		"Editor Prefab"
+	}
+	
+	"Hint_VehicleKeys_Car"
+	{
+		"it"		"%%+speed%% TURBO %%+jump%% FRENA"
+	}
+	
+	"Hint_VehicleKeys_Airboat"
+	{
+		"it"		"%%+forward%% ACCELERA %%+back%% RALLENTA %%+moveleft%% GIRA A SINISTRA %%+moveright%% GIRA A DESTRA"
+	}
+	
+	"Hint_BottlePickup_WrongClass"
+	{
+		"it"		"Devi essere un demolitore per raccogliere questo!"
+	}
+	
+	"RoundState_NoWinner"
+	{
+		"it"		"Stallo! Siete tutti dei perdenti!"
+	}
+	"RoundState_Winner"
+	{
+		"#format"	"{1:N},{2:d}"
+		"it"		"{1} ha vinto questo round con {2} eliminazione/i!"
+	}
+	"RoundState_MostKills_One"
+	{
+		"#format"	"{1:N},{2:d}"
+		"it"		"{1} è il miglior assassino con {2} eliminazione/i in questo round!"
+	}
+	"RoundState_MostKills_Many"
+	{
+		"#format"	"{1:s},{2:N},{3:d}"
+		"it"		"{1} e {2} sono i migliori assassini con {3} eliminazione/i in questo round!"
+	}
+	
+	"Zone_ShrinkAlert"
+	{
+		"it"		"La zona di morte si sta stringendo, muoviti!"
+	}
+}
