@@ -25,7 +25,7 @@
 	"Command_VehicleCantFindName"
 	{
 		"#format"	"{1:s}"
-		"it"		"Impossibile trovare il nome del veiocolo '{1}'"
+		"it"		"Impossibile trovare il nome del veicolo '{1}'"
 	}
 	
 	"Editor_Title"
@@ -54,7 +54,7 @@
 	}
 	"Editor_Place"
 	{
-		"it"		"Posiziona questo oggetto"
+		"it"		"Posiziona questo elemento"
 	}
 	"Editor_Save"
 	{
