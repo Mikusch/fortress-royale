@@ -42,6 +42,7 @@ static DynamicHook g_DHookGetLiveTime;
 static DynamicHook g_DHookStartBuilding;
 static DynamicHook g_DHookGetBaseHealth;
 static DynamicHook g_DHookSetPassenger;
+static DynamicHook g_DHookIsPassengerVisible;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
@@ -72,6 +73,7 @@ void DHook_Init(GameData gamedata)
 	g_DHookStartBuilding = DHook_CreateVirtual(gamedata, "CBaseObject::StartBuilding");
 	g_DHookGetBaseHealth = DHook_CreateVirtual(gamedata, "CBaseObject::GetBaseHealth");
 	g_DHookSetPassenger = DHook_CreateVirtual(gamedata, "CBaseServerVehicle::SetPassenger");
+	g_DHookIsPassengerVisible = DHook_CreateVirtual(gamedata, "CBaseServerVehicle::IsPassengerVisible");
 }
 
 static void DHook_CreateDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
@@ -97,7 +99,7 @@ static DynamicHook DHook_CreateVirtual(GameData gamedata, const char[] name)
 	DynamicHook hook = DynamicHook.FromConf(gamedata, name);
 	if (!hook)
 		LogError("Failed to create virtual: %s", name);
-
+	
 	return hook;
 }
 
@@ -179,7 +181,8 @@ void DHook_UnhookClient(int client)
 
 void DHook_HookVehicle(int vehicle)
 {
-	g_DHookSetPassenger.HookRaw(Hook_Pre, GetServerVehicle(vehicle), DHook_SetPassenger);
+	g_DHookSetPassenger.HookRaw(Hook_Pre, GetServerVehicle(vehicle), DHook_SetPassengerPre);
+	g_DHookIsPassengerVisible.HookRaw(Hook_Post, GetServerVehicle(vehicle), DHook_IsPassengerVisiblePre);
 }
 
 void DHook_OnEntityCreated(int entity, const char[] classname)
@@ -287,7 +290,6 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 		//eyeball_boss uses InSameTeam check but obj_sentrygun owner is itself
 		SetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity", GetEntPropEnt(entity, Prop_Send, "m_hBuilder"));
 	}
-	
 	else if (StrEqual(classname, "player"))
 	{
 		if (IsPlayerAlive(entity) && SDKCall_GetNextThink(entity, "RegenThink") == TICK_NEVER_THINK)	// CTFPlayer::RegenThink
@@ -298,7 +300,6 @@ public MRESReturn DHook_PhysicsDispatchThinkPre(int entity)
 			FRPlayer(entity).ChangeToUnknown();
 		}
 	}
-	
 	else if (StrEqual(classname, "tf_weapon_spellbook"))	// CTFJar::TossJarThink
 	{
 		g_ThinkFunction = ThinkFunction_TossJarThink;
@@ -638,7 +639,7 @@ public MRESReturn DHook_GetBaseHealthPost(int entity, DHookReturn ret)
 	return MRES_Supercede;
 }
 
-public MRESReturn DHook_SetPassenger(Address vehicle, DHookParam params)
+public MRESReturn DHook_SetPassengerPre(Address vehicle, DHookParam params)
 {
 	if (!params.IsNull(2))
 	{
@@ -650,4 +651,10 @@ public MRESReturn DHook_SetPassenger(Address vehicle, DHookParam params)
 		if (client != -1)
 			SetEntProp(client, Prop_Data, "m_bDrawViewmodel", true);
 	}
+}
+
+public MRESReturn DHook_IsPassengerVisiblePre(Address vehicle, DHookReturn ret)
+{
+	ret.Value = true;
+	return MRES_Supercede;
 }

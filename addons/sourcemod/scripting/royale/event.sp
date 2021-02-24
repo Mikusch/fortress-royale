@@ -113,10 +113,9 @@ public Action Event_RoundStart(Event event, const char[] name, bool dontBroadcas
 		
 		if (DispatchSpawn(logic))
 		{
-			SetVariantInt(fr_bottle_points.IntValue);
-			AcceptEntityInput(logic, "SetPointsOnPlayerDeath");
-			
 			g_PlayerDestructionLogic = EntIndexToEntRef(logic);
+			
+			SetBottlePoints(fr_bottle_points.IntValue);
 		}
 	}
 	

@@ -19,7 +19,11 @@ void Vehicles_Init()
 {
 	//Load common vehicle sounds
 	if (g_LoadSoundscript)
+	{
+#if defined _loadsoundscript_included
 		LoadSoundScript("scripts/game_sounds_vehicles.txt");
+#endif
+	}
 }
 
 void Vehicles_SetupFinished()

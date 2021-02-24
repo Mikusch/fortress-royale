@@ -29,6 +29,8 @@ static char g_SpectatorClassnames[][] = {
 	"tf_weapon_rocketlauncher_fireball",//CBaseCombatWeapon::SecondaryAttack
 	"tf_weapon_sniperrifle",			//CTFPlayer::FireBullet
 	"tf_weapon_knife",					//CTFKnife::PrimaryAttack
+	"tf_weapon_fists",					//CTFWeaponBaseMelee::DoMeleeDamage
+	"tf_weapon_stickbomb",				//CTFStickBomb::Smack
 };
 
 static char g_EnemyTeamClassnames[][] = {
@@ -193,14 +195,8 @@ public Action Client_OnTakeDamage(int victim, int &attacker, int &inflictor, flo
 	
 	//Don't drop a beer bottle on death if the attacker wasn't a Demoman
 	//Done in OnTakeDamage because a player_death event hook fires too late (after CTFPlayer::Event_Killed)
-	if (0 < attacker <= MaxClients && IsClientInGame(attacker) && TF2_GetPlayerClass(attacker) != TFClass_DemoMan)
-	{
-		if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
-		{
-			SetVariantInt(0);
-			AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
-		}
-	}
+	if (!(0 < attacker <= MaxClients && IsClientInGame(attacker)) || TF2_GetPlayerClass(attacker) != TFClass_DemoMan)
+		SetBottlePoints(0);
 	
 	return action;
 }
@@ -213,11 +209,7 @@ public void Client_OnTakeDamagePost(int victim, int attacker, int inflictor, flo
 		FRPlayer(victim).ChangeToTeam();
 	
 	//Reset any potential changes from pre-hook
-	if (g_PlayerDestructionLogic != INVALID_ENT_REFERENCE)
-	{
-		SetVariantInt(fr_bottle_points.IntValue);
-		AcceptEntityInput(g_PlayerDestructionLogic, "SetPointsOnPlayerDeath");
-	}
+	SetBottlePoints(fr_bottle_points.IntValue);
 }
 
 public void Client_PreThink(int client)
@@ -286,20 +278,29 @@ public void Client_PostThink(int client)
 		//Mannpower have increased melee damage, and even bigger for knockout powerup
 		GameRules_SetProp("m_bPowerupMode", true);
 		
-		if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		int building = MaxClients + 1;
+		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
 		{
-			//Dont allow repair and upgrade his building if using bare hands
-			FRPlayer(client).ChangeBuildingsToSpectator();
-			
-			if (StrEqual(classname, "tf_weapon_robot_arm"))
+			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") != client)
 			{
-				//Dont allow triple combo punch from gunslinger hand
-				static int offsetComboCount = -1;
-				if (offsetComboCount == -1)
-					offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
-				
-				SetEntData(weapon, offsetComboCount, 0);
+				//Move enemy buildings to spectator to deal damage
+				FREntity(building).ChangeToSpectator();
 			}
+			else if (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+			{
+				//Dont allow repair and upgrade his building if using bare hands
+				FREntity(building).ChangeToSpectator();
+			}
+		}
+		
+		if (StrEqual(classname, "tf_weapon_robot_arm") && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		{
+			//Dont allow triple combo punch from gunslinger hand
+			static int offsetComboCount = -1;
+			if (offsetComboCount == -1)
+				offsetComboCount = FindSendPropInfo("CTFRobotArm", "m_hRobotArm") + 4;	// m_iComboCount
+			
+			SetEntData(weapon, offsetComboCount, 0);
 		}
 	}
 	
@@ -384,8 +385,21 @@ public void Client_PostThinkPost(int client)
 		GameRules_SetProp("m_bPowerupMode", false);
 		
 		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		if (weapon != -1 && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
-			FRPlayer(client).ChangeBuildingsToTeam();
+		
+		int building = MaxClients + 1;
+		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		{
+			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") != client)
+			{
+				//Move enemy buildings to spectator to deal damage
+				FREntity(building).ChangeToTeam();
+			}
+			else if (weapon != INVALID_ENT_REFERENCE && GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+			{
+				//Dont allow repair and upgrade his building if using bare hands
+				FREntity(building).ChangeToTeam();
+			}
+		}
 	}
 }
 
@@ -562,7 +576,7 @@ public Action CaptureFlag_StartTouch(int entity, int toucher)
 	char model[PLATFORM_MAX_PATH];
 	if (GetEntPropString(entity, Prop_Data, "m_ModelName", model, sizeof(model)) > 0 && StrEqual(model, BOTTLE_PICKUP_MODEL))
 	{
-		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan)
+		if (0 < toucher <= MaxClients && TF2_GetPlayerClass(toucher) != TFClass_DemoMan && GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity") == -1)
 			PrintCenterText(toucher, "%t", "Hint_BottlePickup_WrongClass");
 	}
 }
