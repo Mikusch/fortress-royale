@@ -51,6 +51,7 @@ void ConVar_Init()
 	fr_classfilter = CreateConVar("fr_classfilter", "1", "Enable class filtering, restricting weapon loots by classes. Disabling may cause several issues", _, true, 0.0, true, 1.0);
 	fr_randomclass = CreateConVar("fr_randomclass", "0", "If enabled, players will spawn as a random class", _, true, 0.0, true, 1.0);
 	fr_bottle_points = CreateConVar("fr_bottle_points", "1", "How many points a bottle from fallen enemies contains, set to 0 to disable bottle drops");
+	fr_multiwearable = CreateConVar("fr_multiwearable", "0", "Allow equip multiple wearables in same slot with weapons", _, true, 0.0, true, 1.0);
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "Seconds from round start to start zone display", _, true, 0.0);
 	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1.0", "Extra seconds on every player from round start to start zone display", _, true, 0.0);

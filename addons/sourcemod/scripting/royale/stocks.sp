@@ -436,14 +436,33 @@ stock bool TF2_TryToPickupDroppedWeapon(int client)
 	int weaponOld, pos;
 	while (TF2_GetItem(client, weaponOld, pos))
 	{
-		if (slot == TF2_GetSlot(weaponOld) && TF2_ShouldDropWeapon(client, weaponOld))
+		if (slot == WeaponSlot_Melee && GetEntProp(weaponOld, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
 		{
-			TF2_CreateDroppedWeapon(client, weaponOld, true, origin, angles);
 			TF2_RemoveItem(client, weaponOld);
+			continue;
 		}
-		else if (slot == WeaponSlot_Melee && GetEntProp(weaponOld, Prop_Send, "m_iItemDefinitionIndex") == INDEX_FISTS)
+		
+		if (!TF2_ShouldDropWeapon(client, weaponOld))
+			continue;
+		
+		if (!fr_multiwearable.BoolValue)
 		{
-			TF2_RemoveItem(client, weaponOld);
+			if (slot == TF2_GetSlot(weaponOld))
+			{
+				TF2_CreateDroppedWeapon(client, weaponOld, true, origin, angles);
+				TF2_RemoveItem(client, weaponOld);
+			}
+		}
+		else
+		{
+			//Because parachute is a "weapon", use mask to determe if its not a wearable (mask as 0)
+			int mask = TF2Econ_GetItemEquipRegionMask(defindex);
+			int maskOld = TF2Econ_GetItemEquipRegionMask(GetEntProp(weaponOld, Prop_Send, "m_iItemDefinitionIndex"));
+			if ((!mask && !maskOld && slot == TF2_GetSlot(weaponOld)) || (mask & maskOld))
+			{
+				TF2_CreateDroppedWeapon(client, weaponOld, true, origin, angles);
+				TF2_RemoveItem(client, weaponOld);
+			}
 		}
 	}
 	

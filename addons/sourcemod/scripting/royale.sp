@@ -460,6 +460,7 @@ ConVar fr_sectodeployparachute;
 ConVar fr_classfilter;
 ConVar fr_randomclass;
 ConVar fr_bottle_points;
+ConVar fr_multiwearable;
 
 ConVar fr_zone_startdisplay;
 ConVar fr_zone_startdisplay_player;
