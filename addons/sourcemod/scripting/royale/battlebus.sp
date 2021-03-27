@@ -95,34 +95,48 @@ void BattleBus_NewPos(float diameter = 0.0)
 	if (diameter <= 0.0)
 		diameter = g_CurrentBattleBusConfig.diameter;
 	
-	//Create new pos to spawn bus for this round
-	float angleDirection = GetRandomFloat(0.0, 360.0);
+	//Possible directions to select
+	float possibleDirection[360];
+	for (int i = 0; i < sizeof(possibleDirection); i++)
+		possibleDirection[i] = float(i) + GetRandomFloat(0.0, 1.0);
 	
-	if (angleDirection >= 180.0)
-		g_BattleBusAngles[1] = angleDirection - 180.0;
-	else
-		g_BattleBusAngles[1] = angleDirection + 180.0;
+	SortFloats(possibleDirection, sizeof(possibleDirection), Sort_Random);
 	
-	g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * diameter / 2.0) + origin[0];
-	g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * diameter / 2.0) + origin[1];
-	g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.height;
-	
-	g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
-	g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
-	
-	//Check if it safe to go this path with nothing in the way
-	Handle trace = TR_TraceRayEx(g_BattleBusOrigin, g_BattleBusAngles, MASK_PLAYERSOLID, RayType_Infinite);
-	if (TR_DidHit(trace))
+	for (int i = 0; i < sizeof(possibleDirection); i++)
 	{
-		float endPos[3];
-		TR_GetEndPosition(endPos, trace);
+		float angleDirection = possibleDirection[i];
 		
-		//Something is in the way, try again and find a new path
-		if (GetVectorDistance(g_BattleBusOrigin, endPos) < diameter)
-			BattleBus_NewPos(diameter);
+		if (angleDirection >= 180.0)
+			g_BattleBusAngles[1] = angleDirection - 180.0;
+		else
+			g_BattleBusAngles[1] = angleDirection + 180.0;
+		
+		g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * diameter / 2.0) + origin[0];
+		g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * diameter / 2.0) + origin[1];
+		g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.height;
+		
+		g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
+		g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
+		
+		//Check if it safe to go this path with nothing in the way
+		TR_TraceRay(g_BattleBusOrigin, g_BattleBusAngles, MASK_PLAYERSOLID, RayType_Infinite);
+		if (TR_DidHit())
+		{
+			float endPos[3];
+			TR_GetEndPosition(endPos);
+			
+			if (GetVectorDistance(g_BattleBusOrigin, endPos) >= diameter)
+				return;	//Its a good path, end searches
+		}
 	}
 	
-	delete trace;
+	//Not all 360 directions work, we in bad spot
+	int entity = TR_GetEntityIndex();
+	char classname[256];
+	if (entity >= 0)
+		GetEntityClassname(entity, classname, sizeof(classname));
+	
+	LogError("Unable to find valid bus path for origin '%.2f %.2f %.2f' and diameter '%.2f', possibility colliding entity %d (%s)", origin[0], origin[1], g_CurrentBattleBusConfig.height, diameter, entity, classname);
 }
 
 int BattleBus_CreateBus()
