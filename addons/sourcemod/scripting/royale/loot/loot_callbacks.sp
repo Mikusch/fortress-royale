@@ -97,8 +97,8 @@ public void LootCallback_CreateWeapon(int client, CallbackParams params, const f
 		int numAttribs = ExplodeString(buffer, ";", attribBuffer, sizeof(attribBuffer), sizeof(attribBuffer[]));
 		for (int i = 0; i < numAttribs; i++)
 		{
-			char singleAttribBuffer[2][64];
-			int count = ExplodeString(attribBuffer[i], ":", singleAttribBuffer, sizeof(singleAttribBuffer), sizeof(singleAttribBuffer[]));
+			char singleAttribBuffer[3][64];	//[3] so error can correctly be detected for count > 2
+			int count = ExplodeString(attribBuffer[i], "|", singleAttribBuffer, sizeof(singleAttribBuffer), sizeof(singleAttribBuffer[]));
 			if (count == 2)
 				TF2Attrib_SetByName(weapon, singleAttribBuffer[0], StringToFloat(singleAttribBuffer[1]));
 			else
