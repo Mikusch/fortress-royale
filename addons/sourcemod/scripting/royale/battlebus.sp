@@ -142,15 +142,25 @@ void BattleBus_NewPos(float diameter = 0.0)
 int BattleBus_CreateBus()
 {
 	int bus = CreateEntityByName("tf_projectile_rocket");
-	if (IsValidEntity(bus) && DispatchSpawn(bus))
+	if (!IsValidEntity(bus))
 	{
-		SetEntityModel(bus, g_CurrentBattleBusConfig.model);
-		SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
-		
-		return g_BattleBusPropRef = EntIndexToEntRef(bus);
+		LogError("Unable to create bus entity");
+		return INVALID_ENT_REFERENCE;
 	}
 	
-	return INVALID_ENT_REFERENCE;
+	g_BattleBusPropRef = EntIndexToEntRef(bus);
+	SDKHook(bus, SDKHook_StartTouch, BattleBus_StartTouch);
+	
+	if (!DispatchSpawn(bus))
+	{
+		LogError("Unable to spawn bus entity (index %d, ref %d)", bus, g_BattleBusPropRef);
+		return INVALID_ENT_REFERENCE;
+	}
+	
+	SetEntityModel(bus, g_CurrentBattleBusConfig.model);
+	SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
+	
+	return g_BattleBusPropRef;
 }
 
 int BattleBus_CreateBusCamera()
@@ -191,18 +201,26 @@ void BattleBus_SpawnPlayerBus()
 
 public Action BattleBus_EndPlayerBus(Handle timer, int bus)
 {
-	if (IsValidEntity(bus))
+	if (!IsValidEntity(bus))
+		return;
+	
+	if (bus != g_BattleBusPropRef)
 	{
-		//Battle bus has reached its destination, eject all players still here
-		for (int client = 1; client <= MaxClients; client++)
-		{
-			if (IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
-				BattleBus_EjectClient(client);
-		}
-		
-		//Destroy prop
-		RemoveEntity(bus);
+		LogError("Unexpected bus ref %d to end, expected %d", bus, g_BattleBusPropRef);
+		return;
 	}
+	
+	
+	//Battle bus has reached its destination, eject all players still here
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
+			BattleBus_EjectClient(client);
+	}
+	
+	//Destroy prop
+	g_BattleBusPropRef = INVALID_ENT_REFERENCE;
+	RemoveEntity(bus);
 }
 
 void BattleBus_SpectateBus(int client)
@@ -279,6 +297,27 @@ void BattleBus_EjectClient(int client)
 	FRPlayer(client).SecToDeployParachute = fr_sectodeployparachute.IntValue;
 	PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
 	CreateTimer(1.0, Timer_SecToDeployParachute, GetClientSerial(client));
+}
+
+public Action BattleBus_StartTouch(int bus, int toucher)
+{
+	float busOrigin[3], toucherOrigin[3];
+	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", busOrigin);
+	GetEntPropVector(toucher, Prop_Data, "m_vecAbsOrigin", toucherOrigin);
+	
+	char classname[256];
+	GetEntityClassname(toucher, classname, sizeof(classname));
+	LogError("bus %d at origin '%.2f %.2f %.2f' unexpectedly touched entity (%d/%s) at origin '%.2f %.2f %.2f'", bus, busOrigin[0], busOrigin[1], busOrigin[2], toucher, classname, toucherOrigin[0], toucherOrigin[1], toucherOrigin[2]);
+}
+
+void BattleBus_OnEntityDestroyed(int entity)
+{
+	if (EntIndexToEntRef(entity) == g_BattleBusPropRef)
+	{
+		float origin[3];
+		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
+		LogError("Bus (index %d, ref %d) unexpectedly destroyed at origin '%.2f %.2f %.2f'", entity, g_BattleBusPropRef, origin[0], origin[1], origin[2]);
+	}
 }
 
 public Action Timer_SecToDeployParachute(Handle timer, int serial)

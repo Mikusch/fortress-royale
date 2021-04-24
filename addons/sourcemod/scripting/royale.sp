@@ -812,6 +812,7 @@ public void OnEntityDestroyed(int entity)
 	
 	if (0 < entity < 2048)
 	{
+		BattleBus_OnEntityDestroyed(entity);
 		Loot_OnEntityDestroyed(entity);
 		Vehicles_OnEntityDestroyed(entity);
 		FREntity.Destroy(entity);
