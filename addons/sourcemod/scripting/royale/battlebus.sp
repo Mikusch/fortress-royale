@@ -20,6 +20,8 @@
 enum struct BattleBusConfig
 {
 	char model[PLATFORM_MAX_PATH];
+	float size_min[3];
+	float size_max[3];
 	int skin;
 	float height;
 	float diameter;
@@ -32,6 +34,8 @@ enum struct BattleBusConfig
 		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
 		PrecacheModel(this.model);
 		
+		kv.GetVector("size_min", this.size_min, this.size_min);
+		kv.GetVector("size_max", this.size_max, this.size_max);
 		this.skin = kv.GetNum("skin", this.skin);
 		this.height = kv.GetFloat("height", this.height);
 		this.diameter = kv.GetFloat("diameter", this.diameter);
@@ -119,15 +123,14 @@ void BattleBus_NewPos(float diameter = 0.0)
 		g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
 		
 		//Check if it safe to go this path with nothing in the way
-		TR_TraceRay(g_BattleBusOrigin, g_BattleBusAngles, MASK_PLAYERSOLID, RayType_Infinite);
-		if (TR_DidHit())
-		{
-			float endPos[3];
-			TR_GetEndPosition(endPos);
-			
-			if (GetVectorDistance(g_BattleBusOrigin, endPos) >= diameter)
-				return;	//Its a good path, end searches
-		}
+		float endPos[3];
+		endPos = g_BattleBusVelocity;
+		ScaleVector(endPos, g_CurrentBattleBusConfig.time);
+		AddVectors(endPos, g_BattleBusOrigin, endPos);
+		
+		TR_TraceHull(g_BattleBusOrigin, endPos, g_CurrentBattleBusConfig.size_min, g_CurrentBattleBusConfig.size_max, MASK_PLAYERSOLID);
+		if (!TR_DidHit())
+			return;	//Its a good path, end searches
 	}
 	
 	//Not all 360 directions work, we in bad spot
