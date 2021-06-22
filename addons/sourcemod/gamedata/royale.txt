@@ -130,18 +130,18 @@
 			}
 			"CWeaponMedigun::GetHealRate"
 			{
-				"linux"		"492"
-				"windows"	"485"
+				"linux"		"493"
+				"windows"	"486"
 			}
 			"CBaseEntity::ChangeTeam"
 			{
 				"linux"		"92"
-				"windows"	"91"			
+				"windows"	"91"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{
 				"linux"		"118"
-				"windows"	"117"			
+				"windows"	"117"
 			}
 			"CBaseEntity::GetDefaultItemChargeMeterValue"
 			{
@@ -150,68 +150,68 @@
 			}
 			"CBaseCombatCharacter::Weapon_CanSwitchTo"
 			{
-				"linux"		"270"
-				"windows"	"269"
+				"linux"		"271"
+				"windows"	"270"
 			}
 			"CBasePlayer::ForceRespawn"
 			{
-				"linux"		"330"
-				"windows"	"329"
+				"linux"		"331"
+				"windows"	"330"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
-				"linux"		"484"
-				"windows"	"477"
+				"linux"		"485"
+				"windows"	"478"
 			}
 			"CBaseCombatWeapon::GetSlot"
 			{
-				"linux"		"332"
-				"windows"	"326"
+				"linux"		"333"
+				"windows"	"327"
 			}
 			"CBaseGrenade::Explode"
 			{
-				"linux"		"229"
-				"windows"	"228"
+				"linux"		"230"
+				"windows"	"229"
 			}
 			"CTFProjectile_SpellFireball::Explode"
 			{
-				"linux"		"243"
-				"windows"	"240"
+				"linux"		"244"
+				"windows"	"241"
 			}
 			"CTFGrenadePipebombProjectile::GetLiveTime"
 			{
-				"linux"		"250"
-				"windows"	"249"
+				"linux"		"251"
+				"windows"	"250"
 			}
 			"CBaseObject::StartBuilding"
 			{
-				"linux"		"336"
-				"windows"	"334"
+				"linux"		"337"
+				"windows"	"335"
 			}
 			"CBaseObject::GetBaseHealth"
 			{
-				"linux"		"380"
-				"windows"	"379"
+				"linux"		"381"
+				"windows"	"380"
 			}
 			"CBasePlayer::EquipWearable"
 			{
-				"linux"		"431"
-				"windows"	"430"
+				"linux"		"432"
+				"windows"	"431"
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"linux"		"194"
-				"windows"	"193"
+				"linux"		"195"
+				"windows"	"194"
 			}
 			"CTeam::AddPlayer"
 			{
-				"linux"		"202"
-				"windows"	"201"
+				"linux"		"203"
+				"windows"	"202"
 			}
 			"CTeam::RemovePlayer"
 			{
-				"linux"		"203"
-				"windows"	"202"
+				"linux"		"204"
+				"windows"	"203"
 			}
 			"CEconItemView::m_iItemDefinitionIndex"
 			{
