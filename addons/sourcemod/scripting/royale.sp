@@ -31,7 +31,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define TF_MAXPLAYERS	32
+#define TF_MAXPLAYERS	33
 
 #define MAX_MESSAGE_LENGTH	192
 
