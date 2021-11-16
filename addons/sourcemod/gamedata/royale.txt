@@ -130,88 +130,88 @@
 			}
 			"CWeaponMedigun::GetHealRate"
 			{
-				"linux"		"493"
-				"windows"	"486"
+				"linux"		"496"
+				"windows"	"489"
 			}
 			"CBaseEntity::ChangeTeam"
 			{
-				"linux"		"92"
-				"windows"	"91"
+				"linux"		"95"
+				"windows"	"94"
 			}
 			"CBaseEntity::GetMaxHealth"
 			{
-				"linux"		"118"
-				"windows"	"117"
+				"linux"		"121"
+				"windows"	"120"
 			}
 			"CBaseEntity::GetDefaultItemChargeMeterValue"
 			{
-				"linux"		"191"
-				"windows"	"190"
+				"linux"		"194"
+				"windows"	"193"
 			}
 			"CBaseCombatCharacter::Weapon_CanSwitchTo"
 			{
-				"linux"		"271"
-				"windows"	"270"
+				"linux"		"274"
+				"windows"	"273"
 			}
 			"CBasePlayer::ForceRespawn"
 			{
-				"linux"		"331"
-				"windows"	"330"
+				"linux"		"334"
+				"windows"	"333"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
-				"linux"		"485"
-				"windows"	"478"
+				"linux"		"488"
+				"windows"	"481"
 			}
 			"CBaseCombatWeapon::GetSlot"
 			{
-				"linux"		"333"
-				"windows"	"327"
+				"linux"		"336"
+				"windows"	"330"
 			}
 			"CBaseGrenade::Explode"
 			{
-				"linux"		"230"
-				"windows"	"229"
+				"linux"		"233"
+				"windows"	"232"
 			}
 			"CTFProjectile_SpellFireball::Explode"
 			{
-				"linux"		"244"
-				"windows"	"241"
+				"linux"		"247"
+				"windows"	"244"
 			}
 			"CTFGrenadePipebombProjectile::GetLiveTime"
 			{
-				"linux"		"251"
-				"windows"	"250"
+				"linux"		"254"
+				"windows"	"253"
 			}
 			"CBaseObject::StartBuilding"
 			{
-				"linux"		"337"
-				"windows"	"335"
+				"linux"		"340"
+				"windows"	"338"
 			}
 			"CBaseObject::GetBaseHealth"
 			{
-				"linux"		"381"
-				"windows"	"380"
+				"linux"		"384"
+				"windows"	"383"
 			}
 			"CBasePlayer::EquipWearable"
 			{
-				"linux"		"432"
-				"windows"	"431"
+				"linux"		"435"
+				"windows"	"434"
 			}
 			"CBaseAnimating::StudioFrameAdvance"
 			{
-				"linux"		"195"
-				"windows"	"194"
+				"linux"		"198"
+				"windows"	"197"
 			}
 			"CTeam::AddPlayer"
 			{
-				"linux"		"203"
-				"windows"	"202"
+				"linux"		"206"
+				"windows"	"205"
 			}
 			"CTeam::RemovePlayer"
 			{
-				"linux"		"204"
-				"windows"	"203"
+				"linux"		"207"
+				"windows"	"206"
 			}
 			"CEconItemView::m_iItemDefinitionIndex"
 			{
