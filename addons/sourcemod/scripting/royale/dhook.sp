@@ -33,6 +33,7 @@ enum ThinkFunction
 	ThinkFunction_TossJarThink,
 }
 
+static DynamicHook g_DHookShouldCollide;
 static DynamicHook g_DHookGetMaxHealth;
 static DynamicHook g_DHookForceRespawn;
 static DynamicHook g_DHookGiveNamedItem;
@@ -45,6 +46,7 @@ static DynamicHook g_DHookSetPassenger;
 static DynamicHook g_DHookIsPassengerVisible;
 
 static int g_HookIdGiveNamedItem[TF_MAXPLAYERS + 1];
+static int g_HookIdShouldCollidePre[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPre[TF_MAXPLAYERS + 1];
 static int g_HookIdGetMaxHealthPost[TF_MAXPLAYERS + 1];
 static int g_HookIdForceRespawnPre[TF_MAXPLAYERS + 1];
@@ -64,6 +66,7 @@ void DHook_Init(GameData gamedata)
 	DHook_CreateDetour(gamedata, "CLagCompensationManager::StartLagCompensation", DHook_StartLagCompensationPre, DHook_StartLagCompensationPost);
 	DHook_CreateDetour(gamedata, "CTFPlayerMove::SetupMove", DHook_SetupMovePre, _);
 	
+	g_DHookShouldCollide = DHook_CreateVirtual(gamedata, "CBaseEntity::ShouldCollide");
 	g_DHookGetMaxHealth = DHook_CreateVirtual(gamedata, "CBaseEntity::GetMaxHealth");
 	g_DHookForceRespawn = DHook_CreateVirtual(gamedata, "CBasePlayer::ForceRespawn");
 	g_DHookGiveNamedItem = DHook_CreateVirtual(gamedata, "CTFPlayer::GiveNamedItem");
@@ -165,6 +168,7 @@ bool DHook_IsGiveNamedItemActive()
 
 void DHook_HookClient(int client)
 {
+	g_HookIdShouldCollidePre[client] = g_DHookShouldCollide.HookEntity(Hook_Pre, client, DHook_ShouldCollidePre);
 	g_HookIdGetMaxHealthPre[client] = g_DHookGetMaxHealth.HookEntity(Hook_Pre, client, DHook_GetMaxHealthPre);
 	g_HookIdGetMaxHealthPost[client] = g_DHookGetMaxHealth.HookEntity(Hook_Post, client, DHook_GetMaxHealthPost);
 	g_HookIdForceRespawnPre[client] = g_DHookForceRespawn.HookEntity(Hook_Pre, client, DHook_ForceRespawnPre);
@@ -173,6 +177,7 @@ void DHook_HookClient(int client)
 
 void DHook_UnhookClient(int client)
 {
+	DynamicHook.RemoveHook(g_HookIdShouldCollidePre[client]);
 	DynamicHook.RemoveHook(g_HookIdGetMaxHealthPre[client]);
 	DynamicHook.RemoveHook(g_HookIdGetMaxHealthPost[client]);
 	DynamicHook.RemoveHook(g_HookIdForceRespawnPre[client]);
@@ -201,6 +206,10 @@ void DHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		g_DHookGetLiveTime.HookEntity(Hook_Pre, entity, DHook_GetLiveTimePre);
 		g_DHookGetLiveTime.HookEntity(Hook_Post, entity, DHook_GetLiveTimePost);
+	}
+	else if (StrEqual(classname, "tf_projectile_syringe"))
+	{
+		g_DHookShouldCollide.HookEntity(Hook_Pre, entity, DHook_ShouldCollidePre);
 	}
 	else if (StrContains(classname, "obj_") == 0)
 	{
@@ -497,6 +506,18 @@ public MRESReturn DHook_SetupMovePre(DHookParam param)
 		
 		SDKCall_VehicleSetupMove(vehicle, client, ucmd, helper, move);
 	}
+}
+
+public MRESReturn DHook_ShouldCollidePre(int client, DHookReturn ret, DHookParam param)
+{
+	int contentsmask = param.Get(2);
+	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
+	{
+		ret.Value = true;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
 }
 
 public MRESReturn DHook_GetMaxHealthPre(int client)

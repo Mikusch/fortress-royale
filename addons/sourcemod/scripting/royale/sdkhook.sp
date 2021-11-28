@@ -44,8 +44,6 @@ static bool g_PostThinkMelee;
 
 void SDKHook_HookClient(int client)
 {
-	SDKHook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
-	
 	SDKHook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKHook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKHook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
@@ -59,8 +57,6 @@ void SDKHook_HookClient(int client)
 
 void SDKHook_UnhookClient(int client)
 {
-	SDKUnhook(client, SDKHook_ShouldCollide, Entity_ShouldCollide);
-	
 	SDKUnhook(client, SDKHook_SetTransmit, Client_SetTransmit);
 	SDKUnhook(client, SDKHook_OnTakeDamage, Client_OnTakeDamage);
 	SDKUnhook(client, SDKHook_OnTakeDamagePost, Client_OnTakeDamagePost);
@@ -118,10 +114,6 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 		SDKHook(entity, SDKHook_Touch, Projectile_Touch);
 		SDKHook(entity, SDKHook_TouchPost, Projectile_TouchPost);
 	}
-	else if (StrEqual(classname, "tf_projectile_syringe"))
-	{
-		SDKHook(entity, SDKHook_ShouldCollide, Entity_ShouldCollide);
-	}
 	else if (StrEqual(classname, "tf_pumpkin_bomb"))
 	{
 		SDKHook(entity, SDKHook_OnTakeDamage, PumpkinBomb_OnTakeDamage);
@@ -135,14 +127,6 @@ void SDKHook_OnEntityCreated(int entity, const char[] classname)
 	{
 		SDKHook(entity, SDKHook_TouchPost, SpellPickup_TouchPost);
 	}
-}
-
-public bool Entity_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
-{
-	if (contentsmask & CONTENTS_REDTEAM || contentsmask & CONTENTS_BLUETEAM)
-		return true;
-	
-	return originalResult;
 }
 
 public Action Client_SetTransmit(int entity, int client)

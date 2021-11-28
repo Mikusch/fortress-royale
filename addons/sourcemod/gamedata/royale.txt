@@ -133,6 +133,11 @@
 				"linux"		"496"
 				"windows"	"489"
 			}
+			"CBaseEntity::ShouldCollide"
+			{
+				"linux"		"17"
+				"windows"	"16"
+			}
 			"CBaseEntity::ChangeTeam"
 			{
 				"linux"		"95"
@@ -384,6 +389,24 @@
 				"arguments"
 				{
 					"nRole"
+					{
+						"type"	"int"
+					}
+				}
+			}
+			"CBaseEntity::ShouldCollide"
+			{
+				"offset"	"CBaseEntity::ShouldCollide"
+				"hooktype"	"entity"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"collisionGroup"
+					{
+						"type"	"int"
+					}
+					"contentsMask"
 					{
 						"type"	"int"
 					}
