@@ -21,12 +21,14 @@
 static Handle g_SDKCall_CTFDroppedWeapon_Create;
 static Handle g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon;
 static Handle g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles;
+static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
 
 void SDKCalls_Init(GameData gamedata)
 {
 	g_SDKCall_CTFDroppedWeapon_Create = PrepSDKCall_CTFDroppedWeapon_Create(gamedata);
 	g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon = PrepSDKCall_CTFDroppedWeapon_InitDroppedWeapon(gamedata);
 	g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles = PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(gamedata);
+	g_SDKCall_CTFPlayer_GiveNamedItem = PrepSDKCall_CTFPlayer_GiveNamedItem(gamedata);
 }
 
 static Handle PrepSDKCall_CTFDroppedWeapon_Create(GameData gamedata)
@@ -53,8 +55,8 @@ static Handle PrepSDKCall_CTFDroppedWeapon_InitDroppedWeapon(GameData gamedata)
 	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFDroppedWeapon::InitDroppedWeapon");
 	PrepSDKCall_AddParameter(SDKType_CBasePlayer, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
-	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
@@ -70,11 +72,28 @@ static Handle PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(GameData 
 	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
 	PrepSDKCall_AddParameter(SDKType_QAngle, SDKPass_ByRef, _, VENCODE_FLAG_COPYBACK);
-	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
 	
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::CalculateAmmoPackPositionAndAngles");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CTFPlayer_GiveNamedItem(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GiveNamedItem");
+	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_CBaseEntity, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::GiveNamedItem");
 	
 	return call;
 }
@@ -97,12 +116,22 @@ void SDKCall_CTFDroppedWeapon_InitDroppedWeapon(int droppedWeapon, int player, i
 	}
 }
 
-bool SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(int client, int weapon, float vecOrigin[3], float vecAngles[3])
+bool SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(int player, int weapon, float vecOrigin[3], float vecAngles[3])
 {
 	if (g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles)
 	{
-		return SDKCall(g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles, client, weapon, vecOrigin, vecAngles);
+		return SDKCall(g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles, player, weapon, vecOrigin, vecAngles);
 	}
 	
 	return false;
+}
+
+int SDKCall_CTFPlayer_GiveNamedItem(int player, const char[] szName, int iSubType = 0, Address pScriptItem = Address_Null, bool bForce = false)
+{
+	if (g_SDKCall_CTFPlayer_GiveNamedItem)
+	{
+		return SDKCall(g_SDKCall_CTFPlayer_GiveNamedItem, player, szName, iSubType, pScriptItem, bForce);
+	}
+	
+	return -1;
 }

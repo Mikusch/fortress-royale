@@ -20,7 +20,10 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <dhooks>
 #include <tf2utils>
+#include <tf_econ_data>
+#include <tf2items>
 
 #include "royale/shareddefs.sp"
 

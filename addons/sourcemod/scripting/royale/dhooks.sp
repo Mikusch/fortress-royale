@@ -20,5 +20,144 @@
 
 void DHooks_Init(GameData gamedata)
 {
+	CreateDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", _, DHookCallback_CTFPlayer_PickupWeaponFromOther_Post);
+	CreateDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
+}
+
+static void CreateDynamicDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
+{
+	DynamicDetour detour = DynamicDetour.FromConf(gamedata, name);
+	if (detour)
+	{
+		if (callbackPre != INVALID_FUNCTION)
+			detour.Enable(Hook_Pre, callbackPre);
+		
+		if (callbackPost != INVALID_FUNCTION)
+			detour.Enable(Hook_Post, callbackPost);
+	}
+	else
+	{
+		LogError("Failed to create detour setup handle for %s", name);
+	}
+}
+
+static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player, DHookReturn ret, DHookParam params)
+{
+	// If it's already working - great! Don't do anything.
+	if (ret.Value == true)
+		return MRES_Ignored;
 	
+	int droppedWeapon = params.Get(1);
+	
+	Address pItem = GetEntityAddress(droppedWeapon) + FindItemOffset(droppedWeapon);
+	if (!LoadFromAddress(pItem, NumberType_Int32))
+		return MRES_Ignored;
+	
+	if (GetEntProp(droppedWeapon, Prop_Send, "m_bInitialized"))
+	{
+		int itemdef = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
+		
+		TFClassType class = TF2_GetPlayerClass(player);
+		int itemSlot = TF2Econ_GetItemLoadoutSlot(itemdef, class);
+		int weapon = TF2Util_GetPlayerLoadoutEntity(player, itemSlot);
+		
+		// we need to force translating the name here.
+		// GiveNamedItem will not translate if we force creating the item
+		char weaponName[64];
+		TF2Econ_GetItemClassName(itemdef, weaponName, sizeof(weaponName));
+		TF2Econ_TranslateWeaponEntForClass(weaponName, sizeof(weaponName), class);
+		
+		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, weaponName, 0, pItem, true);
+		if (IsValidEntity(newItem))
+		{
+			PrintToServer(weaponName);
+			
+			if (IsValidEntity(weapon))
+			{
+				float vecPackOrigin[3], vecPackAngles[3];
+				SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(player, weapon, vecPackOrigin, vecPackAngles);
+				
+				// TODO: Custom config model support
+				int modelIndex = 0;
+				if (HasEntProp(weapon, Prop_Send, "m_iWorldModelIndex"))
+					modelIndex = GetEntProp(weapon, Prop_Send, "m_iWorldModelIndex");
+				else
+					modelIndex = GetEntProp(weapon, Prop_Send, "m_nModelIndex");
+				
+				if (modelIndex == 0)
+				{
+					LogError("Unable to find model for dropped weapon");
+					return MRES_Ignored;
+				}
+				
+				char model[PLATFORM_MAX_PATH];
+				ModelIndexToString(modelIndex, model, sizeof(model));
+				
+				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
+				if (IsValidEntity(newDroppedWeapon))
+				{
+					SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
+				}
+				
+				RemovePlayerItem(player, weapon);
+				RemoveEntity(weapon);
+			}
+			
+			
+		}
+	}
+	
+	PrintToServer("DHookCallback_CTFPlayer_PickupWeaponFromOther_Post");
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player, DHookReturn ret, DHookParam params)
+{
+	int weapon = params.Get(1);
+	
+	if (!GetEntProp(weapon, Prop_Send, "m_bInitialized"))
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	TFClassType class = TF2_GetPlayerClass(player);
+	if (class == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || TF2_GetPercentInvisible(player) > 0.0))
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	if (TF2_IsPlayerInCondition(player, TFCond_Taunting))
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	if (!IsPlayerAlive(player))
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	if (GetEntPropEnt(player, Prop_Send, "m_hActiveWeapon") == -1)
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	int itemSlot = TF2Econ_GetItemLoadoutSlot(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), class);
+	int ownedWeaponToDrop = TF2Util_GetPlayerLoadoutEntity(player, itemSlot);
+	
+	ret.Value = true/*&& pWeapon->GetItem()->GetStaticData()->CanBeUsedByClass( iClass ) && IsValidPickupWeaponSlot( iItemSlot )*/;
+	return MRES_Supercede;
+}
+
+float TF2_GetPercentInvisible(int client)
+{
+	static int offset = -1;
+	if (offset == -1)
+		offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
+	
+	return GetEntDataFloat(client, offset);
 }

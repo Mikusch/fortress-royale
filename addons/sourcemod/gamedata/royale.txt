@@ -33,11 +33,66 @@
 				"linux"		"@_ZN16CTFDroppedWeapon17InitDroppedWeaponEP9CTFPlayerP13CTFWeaponBasebb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x57\x8B\xF9\x8B\x4D\x08"
 			}
+			"CTFDroppedWeapon::InitPickedUpWeapon"
+			{
+				"library"	"server"
+				"linux"		""
+				"windows"	""
+			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer34CalculateAmmoPackPositionAndAnglesEP13CTFWeaponBaseR6VectorR6QAngle"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x68\x2A\x2A\x2A\x2A"
+			}
+			"CTFPlayer::PickupWeaponFromOther"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer21PickupWeaponFromOtherEP16CTFDroppedWeapon"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x8B\x75\x08\x57\x8B\xF9\x81\xC6\xB0\x04\x00\x00"
+			}
+			"CTFPlayer::CanPickupDroppedWeapon"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
+				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\x04\x05\x00\x00\x00"
+			}
+			"CTFPlayer::GiveNamedItem"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer13GiveNamedItemEPKciPK13CEconItemViewb"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x54\x80\x7D\x14\x00"
+			}
+		}
+		"Functions"
+		{
+			"CTFPlayer::PickupWeaponFromOther"
+			{
+				"signature"	"CTFPlayer::PickupWeaponFromOther"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pDroppedWeapon"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::CanPickupDroppedWeapon"
+			{
+				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pWeapon"
+					{
+						"type"	"cbaseentity"
+					}
+				}
 			}
 		}
 	}
