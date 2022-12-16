@@ -19,8 +19,15 @@
 #pragma semicolon 1
 
 #include <sourcemod>
+#include <sdktools>
+#include <tf2utils>
+
+#include "royale/shareddefs.sp"
 
 #include "royale/config.sp"
+#include "royale/console.sp"
+#include "royale/dhooks.sp"
+#include "royale/sdkcalls.sp"
 #include "royale/zone.sp"
 
 public Plugin myinfo =
@@ -34,6 +41,21 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+	Console_Init();
+	
+	GameData gamedata = new GameData("royale");
+	if (gamedata)
+	{
+		DHooks_Init(gamedata);
+		SDKCalls_Init(gamedata);
+		
+		delete gamedata;
+	}
+	else
+	{
+		SetFailState("Could not find royale gamedata");
+	}
+	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client))
