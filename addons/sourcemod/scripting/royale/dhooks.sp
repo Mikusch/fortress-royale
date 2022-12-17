@@ -70,28 +70,15 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, weaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
-			PrintToServer(weaponName);
-			
+			// make sure we removed our current weapon
 			if (IsValidEntity(weapon))
 			{
+				// drop current weapon
 				float vecPackOrigin[3], vecPackAngles[3];
 				SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(player, weapon, vecPackOrigin, vecPackAngles);
 				
-				// TODO: Custom config model support
-				int modelIndex = 0;
-				if (HasEntProp(weapon, Prop_Send, "m_iWorldModelIndex"))
-					modelIndex = GetEntProp(weapon, Prop_Send, "m_iWorldModelIndex");
-				else
-					modelIndex = GetEntProp(weapon, Prop_Send, "m_nModelIndex");
-				
-				if (modelIndex == 0)
-				{
-					LogError("Unable to find model for dropped weapon");
-					return MRES_Ignored;
-				}
-				
 				char model[PLATFORM_MAX_PATH];
-				ModelIndexToString(modelIndex, model, sizeof(model));
+				GetItemWorldModel(weapon, model, sizeof(model));
 				
 				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 				if (IsValidEntity(newDroppedWeapon))
@@ -103,11 +90,28 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 				RemoveEntity(weapon);
 			}
 			
+			int lastWeapon = GetEntPropEnt(player, Prop_Send, "m_hLastWeapon");
+			SetEntProp(newItem, Prop_Send, "m_bValidatedAttachedEntity", true);
+			ItemGiveTo(player, newItem);
+			SetEntPropEnt(player, Prop_Send, "m_hLastWeapon", lastWeapon);
 			
+			SDKCall_CTFDroppedWeapon_InitPickedUpWeapon(droppedWeapon, player, newItem);
+			
+			// can't use the weapon we just picked up?
+			if (!SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(player, newItem))
+			{
+				// try next best thing we can use
+				SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(player, newItem);
+			}
+			
+			// delay pickup weapon message
+			FRPlayer(player).m_flSendPickupWeaponMessageTime = GetGameTime() + 0.1;
+			
+			ret.Value = true;
+			return MRES_Supercede;
 		}
 	}
 	
-	PrintToServer("DHookCallback_CTFPlayer_PickupWeaponFromOther_Post");
 	return MRES_Ignored;
 }
 
@@ -151,13 +155,4 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 	
 	ret.Value = true/*&& pWeapon->GetItem()->GetStaticData()->CanBeUsedByClass( iClass ) && IsValidPickupWeaponSlot( iItemSlot )*/;
 	return MRES_Supercede;
-}
-
-float TF2_GetPercentInvisible(int client)
-{
-	static int offset = -1;
-	if (offset == -1)
-		offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
-	
-	return GetEntDataFloat(client, offset);
 }

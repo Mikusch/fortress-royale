@@ -24,13 +24,16 @@
 #include <tf2utils>
 #include <tf_econ_data>
 #include <tf2items>
+#include <cbasenpc>
 
 #include "royale/shareddefs.sp"
 
 #include "royale/config.sp"
 #include "royale/console.sp"
+#include "royale/data.sp"
 #include "royale/dhooks.sp"
 #include "royale/sdkcalls.sp"
+#include "royale/util.sp"
 #include "royale/zone.sp"
 
 public Plugin myinfo =

@@ -54,25 +54,13 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	if (!found)
 		return Plugin_Continue;
 	
+	// TODO: This SDKCall takes a weapon but we might pass in a wearable
 	float vecOrigin[3], vecAngles[3];
 	if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, weapon, vecOrigin, vecAngles))
 		return Plugin_Continue;
 	
-	// TODO: Custom config model support
-	int modelIndex = 0;
-	if (HasEntProp(weapon, Prop_Send, "m_iWorldModelIndex"))
-		modelIndex = GetEntProp(weapon, Prop_Send, "m_iWorldModelIndex");
-	else
-		modelIndex = GetEntProp(weapon, Prop_Send, "m_nModelIndex");
-	
-	if (modelIndex == 0)
-	{
-		LogError("Unable to find model for dropped weapon");
-		return Plugin_Continue;
-	}
-	
 	char model[PLATFORM_MAX_PATH];
-	ModelIndexToString(modelIndex, model, sizeof(model));
+	GetItemWorldModel(weapon, model, sizeof(model));
 	
 	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(droppedWeapon))
@@ -90,20 +78,7 @@ bool TF2_ShouldDropWeapon(int client, int weapon)
 	return true;
 }
 
-bool ModelIndexToString(int index, char[] model, int size)
+void CreateDroppedWeapon(int droppedWeapon, int client, int weapon)
 {
-	int table = FindStringTable("modelprecache");
-	if (table == INVALID_STRING_INDEX)
-		return false;
 	
-	return ReadStringTable(table, index, model, size) != 0;
-}
-
-any FindItemOffset(int entity)
-{
-	char clsname[32];
-	if (!GetEntityNetClass(entity, clsname, sizeof(clsname)))
-		return -1;
-	
-	return FindSendPropInfo(clsname, "m_Item");
 }

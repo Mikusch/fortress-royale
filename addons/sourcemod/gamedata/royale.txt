@@ -36,8 +36,8 @@
 			"CTFDroppedWeapon::InitPickedUpWeapon"
 			{
 				"library"	"server"
-				"linux"		""
-				"windows"	""
+				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53\x56\x57"
 			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
@@ -62,6 +62,21 @@
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer13GiveNamedItemEPKciPK13CEconItemViewb"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x54\x80\x7D\x14\x00"
+			}
+			"CBaseCombatCharacter::SwitchToNextBestWeapon"
+			{
+				"library"	"server"
+				"linux"		"@_ZN20CBaseCombatCharacter22SwitchToNextBestWeaponEP17CBaseCombatWeapon"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x56"
+			}
+		}
+		"Offsets"
+		{
+			"CBaseCombatCharacter::Weapon_CanSwitchTo"
+			{
+				"library"	"server"
+				"linux"		"277"
+				"windows"	"276"
 			}
 		}
 		"Functions"
