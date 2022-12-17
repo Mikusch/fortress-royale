@@ -81,7 +81,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 				GetItemWorldModel(weapon, model, sizeof(model));
 				
 				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
-				if (IsValidEntity(newDroppedWeapon))
+				if (IsValidEntity(newDroppedWeapon) && IsCTFWeaponBase(weapon))
 				{
 					SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
 				}
@@ -95,13 +95,17 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 			ItemGiveTo(player, newItem);
 			SetEntPropEnt(player, Prop_Send, "m_hLastWeapon", lastWeapon);
 			
-			SDKCall_CTFDroppedWeapon_InitPickedUpWeapon(droppedWeapon, player, newItem);
-			
-			// can't use the weapon we just picked up?
-			if (!SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(player, newItem))
+			// FIXME: This takes a weapon but we might pass a wearable as newItem
+			if (IsCTFWeaponBase(newItem))
 			{
-				// try next best thing we can use
-				SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(player, newItem);
+				SDKCall_CTFDroppedWeapon_InitPickedUpWeapon(droppedWeapon, player, newItem);
+				
+				// can't use the weapon we just picked up?
+				if (!SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(player, newItem))
+				{
+					// try next best thing we can use
+					SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(player, newItem);
+				}
 			}
 			
 			// delay pickup weapon message

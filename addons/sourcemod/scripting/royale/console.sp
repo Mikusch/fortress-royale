@@ -39,6 +39,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	
 	if (!found)
 	{
+		// TODO: Only iterate normal loadout slots e.g. primary to builder weapons (NO WEARABLES)
 		for (int loadoutSlot = 0; loadoutSlot < CLASS_LOADOUT_POSITION_COUNT; loadoutSlot++)
 		{
 			weapon = TF2Util_GetPlayerLoadoutEntity(client, loadoutSlot);
@@ -54,7 +55,6 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	if (!found)
 		return Plugin_Continue;
 	
-	// TODO: This SDKCall takes a weapon but we might pass in a wearable
 	float vecOrigin[3], vecAngles[3];
 	if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, weapon, vecOrigin, vecAngles))
 		return Plugin_Continue;
@@ -65,7 +65,11 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(droppedWeapon))
 	{
-		SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
+		if (IsCTFWeaponBase(weapon))
+		{
+			SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
+		}
+		
 		RemovePlayerItem(client, weapon);
 		RemoveEntity(weapon);
 	}
@@ -75,10 +79,6 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 
 bool TF2_ShouldDropWeapon(int client, int weapon)
 {
+	// TODO
 	return true;
-}
-
-void CreateDroppedWeapon(int droppedWeapon, int client, int weapon)
-{
-	
 }
