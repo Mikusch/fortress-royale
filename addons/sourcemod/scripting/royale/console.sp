@@ -34,26 +34,45 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	// - wearables (can't be used as active weapon)
 	// - weapons that can't be switched to (as determined by TF2)
 	
-	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	bool found = (weapon != -1) && TF2_ShouldDropWeapon(client, weapon);
+	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	int weapon = activeWeapon;
+	bool found = (weapon != -1) && ShouldDropWeapon(client, weapon);
 	
 	if (!found)
 	{
-		// TODO: Only iterate normal loadout slots e.g. primary to builder weapons (NO WEARABLES)
-		for (int loadoutSlot = 0; loadoutSlot < CLASS_LOADOUT_POSITION_COUNT; loadoutSlot++)
+		for (int slot = 0; slot <= LOADOUT_POSITION_PDA2; slot++)
 		{
-			weapon = TF2Util_GetPlayerLoadoutEntity(client, loadoutSlot);
-			if (weapon != -1 && TF2_ShouldDropWeapon(client, weapon))
+			weapon = TF2Util_GetPlayerLoadoutEntity(client, slot);
+			if (weapon == -1)
+				continue;
+			
+			if (TF2Util_IsEntityWearable(weapon))
 			{
-				PrintToServer("weapon %d", weapon);
+				// Always drop wearables
 				found = true;
 				break;
+			}
+			else
+			{
+				if (ShouldDropWeapon(client, weapon))
+				{
+					found = true;
+					break;
+				}
 			}
 		}
 	}
 	
 	if (!found)
+	{
+		if (activeWeapon != -1 && TF2Util_GetWeaponSlot(activeWeapon) == TFWeaponSlot_Melee)
+		{
+			EmitGameSoundToClient(client, "Player.UseDeny");
+			ShowGameMessage("You cannot drop your melee weapon!", "ico_notify_golden_wrench");
+		}
+		
 		return Plugin_Continue;
+	}
 	
 	float vecOrigin[3], vecAngles[3];
 	if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, weapon, vecOrigin, vecAngles))
@@ -65,20 +84,22 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(droppedWeapon))
 	{
-		if (IsCTFWeaponBase(weapon))
+		if (TF2Util_IsEntityWeapon(weapon))
 		{
 			SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
+			SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
 		}
 		
-		RemovePlayerItem(client, weapon);
-		RemoveEntity(weapon);
+		TF2_RemovePlayerItem(client, weapon);
 	}
 	
 	return Plugin_Continue;
 }
 
-bool TF2_ShouldDropWeapon(int client, int weapon)
+bool ShouldDropWeapon(int client, int weapon)
 {
-	// TODO
-	return true;
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
+		return false;
+	
+	return TF2Util_GetWeaponSlot(weapon) != LOADOUT_POSITION_MELEE;
 }

@@ -81,13 +81,12 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 				GetItemWorldModel(weapon, model, sizeof(model));
 				
 				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
-				if (IsValidEntity(newDroppedWeapon) && IsCTFWeaponBase(weapon))
+				if (IsValidEntity(newDroppedWeapon) && TF2Util_IsEntityWeapon(weapon))
 				{
 					SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
 				}
 				
-				RemovePlayerItem(player, weapon);
-				RemoveEntity(weapon);
+				TF2_RemovePlayerItem(player, weapon);
 			}
 			
 			int lastWeapon = GetEntPropEnt(player, Prop_Send, "m_hLastWeapon");
@@ -95,8 +94,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 			ItemGiveTo(player, newItem);
 			SetEntPropEnt(player, Prop_Send, "m_hLastWeapon", lastWeapon);
 			
-			// FIXME: This takes a weapon but we might pass a wearable as newItem
-			if (IsCTFWeaponBase(newItem))
+			if (TF2Util_IsEntityWeapon(newItem))
 			{
 				SDKCall_CTFDroppedWeapon_InitPickedUpWeapon(droppedWeapon, player, newItem);
 				

@@ -72,7 +72,57 @@ float TF2_GetPercentInvisible(int client)
 	return GetEntDataFloat(client, offset);
 }
 
-bool IsCTFWeaponBase(int entity)
+void ShowGameMessage(const char[] message, const char[] icon, int displayToTeam = 0, int teamColor = 0)
 {
-	return HasEntProp(entity, Prop_Data, "CTFWeaponBaseFallThink");
+	int msg = CreateEntityByName("game_text_tf");
+	if (IsValidEntity(msg))
+	{
+		DispatchKeyValue(msg, "message", message);
+		switch (displayToTeam)
+		{
+			case 2: DispatchKeyValue(msg, "display_to_team", "2");
+			case 3: DispatchKeyValue(msg, "display_to_team", "3");
+			default: DispatchKeyValue(msg, "display_to_team", "0");
+		}
+		switch (teamColor)
+		{
+			case 2: DispatchKeyValue(msg, "background", "2");
+			case 3: DispatchKeyValue(msg, "background", "3");
+			default: DispatchKeyValue(msg, "background", "0");
+		}
+		
+		DispatchKeyValue(msg, "icon", icon);
+		
+		if (DispatchSpawn(msg))
+		{
+			AcceptEntityInput(msg, "Display");
+			RemoveEntity(msg);
+		}
+	}
+}
+
+void TF2_RemovePlayerItem(int client, int item)
+{
+	if (TF2Util_IsEntityWearable(item))
+	{
+		TF2_RemoveWearable(client, item);
+		return;
+	}
+	
+	// Remove any extra wearables associated with the weapon
+	int extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
+	if (extraWearable != -1)
+	{
+		TF2_RemoveWearable(client, extraWearable);
+	}
+	
+	// And their viewmodel too
+	extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
+	if (extraWearable != -1)
+	{
+		TF2_RemoveWearable(client, extraWearable);
+	}
+	
+	RemovePlayerItem(client, item);
+	RemoveEntity(item);
 }
