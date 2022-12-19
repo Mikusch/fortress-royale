@@ -75,8 +75,20 @@ public void OnPluginStart()
 	}
 }
 
+public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
+{
+	if (TF2Econ_GetItemLoadoutSlot(itemDefIndex, TF2_GetPlayerClass(client)) == LOADOUT_POSITION_MELEE)
+	{
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
+}
+
 public void OnClientPutInServer(int client)
 {
+	FRPlayer(client).Init();
+	
 	SDKHooks_OnClientPutInServer(client);
 }
 

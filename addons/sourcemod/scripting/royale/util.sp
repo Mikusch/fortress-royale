@@ -126,3 +126,39 @@ void TF2_RemovePlayerItem(int client, int item)
 	RemovePlayerItem(client, item);
 	RemoveEntity(item);
 }
+
+bool ShouldUseCustomViewModel(int client, int weapon)
+{
+	return IsValidEntity(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_FISTS && TF2_GetPlayerClass(client) != TFClass_Heavy;
+}
+
+int CreateViewModelWearable(int client, int weapon)
+{
+	int wearable = CreateEntityByName("tf_wearable_vm");
+	
+	float vecOrigin[3], vecAngles[3];
+	GetEntPropVector(client, Prop_Send, "m_vecOrigin", vecOrigin);
+	GetEntPropVector(client, Prop_Send, "m_angRotation", vecAngles);
+	TeleportEntity(wearable, vecOrigin, vecAngles);
+	
+	SetEntProp(wearable, Prop_Send, "m_bValidatedAttachedEntity", true);
+	SetEntPropEnt(wearable, Prop_Send, "m_hOwnerEntity", client);
+	SetEntProp(wearable, Prop_Send, "m_iTeamNum", GetClientTeam(client));
+	SetEntProp(wearable, Prop_Send, "m_usSolidFlags", FSOLID_NOT_SOLID);
+	SetEntProp(wearable, Prop_Send, "m_CollisionGroup", COLLISION_GROUP_WEAPON);
+	SetEntProp(wearable, Prop_Send, "m_fEffects", EF_BONEMERGE | EF_BONEMERGE_FASTCULL);
+	
+	if (IsValidEntity(weapon))
+	{
+		SetEntPropEnt(wearable, Prop_Send, "m_hWeaponAssociatedWith", weapon);
+		SetEntPropEnt(weapon, Prop_Send, "m_hExtraWearableViewModel", wearable);
+	}
+	
+	DispatchSpawn(wearable);
+	TF2Util_EquipPlayerWearable(client, wearable);
+	
+	SetVariantString("!activator");
+	AcceptEntityInput(wearable, "SetParent", GetEntPropEnt(client, Prop_Send, "m_hViewModel"));
+	
+	return wearable;
+}
