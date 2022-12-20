@@ -131,7 +131,7 @@ void TF2_RemovePlayerItem(int client, int item)
 
 bool ShouldUseCustomViewModel(int client, int weapon)
 {
-	return IsValidEntity(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_FISTS && TF2_GetPlayerClass(client) != TFClass_Heavy;
+	return IsWeaponFists(weapon) && TF2_GetPlayerClass(client) != TFClass_Heavy;
 }
 
 int CreateViewModelWearable(int client, int weapon)
@@ -191,4 +191,16 @@ int GetEntityForLoadoutSlot(int client, int loadoutSlot)
 	}
 	
 	return -1;
+}
+
+bool IsWeaponFists(int weapon)
+{
+	if (!IsValidEntity(weapon))
+		return false;
+	
+	if (!TF2Util_IsEntityWeapon(weapon))
+		return false;
+	
+	int iItemDefIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+	return (iItemDefIndex == TF_DEFINDEX_FISTS || iItemDefIndex == TF_DEFINDEX_UPGRADEABLE_FISTS);
 }

@@ -20,6 +20,9 @@
 
 #define MAX_WEAPONS				48	// Max number of weapons available
 
+#define TF_DEFINDEX_FISTS				5
+#define TF_DEFINDEX_UPGRADEABLE_FISTS	195
+
 #define INVALID_ITEM_DEF_INDEX	(0xFFFF)
 
 //-----------------------------------------------------------------------------

@@ -65,7 +65,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	
 	if (!found)
 	{
-		if (activeWeapon != -1 && TF2Util_GetWeaponID(activeWeapon) == TF_WEAPON_FISTS)
+		if (IsWeaponFists(activeWeapon))
 		{
 			EmitGameSoundToClient(client, "Player.UseDeny");
 			ShowGameMessage("You cannot drop your fists!", "ico_notify_golden_wrench");
@@ -113,7 +113,7 @@ bool ShouldDropWeapon(int client, int weapon)
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
 		return false;
 	
-	if (TF2Util_GetWeaponID(weapon) == TF_WEAPON_FISTS)
+	if (IsWeaponFists(weapon))
 		return false;
 	
 	return true;
