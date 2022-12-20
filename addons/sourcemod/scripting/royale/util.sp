@@ -204,3 +204,40 @@ bool IsWeaponFists(int weapon)
 	int iItemDefIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
 	return (iItemDefIndex == TF_DEFINDEX_FISTS || iItemDefIndex == TF_DEFINDEX_UPGRADEABLE_FISTS);
 }
+
+void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap)
+{
+	float vecImpulse[3];
+	float flImpulseScale = 0.0;
+	if (bSwap && IsValidEntity(client))
+	{
+		float vecEyeAngles[3];
+		GetClientEyeAngles(client, vecEyeAngles);
+		
+		float vecForward[3], vecUp[3];
+		GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, vecUp);
+		AddVectors(vecImpulse, { 0.0, 0.0, 1.5 }, vecImpulse);
+		AddVectors(vecUp, vecForward, vecImpulse);
+		flImpulseScale = 250.0;
+	}
+	else
+	{
+		float vecAngles[3];
+		GetEntPropVector(droppedWeapon, Prop_Data, "m_angAbsRotation", vecAngles);
+		
+		float vecRight[3], vecUp[3];
+		GetAngleVectors(vecAngles, NULL_VECTOR, vecRight, vecUp);
+		ScaleVector(vecUp, GetRandomFloat(-0.25, 0.25));
+		ScaleVector(vecRight, GetRandomFloat(-0.25, 0.25));
+		flImpulseScale = GetRandomFloat(100.0, 150.0);
+	}
+	
+	NormalizeVector(vecImpulse, vecImpulse);
+	ScaleVector(vecImpulse, flImpulseScale);
+	
+	float vecVelocity[3];
+	GetEntPropVector(droppedWeapon, Prop_Data, "m_vecAbsVelocity", vecVelocity);
+	AddVectors(vecImpulse, vecVelocity, vecImpulse);
+	
+	TeleportEntity(droppedWeapon, .velocity = vecImpulse);
+}

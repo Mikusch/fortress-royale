@@ -81,9 +81,16 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 				GetItemWorldModel(weapon, model, sizeof(model));
 				
 				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
-				if (IsValidEntity(newDroppedWeapon) && TF2Util_IsEntityWeapon(weapon))
+				if (IsValidEntity(newDroppedWeapon))
 				{
-					SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
+					if (TF2Util_IsEntityWeapon(weapon))
+					{
+						SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
+					}
+					else if (TF2Util_IsEntityWearable(weapon))
+					{
+						InitDroppedWearable(newDroppedWeapon, player, weapon, true);
+					}
 				}
 				
 				TF2_RemovePlayerItem(player, weapon);

@@ -20,14 +20,7 @@
 
 void Events_Init()
 {
-	HookEvent("post_inventory_application", EventHook_PostInventoryApplication);
-}
-
-static void EventHook_PostInventoryApplication(Event event, const char[] name, bool dontBroadcast)
-{
-	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	//CreateFists(client);
 }
 
 int CreateFists(int client)

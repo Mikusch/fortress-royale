@@ -94,6 +94,10 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 				SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
 			}
 		}
+		else if (TF2Util_IsEntityWearable(weapon))
+		{
+			InitDroppedWearable(droppedWeapon, client, weapon, true);
+		}
 		
 		TF2_RemovePlayerItem(client, weapon);
 	}
