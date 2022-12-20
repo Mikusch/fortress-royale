@@ -54,7 +54,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			}
 			else
 			{
-				if (ShouldDropWeapon(client, weapon))
+				if (ShouldDropWeapon(client, weapon) && !SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
 				{
 					found = true;
 					break;
@@ -65,10 +65,10 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	
 	if (!found)
 	{
-		if (activeWeapon != -1 && TF2Util_GetWeaponSlot(activeWeapon) == TFWeaponSlot_Melee)
+		if (activeWeapon != -1 && TF2Util_GetWeaponID(activeWeapon) == TF_WEAPON_FISTS)
 		{
 			EmitGameSoundToClient(client, "Player.UseDeny");
-			ShowGameMessage("You cannot drop your melee weapon!", "ico_notify_golden_wrench");
+			ShowGameMessage("You cannot drop your fists!", "ico_notify_golden_wrench");
 		}
 		
 		return Plugin_Continue;
@@ -87,10 +87,22 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		if (TF2Util_IsEntityWeapon(weapon))
 		{
 			SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
-			SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
+			
+			// If the weapon we just dropped could not be switched to, stay on our current weapon
+			if (SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+			{
+				SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
+			}
 		}
 		
 		TF2_RemovePlayerItem(client, weapon);
+	}
+	
+	// If we dropped our melee weapon, get fists back
+	int melee = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
+	if (melee == -1)
+	{
+		CreateFists(client);
 	}
 	
 	return Plugin_Continue;
@@ -101,5 +113,8 @@ bool ShouldDropWeapon(int client, int weapon)
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
 		return false;
 	
-	return TF2Util_GetWeaponSlot(weapon) != LOADOUT_POSITION_MELEE;
+	if (TF2Util_GetWeaponID(weapon) == TF_WEAPON_FISTS)
+		return false;
+	
+	return true;
 }

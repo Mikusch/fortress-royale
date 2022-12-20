@@ -27,6 +27,11 @@ static void EventHook_PostInventoryApplication(Event event, const char[] name, b
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
+	//CreateFists(client);
+}
+
+int CreateFists(int client)
+{
 	Handle item = TF2Items_CreateItem(FORCE_GENERATION);
 	TF2Items_SetClassname(item, "tf_weapon_fists");
 	TF2Items_SetItemIndex(item, 5);
@@ -35,5 +40,7 @@ static void EventHook_PostInventoryApplication(Event event, const char[] name, b
 	delete item;
 	
 	EquipPlayerWeapon(client, weapon);
-//	TF2Util_SetPlayerActiveWeapon(client, weapon);
+	TF2Util_SetPlayerActiveWeapon(client, weapon);
+	
+	return weapon;
 }

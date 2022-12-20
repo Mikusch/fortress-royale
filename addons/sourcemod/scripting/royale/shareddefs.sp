@@ -18,6 +18,10 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+#define MAX_WEAPONS				48	// Max number of weapons available
+
+#define INVALID_ITEM_DEF_INDEX	(0xFFFF)
+
 //-----------------------------------------------------------------------------
 // Purpose: Slots for items within loadouts
 //-----------------------------------------------------------------------------

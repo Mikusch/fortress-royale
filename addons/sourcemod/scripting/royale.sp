@@ -79,7 +79,8 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDef
 {
 	if (TF2Econ_GetItemLoadoutSlot(itemDefIndex, TF2_GetPlayerClass(client)) == LOADOUT_POSITION_MELEE)
 	{
-		return Plugin_Handled;
+		//CreateFists(client);
+		//return Plugin_Handled;
 	}
 	
 	return Plugin_Continue;

@@ -59,7 +59,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 		
 		TFClassType class = TF2_GetPlayerClass(player);
 		int itemSlot = TF2Econ_GetItemLoadoutSlot(itemdef, class);
-		int weapon = TF2Util_GetPlayerLoadoutEntity(player, itemSlot);
+		int weapon = GetEntityForLoadoutSlot(player, itemSlot);
 		
 		// we need to force translating the name here.
 		// GiveNamedItem will not translate if we force creating the item
@@ -114,7 +114,8 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 		}
 	}
 	
-	return MRES_Ignored;
+	ret.Value = false;
+	return MRES_Supercede;
 }
 
 static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player, DHookReturn ret, DHookParam params)

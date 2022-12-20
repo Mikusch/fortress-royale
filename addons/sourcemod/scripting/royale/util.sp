@@ -106,24 +106,26 @@ void TF2_RemovePlayerItem(int client, int item)
 	if (TF2Util_IsEntityWearable(item))
 	{
 		TF2_RemoveWearable(client, item);
-		return;
 	}
-	
-	// Remove any extra wearables associated with the weapon
-	int extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
-	if (extraWearable != -1)
+	else if (TF2Util_IsEntityWeapon(item))
 	{
-		TF2_RemoveWearable(client, extraWearable);
+		// Remove any extra wearables associated with the weapon
+		int extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
+		if (extraWearable != -1)
+		{
+			TF2_RemoveWearable(client, extraWearable);
+		}
+		
+		// And their viewmodel too
+		extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
+		if (extraWearable != -1)
+		{
+			TF2_RemoveWearable(client, extraWearable);
+		}
+		
+		RemovePlayerItem(client, item);
 	}
 	
-	// And their viewmodel too
-	extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
-	if (extraWearable != -1)
-	{
-		TF2_RemoveWearable(client, extraWearable);
-	}
-	
-	RemovePlayerItem(client, item);
 	RemoveEntity(item);
 }
 
@@ -161,4 +163,32 @@ int CreateViewModelWearable(int client, int weapon)
 	AcceptEntityInput(wearable, "SetParent", GetEntPropEnt(client, Prop_Send, "m_hViewModel"));
 	
 	return wearable;
+}
+
+int GetEntityForLoadoutSlot(int client, int loadoutSlot)
+{
+	int entity = TF2Util_GetPlayerLoadoutEntity(client, loadoutSlot);
+	if (entity != -1)
+		return entity;
+	
+	// TF2Util_GetPlayerLoadoutEntity does not find items equipped by the wrong classes.
+	// Iterate all classes and check their items.
+	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
+	{
+		for (int i = 0; i < MAX_WEAPONS; i++)
+		{
+			int myWeapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", i);
+			if (myWeapon != -1)
+			{
+				int itemdef = GetEntProp(myWeapon, Prop_Send, "m_iItemDefinitionIndex");
+				if (itemdef == INVALID_ITEM_DEF_INDEX)
+					continue;
+				
+				if (TF2Econ_GetItemLoadoutSlot(itemdef, class) == loadoutSlot)
+					return myWeapon;
+			}
+		}
+	}
+	
+	return -1;
 }
