@@ -273,3 +273,9 @@ int GivePlayerFists(int client)
 	
 	return weapon;
 }
+
+bool CanWeaponBeUsedByClass(int weapon, TFClassType class)
+{
+	int iItemDefIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+	return TF2Econ_GetItemLoadoutSlot(iItemDefIndex, class) != -1;
+}

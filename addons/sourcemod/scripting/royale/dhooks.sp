@@ -160,9 +160,6 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 		return MRES_Supercede;
 	}
 	
-	int itemSlot = TF2Econ_GetItemLoadoutSlot(GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"), class);
-	int ownedWeaponToDrop = TF2Util_GetPlayerLoadoutEntity(player, itemSlot);
-	
-	ret.Value = true/*&& pWeapon->GetItem()->GetStaticData()->CanBeUsedByClass( iClass ) && IsValidPickupWeaponSlot( iItemSlot )*/;
+	ret.Value = CanWeaponBeUsedByClass(weapon, class);
 	return MRES_Supercede;
 }
