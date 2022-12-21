@@ -102,23 +102,15 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		TF2_RemovePlayerItem(client, weapon);
 	}
 	
-	// If we dropped our melee weapon, get fists back
-	int melee = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
-	if (melee == -1)
+	if (IsPlayerAlive(client))
 	{
-		CreateFists(client);
+		// If we dropped our melee weapon, get our fists back
+		int melee = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
+		if (melee == -1)
+		{
+			GivePlayerFists(client);
+		}
 	}
 	
 	return Plugin_Continue;
-}
-
-bool ShouldDropWeapon(int client, int weapon)
-{
-	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
-		return false;
-	
-	if (IsWeaponFists(weapon))
-		return false;
-	
-	return true;
 }

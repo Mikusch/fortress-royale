@@ -171,8 +171,8 @@ int GetEntityForLoadoutSlot(int client, int loadoutSlot)
 	if (entity != -1)
 		return entity;
 	
-	// TF2Util_GetPlayerLoadoutEntity does not find items equipped by the wrong classes.
-	// Iterate all classes and check their items.
+	// TF2Util_GetPlayerLoadoutEntity does not find weapons equipped by the wrong classes.
+	// Iterate all classes and check their weapons.
 	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
 	{
 		for (int i = 0; i < MAX_WEAPONS; i++)
@@ -240,4 +240,36 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 	AddVectors(vecImpulse, vecVelocity, vecImpulse);
 	
 	TeleportEntity(droppedWeapon, .velocity = vecImpulse);
+}
+
+bool ShouldDropWeapon(int client, int weapon)
+{
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
+		return false;
+	
+	if (IsWeaponFists(weapon))
+		return false;
+	
+	return true;
+}
+
+int GivePlayerFists(int client)
+{
+	Handle item = TF2Items_CreateItem(FORCE_GENERATION | OVERRIDE_ALL);
+	
+	TF2Items_SetItemIndex(item, TF_DEFINDEX_FISTS);
+	TF2Items_SetLevel(item, 1);
+	
+	char classname[64];
+	TF2Econ_GetItemClassName(TF_DEFINDEX_FISTS, classname, sizeof(classname));
+	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	TF2Items_SetClassname(item, classname);
+	
+	int weapon = TF2Items_GiveNamedItem(client, item);
+	delete item;
+	
+	EquipPlayerWeapon(client, weapon);
+	TF2Util_SetPlayerActiveWeapon(client, weapon);
+	
+	return weapon;
 }
