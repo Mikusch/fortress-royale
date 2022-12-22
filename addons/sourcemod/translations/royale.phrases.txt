@@ -1,0 +1,12 @@
+"Phrases"
+{
+	"Crate_Opening"
+	{
+		"#format"	"{1:N}"
+		"en"		"{1} is opening"
+	}
+	"Weapon_CannotDropFists"
+	{
+		"en"		"You cannot drop your fists!"
+	}
+}

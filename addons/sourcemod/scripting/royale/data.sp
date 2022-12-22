@@ -19,6 +19,7 @@
 #pragma semicolon 1
 
 static int m_clientWearableVM[MAXPLAYERS + 1];
+static float m_flCrateOpenTime[MAXPLAYERS + 1];
 
 methodmap FRPlayer < CBaseCombatCharacter
 {
@@ -48,6 +49,18 @@ methodmap FRPlayer < CBaseCombatCharacter
 		public set(int clientWearableVM)
 		{
 			m_clientWearableVM[this.index] = clientWearableVM;
+		}
+	}
+	
+	property float m_flCrateOpenTime
+	{
+		public get()
+		{
+			return m_flCrateOpenTime[this.index];
+		}
+		public set(float flCrateOpenTime)
+		{
+			m_flCrateOpenTime[this.index] = flCrateOpenTime;
 		}
 	}
 	

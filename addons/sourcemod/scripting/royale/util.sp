@@ -209,7 +209,7 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 {
 	// No physics object, don't apply any velocity
 	Address pPhysicsObject = view_as<Address>(GetEntData(droppedWeapon, FindDataMapInfo(droppedWeapon, "m_pPhysicsObject")));
-	if (pPhysicsObject != Address_Null)
+	if (pPhysicsObject == Address_Null)
 		return;
 	
 	float vecImpulse[3];
