@@ -28,6 +28,7 @@
 #include <cbasenpc>
 
 ConVar fr_crate_open_time;
+ConVar fr_crate_open_range;
 
 #include "royale/shareddefs.sp"
 
@@ -90,97 +91,40 @@ public void OnMapStart()
 
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])
 {
-	// TODO: Use an actual trace
-	int entity = GetClientAimTarget(client, false);
-	if (entity != -1)
+	ProcessCrateOpening(client, buttons);
+	
+	return Plugin_Continue;
+}
+
+static bool ProcessCrateOpening(int client, int buttons)
+{
+	if (IsPlayerAlive(client) && buttons & IN_RELOAD)
 	{
-		char classname[64];
-		if (GetEntityClassname(entity, classname, sizeof(classname)) && StrEqual(classname, "prop_dynamic"))
+		float vecEyePosition[3], vecEyeAngles[3];
+		GetClientEyePosition(client, vecEyePosition);
+		GetClientEyeAngles(client, vecEyeAngles);
+		
+		float vecForward[3];
+		GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, NULL_VECTOR);
+		
+		ScaleVector(vecForward, fr_crate_open_range.FloatValue);
+		AddVectors(vecForward, vecEyePosition, vecForward);
+		
+		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_IgnoreEntity, client);
+		
+		if (TR_GetFraction() != 1.0 && TR_DidHit())
 		{
-			if (buttons & IN_RELOAD)
-			{
-				// Crate is already claimed by another player
-				if (!FRCrate(entity).CanUse(client))
-				{
-					return Plugin_Continue;
-				}
-				
-				// Claim and start opening this crate
-				if (FRPlayer(client).m_flCrateOpenTime == 0.0)
-				{
-					FRPlayer(client).m_flCrateOpenTime = GetGameTime();
-					
-					FRCrate(entity).m_claimedBy = client;
-					SetEntityFlags(client, GetEntityFlags(client) | FL_FROZEN);
-					EmitSoundToAll(")ui/item_open_crate.wav", entity, SNDCHAN_STATIC, SNDLEVEL_NONE);
-				}
-				
-				// Process crate opening
-				if (FRPlayer(client).m_flCrateOpenTime + fr_crate_open_time.FloatValue > GetGameTime())
-				{
-					char szMessage[64];
-					Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", client, client);
-					
-					int iSeconds = RoundToCeil(GetGameTime() - FRPlayer(client).m_flCrateOpenTime);
-					for (int i = 0; i < iSeconds; i++)
-					{
-						Format(szMessage, sizeof(szMessage), "%s%s", szMessage, ".");
-					}
-					
-					FRCrate(entity).SetText(szMessage);
-				}
-				else
-				{
-					// Pow!
-					SetEntityFlags(client, GetEntityFlags(client) & ~FL_FROZEN);
-					
-					EmitSoundToAll(")ui/itemcrate_smash_ultrarare_short.wav", entity, SNDCHAN_STATIC);
-					StopSound(entity, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
-					RemoveEntity(entity);
-				}
-			}
-			else
-			{
-				if (FRCrate(entity).m_claimedBy != -1)
-				{
-					FRPlayer(client).m_flCrateOpenTime = 0.0;
-					SetEntityFlags(client, GetEntityFlags(client) & ~FL_FROZEN);
-					
-					FRCrate(entity).m_claimedBy = -1;
-					FRCrate(entity).ClearText();
-					StopSound(entity, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
-				}
-			}
-		}
-	}
-	else 
-	{
-		// If we hit this, the crate we were opening is now invalid (out of range, destroyed, etc.)
-		if (FRPlayer(client).m_flCrateOpenTime)
-		{
-			FRPlayer(client).m_flCrateOpenTime = 0.0;
-			SetEntityFlags(client, GetEntityFlags(client) & ~FL_FROZEN);
-			
-			// Find crates still claimed by us and reset them
-			int worldtext = -1;
-			while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
-			{
-				int hMoveParent = GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent");
-				
-				if (hMoveParent == -1)
-					continue;
-				
-				if (FRCrate(hMoveParent).m_claimedBy != client)
-					continue;
-				
-				FRCrate(hMoveParent).m_claimedBy = -1;
-				StopSound(hMoveParent, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
-				RemoveEntity(worldtext);
-			}
+			return FREntity(TR_GetEntityIndex()).IsValidCrate() && FRPlayer(client).TryToOpenCrate(TR_GetEntityIndex());
 		}
 	}
 	
-	return Plugin_Continue;
+	FRPlayer(client).StopOpeningCrate();
+	return false;
+}
+
+static bool TraceEntityFilter_IgnoreEntity(int entity, int mask, any data)
+{
+	return entity != data;
 }
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
@@ -204,4 +148,9 @@ public void OnClientPutInServer(int client)
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	SDKHooks_OnEntityCreated(entity, classname);
+}
+
+public void OnEntityDestroyed(int entity)
+{
+	FREntity(entity).Destroy();
 }

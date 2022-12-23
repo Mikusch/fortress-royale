@@ -79,6 +79,82 @@ methodmap FRPlayer < CBaseCombatCharacter
 		this.m_clientWearableVM = INVALID_ENT_REFERENCE;
 	}
 	
+	public bool TryToOpenCrate(int crate)
+	{
+		// Crate is already claimed by another player
+		if (!FRCrate(crate).CanUse(this.index))
+		{
+			return false;
+		}
+		
+		// Claim and start opening this crate
+		if (this.m_flCrateOpenTime == 0.0)
+		{
+			this.m_flCrateOpenTime = GetGameTime();
+			this.AddFlag(FL_FROZEN);
+			
+			FRCrate(crate).m_claimedBy = this.index;
+			EmitSoundToAll(")ui/item_open_crate.wav", crate);
+		}
+		
+		if (this.m_flCrateOpenTime + fr_crate_open_time.FloatValue > GetGameTime())
+		{
+			char szMessage[64];
+			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index, this.index);
+			
+			int iSeconds = RoundToCeil(GetGameTime() - this.m_flCrateOpenTime);
+			for (int i = 0; i < iSeconds; i++)
+			{
+				Format(szMessage, sizeof(szMessage), "%s%s", szMessage, ".");
+			}
+			
+			FRCrate(crate).SetText(szMessage);
+		}
+		else
+		{
+			this.StopOpeningCrate(crate);
+			
+			EmitSoundToAll(")ui/itemcrate_smash_ultrarare_short.wav", crate, SNDCHAN_STATIC);
+			
+			float origin[3];
+			CBaseEntity(crate).WorldSpaceCenter(origin);
+			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin);
+			TE_TFParticleEffect("mvm_loot_explosion", origin);
+			
+			AcceptEntityInput(crate, "Break");
+		}
+		
+		return true;
+	}
+	
+	public void StopOpeningCrate(int crate = -1)
+	{
+		// We are not opening a crate right now...
+		if (this.m_flCrateOpenTime == 0.0)
+			return;
+		
+		this.m_flCrateOpenTime = 0.0;
+		this.RemoveFlag(FL_FROZEN);
+		
+		// If no crate was passed in, search for claimed crates
+		if (crate != -1)
+		{
+			FRCrate(crate).CancelOpen();
+		}
+		else
+		{
+			while ((crate = FindEntityByClassname(crate, "prop_dynamic")) != -1)
+			{
+				// Find our current crate
+				if (FREntity(crate).IsValidCrate() && FRCrate(crate).m_claimedBy == this.index)
+				{
+					FRCrate(crate).CancelOpen();
+					break;
+				}
+			}
+		}
+	}
+	
 	public void Init()
 	{
 		this.m_clientWearableVM = INVALID_ENT_REFERENCE;

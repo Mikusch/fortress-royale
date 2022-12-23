@@ -51,6 +51,7 @@ methodmap FREntity < CBaseEntity
 			// Fill basic properties
 			EntityProperties properties;
 			properties.m_index = entity;
+			properties.m_claimedBy = -1;
 			
 			g_entityProperties.PushArray(properties);
 		}
@@ -72,6 +73,15 @@ methodmap FREntity < CBaseEntity
 		{
 			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::m_index);
 		}
+	}
+	
+	public bool IsValidCrate()
+	{
+		if (this.index == 0)
+			return false;
+		
+		char classname[64];
+		return this.GetClassname(classname, sizeof(classname)) && StrEqual(classname, "prop_dynamic");
 	}
 	
 	public void Destroy()
@@ -150,6 +160,13 @@ methodmap FRCrate < FREntity
 			RemoveEntity(worldtext);
 			return;
 		}
+	}
+	
+	public void CancelOpen()
+	{
+		this.m_claimedBy = -1;
+		this.ClearText();
+		StopSound(this.index, SNDCHAN_AUTO, ")ui/item_open_crate.wav");
 	}
 	
 	public bool CanUse(int client)

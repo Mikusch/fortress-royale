@@ -284,3 +284,50 @@ bool CanWeaponBeUsedByClass(int weapon, TFClassType class)
 	int iItemDefIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
 	return TF2Econ_GetItemLoadoutSlot(iItemDefIndex, class) != -1;
 }
+
+void TE_TFParticleEffect(const char[] name, const float vecOrigin[3] = NULL_VECTOR,
+	const float vecStart[3] = NULL_VECTOR, const float vecAngles[3] = NULL_VECTOR,
+	int entity = -1, ParticleAttachment_t attachType = PATTACH_ABSORIGIN,
+	int attachPoint = -1, bool bResetParticles = false)
+{
+	int particleTable, particleIndex;
+	
+	if ((particleTable = FindStringTable("ParticleEffectNames")) == INVALID_STRING_TABLE)
+	{
+		ThrowError("Could not find string table: ParticleEffectNames");
+	}
+	
+	if ((particleIndex = FindStringIndex(particleTable, name)) == INVALID_STRING_INDEX)
+	{
+		ThrowError("Could not find particle index: %s", name);
+	}
+	
+	TE_Start("TFParticleEffect");
+	TE_WriteFloat("m_vecOrigin[0]", vecOrigin[0]);
+	TE_WriteFloat("m_vecOrigin[1]", vecOrigin[1]);
+	TE_WriteFloat("m_vecOrigin[2]", vecOrigin[2]);
+	TE_WriteFloat("m_vecStart[0]", vecStart[0]);
+	TE_WriteFloat("m_vecStart[1]", vecStart[1]);
+	TE_WriteFloat("m_vecStart[2]", vecStart[2]);
+	TE_WriteVector("m_vecAngles", vecAngles);
+	TE_WriteNum("m_iParticleSystemIndex", particleIndex);
+	
+	if (entity != -1)
+	{
+		TE_WriteNum("entindex", entity);
+	}
+	
+	if (attachType != PATTACH_ABSORIGIN)
+	{
+		TE_WriteNum("m_iAttachType", view_as<int>(attachType));
+	}
+	
+	if (attachPoint != -1)
+	{
+		TE_WriteNum("m_iAttachmentPointIndex", attachPoint);
+	}
+	
+	TE_WriteNum("m_bResetParticles", bResetParticles ? 1 : 0);
+	
+	TE_SendToAll();
+}

@@ -18,4 +18,5 @@
 void ConVars_Init()
 {
 	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3.f", "Amount of time to open a crate.");
+	fr_crate_open_range = CreateConVar("fr_crate_open_range", "100.f", "Range in HU that players may open crates from.");
 }

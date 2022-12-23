@@ -125,6 +125,25 @@ enum MoveCollide_t
 	MOVECOLLIDE_MAX_BITS = 3
 };
 
+
+//-----------------------------------------------------------------------------
+// Particle attachment methods
+//-----------------------------------------------------------------------------
+enum ParticleAttachment_t
+{
+	PATTACH_ABSORIGIN = 0,			// Create at absorigin, but don't follow
+	PATTACH_ABSORIGIN_FOLLOW,		// Create at absorigin, and update to follow the entity
+	PATTACH_CUSTOMORIGIN,			// Create at a custom origin, but don't follow
+	PATTACH_POINT,					// Create on attachment point, but don't follow
+	PATTACH_POINT_FOLLOW,			// Create on attachment point, and update to follow the entity
+
+	PATTACH_WORLDORIGIN,			// Used for control points that don't attach to an entity
+
+	PATTACH_ROOTBONE_FOLLOW,		// Create at the root bone of the entity, and update to follow
+
+	MAX_PATTACH_TYPES,
+};
+
 char g_viewModelArms[][] = {
 	"",
 	"models/weapons/c_models/c_scout_arms.mdl",
@@ -136,4 +155,22 @@ char g_viewModelArms[][] = {
 	"models/weapons/c_models/c_pyro_arms.mdl",
 	"models/weapons/c_models/c_spy_arms.mdl",
 	"models/weapons/c_models/c_engineer_arms.mdl",
+};
+
+char g_szCrateParticles[][] =
+{
+	"mvm_pow_bam",
+	"mvm_pow_boing",
+	"mvm_pow_crack",
+	"mvm_pow_crash",
+	"mvm_pow_crit",
+	"mvm_pow_poof",
+	"mvm_pow_pow",
+	"mvm_pow_punch",
+	"mvm_pow_smash",
+	"mvm_pow_banana",
+	"mvm_pow_boot",
+	"mvm_pow_loot",
+	"mvm_pow_mmph",
+	"mvm_pow_caber"
 };
