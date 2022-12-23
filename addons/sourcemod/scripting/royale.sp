@@ -110,7 +110,7 @@ static bool ProcessCrateOpening(int client, int buttons)
 		ScaleVector(vecForward, fr_crate_open_range.FloatValue);
 		AddVectors(vecForward, vecEyePosition, vecForward);
 		
-		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_IgnoreEntity, client);
+		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_HitCrates, client);
 		
 		if (TR_GetFraction() != 1.0 && TR_DidHit())
 		{
@@ -122,9 +122,9 @@ static bool ProcessCrateOpening(int client, int buttons)
 	return false;
 }
 
-static bool TraceEntityFilter_IgnoreEntity(int entity, int mask, any data)
+static bool TraceEntityFilter_HitCrates(int entity, int mask, int client)
 {
-	return entity != data;
+	return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client);
 }
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
