@@ -27,15 +27,26 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 {
 	// If the player has an item, drop it first
 	if (GetEntPropEnt(client, Prop_Send, "m_hItem") != -1)
+	{
 		return Plugin_Continue;
+	}
+	
+	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	{
+		return Plugin_Continue;
+	}
+	
+	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
+	{
+		return Plugin_Continue;
+	}
 	
 	// The following will be dropped (in that order):
 	// - current active weapon
 	// - wearables (can't be used as active weapon)
 	// - weapons that can't be switched to (as determined by TF2)
 	
-	int activeWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	int weapon = activeWeapon;
+	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
 	bool found = (weapon != -1) && ShouldDropWeapon(client, weapon);
 	
 	if (!found)
@@ -65,7 +76,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	
 	if (!found)
 	{
-		if (IsWeaponFists(activeWeapon))
+		if (IsWeaponFists(GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon")))
 		{
 			EmitGameSoundToClient(client, "Player.UseDeny");
 			

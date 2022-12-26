@@ -63,7 +63,7 @@ bool GetItemWorldModel(int item, char[] model, int size)
 	return ModelIndexToString(modelIndex, model, size);
 }
 
-float TF2_GetPercentInvisible(int client)
+float GetPercentInvisible(int client)
 {
 	static int offset = -1;
 	if (offset == -1)
@@ -330,4 +330,36 @@ void TE_TFParticleEffect(const char[] name, const float vecOrigin[3] = NULL_VECT
 	TE_WriteNum("m_bResetParticles", bResetParticles ? 1 : 0);
 	
 	TE_SendToAll();
+}
+
+int Compare(any val1, any val2)
+{
+	if (val1 > val2)
+	{
+		return 1;
+	}
+	else if (val1 < val2)
+	{
+		return -1;
+	}
+	
+	return 0;
+}
+
+int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle array, Handle hndl)
+{
+	ArrayList list = view_as<ArrayList>(array);
+	
+	CrateContentConfig content1, content2;
+	list.GetArray(index1, content1);
+	list.GetArray(index2, content2);
+	
+	float rand = GetRandomFloat();
+	
+	// Compare each element against a random number
+	int c1 = FloatCompare(rand, content1.chance);
+	int c2 = FloatCompare(rand, content2.chance);
+	
+	// If both are the same, pick a random one
+	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
 }

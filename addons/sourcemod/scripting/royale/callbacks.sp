@@ -15,10 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-void ConVars_Init()
+#pragma newdecls required
+#pragma semicolon 1
+
+public bool ItemCallback_CreateWeapon(int client, CallbackParams params, const float origin[3])
 {
-	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3.f", "Amount of time to open a crate.");
-	fr_crate_open_range = CreateConVar("fr_crate_open_range", "100.f", "Range in HU that players may open crates from.");
-	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
-	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
+	int itemdefindex;
+	if (!params.GetIntEx("itemdefindex", itemdefindex))
+	{
+		LogError("Required parameter 'itemdefindex' not found");
+		return false;
+	}
+
+	return true;
 }

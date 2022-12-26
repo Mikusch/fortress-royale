@@ -22,6 +22,7 @@
 #include <sdktools>
 #include <dhooks>
 #include <sdkhooks>
+#include <regex>
 #include <tf2utils>
 #include <tf_econ_data>
 #include <tf2items>
@@ -29,9 +30,12 @@
 
 ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
+ConVar fr_crate_max_drops;
+ConVar fr_crate_max_extra_drops;
 
 #include "royale/shareddefs.sp"
 
+#include "royale/callbacks.sp"
 #include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convars.sp"
@@ -87,6 +91,13 @@ public void OnMapStart()
 {
 	PrecacheSound(")ui/item_open_crate.wav");
 	PrecacheSound(")ui/itemcrate_smash_ultrarare_short.wav");
+	
+	Config_Parse();
+}
+
+public void OnMapEnd()
+{
+	Config_Delete();
 }
 
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])

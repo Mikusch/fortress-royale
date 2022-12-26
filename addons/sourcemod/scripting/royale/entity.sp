@@ -173,4 +173,51 @@ methodmap FRCrate < FREntity
 	{
 		return this.m_claimedBy == -1 || this.m_claimedBy == client;
 	}
+	
+	public void DropItem(int client)
+	{
+		char name[64];
+		if (this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) == 0)
+		{
+			LogError("Failed to get targetname for entity '%d'", this.index);
+			return;
+		}
+		
+		// Find all crates that fit our criteria
+		ArrayList crates = Config_GetCratesByName(name);
+		
+		if (!crates || crates.Length == 0)
+		{
+			LogError("No crate configs for '%s' found", name);
+			delete crates;
+			return;
+		}
+		
+		// Grab a random crate config
+		CrateConfig crate;
+		if (crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) > 0)
+		{
+			// Normal crate drops (guaranteed)
+			for (int i = 0; i < crate.max_drops; i++)
+			{
+				CrateContentConfig content;
+				if (crate.GetRandomContent(content))
+				{
+					// TODO
+				}
+			}
+			
+			// Extra drops (random)
+			for (int i = 0; i < crate.max_extra_drops; i++)
+			{
+				CrateContentConfig extra_content;
+				if (crate.GetRandomExtraContent(extra_content))
+				{
+					// TODO
+				}
+			}
+		}
+		
+		delete crates;
+	}
 }

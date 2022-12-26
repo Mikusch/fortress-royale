@@ -113,6 +113,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 		else
 		{
 			this.StopOpeningCrate(crate);
+			FRCrate(crate).DropItem(this.index);
 			
 			EmitSoundToAll(")ui/itemcrate_smash_ultrarare_short.wav", crate, SNDCHAN_STATIC);
 			

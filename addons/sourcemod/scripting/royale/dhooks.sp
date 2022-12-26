@@ -136,7 +136,7 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 	}
 	
 	TFClassType class = TF2_GetPlayerClass(player);
-	if (class == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || TF2_GetPercentInvisible(player) > 0.0))
+	if (class == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || GetPercentInvisible(player) > 0.0))
 	{
 		ret.Value = false;
 		return MRES_Supercede;
