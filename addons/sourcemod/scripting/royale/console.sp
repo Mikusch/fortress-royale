@@ -123,7 +123,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		if (melee == -1)
 		{
 			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
-			EquipPlayerWeapon(client, weapon);
+			ItemGiveTo(client, weapon);
 			TF2Util_SetPlayerActiveWeapon(client, weapon);
 		}
 	}

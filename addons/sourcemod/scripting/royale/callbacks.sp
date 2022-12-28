@@ -20,88 +20,93 @@
 
 public void ItemCallback_PrecacheModel(CallbackParams params)
 {
-	int item_def_index;
-	if (!params.GetIntEx("item_def_index", item_def_index))
+	int iItemDefIndex;
+	if (!params.GetIntEx("item_def_index", iItemDefIndex))
 	{
 		LogError("Failed to find required callback parameter 'item_def_index'");
 		return;
 	}
 	
-	char model[PLATFORM_MAX_PATH];
-	if (!params.GetString("model", model, sizeof(model)))
+	char szModel[PLATFORM_MAX_PATH];
+	if (!params.GetString("model", szModel, sizeof(szModel)))
 	{
 		LogError("Failed to find required callback parameter 'model'");
 		return;
 	}
 	
-	any values[2];
-	values[0] = item_def_index;
-	values[1] = PrecacheModel(model);
-	g_itemModelIndexes.PushArray(values);
+	any aValues[2];
+	aValues[0] = iItemDefIndex;
+	aValues[1] = PrecacheModel(szModel);
+	g_itemModelIndexes.PushArray(aValues);
 }
 
-public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, const float origin[3], const float angles[3])
+public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, const float vecOrigin[3], const float vecAngles[3])
 {
-	int item_def_index;
-	if (!params.GetIntEx("item_def_index", item_def_index))
+	int iItemDefIndex;
+	if (!params.GetIntEx("item_def_index", iItemDefIndex))
 	{
 		LogError("Failed to find required callback parameter 'item_def_index'");
 		return false;
 	}
 	
-	TFClassType class = TF2_GetPlayerClass(client);
+	TFClassType nClass = TF2_GetPlayerClass(client);
 	
-	int slot = TF2Econ_GetItemLoadoutSlot(item_def_index, class);
-	if (slot == -1)
+	int iSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+	if (iSlot == -1)
 		return false;
 	
-	Address pScriptItem = SDKCall_CTFPlayer_GetLoadoutItem(client, class, slot);
+	Address pScriptItem = SDKCall_CTFPlayer_GetLoadoutItem(client, nClass, iSlot);
 	if (!pScriptItem)
 		return false;
 	
-	char weaponName[64];
-	TF2Econ_GetItemClassName(item_def_index, weaponName, sizeof(weaponName));
-	TF2Econ_TranslateWeaponEntForClass(weaponName, sizeof(weaponName), class);
+	char szWeaponName[64];
+	if (!TF2Econ_GetItemClassName(iItemDefIndex, szWeaponName, sizeof(szWeaponName)))
+		return false;
+	
+	TF2Econ_TranslateWeaponEntForClass(szWeaponName, sizeof(szWeaponName), nClass);
 	
 	int weapon = -1;
 	
-	// CEconItemView::m_iItemDefinitionIndex
-	int actualDefIndex = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);
-	if (actualDefIndex == item_def_index)
+	// Check if the player has this weapon equipped
+	int iLoadoutItemDefIndex = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);	// CEconItemView::m_iItemDefinitionIndex
+	if (iLoadoutItemDefIndex == iItemDefIndex)
 	{
-		weapon = SDKCall_CTFPlayer_GiveNamedItem(client, weaponName, 0, pScriptItem, true);
+		weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, pScriptItem, true);
 	}
 	
-	char buffer[256];
-	if (params.GetString("reskins", buffer, sizeof(buffer)))
+	// Check if the player has a suitable reskin equipped
+	if (!IsValidEntity(weapon))
 	{
-		char buffers[32][8];
-		int count = ExplodeString(buffer, ",", buffers, sizeof(buffers), sizeof(buffers[]));
-		for (int i = 0; i < count; i++)
+		char szReskins[256];
+		if (params.GetString("reskins", szReskins, sizeof(szReskins)))
 		{
-			int value;
-			if (StringToIntEx(buffers[i], value) && actualDefIndex == value)
+			char aBuffers[32][8];
+			int count = ExplodeString(szReskins, ",", aBuffers, sizeof(aBuffers), sizeof(aBuffers[]));
+			for (int i = 0; i < count; i++)
 			{
-				weapon = SDKCall_CTFPlayer_GiveNamedItem(client, weaponName, 0, pScriptItem, true);
-				break;
+				int iValue;
+				if (StringToIntEx(aBuffers[i], iValue) && iLoadoutItemDefIndex == iValue)
+				{
+					weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, pScriptItem, true);
+					break;
+				}
 			}
 		}
 	}
 	
+	// If we did not find a weapon, generate a default one
 	if (!IsValidEntity(weapon))
 	{
-		weapon = GenerateDefaultItem(client, item_def_index);
+		weapon = GenerateDefaultItem(client, iItemDefIndex);
 	}
 	
-	if (!IsValidEntity(weapon))
-	{
-		return false;
-	}
+	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
+	ItemGiveTo(client, weapon);
 	
-	char model[PLATFORM_MAX_PATH];
-	GetItemWorldModel(weapon, model, sizeof(model));
+	char szModel[PLATFORM_MAX_PATH];
+	GetItemWorldModel(weapon, szModel, sizeof(szModel));
 	
-	int newDroppedWeapon = CreateDroppedWeapon(client, origin, angles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
+	int newDroppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(newDroppedWeapon))
 	{
 		if (TF2Util_IsEntityWeapon(weapon))
@@ -121,13 +126,13 @@ public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, 
 
 public bool ItemCallback_CanBeUsedByPlayer(int client, CallbackParams params)
 {
-	int item_def_index;
-	if (!params.GetIntEx("item_def_index", item_def_index))
+	int iItemDefIndex;
+	if (!params.GetIntEx("item_def_index", iItemDefIndex))
 	{
 		LogError("Failed to find required callback parameter 'item_def_index'");
 		return false;
 	}
 	
-	TFClassType class = TF2_GetPlayerClass(client);
-	return TF2Econ_GetItemLoadoutSlot(item_def_index, class) != -1;
+	TFClassType nClass = TF2_GetPlayerClass(client);
+	return TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass) != -1;
 }

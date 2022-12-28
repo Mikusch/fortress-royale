@@ -163,7 +163,7 @@ int CreateViewModelWearable(int client, int weapon)
 	}
 	
 	DispatchSpawn(wearable);
-	TF2Util_EquipPlayerWearable(client, wearable);
+	ItemGiveTo(client, wearable);
 	
 	SetVariantString("!activator");
 	AcceptEntityInput(wearable, "SetParent", GetEntPropEnt(client, Prop_Send, "m_hViewModel"));
@@ -278,7 +278,22 @@ int GenerateDefaultItem(int client, int defindex)
 	int weapon = TF2Items_GiveNamedItem(client, item);
 	delete item;
 	
+	// Fake global id
+	static int s_nFakeID = 1;
+	SetItemID(weapon, s_nFakeID++);
+	
 	return weapon;
+}
+
+void SetItemID(int weapon, int iIdx)
+{
+	char clsname[64];
+	if (GetEntityNetClass(weapon, clsname, sizeof(clsname)))
+	{
+		SetEntData(weapon, FindSendPropInfo(clsname, "m_iItemIDHigh") - 4, iIdx);	// m_iItemID
+		SetEntProp(weapon, Prop_Send, "m_iItemIDHigh", iIdx >> 32);
+		SetEntProp(weapon, Prop_Send, "m_iItemIDLow", iIdx & 0xFFFFFFFF);
+	}
 }
 
 bool CanWeaponBeUsedByClass(int weapon, TFClassType class)
@@ -383,7 +398,6 @@ int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vec
 		}
 	}
 	
-	// Pass NULL pLastOwner to prevent TF2 from deleting old dropped weapons
 	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(lastOwner, vecOrigin, vecAngles, szModelName, pItem);
 	
 	for (int i = 0; i < droppedWeapons.Length; i++)
