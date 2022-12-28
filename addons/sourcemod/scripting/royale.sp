@@ -61,7 +61,7 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	g_itemModelIndexes = new ArrayList();
+	g_itemModelIndexes = new ArrayList(2);
 	
 	LoadTranslations("royale.phrases");
 	

@@ -401,18 +401,21 @@ int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClass_Unkn
 	
 	if (GetEntProp(weapon, Prop_Send, "m_iItemIDHigh") == -1 && GetEntProp(weapon, Prop_Send, "m_iItemIDLow") == -1)
 	{
-		// Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) with 0
-		char clsname[64];
-		if (GetEntityNetClass(weapon, clsname, sizeof(clsname)))
-		{
-			int offset = FindSendPropInfo(clsname, "m_iItemIDHigh");
-			
-			SetEntData(weapon, offset - 8, 0);	// m_iItemID
-			SetEntData(weapon, offset - 4, 0);	// m_iItemID
-			SetEntData(weapon, offset, 0);		// m_iItemIDHigh
-			SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
-		}
+		// Fake global id
+		static int s_nFakeID = 1;
+		SetItemID(weapon, s_nFakeID++);
 	}
 	
 	return weapon;
+}
+
+void SetItemID(int item, int iIdx)
+{
+	char clsname[64];
+	if (GetEntityNetClass(item, clsname, sizeof(clsname)))
+	{
+		SetEntData(item, FindSendPropInfo(clsname, "m_iItemIDHigh") - 4, iIdx); // m_iItemID
+		SetEntProp(item, Prop_Send, "m_iItemIDHigh", (iIdx >> 32));
+		SetEntProp(item, Prop_Send, "m_iItemIDLow", (iIdx & 0xFFFFFFFF));
+	}
 }
