@@ -59,18 +59,38 @@ public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, 
 	if (!pScriptItem)
 		return false;
 	
+	char weaponName[64];
+	TF2Econ_GetItemClassName(item_def_index, weaponName, sizeof(weaponName));
+	TF2Econ_TranslateWeaponEntForClass(weaponName, sizeof(weaponName), class);
+	
 	int weapon = -1;
 	
 	// CEconItemView::m_iItemDefinitionIndex
-	int reskin = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);
-	if (reskin == item_def_index)
+	int actualDefIndex = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);
+	if (actualDefIndex == item_def_index)
 	{
-		weapon = TF2_GiveNamedItem(client, pScriptItem, class);
+		weapon = SDKCall_CTFPlayer_GiveNamedItem(client, weaponName, 0, pScriptItem, true);
+	}
+	
+	char buffer[256];
+	if (params.GetString("reskins", buffer, sizeof(buffer)))
+	{
+		char buffers[32][8];
+		int count = ExplodeString(buffer, ",", buffers, sizeof(buffers), sizeof(buffers[]));
+		for (int i = 0; i < count; i++)
+		{
+			int value;
+			if (StringToIntEx(buffers[i], value) && actualDefIndex == value)
+			{
+				weapon = SDKCall_CTFPlayer_GiveNamedItem(client, weaponName, 0, pScriptItem, true);
+				break;
+			}
+		}
 	}
 	
 	if (!IsValidEntity(weapon))
 	{
-		PrintToChat(client, "creating default weapon");
+		weapon = GenerateDefaultItem(client, item_def_index);
 	}
 	
 	if (!IsValidEntity(weapon))
@@ -81,7 +101,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, 
 	char model[PLATFORM_MAX_PATH];
 	GetItemWorldModel(weapon, model, sizeof(model));
 	
-	int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(client, origin, angles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
+	int newDroppedWeapon = CreateDroppedWeapon(client, origin, angles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(newDroppedWeapon))
 	{
 		if (TF2Util_IsEntityWeapon(weapon))

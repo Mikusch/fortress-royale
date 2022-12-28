@@ -20,7 +20,7 @@
 
 void DHooks_Init(GameData gamedata)
 {
-	CreateDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", _, DHookCallback_CTFPlayer_PickupWeaponFromOther_Post);
+	CreateDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
 	CreateDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
 }
 
@@ -41,17 +41,16 @@ static void CreateDynamicDetour(GameData gamedata, const char[] name, DHookCallb
 	}
 }
 
-static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player, DHookReturn ret, DHookParam params)
+static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, DHookReturn ret, DHookParam params)
 {
-	// If it's already working - great! Don't do anything.
-	if (ret.Value == true)
-		return MRES_Ignored;
-	
 	int droppedWeapon = params.Get(1);
 	
 	Address pItem = GetEntityAddress(droppedWeapon) + FindItemOffset(droppedWeapon);
 	if (!LoadFromAddress(pItem, NumberType_Int32))
-		return MRES_Ignored;
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
 	
 	if (GetEntProp(droppedWeapon, Prop_Send, "m_bInitialized"))
 	{
@@ -80,7 +79,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Post(int player,
 				char model[PLATFORM_MAX_PATH];
 				GetItemWorldModel(weapon, model, sizeof(model));
 				
-				int newDroppedWeapon = SDKCall_CTFDroppedWeapon_Create(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
+				int newDroppedWeapon = CreateDroppedWeapon(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 				if (IsValidEntity(newDroppedWeapon))
 				{
 					if (TF2Util_IsEntityWeapon(weapon))

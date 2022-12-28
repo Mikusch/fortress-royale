@@ -95,7 +95,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	char model[PLATFORM_MAX_PATH];
 	GetItemWorldModel(weapon, model, sizeof(model));
 	
-	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
+	int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
 	if (IsValidEntity(droppedWeapon))
 	{
 		if (TF2Util_IsEntityWeapon(weapon))
@@ -122,7 +122,9 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		int melee = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
 		if (melee == -1)
 		{
-			GivePlayerFists(client);
+			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
+			EquipPlayerWeapon(client, weapon);
+			TF2Util_SetPlayerActiveWeapon(client, weapon);
 		}
 	}
 	

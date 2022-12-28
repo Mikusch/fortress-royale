@@ -264,23 +264,19 @@ bool ShouldDropWeapon(int client, int weapon)
 	return true;
 }
 
-int GivePlayerFists(int client)
+int GenerateDefaultItem(int client, int defindex)
 {
-	Handle item = TF2Items_CreateItem(FORCE_GENERATION | OVERRIDE_ALL);
-	
-	TF2Items_SetItemIndex(item, TF_DEFINDEX_FISTS);
-	TF2Items_SetLevel(item, 1);
+	Handle item = TF2Items_CreateItem(FORCE_GENERATION | PRESERVE_ATTRIBUTES);
 	
 	char classname[64];
-	TF2Econ_GetItemClassName(TF_DEFINDEX_FISTS, classname, sizeof(classname));
+	TF2Econ_GetItemClassName(defindex, classname, sizeof(classname));
 	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
+	
+	TF2Items_SetItemIndex(item, defindex);
 	TF2Items_SetClassname(item, classname);
 	
 	int weapon = TF2Items_GiveNamedItem(client, item);
 	delete item;
-	
-	EquipPlayerWeapon(client, weapon);
-	TF2Util_SetPlayerActiveWeapon(client, weapon);
 	
 	return weapon;
 }
@@ -370,52 +366,33 @@ int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle arra
 	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
 }
 
-int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClass_Unknown)
+int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
 {
-	int defindex = LoadFromAddress(item + view_as<Address>(0x4), NumberType_Int16);
+	ArrayList droppedWeapons = new ArrayList();
 	
-	char classname[64];
-	if (!TF2Econ_GetItemClassName(defindex, classname, sizeof(classname)))
-		return -1;
-	
-	if (class == TFClass_Unknown)
+	// CTFDroppedWeapon::Create starts deleting old weapons if there are too many in the world.
+	// Add EFL_KILLME flag to all dropped weapons to bypass this.
+	int entity = -1;
+	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) != -1)
 	{
-		for (class = TFClass_Scout; class <= TFClass_Engineer; class++)
+		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		if (!(flags & EFL_KILLME))
 		{
-			if (TF2Econ_GetItemLoadoutSlot(defindex, class) != -1)
-			{
-				break;
-			}
+			SetEntProp(entity, Prop_Data, "m_iEFlags", flags | EFL_KILLME);
+			droppedWeapons.Push(entity);
 		}
 	}
 	
-	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
+	// Pass NULL pLastOwner to prevent TF2 from deleting old dropped weapons
+	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(lastOwner, vecOrigin, vecAngles, szModelName, pItem);
 	
-	int iSubType = 0;
-	if (class == TFClass_Spy && (StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")))
-		iSubType = view_as<int>(TFObject_Sapper);
-	
-	int weapon = SDKCall_CTFPlayer_GiveNamedItem(client, classname, iSubType, item, true);
-	if (weapon == -1)
-		return -1;
-	
-	if (GetEntProp(weapon, Prop_Send, "m_iItemIDHigh") == -1 && GetEntProp(weapon, Prop_Send, "m_iItemIDLow") == -1)
+	for (int i = 0; i < droppedWeapons.Length; i++)
 	{
-		// Fake global id
-		static int s_nFakeID = 1;
-		SetItemID(weapon, s_nFakeID++);
+		int flags = GetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags");
+		flags = flags &= ~EFL_KILLME;
+		SetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags", flags);
 	}
 	
-	return weapon;
-}
-
-void SetItemID(int item, int iIdx)
-{
-	char clsname[64];
-	if (GetEntityNetClass(item, clsname, sizeof(clsname)))
-	{
-		SetEntData(item, FindSendPropInfo(clsname, "m_iItemIDHigh") - 4, iIdx); // m_iItemID
-		SetEntProp(item, Prop_Send, "m_iItemIDHigh", (iIdx >> 32));
-		SetEntProp(item, Prop_Send, "m_iItemIDLow", (iIdx & 0xFFFFFFFF));
-	}
+	delete droppedWeapons;
+	return droppedWeapon;
 }
