@@ -33,6 +33,8 @@ ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
 ConVar fr_crate_max_extra_drops;
 
+ArrayList g_itemModelIndexes;
+
 #include "royale/shareddefs.sp"
 
 #include "royale/callbacks.sp"
@@ -59,6 +61,8 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+	g_itemModelIndexes = new ArrayList();
+	
 	LoadTranslations("royale.phrases");
 	
 	Console_Init();
@@ -93,6 +97,7 @@ public void OnMapStart()
 	PrecacheSound(")ui/itemcrate_smash_ultrarare_short.wav");
 	
 	Config_Parse();
+	Config_Precache();
 }
 
 public void OnMapEnd()
@@ -121,11 +126,11 @@ static bool ProcessCrateOpening(int client, int buttons)
 		ScaleVector(vecForward, fr_crate_open_range.FloatValue);
 		AddVectors(vecForward, vecEyePosition, vecForward);
 		
-		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_HitCrates, client);
+		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_HitCrates, client, TRACE_ENTITIES_ONLY);
 		
 		if (TR_GetFraction() != 1.0 && TR_DidHit())
 		{
-			return FREntity(TR_GetEntityIndex()).IsValidCrate() && FRPlayer(client).TryToOpenCrate(TR_GetEntityIndex());
+			return FRPlayer(client).TryToOpenCrate(TR_GetEntityIndex());
 		}
 	}
 	

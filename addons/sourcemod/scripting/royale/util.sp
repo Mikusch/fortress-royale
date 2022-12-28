@@ -50,7 +50,13 @@ any FindItemOffset(int entity)
 
 bool GetItemWorldModel(int item, char[] model, int size)
 {
-	// TODO: Custom config model support
+	int defindex = GetEntProp(item, Prop_Send, "m_iItemDefinitionIndex");
+	int index = g_itemModelIndexes.FindValue(defindex);
+	if (index != -1)
+	{
+		return ModelIndexToString(g_itemModelIndexes.Get(index, 1), model, size);
+	}
+	
 	int modelIndex = 0;
 	if (HasEntProp(item, Prop_Send, "m_iWorldModelIndex"))
 		modelIndex = GetEntProp(item, Prop_Send, "m_iWorldModelIndex");

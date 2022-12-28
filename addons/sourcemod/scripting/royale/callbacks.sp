@@ -18,14 +18,49 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-public bool ItemCallback_CreateWeapon(int client, CallbackParams params, const float origin[3])
+public void ItemCallback_PrecacheModel(CallbackParams params)
 {
-	int itemdefindex;
-	if (!params.GetIntEx("itemdefindex", itemdefindex))
+	int item_def_index;
+	if (!params.GetIntEx("item_def_index", item_def_index))
 	{
-		LogError("Required parameter 'itemdefindex' not found");
+		LogError("Failed to find required callback parameter 'item_def_index'");
+		return;
+	}
+	
+	char model[PLATFORM_MAX_PATH];
+	if (!params.GetString("model", model, sizeof(model)))
+	{
+		LogError("Failed to find required callback parameter 'model'");
+		return;
+	}
+	
+	any values[2];
+	values[0] = item_def_index;
+	values[1] = PrecacheModel(model);
+	g_itemModelIndexes.PushArray(values);
+}
+
+public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, const float origin[3])
+{
+	int item_def_index;
+	if (!params.GetIntEx("item_def_index", item_def_index))
+	{
+		LogError("Failed to find required callback parameter 'item_def_index'");
 		return false;
 	}
-
+	
 	return true;
+}
+
+public bool ItemCallback_CanBeUsedByPlayer(int client, CallbackParams params)
+{
+	int item_def_index;
+	if (!params.GetIntEx("item_def_index", item_def_index))
+	{
+		LogError("Failed to find required callback parameter 'item_def_index'");
+		return false;
+	}
+	
+	TFClassType class = TF2_GetPlayerClass(client);
+	return TF2Econ_GetItemLoadoutSlot(item_def_index, class) != -1;
 }

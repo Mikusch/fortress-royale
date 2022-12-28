@@ -77,11 +77,15 @@ methodmap FREntity < CBaseEntity
 	
 	public bool IsValidCrate()
 	{
-		if (this.index == 0)
+		if (EntRefToEntIndex(this.ref) <= MaxClients)
 			return false;
 		
 		char classname[64];
-		return this.GetClassname(classname, sizeof(classname)) && StrEqual(classname, "prop_dynamic");
+		if (!this.GetClassname(classname, sizeof(classname)) || !StrEqual(classname, "prop_dynamic"))
+			return false;
+		
+		char name[64];
+		return this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) && Config_IsValidCrateName(name);
 	}
 	
 	public void Destroy()
@@ -183,19 +187,9 @@ methodmap FRCrate < FREntity
 			return;
 		}
 		
-		// Find all crates that fit our criteria
-		ArrayList crates = Config_GetCratesByName(name);
-		
-		if (!crates || crates.Length == 0)
-		{
-			LogError("No crate configs for '%s' found", name);
-			delete crates;
-			return;
-		}
-		
 		// Grab a random crate config
 		CrateConfig crate;
-		if (crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) > 0)
+		if (Config_GetRandomCrateByName(name, crate))
 		{
 			// Normal crate drops (guaranteed)
 			for (int i = 0; i < crate.max_drops; i++)
@@ -203,7 +197,11 @@ methodmap FRCrate < FREntity
 				CrateContentConfig content;
 				if (crate.GetRandomContent(content))
 				{
-					// TODO
+					ItemConfig item;
+					if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
+					{
+						Config_CreateItem(client, this.index, item);
+					}
 				}
 			}
 			
@@ -213,11 +211,13 @@ methodmap FRCrate < FREntity
 				CrateContentConfig extra_content;
 				if (crate.GetRandomExtraContent(extra_content))
 				{
-					// TODO
+					ItemConfig item;
+					if (Config_GetRandomItemByType(client, extra_content.type, extra_content.subtype, item))
+					{
+						Config_CreateItem(client, this.index, item);
+					}
 				}
 			}
 		}
-		
-		delete crates;
 	}
 }

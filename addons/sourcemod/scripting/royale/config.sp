@@ -20,14 +20,14 @@
 
 #define CONFIG_MAX_LENGTH	256
 
-ArrayList g_itemConfigs;
-ArrayList g_crateConfigs;
+static ArrayList g_itemConfigs;
+static ArrayList g_crateConfigs;
 
 methodmap CallbackParams < StringMap
 {
-	public CallbackParams()
+	public CallbackParams(StringMap map)
 	{
-		return view_as<CallbackParams>(new StringMap());
+		return view_as<CallbackParams>(map.Clone());
 	}
 	
 	public void Parse(KeyValues kv)
@@ -97,7 +97,8 @@ enum struct ItemConfig
 {
 	char type[CONFIG_MAX_LENGTH];
 	char subtype[CONFIG_MAX_LENGTH];
-	ArrayList callbacks;
+	StringMap callback_functions;
+	StringMap callback_params;
 	
 	void Parse(KeyValues kv)
 	{
@@ -106,68 +107,61 @@ enum struct ItemConfig
 		
 		if (kv.JumpToKey("callbacks", false))
 		{
-			this.callbacks = new ArrayList(sizeof(ItemCallbackConfig));
-			if (kv.GotoFirstSubKey(false))
+			if (kv.JumpToKey("functions", false))
 			{
-				do
-				{
-					ItemCallbackConfig callback;
-					callback.Parse(kv);
-					this.callbacks.PushArray(callback);
-				}
-				while (kv.GotoNextKey(false));
-				kv.GoBack();
+				this.callback_functions = KeyValuesToStringMap(kv);
 			}
+			
+			if (kv.JumpToKey("params", false))
+			{
+				this.callback_params = KeyValuesToStringMap(kv);
+			}
+			
 			kv.GoBack();
 		}
 	}
 	
-	void Delete()
+	void Precache()
 	{
-		if (this.callbacks)
+		Function callback = this.GetCallbackFunction("precache");
+		if (callback == INVALID_FUNCTION)
+			return;
+		
+		CallbackParams params = new CallbackParams(this.callback_params);
+		
+		Call_StartFunction(null, callback);
+		Call_PushCell(params);
+		
+		if (Call_Finish() != SP_ERROR_NONE)
 		{
-			for (int i = 0; i < this.callbacks.Length; i++)
-			{
-				ItemCallbackConfig callback;
-				if (this.callbacks.GetArray(i, callback) > 0)
-				{
-					callback.Delete();
-				}
-			}
-			delete this.callbacks;
+			LogError("Failed to call callback 'precache' for item '%s/%s'", this.type, this.subtype);
 		}
+		
+		delete params;
 	}
-}
-
-enum struct ItemCallbackConfig
-{
-	Function callback;
-	CallbackParams params;
 	
-	void Parse(KeyValues kv)
+	Function GetCallbackFunction(const char[] key, Handle plugin = null)
 	{
 		char name[CONFIG_MAX_LENGTH];
-		kv.GetString("name", name, sizeof(name));
-		
-		if (name[0])
+		if (this.callback_functions.GetString(key, name, sizeof(name)))
 		{
-			this.callback = GetFunctionByName(null, name);
-			if (this.callback == INVALID_FUNCTION)
+			Function callback = GetFunctionByName(plugin, name);
+			if (callback == INVALID_FUNCTION)
 			{
-				LogError("Failed to find callback function '%s'", name);
+				LogError("Unable to find callback function '%s' for '%s'", name, key);
 			}
+			
+			return callback;
 		}
 		
-		if (kv.JumpToKey("params", false))
-		{
-			this.params = new CallbackParams();
-			this.params.Parse(kv);
-		}
+		// No callbacks specified on item
+		return INVALID_FUNCTION;
 	}
 	
 	void Delete()
 	{
-		delete this.params;
+		delete this.callback_functions;
+		delete this.callback_params;
 	}
 }
 
@@ -342,6 +336,18 @@ void Config_Parse()
 	delete crates;
 }
 
+void Config_Precache()
+{
+	for (int i = 0; i < g_itemConfigs.Length; i++)
+	{
+		ItemConfig item;
+		if (g_itemConfigs.GetArray(i, item) > 0)
+		{
+			item.Precache();
+		}
+	}
+}
+
 void Config_Delete()
 {
 	for (int i = 0; i < g_itemConfigs.Length; i++)
@@ -382,4 +388,155 @@ ArrayList Config_GetCratesByName(const char[] name)
 	}
 	
 	return list;
+}
+
+bool Config_IsValidCrateName(const char[] name)
+{
+	for (int i = 0; i < g_crateConfigs.Length; i++)
+	{
+		CrateConfig crate;
+		if (g_crateConfigs.GetArray(i, crate) > 0)
+		{
+			if (crate.regex && crate.regex.Match(name) > 0)
+			{
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+bool Config_GetRandomCrateByName(const char[] name, CrateConfig crate)
+{
+	ArrayList crates = Config_GetCratesByName(name);
+	
+	if (!crates || crates.Length == 0)
+	{
+		LogError("No crate configs for '%s' found", name);
+		delete crates;
+		return false;
+	}
+	
+	return crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) > 0;
+}
+
+ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
+{
+	ArrayList list = new ArrayList(sizeof(ItemConfig));
+	
+	for (int i = 0; i < g_itemConfigs.Length; i++)
+	{
+		ItemConfig item;
+		if (g_itemConfigs.GetArray(i, item) > 0)
+		{
+			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
+			{
+				list.PushArray(item);
+			}
+		}
+	}
+	
+	return list;
+}
+
+bool Config_GetRandomItemByType(int client, const char[] type, const char[] subtype, ItemConfig item)
+{
+	ArrayList items = Config_GetItemsByType(type, subtype);
+	
+	if (!items || items.Length == 0)
+	{
+		LogError("No item configs for '%s/%s' found", type, subtype);
+		delete items;
+		return false;
+	}
+	
+	// Go through each item until one matches our criteria
+	for (int i = 0; i < items.Length; i++)
+	{
+		if (items.GetArray(i, item) > 0)
+		{
+			Function callback = item.GetCallbackFunction("can_be_used");
+			if (callback == INVALID_FUNCTION)
+				continue;
+			
+			CallbackParams params = new CallbackParams(item.callback_params);
+			
+			Call_StartFunction(null, callback);
+			Call_PushCell(client);
+			Call_PushCell(params);
+			
+			// If we can not equip this item, remove it from the list
+			bool result;
+			if (Call_Finish(result) != SP_ERROR_NONE)
+			{
+				LogError("Failed to call callback 'can_be_used' for item '%s/%s'", item.type, item.subtype);
+				items.Erase(i);
+			}
+			else if (!result)
+			{
+				LogMessage("Removing item '%s/%s'", item.type, item.subtype);
+				items.Erase(i);
+			}
+			
+			delete params;
+		}
+	}
+	
+	if (items.Length == 0)
+	{
+		delete items;
+		LogError("No valid items for '%s/%s' found!", type, subtype);
+		return false;
+	}
+	
+	bool success = items.GetArray(GetRandomInt(0, items.Length - 1), item) > 0;
+	delete items;
+	return success;
+}
+
+bool Config_CreateItem(int client, int crate, ItemConfig item)
+{
+	Function callback = item.GetCallbackFunction("create");
+	if (callback == INVALID_FUNCTION)
+		return false;
+	
+	float center[3];
+	CBaseEntity(crate).WorldSpaceCenter(center);
+	
+	CallbackParams params = new CallbackParams(item.callback_params);
+	
+	Call_StartFunction(null, callback);
+	Call_PushCell(client);
+	Call_PushCell(params);
+	Call_PushArray(center, sizeof(center));
+	
+	if (Call_Finish() != SP_ERROR_NONE)
+	{
+		LogError("Failed to call callback 'create' for item '%s/%s'", item.type, item.subtype);
+		return false;
+	}
+	
+	return true;
+}
+
+static StringMap KeyValuesToStringMap(KeyValues kv)
+{
+	StringMap map = new StringMap();
+	
+	if (kv.GotoFirstSubKey(false))
+	{
+		do
+		{
+			char key[CONFIG_MAX_LENGTH], value[CONFIG_MAX_LENGTH];
+			kv.GetSectionName(key, sizeof(key));
+			kv.GetString(NULL_STRING, value, sizeof(value));
+			map.SetString(key, value);
+		}
+		while (kv.GotoNextKey(false));
+		kv.GoBack();
+	}
+	kv.GoBack();
+	
+	return map;
 }
