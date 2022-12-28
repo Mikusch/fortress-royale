@@ -77,9 +77,6 @@ methodmap FREntity < CBaseEntity
 	
 	public bool IsValidCrate()
 	{
-		if (EntRefToEntIndex(this.ref) <= MaxClients)
-			return false;
-		
 		char classname[64];
 		if (!this.GetClassname(classname, sizeof(classname)) || !StrEqual(classname, "prop_dynamic"))
 			return false;

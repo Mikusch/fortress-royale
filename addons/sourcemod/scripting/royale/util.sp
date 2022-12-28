@@ -369,3 +369,50 @@ int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle arra
 	// If both are the same, pick a random one
 	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
 }
+
+int TF2_GiveNamedItem(int client, Address item, TFClassType class = TFClass_Unknown)
+{
+	int defindex = LoadFromAddress(item + view_as<Address>(0x4), NumberType_Int16);
+	
+	char classname[64];
+	if (!TF2Econ_GetItemClassName(defindex, classname, sizeof(classname)))
+		return -1;
+	
+	if (class == TFClass_Unknown)
+	{
+		for (class = TFClass_Scout; class <= TFClass_Engineer; class++)
+		{
+			if (TF2Econ_GetItemLoadoutSlot(defindex, class) != -1)
+			{
+				break;
+			}
+		}
+	}
+	
+	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), class);
+	
+	int iSubType = 0;
+	if (class == TFClass_Spy && (StrEqual(classname, "tf_weapon_builder") || StrEqual(classname, "tf_weapon_sapper")))
+		iSubType = view_as<int>(TFObject_Sapper);
+	
+	int weapon = SDKCall_CTFPlayer_GiveNamedItem(client, classname, iSubType, item, true);
+	if (weapon == -1)
+		return -1;
+	
+	if (GetEntProp(weapon, Prop_Send, "m_iItemIDHigh") == -1 && GetEntProp(weapon, Prop_Send, "m_iItemIDLow") == -1)
+	{
+		// Fix extra wearable visibility by replacing INVALID_ITEM_ID (-1) with 0
+		char clsname[64];
+		if (GetEntityNetClass(weapon, clsname, sizeof(clsname)))
+		{
+			int offset = FindSendPropInfo(clsname, "m_iItemIDHigh");
+			
+			SetEntData(weapon, offset - 8, 0);	// m_iItemID
+			SetEntData(weapon, offset - 4, 0);	// m_iItemID
+			SetEntData(weapon, offset, 0);		// m_iItemIDHigh
+			SetEntData(weapon, offset + 4, 0);	// m_iItemIDLow
+		}
+	}
+	
+	return weapon;
+}

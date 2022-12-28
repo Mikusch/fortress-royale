@@ -501,8 +501,9 @@ bool Config_CreateItem(int client, int crate, ItemConfig item)
 	if (callback == INVALID_FUNCTION)
 		return false;
 	
-	float center[3];
+	float center[3], angles[3];
 	CBaseEntity(crate).WorldSpaceCenter(center);
+	CBaseEntity(crate).GetAbsAngles(angles);
 	
 	CallbackParams params = new CallbackParams(item.callback_params);
 	
@@ -510,6 +511,7 @@ bool Config_CreateItem(int client, int crate, ItemConfig item)
 	Call_PushCell(client);
 	Call_PushCell(params);
 	Call_PushArray(center, sizeof(center));
+	Call_PushArray(angles, sizeof(angles));
 	
 	if (Call_Finish() != SP_ERROR_NONE)
 	{

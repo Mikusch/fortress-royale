@@ -23,6 +23,7 @@ static Handle g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon;
 static Handle g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon;
 static Handle g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
+static Handle g_SDKCall_CTFPlayer_GetLoadoutItem;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
 
@@ -33,6 +34,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon = PrepSDKCall_CTFDroppedWeapon_InitPickedUpWeapon(gamedata);
 	g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles = PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(gamedata);
 	g_SDKCall_CTFPlayer_GiveNamedItem = PrepSDKCall_CTFPlayer_GiveNamedItem(gamedata);
+	g_SDKCall_CTFPlayer_GetLoadoutItem = PrepSDKCall_CTFPlayer_GetLoadoutItem(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
 }
@@ -118,6 +120,22 @@ static Handle PrepSDKCall_CTFPlayer_GiveNamedItem(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_CTFPlayer_GetLoadoutItem(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GetLoadoutItem");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_AddParameter(SDKType_Bool, SDKPass_ByValue);
+	PrepSDKCall_SetReturnInfo(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::GetLoadoutItem");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
@@ -146,7 +164,7 @@ static Handle PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(GameData g
 	return call;
 }
 
-int SDKCall_CTFDroppedWeapon_Create(int lastOwner, float vecOrigin[3], float vecAngles[3], char[] szModelName, Address pItem)
+int SDKCall_CTFDroppedWeapon_Create(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
 {
 	if (g_SDKCall_CTFDroppedWeapon_Create)
 	{
@@ -190,6 +208,16 @@ int SDKCall_CTFPlayer_GiveNamedItem(int player, const char[] szName, int iSubTyp
 	}
 	
 	return -1;
+}
+
+Address SDKCall_CTFPlayer_GetLoadoutItem(int player, TFClassType nClass, int iSlot, bool bReportWhitelistFails = false)
+{
+	if (g_SDKCall_CTFPlayer_GetLoadoutItem)
+	{
+		return SDKCall(g_SDKCall_CTFPlayer_GetLoadoutItem, player, nClass, iSlot, bReportWhitelistFails);
+	}
+	
+	return Address_Null;
 }
 
 bool SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(int player, int weapon)
