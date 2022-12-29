@@ -15,10 +15,134 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#pragma semicolon 1
+#pragma newdecls required
+
+#define COMMAND_MAX_LENGTH	512
+
+enum struct ConVarData
+{
+	char name[COMMAND_MAX_LENGTH];
+	char value[COMMAND_MAX_LENGTH];
+	char initial_value[COMMAND_MAX_LENGTH];
+	bool enforce;
+}
+
+static StringMap g_ConVars;
+
 void ConVars_Init()
 {
+	g_ConVars = new StringMap();
+	
+	fr_enable = CreateConVar("fr_enable", "1", "Enable the plugin?");
 	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3.f", "Amount of time to open a crate.");
 	fr_crate_open_range = CreateConVar("fr_crate_open_range", "100.f", "Range in HU that players may open crates from.");
 	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
 	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
+	
+	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
+	
+	ConVars_AddConVar("tf_powerup_mode", "1");
+}
+
+void ConVars_Toggle(bool enable)
+{
+	StringMapSnapshot snapshot = g_ConVars.Snapshot();
+	for (int i = 0; i < snapshot.Length; i++)
+	{
+		int size = snapshot.KeyBufferSize(i);
+		char[] key = new char[size];
+		snapshot.GetKey(i, key, size);
+		
+		if (enable)
+		{
+			ConVars_Enable(key);
+		}
+		else
+		{
+			ConVars_Disable(key);
+		}
+	}
+	delete snapshot;
+}
+
+static void ConVars_AddConVar(const char[] name, const char[] value, bool enforce = true)
+{
+	ConVar convar = FindConVar(name);
+	if (convar)
+	{
+		// Store ConVar data
+		ConVarData data;
+		strcopy(data.name, sizeof(data.name), name);
+		strcopy(data.value, sizeof(data.value), value);
+		data.enforce = enforce;
+		
+		g_ConVars.SetArray(name, data, sizeof(data));
+	}
+	else
+	{
+		LogError("Failed to find convar with name %s", name);
+	}
+}
+
+static void ConVars_Enable(const char[] name)
+{
+	ConVarData data;
+	if (g_ConVars.GetArray(name, data, sizeof(data)))
+	{
+		ConVar convar = FindConVar(data.name);
+		
+		// Store the current value so we can later reset the ConVar to it
+		convar.GetString(data.initial_value, sizeof(data.initial_value));
+		g_ConVars.SetArray(name, data, sizeof(data));
+		
+		// Update the current value
+		convar.SetString(data.value);
+		convar.AddChangeHook(ConVarChanged_OnTrackedConVarChanged);
+	}
+}
+
+static void ConVars_Disable(const char[] name)
+{
+	ConVarData data;
+	if (g_ConVars.GetArray(name, data, sizeof(data)))
+	{
+		ConVar convar = FindConVar(data.name);
+		
+		g_ConVars.SetArray(name, data, sizeof(data));
+		
+		// Restore the convar value
+		convar.RemoveChangeHook(ConVarChanged_OnTrackedConVarChanged);
+		convar.SetString(data.initial_value);
+	}
+}
+
+static void ConVarChanged_OnTrackedConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	char[] name = new char[sizeof(ConVarData::name)];
+	convar.GetName(name, sizeof(ConVarData::name));
+	
+	ConVarData data;
+	if (g_ConVars.GetArray(name, data, sizeof(data)))
+	{
+		if (!StrEqual(newValue, data.value))
+		{
+			strcopy(data.initial_value, sizeof(data.initial_value), newValue);
+			g_ConVars.SetArray(name, data, sizeof(data));
+			
+			// Restore our value if needed
+			if (data.enforce)
+			{
+				convar.SetString(data.value);
+			}
+		}
+	}
+}
+
+static void ConVarChanged_OnEnableChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+{
+	if (g_bEnabled != convar.BoolValue)
+	{
+		FortressRoyale_Toggle(convar.BoolValue);
+	}
 }

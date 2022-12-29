@@ -55,12 +55,12 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	// Check if the player has a suitable reskin equipped
 	if (!IsValidEntity(weapon))
 	{
-		WeaponData data;
-		if (Config_GetWeaponDataByDefIndex(iItemDefIndex, data) && data.reskins)
+		WeaponData wpnData;
+		if (Config_GetWeaponDataByDefIndex(iItemDefIndex, wpnData) && wpnData.reskins)
 		{
-			for (int i = 0; i < data.reskins.Length; i++)
+			for (int i = 0; i < wpnData.reskins.Length; i++)
 			{
-				if (data.reskins.Get(i) == iLoadoutItemDefIndex)
+				if (wpnData.reskins.Get(i) == iLoadoutItemDefIndex)
 				{
 					weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, pScriptItem, true);
 					break;

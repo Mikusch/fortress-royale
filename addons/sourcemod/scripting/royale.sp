@@ -28,10 +28,13 @@
 #include <tf2items>
 #include <cbasenpc>
 
+ConVar fr_enable;
 ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
 ConVar fr_crate_max_extra_drops;
+
+bool g_bEnabled;
 
 #include "royale/shareddefs.sp"
 
@@ -61,7 +64,6 @@ public void OnPluginStart()
 {
 	LoadTranslations("royale.phrases");
 	
-	Console_Init();
 	ConVars_Init();
 	Events_Init();
 	
@@ -76,14 +78,6 @@ public void OnPluginStart()
 	else
 	{
 		SetFailState("Could not find royale gamedata");
-	}
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client))
-		{
-			OnClientPutInServer(client);
-		}
 	}
 }
 
@@ -101,8 +95,19 @@ public void OnMapEnd()
 	Config_Delete();
 }
 
+public void OnConfigsExecuted()
+{
+	if (g_bEnabled != fr_enable.BoolValue)
+	{
+		FortressRoyale_Toggle(fr_enable.BoolValue);
+	}
+}
+
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])
 {
+	if (!g_bEnabled)
+		return Plugin_Continue;
+	
 	ProcessCrateOpening(client, buttons);
 	
 	return Plugin_Continue;
@@ -141,6 +146,9 @@ static bool TraceEntityFilter_HitCrates(int entity, int mask, int client)
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
 {
+	if (!g_bEnabled)
+		return Plugin_Continue;
+	
 	if (TF2Econ_GetItemLoadoutSlot(itemDefIndex, TF2_GetPlayerClass(client)) == LOADOUT_POSITION_MELEE)
 	{
 		//CreateFists(client);
@@ -152,6 +160,9 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDef
 
 public void OnClientPutInServer(int client)
 {
+	if (!g_bEnabled)
+		return;
+	
 	FRPlayer(client).Init();
 	
 	SDKHooks_OnClientPutInServer(client);
@@ -159,10 +170,41 @@ public void OnClientPutInServer(int client)
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+	if (!g_bEnabled)
+		return;
+	
 	SDKHooks_OnEntityCreated(entity, classname);
 }
 
 public void OnEntityDestroyed(int entity)
 {
+	if (!g_bEnabled)
+		return;
+	
 	FREntity(entity).Destroy();
+}
+
+void FortressRoyale_Toggle(bool enable)
+{
+	g_bEnabled = enable;
+	
+	Console_Toggle(enable);
+	ConVars_Toggle(enable);
+	DHooks_Toggle(enable);
+	Events_Toggle(enable);
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client))
+		{
+			if (enable)
+			{
+				OnClientPutInServer(client);
+			}
+			else
+			{
+				SDKHooks_UnhookClient(client);
+			}
+		}
+	}
 }

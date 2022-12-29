@@ -18,13 +18,66 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+#define MAX_EVENT_NAME_LENGTH	32
+
+enum struct EventData
+{
+	char name[MAX_EVENT_NAME_LENGTH];
+	EventHook callback;
+	EventHookMode mode;
+}
+
+ArrayList g_Events;
+
 void Events_Init()
 {
-	HookEvent("player_death", EventHook_PlayerDeath);
+	g_Events = new ArrayList(sizeof(EventData));
+	
+	Events_Add("player_death", EventHook_PlayerDeath);
+}
+
+void Events_Toggle(bool enable)
+{
+	for (int i = 0; i < g_Events.Length; i++)
+	{
+		EventData data;
+		if (g_Events.GetArray(i, data) > 0)
+		{
+			if (enable)
+			{
+				HookEvent(data.name, data.callback, data.mode);
+			}
+			else
+			{
+				UnhookEvent(data.name, data.callback, data.mode);
+			}
+		}
+	}
+}
+
+static void Events_Add(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
+{
+	Event event = CreateEvent(name, true);
+	if (event)
+	{
+		event.Cancel();
+		
+		EventData data;
+		strcopy(data.name, sizeof(data.name), name);
+		data.callback = callback;
+		data.mode = mode;
+		
+		g_Events.PushArray(data);
+	}
+	else
+	{
+		LogError("Failed to create event with name %s", name);
+	}
 }
 
 static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("victim"));
 	
+	// TODO
 }

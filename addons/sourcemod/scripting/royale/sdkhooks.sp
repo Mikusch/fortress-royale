@@ -24,6 +24,12 @@ void SDKHooks_OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
 }
 
+void SDKHooks_UnhookClient(int client)
+{
+	SDKUnhook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
+	SDKUnhook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
+}
+
 void SDKHooks_OnEntityCreated(int entity, const char[] classname)
 {
 	

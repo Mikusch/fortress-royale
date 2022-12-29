@@ -18,9 +18,16 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-void Console_Init()
+void Console_Toggle(bool enable)
 {
-	AddCommandListener(CommandListener_DropItem, "dropitem");
+	if (enable)
+	{
+		AddCommandListener(CommandListener_DropItem, "dropitem");
+	}
+	else
+	{
+		RemoveCommandListener(CommandListener_DropItem, "dropitem");
+	}
 }
 
 static Action CommandListener_DropItem(int client, const char[] command, int argc)
@@ -119,8 +126,8 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	if (IsPlayerAlive(client))
 	{
 		// If we dropped our melee weapon, get our fists back
-		int melee = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
-		if (melee == -1)
+		weapon = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
+		if (weapon == -1)
 		{
 			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
 			ItemGiveTo(client, weapon);

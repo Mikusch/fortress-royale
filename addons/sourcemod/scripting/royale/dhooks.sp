@@ -18,22 +18,60 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-void DHooks_Init(GameData gamedata)
+enum struct DetourData
 {
-	CreateDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
-	CreateDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
+	DynamicDetour detour;
+	DHookCallback callback_pre;
+	DHookCallback callback_post;
 }
 
-static void CreateDynamicDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
+static ArrayList g_DynamicDetours;
+
+void DHooks_Init(GameData gamedata)
+{
+	g_DynamicDetours = new ArrayList(sizeof(DetourData));
+	
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
+}
+
+void DHooks_Toggle(bool enable)
+{
+	for (int i = 0; i < g_DynamicDetours.Length; i++)
+	{
+		DetourData data;
+		if (g_DynamicDetours.GetArray(i, data) != 0)
+		{
+			if (data.callback_pre != INVALID_FUNCTION)
+			{
+				if (enable)
+					data.detour.Enable(Hook_Pre, data.callback_pre);
+				else
+					data.detour.Disable(Hook_Pre, data.callback_pre);
+			}
+			
+			if (data.callback_post != INVALID_FUNCTION)
+			{
+				if (enable)
+					data.detour.Enable(Hook_Post, data.callback_post);
+				else
+					data.detour.Disable(Hook_Post, data.callback_post);
+			}
+		}
+	}
+}
+
+static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callback_pre = INVALID_FUNCTION, DHookCallback callback_post = INVALID_FUNCTION)
 {
 	DynamicDetour detour = DynamicDetour.FromConf(gamedata, name);
 	if (detour)
 	{
-		if (callbackPre != INVALID_FUNCTION)
-			detour.Enable(Hook_Pre, callbackPre);
+		DetourData data;
+		data.detour = detour;
+		data.callback_pre = callback_pre;
+		data.callback_post = callback_post;
 		
-		if (callbackPost != INVALID_FUNCTION)
-			detour.Enable(Hook_Post, callbackPost);
+		g_DynamicDetours.PushArray(data);
 	}
 	else
 	{
