@@ -18,10 +18,10 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, const float vecOrigin[3], const float vecAngles[3])
+public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const float vecOrigin[3], const float vecAngles[3])
 {
-	int iItemDefIndex;
-	if (!params.GetIntEx("item_def_index", iItemDefIndex))
+	int iItemDefIndex = data.GetNum("item_def_index", INVALID_ITEM_DEF_INDEX);
+	if (iItemDefIndex == INVALID_ITEM_DEF_INDEX)
 	{
 		LogError("Failed to find required callback parameter 'item_def_index'");
 		return false;
@@ -99,10 +99,10 @@ public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, 
 	return true;
 }
 
-public bool ItemCallback_CanBeUsedByPlayer(int client, CallbackParams params)
+public bool ItemCallback_CanBeUsedByPlayer(int client, KeyValues data)
 {
-	int iItemDefIndex;
-	if (!params.GetIntEx("item_def_index", iItemDefIndex))
+	int iItemDefIndex = data.GetNum("item_def_index", INVALID_ITEM_DEF_INDEX);
+	if (iItemDefIndex == INVALID_ITEM_DEF_INDEX)
 	{
 		LogError("Failed to find required callback parameter 'item_def_index'");
 		return false;

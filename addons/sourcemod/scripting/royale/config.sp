@@ -24,83 +24,13 @@ static ArrayList g_itemConfigs;
 static ArrayList g_crateConfigs;
 static ArrayList g_weaponData;
 
-methodmap CallbackParams < StringMap
-{
-	public CallbackParams(StringMap map)
-	{
-		return view_as<CallbackParams>(map.Clone());
-	}
-	
-	public void Parse(KeyValues kv)
-	{
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				char key[CONFIG_MAX_LENGTH], value[CONFIG_MAX_LENGTH];
-				kv.GetString("key", key, sizeof(key));
-				kv.GetString("value", value, sizeof(value));
-				this.SetString(key, value);
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-		kv.GoBack();
-	}
-	
-	public bool GetBool(const char[] key, bool defValue = false)
-	{
-		char value[CONFIG_MAX_LENGTH];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return view_as<bool>(StringToInt(value));
-	}
-	
-	public int GetInt(const char[] key, int defValue = 0)
-	{
-		char value[CONFIG_MAX_LENGTH];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToInt(value);
-	}
-	
-	public int GetIntEx(const char[] key, int &result)
-	{
-		char value[CONFIG_MAX_LENGTH];
-		if (!this.GetString(key, value, sizeof(value)))
-			return 0;
-		
-		return StringToIntEx(value, result);
-	}
-	
-	public float GetFloat(const char[] key, float defValue = 0.0)
-	{
-		char value[CONFIG_MAX_LENGTH];
-		if (!this.GetString(key, value, sizeof(value)))
-			return defValue;
-		else
-			return StringToFloat(value);
-	}
-	
-	public int GetFloatEx(const char[] key, float &result)
-	{
-		char value[CONFIG_MAX_LENGTH];
-		if (!this.GetString(key, value, sizeof(value)))
-			return 0;
-		
-		return StringToFloatEx(value, result);
-	}
-}
-
 enum struct ItemConfig
 {
 	char name[CONFIG_MAX_LENGTH];
 	char type[CONFIG_MAX_LENGTH];
 	char subtype[CONFIG_MAX_LENGTH];
 	StringMap callback_functions;
-	StringMap callback_params;
+	KeyValues callback_data;
 	
 	void Parse(KeyValues kv)
 	{
@@ -113,12 +43,27 @@ enum struct ItemConfig
 			{
 				if (kv.JumpToKey("functions", false))
 				{
-					this.callback_functions = KeyValuesToStringMap(kv);
+					this.callback_functions = new StringMap();
+					if (kv.GotoFirstSubKey(false))
+					{
+						do
+						{
+							char key[CONFIG_MAX_LENGTH], value[CONFIG_MAX_LENGTH];
+							kv.GetSectionName(key, sizeof(key));
+							kv.GetString(NULL_STRING, value, sizeof(value));
+							this.callback_functions.SetString(key, value);
+						}
+						while (kv.GotoNextKey(false));
+						kv.GoBack();
+					}
+					kv.GoBack();
 				}
 				
-				if (kv.JumpToKey("params", false))
+				if (kv.JumpToKey("data", false))
 				{
-					this.callback_params = KeyValuesToStringMap(kv);
+					this.callback_data = new KeyValues("data");
+					this.callback_data.Import(kv);
+					kv.GoBack();
 				}
 				
 				kv.GoBack();
@@ -132,17 +77,13 @@ enum struct ItemConfig
 		if (callback == INVALID_FUNCTION)
 			return;
 		
-		CallbackParams params = new CallbackParams(this.callback_params);
-		
 		Call_StartFunction(null, callback);
-		Call_PushCell(params);
+		Call_PushCell(this.callback_data);
 		
 		if (Call_Finish() != SP_ERROR_NONE)
 		{
 			LogError("Failed to call callback 'precache' for item '%s/%s'", this.type, this.subtype);
 		}
-		
-		delete params;
 	}
 	
 	Function GetCallbackFunction(const char[] key, Handle plugin = null)
@@ -166,7 +107,7 @@ enum struct ItemConfig
 	void Delete()
 	{
 		delete this.callback_functions;
-		delete this.callback_params;
+		delete this.callback_data;
 	}
 }
 
@@ -540,11 +481,9 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 			if (callback == INVALID_FUNCTION)
 				continue;
 			
-			CallbackParams params = new CallbackParams(item.callback_params);
-			
 			Call_StartFunction(null, callback);
 			Call_PushCell(client);
-			Call_PushCell(params);
+			Call_PushCell(item.callback_data);
 			
 			// If we can not equip this item, remove it from the list
 			bool result;
@@ -555,11 +494,8 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 			}
 			else if (!result)
 			{
-				LogMessage("Removing item '%s'", item.name);
 				items.Erase(i--);
 			}
-			
-			delete params;
 		}
 	}
 	
@@ -596,40 +532,17 @@ bool Config_CreateItem(int client, int crate, ItemConfig item)
 	CBaseEntity(crate).WorldSpaceCenter(center);
 	CBaseEntity(crate).GetAbsAngles(angles);
 	
-	CallbackParams params = new CallbackParams(item.callback_params);
-	
 	Call_StartFunction(null, callback);
 	Call_PushCell(client);
-	Call_PushCell(params);
+	Call_PushCell(item.callback_data);
 	Call_PushArray(center, sizeof(center));
 	Call_PushArray(angles, sizeof(angles));
 	
 	if (Call_Finish() != SP_ERROR_NONE)
 	{
-		LogError("Failed to call callback 'create' for item '%s/%s'", item.type, item.subtype);
+		LogError("Failed to call callback 'create' for item '%s'", item.name);
 		return false;
 	}
 	
 	return true;
-}
-
-static StringMap KeyValuesToStringMap(KeyValues kv)
-{
-	StringMap map = new StringMap();
-	
-	if (kv.GotoFirstSubKey(false))
-	{
-		do
-		{
-			char key[CONFIG_MAX_LENGTH], value[CONFIG_MAX_LENGTH];
-			kv.GetSectionName(key, sizeof(key));
-			kv.GetString(NULL_STRING, value, sizeof(value));
-			map.SetString(key, value);
-		}
-		while (kv.GotoNextKey(false));
-		kv.GoBack();
-	}
-	kv.GoBack();
-	
-	return map;
 }
