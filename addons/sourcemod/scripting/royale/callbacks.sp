@@ -18,28 +18,6 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-public void ItemCallback_PrecacheModel(CallbackParams params)
-{
-	int iItemDefIndex;
-	if (!params.GetIntEx("item_def_index", iItemDefIndex))
-	{
-		LogError("Failed to find required callback parameter 'item_def_index'");
-		return;
-	}
-	
-	char szModel[PLATFORM_MAX_PATH];
-	if (!params.GetString("model", szModel, sizeof(szModel)))
-	{
-		LogError("Failed to find required callback parameter 'model'");
-		return;
-	}
-	
-	any aValues[2];
-	aValues[0] = iItemDefIndex;
-	aValues[1] = PrecacheModel(szModel);
-	g_itemModelIndexes.PushArray(aValues);
-}
-
 public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, const float vecOrigin[3], const float vecAngles[3])
 {
 	int iItemDefIndex;
@@ -77,15 +55,12 @@ public bool ItemCallback_CreateDroppedWeapon(int client, CallbackParams params, 
 	// Check if the player has a suitable reskin equipped
 	if (!IsValidEntity(weapon))
 	{
-		char szReskins[256];
-		if (params.GetString("reskins", szReskins, sizeof(szReskins)))
+		WeaponData data;
+		if (Config_GetWeaponDataByDefIndex(iItemDefIndex, data) && data.reskins)
 		{
-			char aBuffers[32][8];
-			int count = ExplodeString(szReskins, ",", aBuffers, sizeof(aBuffers), sizeof(aBuffers[]));
-			for (int i = 0; i < count; i++)
+			for (int i = 0; i < data.reskins.Length; i++)
 			{
-				int iValue;
-				if (StringToIntEx(aBuffers[i], iValue) && iLoadoutItemDefIndex == iValue)
+				if (data.reskins.Get(i) == iLoadoutItemDefIndex)
 				{
 					weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, pScriptItem, true);
 					break;

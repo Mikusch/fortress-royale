@@ -33,8 +33,6 @@ ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
 ConVar fr_crate_max_extra_drops;
 
-ArrayList g_itemModelIndexes;
-
 #include "royale/shareddefs.sp"
 
 #include "royale/callbacks.sp"
@@ -61,8 +59,6 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	g_itemModelIndexes = new ArrayList(2);
-	
 	LoadTranslations("royale.phrases");
 	
 	Console_Init();

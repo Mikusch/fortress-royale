@@ -22,6 +22,7 @@
 
 static ArrayList g_itemConfigs;
 static ArrayList g_crateConfigs;
+static ArrayList g_weaponData;
 
 methodmap CallbackParams < StringMap
 {
@@ -245,7 +246,7 @@ enum struct CrateConfig
 	
 	bool GetRandomContent(CrateContentConfig content)
 	{
-		if (this.contents && this.contents.Length > 0)
+		if (this.contents && this.contents.Length != 0)
 		{
 			ArrayList contents = this.contents.Clone();
 			contents.SortCustom(SortFuncADTArray_SortCrateContentsRandom);
@@ -259,7 +260,7 @@ enum struct CrateConfig
 	
 	bool GetRandomExtraContent(CrateContentConfig extra_content)
 	{
-		if (this.extra_contents && this.extra_contents.Length > 0)
+		if (this.extra_contents && this.extra_contents.Length != 0)
 		{
 			ArrayList extra_contents = this.extra_contents.Clone();
 			extra_contents.GetArray(GetRandomInt(0, extra_contents.Length - 1), extra_content);
@@ -270,7 +271,6 @@ enum struct CrateConfig
 		return false;
 	}
 }
-
 
 enum struct CrateContentConfig
 {
@@ -286,11 +286,54 @@ enum struct CrateContentConfig
 	}
 }
 
+enum struct WeaponData
+{
+	int defindex;
+	char world_model[PLATFORM_MAX_PATH];
+	ArrayList reskins;
+	
+	void Parse(KeyValues kv)
+	{
+		char section[CONFIG_MAX_LENGTH];
+		if (kv.GetSectionName(section, sizeof(section)) && StringToIntEx(section, this.defindex))
+		{
+			kv.GetString("world_model", this.world_model, sizeof(this.world_model));
+			
+			if (kv.JumpToKey("reskins", false))
+			{
+				this.reskins = new ArrayList();
+				if (kv.GotoFirstSubKey(false))
+				{
+					do
+					{
+						if (kv.GetSectionName(section, sizeof(section)))
+						{
+							int reskin = StringToInt(section);
+							if (kv.GetNum(NULL_STRING) != 0)
+							{
+								this.reskins.Push(reskin);
+							}
+						}
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
+				}
+				kv.GoBack();
+			}
+		}
+	}
+	
+	void Delete()
+	{
+		delete this.reskins;
+	}
+}
+
 void Config_Parse()
 {
 	char file[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
 	
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
 	KeyValues items = new KeyValues("items");
 	if (items.ImportFromFile(file))
 	{
@@ -315,7 +358,6 @@ void Config_Parse()
 	delete items;
 	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/crates.cfg");
-	
 	KeyValues crates = new KeyValues("crates");
 	if (crates.ImportFromFile(file))
 	{
@@ -338,6 +380,30 @@ void Config_Parse()
 		LogError("Failed to import config '%s'", file);
 	}
 	delete crates;
+	
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/weapons.cfg");
+	KeyValues weapons = new KeyValues("weapons");
+	if (weapons.ImportFromFile(file))
+	{
+		g_weaponData = new ArrayList(sizeof(WeaponData));
+		
+		if (weapons.GotoFirstSubKey(false))
+		{
+			do
+			{
+				WeaponData data;
+				data.Parse(weapons);
+				g_weaponData.PushArray(data);
+			}
+			while (weapons.GotoNextKey(false));
+			weapons.GoBack();
+		}
+	}
+	else
+	{
+		LogError("Failed to import config '%s'", file);
+	}
+	delete weapons;
 }
 
 void Config_Precache()
@@ -345,7 +411,7 @@ void Config_Precache()
 	for (int i = 0; i < g_itemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) > 0)
+		if (g_itemConfigs.GetArray(i, item) != 0)
 		{
 			item.Precache();
 		}
@@ -357,7 +423,7 @@ void Config_Delete()
 	for (int i = 0; i < g_itemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) > 0)
+		if (g_itemConfigs.GetArray(i, item) != 0)
 		{
 			item.Delete();
 		}
@@ -367,12 +433,22 @@ void Config_Delete()
 	for (int i = 0; i < g_crateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) > 0)
+		if (g_crateConfigs.GetArray(i, crate) != 0)
 		{
 			crate.Delete();
 		}
 	}
 	delete g_crateConfigs;
+	
+	for (int i = 0; i < g_weaponData.Length; i++)
+	{
+		WeaponData data;
+		if (g_weaponData.GetArray(i, data) != 0)
+		{
+			data.Delete();
+		}
+	}
+	delete g_weaponData;
 }
 
 ArrayList Config_GetCratesByName(const char[] name)
@@ -382,9 +458,9 @@ ArrayList Config_GetCratesByName(const char[] name)
 	for (int i = 0; i < g_crateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) > 0)
+		if (g_crateConfigs.GetArray(i, crate) != 0)
 		{
-			if (crate.regex && crate.regex.Match(name) > 0)
+			if (crate.regex && crate.regex.Match(name) != 0)
 			{
 				list.PushArray(crate);
 			}
@@ -399,9 +475,9 @@ bool Config_IsValidCrateName(const char[] name)
 	for (int i = 0; i < g_crateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) > 0)
+		if (g_crateConfigs.GetArray(i, crate) != 0)
 		{
-			if (crate.regex && crate.regex.Match(name) > 0)
+			if (crate.regex && crate.regex.Match(name) != 0)
 			{
 				return true;
 			}
@@ -422,7 +498,7 @@ bool Config_GetRandomCrateByName(const char[] name, CrateConfig crate)
 		return false;
 	}
 	
-	return crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) > 0;
+	return crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) != 0;
 }
 
 ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
@@ -432,7 +508,7 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 	for (int i = 0; i < g_itemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) > 0)
+		if (g_itemConfigs.GetArray(i, item) != 0)
 		{
 			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
 			{
@@ -458,7 +534,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 	// Go through each item until one matches our criteria
 	for (int i = 0; i < items.Length; i++)
 	{
-		if (items.GetArray(i, item) > 0)
+		if (items.GetArray(i, item) != 0)
 		{
 			Function callback = item.GetCallbackFunction("can_be_used");
 			if (callback == INVALID_FUNCTION)
@@ -494,9 +570,20 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 		return false;
 	}
 	
-	bool success = items.GetArray(GetRandomInt(0, items.Length - 1), item) > 0;
+	bool success = items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0;
 	delete items;
 	return success;
+}
+
+bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
+{
+	int index = g_weaponData.FindValue(defindex);
+	if (index != -1)
+	{
+		return g_weaponData.GetArray(index, data) != 0;
+	}
+	
+	return false;
 }
 
 bool Config_CreateItem(int client, int crate, ItemConfig item)

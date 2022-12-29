@@ -50,23 +50,25 @@ any FindItemOffset(int entity)
 
 bool GetItemWorldModel(int item, char[] model, int size)
 {
-	int defindex = GetEntProp(item, Prop_Send, "m_iItemDefinitionIndex");
-	int index = g_itemModelIndexes.FindValue(defindex);
-	if (index != -1)
+	int iItemDefIndex = GetEntProp(item, Prop_Send, "m_iItemDefinitionIndex");
+	
+	// Check if the weapon config has a model set
+	WeaponData data;
+	if (Config_GetWeaponDataByDefIndex(iItemDefIndex, data) && data.world_model[0])
 	{
-		return ModelIndexToString(g_itemModelIndexes.Get(index, 1), model, size);
+		return strcopy(model, size, data.world_model) != 0;
 	}
 	
-	int modelIndex = 0;
+	int nModelIndex = 0;
 	if (HasEntProp(item, Prop_Send, "m_iWorldModelIndex"))
-		modelIndex = GetEntProp(item, Prop_Send, "m_iWorldModelIndex");
+		nModelIndex = GetEntProp(item, Prop_Send, "m_iWorldModelIndex");
 	else
-		modelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
+		nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
 	
-	if (modelIndex == 0)
+	if (nModelIndex == 0)
 		return false;
 	
-	return ModelIndexToString(modelIndex, model, size);
+	return ModelIndexToString(nModelIndex, model, size);
 }
 
 float GetPercentInvisible(int client)
