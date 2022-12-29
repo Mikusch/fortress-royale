@@ -95,6 +95,7 @@ methodmap CallbackParams < StringMap
 
 enum struct ItemConfig
 {
+	char name[CONFIG_MAX_LENGTH];
 	char type[CONFIG_MAX_LENGTH];
 	char subtype[CONFIG_MAX_LENGTH];
 	StringMap callback_functions;
@@ -102,22 +103,25 @@ enum struct ItemConfig
 	
 	void Parse(KeyValues kv)
 	{
-		kv.GetString("type", this.type, sizeof(this.type));
-		kv.GetString("subtype", this.subtype, sizeof(this.subtype));
-		
-		if (kv.JumpToKey("callbacks", false))
+		if (kv.GetSectionName(this.name, sizeof(this.name)))
 		{
-			if (kv.JumpToKey("functions", false))
-			{
-				this.callback_functions = KeyValuesToStringMap(kv);
-			}
+			kv.GetString("type", this.type, sizeof(this.type));
+			kv.GetString("subtype", this.subtype, sizeof(this.subtype));
 			
-			if (kv.JumpToKey("params", false))
+			if (kv.JumpToKey("callbacks", false))
 			{
-				this.callback_params = KeyValuesToStringMap(kv);
+				if (kv.JumpToKey("functions", false))
+				{
+					this.callback_functions = KeyValuesToStringMap(kv);
+				}
+				
+				if (kv.JumpToKey("params", false))
+				{
+					this.callback_params = KeyValuesToStringMap(kv);
+				}
+				
+				kv.GoBack();
 			}
-			
-			kv.GoBack();
 		}
 	}
 	
@@ -470,13 +474,13 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 			bool result;
 			if (Call_Finish(result) != SP_ERROR_NONE)
 			{
-				LogError("Failed to call callback 'can_be_used' for item '%s/%s'", item.type, item.subtype);
-				items.Erase(i);
+				LogError("Failed to call callback 'can_be_used' for item '%s'", item.name);
+				items.Erase(i--);
 			}
 			else if (!result)
 			{
-				LogMessage("Removing item '%s/%s'", item.type, item.subtype);
-				items.Erase(i);
+				LogMessage("Removing item '%s'", item.name);
+				items.Erase(i--);
 			}
 			
 			delete params;
