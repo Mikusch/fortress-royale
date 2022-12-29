@@ -111,11 +111,7 @@ void ShowGameMessage(const char[] message, const char[] icon, int displayToTeam 
 
 void TF2_RemovePlayerItem(int client, int item)
 {
-	if (TF2Util_IsEntityWearable(item))
-	{
-		TF2_RemoveWearable(client, item);
-	}
-	else if (TF2Util_IsEntityWeapon(item))
+	if (TF2Util_IsEntityWeapon(item))
 	{
 		// Remove any extra wearables associated with the weapon
 		int extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
@@ -132,6 +128,10 @@ void TF2_RemovePlayerItem(int client, int item)
 		}
 		
 		RemovePlayerItem(client, item);
+	}
+	else if (TF2Util_IsEntityWearable(item))
+	{
+		TF2_RemoveWearable(client, item);
 	}
 	
 	RemoveEntity(item);

@@ -111,6 +111,14 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 					SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(player, newItem);
 				}
 			}
+			else if (TF2Util_IsEntityWearable(newItem))
+			{
+				// switch to the next best weapon
+				if (GetEntPropEnt(player, Prop_Send, "m_hActiveWeapon") == -1)
+				{
+					SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(player, -1);
+				}
+			}
 			
 			// delay pickup weapon message
 			FRPlayer(player).m_flSendPickupWeaponMessageTime = GetGameTime() + 0.1;
