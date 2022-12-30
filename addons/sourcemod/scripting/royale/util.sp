@@ -412,3 +412,52 @@ int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vec
 	delete droppedWeapons;
 	return droppedWeapon;
 }
+
+int CountCharInString(const char[] str, char c) 
+{
+	int i = 0, count = 0;
+	
+	while (str[i] != '\0') 
+	{
+		if (str[i++] == c)
+		{
+			count++;
+		}
+	}
+	
+	return count;
+}
+
+// TODO: Make this less bad
+void TF2_CreateSetupTimer(int duration, EntityOutput callback)
+{
+	int timer = CreateEntityByName("team_round_timer");
+	
+	char string[12];
+	IntToString(duration, string, sizeof(string));
+	DispatchKeyValue(timer, "setup_length", string);
+	
+	DispatchKeyValue(timer, "show_in_hud", "1");
+	DispatchKeyValue(timer, "start_paused", "0");
+	DispatchSpawn(timer);
+	HookSingleEntityOutput(timer, "OnSetupFinished", callback, true);
+	
+	AcceptEntityInput(timer, "Enable");
+	
+	Event event = CreateEvent("teamplay_update_timer", true);
+	event.Fire();
+}
+
+// TODO: Make this less bad
+int GetAlivePlayersCount()
+{
+	int count = 0;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && FRPlayer(client).IsAlive())
+			count++;
+	}
+	
+	return count;
+}

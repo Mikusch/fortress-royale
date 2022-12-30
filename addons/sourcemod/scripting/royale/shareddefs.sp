@@ -25,7 +25,8 @@
 
 #define INVALID_ITEM_DEF_INDEX	(0xFFFF)
 
-#define EFL_KILLME	(1<<0)
+#define EFL_KILLME		(1<<0)
+#define EFL_IN_SKYBOX	(1<<17)
 
 //-----------------------------------------------------------------------------
 // Purpose: Slots for items within loadouts
@@ -110,23 +111,6 @@ enum Collision_Group_t
 
 	LAST_SHARED_COLLISION_GROUP
 };
-
-// edict->movecollide values
-enum MoveCollide_t
-{
-	MOVECOLLIDE_DEFAULT = 0,
-
-	// These ones only work for MOVETYPE_FLY + MOVETYPE_FLYGRAVITY
-	MOVECOLLIDE_FLY_BOUNCE,	// bounces, reflects, based on elasticity of surface and object - applies friction (adjust velocity)
-	MOVECOLLIDE_FLY_CUSTOM,	// Touch() will modify the velocity however it likes
-	MOVECOLLIDE_FLY_SLIDE,  // slides along surfaces (no bounce) - applies friciton (adjusts velocity)
-
-	MOVECOLLIDE_COUNT,		// Number of different movecollides
-
-	// When adding new movecollide types, make sure this is correct
-	MOVECOLLIDE_MAX_BITS = 3
-};
-
 
 //-----------------------------------------------------------------------------
 // Particle attachment methods

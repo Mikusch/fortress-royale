@@ -34,6 +34,9 @@ void Events_Init()
 	g_Events = new ArrayList(sizeof(EventData));
 	
 	Events_Add("player_death", EventHook_PlayerDeath);
+	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
+	Events_Add("teamplay_setup_finished", EventHook_SetupFinished);
+	Events_Add("teamplay_round_active", EventHook_TeamplayRoundActive);
 }
 
 void Events_Toggle(bool enable)
@@ -80,4 +83,21 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 	int client = GetClientOfUserId(event.GetInt("victim"));
 	
 	// TODO
+}
+
+static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+	Zone_OnRoundStart();
+}
+
+
+static void EventHook_TeamplayRoundActive(Event event, const char[] name, bool dontBroadcast)
+{
+	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+}
+
+
+static void EventHook_SetupFinished(Event event, const char[] name, bool dontBroadcast)
+{
+	
 }

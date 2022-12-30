@@ -274,6 +274,17 @@ void Config_Parse()
 {
 	char file[PLATFORM_MAX_PATH];
 	
+	// Parse global config
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/global.cfg");
+	Config_ParseMapConfig(file);
+	
+	// Parse map specific config to override global settings
+	file[0] = '\0';
+	if (Config_GetMapConfigFilepath(file, sizeof(file)))
+	{
+		Config_ParseMapConfig(file);
+	}
+	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
 	KeyValues items = new KeyValues("items");
 	if (items.ImportFromFile(file))
@@ -345,6 +356,57 @@ void Config_Parse()
 		LogError("Failed to import config '%s'", file);
 	}
 	delete weapons;
+}
+
+void Config_ParseMapConfig(const char[] file)
+{
+	KeyValues kv = new KeyValues("global");
+	if (kv.ImportFromFile(file))
+	{
+		if (kv.JumpToKey("zone", false))
+		{
+			Zone_Parse(kv);
+			kv.GoBack();
+		}
+	}
+	else
+	{
+		LogError("Failed to import config '%s'", file);
+	}
+	delete kv;
+}
+
+bool Config_GetMapConfigFilepath(char[] filePath, int length)
+{
+	char mapName[PLATFORM_MAX_PATH];
+	GetCurrentMap(mapName, sizeof(mapName));
+	GetMapDisplayName(mapName, mapName, sizeof(mapName));
+	
+	int partsCount = CountCharInString(mapName, '_') + 1;
+	
+	// Split map prefix and first part of its name (e.g. pl_hightower)
+	char[][] nameParts = new char[partsCount][PLATFORM_MAX_PATH];
+	ExplodeString(mapName, "_", nameParts, partsCount, PLATFORM_MAX_PATH);
+	
+	// Start to stitch name parts together
+	char tidyMapName[PLATFORM_MAX_PATH];
+	char filePathBuffer[PLATFORM_MAX_PATH];
+	strcopy(tidyMapName, sizeof(tidyMapName), nameParts[0]);
+	
+	// Build file path
+	BuildPath(Path_SM, tidyMapName, sizeof(tidyMapName), "configs/royale/maps/%s", tidyMapName);
+	
+	for (int i = 1; i < partsCount; i++)
+	{
+		Format(tidyMapName, sizeof(tidyMapName), "%s_%s", tidyMapName, nameParts[i]);
+		Format(filePathBuffer, sizeof(filePathBuffer), "%s.cfg", tidyMapName);
+		
+		// Find the most specific config
+		if (FileExists(filePathBuffer))
+			strcopy(filePath, length, filePathBuffer);
+	}
+	
+	return FileExists(filePath);
 }
 
 void Config_Precache()

@@ -64,6 +64,12 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
+	public bool IsAlive()
+	{
+		// TODO Respect player state
+		return IsPlayerAlive(this.index);
+	}
+	
 	public void SetWearableVM(int wearable)
 	{
 		this.m_clientWearableVM = wearable;

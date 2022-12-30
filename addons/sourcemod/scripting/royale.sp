@@ -33,6 +33,15 @@ ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
 ConVar fr_crate_max_extra_drops;
+ConVar fr_zone_startdisplay;
+ConVar fr_zone_startdisplay_player;
+ConVar fr_zone_display;
+ConVar fr_zone_display_player;
+ConVar fr_zone_shrink;
+ConVar fr_zone_shrink_player;
+ConVar fr_zone_nextdisplay;
+ConVar fr_zone_nextdisplay_player;
+ConVar fr_zone_damagemultiplier;
 
 bool g_bEnabled;
 
@@ -101,6 +110,11 @@ public void OnConfigsExecuted()
 	{
 		FortressRoyale_Toggle(fr_enable.BoolValue);
 	}
+}
+
+public void OnGameFrame()
+{
+	Zone_Think();
 }
 
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])
@@ -207,4 +221,32 @@ void FortressRoyale_Toggle(bool enable)
 			}
 		}
 	}
+}
+
+Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
+{
+	RemoveEntity(caller);
+	
+	// TODO
+	/*if (g_RoundState != FRRoundState_Setup)
+		//return;
+	
+	g_RoundState = FRRoundState_Active;
+	
+	BattleBus_SpawnPlayerBus();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			BattleBus_SpectateBus(client);
+	}
+	
+	g_PlayerCount = GetAlivePlayersCount();
+	
+	
+	Loot_SetupFinished();
+	Vehicles_SetupFinished();*/
+	Zone_OnSetupFinished();
+	
+	return Plugin_Continue;
 }
