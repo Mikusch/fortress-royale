@@ -26,6 +26,7 @@
 #include <tf2utils>
 #include <tf_econ_data>
 #include <tf2items>
+#include <tf2attributes>
 #include <cbasenpc>
 
 ConVar fr_enable;
@@ -41,7 +42,7 @@ ConVar fr_zone_shrink;
 ConVar fr_zone_shrink_player;
 ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
-ConVar fr_zone_damagemultiplier;
+ConVar fr_zone_damage;
 
 bool g_bEnabled;
 
