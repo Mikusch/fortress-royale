@@ -246,6 +246,7 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 
 bool ShouldDropWeapon(int client, int weapon)
 {
+	// Don't drop engineer's toolbox
 	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
 		return false;
 	
@@ -424,20 +425,26 @@ int CountCharInString(const char[] str, char c)
 void TF2_CreateSetupTimer(int duration, EntityOutput callback)
 {
 	int timer = CreateEntityByName("team_round_timer");
-	
-	char string[12];
-	IntToString(duration, string, sizeof(string));
-	DispatchKeyValue(timer, "setup_length", string);
-	
-	DispatchKeyValue(timer, "show_in_hud", "1");
-	DispatchKeyValue(timer, "start_paused", "0");
-	DispatchSpawn(timer);
-	HookSingleEntityOutput(timer, "OnSetupFinished", callback, true);
-	
-	AcceptEntityInput(timer, "Enable");
-	
-	Event event = CreateEvent("teamplay_update_timer", true);
-	event.Fire();
+	if (IsValidEntity(timer))
+	{
+		char setup_length[8];
+		IntToString(duration, setup_length, sizeof(setup_length));
+		DispatchKeyValue(timer, "setup_length", setup_length);
+		
+		DispatchKeyValue(timer, "show_in_hud", "1");
+		DispatchKeyValue(timer, "start_paused", "0");
+		if (DispatchSpawn(timer))
+		{
+			HookSingleEntityOutput(timer, "OnSetupFinished", callback, true);
+			AcceptEntityInput(timer, "Enable");
+			
+			Event event = CreateEvent("teamplay_update_timer");
+			if (event)
+			{
+				event.Fire();
+			}
+		}
+	}
 }
 
 // TODO: Make this less bad

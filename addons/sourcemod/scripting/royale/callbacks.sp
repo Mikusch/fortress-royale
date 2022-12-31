@@ -72,12 +72,13 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	// If we did not find a weapon, generate a default one
 	if (!IsValidEntity(weapon))
 	{
-		// TODO: GiveNamedItem causes weapon switches, create weapon entity manually (see TF2_CreateWeapon)
 		weapon = GenerateDefaultItem(client, iItemDefIndex);
 	}
 	
-	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
+	// Weapon_Equip can cause weapon switches, just temporary prevent it
+	TF2Attrib_SetByName(weapon, "disable weapon switch", 1.0);
 	ItemGiveTo(client, weapon);
+	TF2Attrib_RemoveByName(weapon, "disable weapon switch");
 	
 	char szModel[PLATFORM_MAX_PATH];
 	GetItemWorldModel(weapon, szModel, sizeof(szModel));

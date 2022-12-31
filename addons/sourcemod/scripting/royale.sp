@@ -164,13 +164,7 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDef
 	if (!g_bEnabled)
 		return Plugin_Continue;
 	
-	if (TF2Econ_GetItemLoadoutSlot(itemDefIndex, TF2_GetPlayerClass(client)) == LOADOUT_POSITION_MELEE)
-	{
-		//CreateFists(client);
-		//return Plugin_Handled;
-	}
-	
-	return Plugin_Continue;
+	return Plugin_Handled;
 }
 
 public void OnClientPutInServer(int client)

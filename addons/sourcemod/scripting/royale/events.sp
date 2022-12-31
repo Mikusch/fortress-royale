@@ -33,6 +33,7 @@ void Events_Init()
 {
 	g_Events = new ArrayList(sizeof(EventData));
 	
+	Events_Add("player_spawn", EventHook_PlayerSpawn);
 	Events_Add("player_death", EventHook_PlayerDeath);
 	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_Add("teamplay_setup_finished", EventHook_SetupFinished);
@@ -75,6 +76,18 @@ static void Events_Add(const char[] name, EventHook callback, EventHookMode mode
 	else
 	{
 		LogError("Failed to create event with name %s", name);
+	}
+}
+
+static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	
+	int weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
+	if (IsValidEntity(weapon))
+	{
+		ItemGiveTo(client, weapon);
+		TF2Util_SetPlayerActiveWeapon(client, weapon);
 	}
 }
 

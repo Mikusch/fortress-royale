@@ -29,10 +29,10 @@
 	"Zone_ShrinkWarning"
 	{
 		"#format"	"{1:0.0f}"
-		"en"		"Zone shrinking in {1} seconds"
+		"en"		"The zone will shrink in {1} seconds."
 	}
 	"Zone_Shrinking"
 	{
-		"en"		"Zone shrinking, get moving!"
+		"en"		"The zone is shrinking, get moving!"
 	}
 }

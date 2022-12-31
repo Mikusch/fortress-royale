@@ -86,10 +86,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		if (IsWeaponFists(GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon")))
 		{
 			EmitGameSoundToClient(client, "Player.UseDeny");
-			
-			char message[64];
-			Format(message, sizeof(message), "%T", "Weapon_CannotDropFists", client);
-			SendHudNotificationCustom(client, message, "fists");
+			PrintCenterText(client, "%t", "Weapon_CannotDropFists");
 		}
 		
 		return Plugin_Continue;
@@ -120,14 +117,11 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			InitDroppedWearable(droppedWeapon, client, weapon, true);
 		}
 		
+		bool bDroppedMelee = TF2Util_GetWeaponSlot(weapon) == TFWeaponSlot_Melee;
 		TF2_RemovePlayerItem(client, weapon);
-	}
-	
-	if (IsPlayerAlive(client))
-	{
+		
 		// If we dropped our melee weapon, get our fists back
-		weapon = GetEntityForLoadoutSlot(client, LOADOUT_POSITION_MELEE);
-		if (weapon == -1)
+		if (bDroppedMelee)
 		{
 			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
 			ItemGiveTo(client, weapon);
