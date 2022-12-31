@@ -107,6 +107,12 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, weaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
+			if (TF2Util_IsEntityWeapon(newItem) && TF2Util_GetWeaponID(newItem) == TF_WEAPON_BUILDER && class == TFClass_Spy)
+			{
+				SetEntProp(newItem, Prop_Send, "m_iObjectType", TFObject_Sapper);
+				SetEntProp(newItem, Prop_Data, "m_iSubType", TFObject_Sapper);
+			}
+			
 			// make sure we removed our current weapon
 			if (IsValidEntity(weapon))
 			{

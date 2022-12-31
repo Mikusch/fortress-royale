@@ -190,10 +190,16 @@ static Action Timer_StartShrink(Handle timer)
 	g_ZoneShrinkLevel--;
 	
 	EmitGameSoundToAll("MVM.Warning");
-	char message[256];
-	//Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
-	strcopy(message, sizeof(message), "Zone is shrinking lol");
-	ShowGameMessage(message, "ico_notify_ten_seconds");
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char message[64];
+		Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", client);
+		SendHudNotificationCustom(client, message, "ico_notify_ten_seconds");
+	}
 	
 	// Begin shrinking
 	g_ZoneShrinkStart = GetGameTime();
@@ -244,16 +250,19 @@ void Zone_Think()
 	{
 		// We are shrinking, update zone position and model scale
 		
-		// Progress from level x+1 to level x
-		float progress = (GetGameTime() - g_ZoneShrinkStart) / duration;
-		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, vecZoneOrigin); // Distance from start to end
-		ScaleVector(vecZoneOrigin, progress); // Scale by progress
-		AddVectors(vecZoneOrigin, g_ZonePropcenterOld, vecZoneOrigin); // Add distance to old center
-		TeleportEntity(g_ZonePropRef, vecZoneOrigin);
-		
-		// Progress from 1.0 to 0.0 (starting zone to zero size)
-		percentage = (float(g_ZoneShrinkLevel + 1) - progress) / float(g_ZoneConfig.num_shrinks);
-		SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(percentage));
+		if (IsValidEntity(g_ZonePropRef))
+		{
+			// Progress from level x+1 to level x
+			float progress = (GetGameTime() - g_ZoneShrinkStart) / duration;
+			SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, vecZoneOrigin); // Distance from start to end
+			ScaleVector(vecZoneOrigin, progress); // Scale by progress
+			AddVectors(vecZoneOrigin, g_ZonePropcenterOld, vecZoneOrigin); // Add distance to old center
+			TeleportEntity(g_ZonePropRef, vecZoneOrigin);
+			
+			// Progress from 1.0 to 0.0 (starting zone to zero size)
+			percentage = (float(g_ZoneShrinkLevel + 1) - progress) / float(g_ZoneConfig.num_shrinks);
+			SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(percentage));
+		}
 	}
 	else
 	{
@@ -298,7 +307,7 @@ void Zone_Think()
 			
 			float ratio = GetVectorDistance(origin, vecZoneOrigin) / zoneRadius;
 			bool isOutsideZone = ratio > 1.0;
-			PrintToServer("%f", ratio);
+			
 			if (isOutsideZone)
 			{
 				SDKHooks_TakeDamage(obj, 0, 0, fr_zone_damage.FloatValue);

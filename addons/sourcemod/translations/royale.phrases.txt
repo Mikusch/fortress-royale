@@ -26,4 +26,8 @@
 	{
 		"en"		"You cannot drop your fists!"
 	}
+	"Zone_ShrinkAlert"
+	{
+		"en"		"The death zone is shrinking, get moving!"
+	}
 }

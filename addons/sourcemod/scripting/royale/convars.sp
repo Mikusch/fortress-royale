@@ -53,6 +53,10 @@ void ConVars_Init()
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
 	ConVars_AddConVar("tf_powerup_mode", "1");
+	ConVars_AddConVar("tf_weapon_criticals", "0");
+	ConVars_AddConVar("tf_dropped_weapon_lifetime", "99999.9");
+	ConVars_AddConVar("mp_teams_unbalance_limit", "0");
+	ConVars_AddConVar("mp_autoteambalance", "0");
 }
 
 void ConVars_Toggle(bool enable)

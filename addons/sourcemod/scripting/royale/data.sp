@@ -97,10 +97,8 @@ methodmap FRPlayer < CBaseCombatCharacter
 		if (this.m_flCrateOpenTime == 0.0)
 		{
 			this.m_flCrateOpenTime = GetGameTime();
-			this.AddFlag(FL_FROZEN);
 			
-			FRCrate(crate).m_claimedBy = this.index;
-			EmitSoundToAll(")ui/item_open_crate.wav", crate);
+			FRCrate(crate).StartOpen(this.index);
 		}
 		
 		if (this.m_flCrateOpenTime + fr_crate_open_time.FloatValue > GetGameTime())
@@ -141,7 +139,6 @@ methodmap FRPlayer < CBaseCombatCharacter
 			return;
 		
 		this.m_flCrateOpenTime = 0.0;
-		this.RemoveFlag(FL_FROZEN);
 		
 		// If no crate was passed in, search for claimed crates
 		if (crate != -1)
@@ -160,6 +157,11 @@ methodmap FRPlayer < CBaseCombatCharacter
 				}
 			}
 		}
+	}
+	
+	public bool IsInAVehicle()
+	{
+		return this.GetPropEnt(Prop_Data, "m_hVehicle") != -1;
 	}
 	
 	public void Init()

@@ -130,7 +130,7 @@ public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel
 
 static bool ProcessCrateOpening(int client, int buttons)
 {
-	if (IsPlayerAlive(client) && buttons & IN_RELOAD)
+	if (IsPlayerAlive(client) && (buttons & IN_RELOAD) && !FRPlayer(client).IsInAVehicle())
 	{
 		float vecEyePosition[3], vecEyeAngles[3];
 		GetClientEyePosition(client, vecEyePosition);

@@ -72,6 +72,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	// If we did not find a weapon, generate a default one
 	if (!IsValidEntity(weapon))
 	{
+		// TODO: GiveNamedItem causes weapon switches, create weapon entity manually (see TF2_CreateWeapon)
 		weapon = GenerateDefaultItem(client, iItemDefIndex);
 	}
 	

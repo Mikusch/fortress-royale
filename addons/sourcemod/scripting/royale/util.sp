@@ -56,6 +56,7 @@ bool GetItemWorldModel(int item, char[] model, int size)
 	WeaponData data;
 	if (Config_GetWeaponDataByDefIndex(iItemDefIndex, data) && data.world_model[0])
 	{
+		PrecacheModel(data.world_model);
 		return strcopy(model, size, data.world_model) != 0;
 	}
 	
@@ -80,33 +81,21 @@ float GetPercentInvisible(int client)
 	return GetEntDataFloat(client, offset);
 }
 
-void ShowGameMessage(const char[] message, const char[] icon, int displayToTeam = 0, int teamColor = 0)
+void SendHudNotificationCustom(int client, const char[] text, const char[] icon, TFTeam team = TFTeam_Unassigned)
 {
-	int msg = CreateEntityByName("game_text_tf");
-	if (IsValidEntity(msg))
-	{
-		DispatchKeyValue(msg, "message", message);
-		switch (displayToTeam)
-		{
-			case 2: DispatchKeyValue(msg, "display_to_team", "2");
-			case 3: DispatchKeyValue(msg, "display_to_team", "3");
-			default: DispatchKeyValue(msg, "display_to_team", "0");
-		}
-		switch (teamColor)
-		{
-			case 2: DispatchKeyValue(msg, "background", "2");
-			case 3: DispatchKeyValue(msg, "background", "3");
-			default: DispatchKeyValue(msg, "background", "0");
-		}
-		
-		DispatchKeyValue(msg, "icon", icon);
-		
-		if (DispatchSpawn(msg))
-		{
-			AcceptEntityInput(msg, "Display");
-			RemoveEntity(msg);
-		}
-	}
+	BfWrite bf = UserMessageToBfWrite(StartMessageOne("HudNotifyCustom", client));
+	bf.WriteString(text);
+	bf.WriteString(icon);
+	bf.WriteByte(view_as<int>(team));
+	EndMessage();
+}
+
+void SendHudNotification(HudNotification_t type, bool forceShow = false)
+{
+	BfWrite bf = UserMessageToBfWrite(StartMessageAll("HudNotify"));
+	bf.WriteByte(view_as<int>(type));
+	bf.WriteBool(forceShow);	// Display in cl_hud_minmode
+	EndMessage();
 }
 
 void TF2_RemovePlayerItem(int client, int item)
@@ -283,6 +272,9 @@ int GenerateDefaultItem(int client, int defindex)
 	// Fake global id
 	static int s_nFakeID = 1;
 	SetItemID(weapon, s_nFakeID++);
+	
+	SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
+	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
 	
 	return weapon;
 }

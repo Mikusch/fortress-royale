@@ -163,11 +163,17 @@ methodmap FRCrate < FREntity
 		}
 	}
 	
+	public void StartOpen(int client)
+	{
+		this.m_claimedBy = client;
+		EmitSoundToAll(")ui/item_open_crate.wav", this.index, SNDCHAN_STATIC);
+	}
+	
 	public void CancelOpen()
 	{
 		this.m_claimedBy = -1;
 		this.ClearText();
-		StopSound(this.index, SNDCHAN_AUTO, ")ui/item_open_crate.wav");
+		StopSound(this.index, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
 	}
 	
 	public bool CanUse(int client)

@@ -89,7 +89,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			
 			char message[64];
 			Format(message, sizeof(message), "%T", "Weapon_CannotDropFists", client);
-			ShowGameMessage(message, "fists");
+			SendHudNotificationCustom(client, message, "fists");
 		}
 		
 		return Plugin_Continue;
