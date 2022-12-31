@@ -71,21 +71,6 @@ enum struct ItemConfig
 		}
 	}
 	
-	void Precache()
-	{
-		Function callback = this.GetCallbackFunction("precache");
-		if (callback == INVALID_FUNCTION)
-			return;
-		
-		Call_StartFunction(null, callback);
-		Call_PushCell(this.callback_data);
-		
-		if (Call_Finish() != SP_ERROR_NONE)
-		{
-			LogError("Failed to call callback 'precache' for item '%s/%s'", this.type, this.subtype);
-		}
-	}
-	
 	Function GetCallbackFunction(const char[] key, Handle plugin = null)
 	{
 		char name[CONFIG_MAX_LENGTH];
@@ -407,18 +392,6 @@ bool Config_GetMapConfigFilepath(char[] filePath, int length)
 	}
 	
 	return FileExists(filePath);
-}
-
-void Config_Precache()
-{
-	for (int i = 0; i < g_itemConfigs.Length; i++)
-	{
-		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) != 0)
-		{
-			item.Precache();
-		}
-	}
 }
 
 void Config_Delete()

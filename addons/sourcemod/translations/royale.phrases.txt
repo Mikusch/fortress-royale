@@ -26,8 +26,13 @@
 	{
 		"en"		"You cannot drop your fists!"
 	}
-	"Zone_ShrinkAlert"
+	"Zone_ShrinkWarning"
 	{
-		"en"		"The death zone is shrinking, get moving!"
+		"#format"	"{1:0.0f}"
+		"en"		"Zone shrinking in {1} seconds"
+	}
+	"Zone_Shrinking"
+	{
+		"en"		"Zone shrinking, get moving!"
 	}
 }

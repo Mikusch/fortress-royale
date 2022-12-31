@@ -97,7 +97,7 @@ public void OnMapStart()
 	PrecacheSound(")ui/itemcrate_smash_ultrarare_short.wav");
 	
 	Config_Parse();
-	Config_Precache();
+	Zone_Precache();
 }
 
 public void OnMapEnd()

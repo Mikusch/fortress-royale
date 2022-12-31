@@ -75,6 +75,14 @@ int g_ZoneShrinkLevel;
 float g_ZoneShrinkStart;
 float g_flNextZoneDamageTick;
 
+void Zone_Precache()
+{
+	SuperPrecacheModel(ZONE_MODEL);
+	
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vmt");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vtf");
+}
+
 void Zone_Parse(KeyValues kv)
 {
 	g_ZoneConfig.Parse(kv);
@@ -177,6 +185,16 @@ static Action Timer_StartDisplay(Handle timer)
 		AcceptEntityInput(g_ZoneGhostRef, "Enable");
 	}
 	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char message[64];
+		Format(message, sizeof(message), "%T", "Zone_ShrinkWarning", client, Zone_GetDisplayDuration());
+		SendHudNotificationCustom(client, message, "ico_notify_thirty_seconds");
+	}
+	
 	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 	
 	return Plugin_Continue;
@@ -197,7 +215,7 @@ static Action Timer_StartShrink(Handle timer)
 			continue;
 		
 		char message[64];
-		Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", client);
+		Format(message, sizeof(message), "%T", "Zone_Shrinking", client);
 		SendHudNotificationCustom(client, message, "ico_notify_ten_seconds");
 	}
 	

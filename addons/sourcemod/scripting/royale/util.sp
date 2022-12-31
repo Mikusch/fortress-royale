@@ -453,3 +453,43 @@ int GetAlivePlayersCount()
 	
 	return count;
 }
+
+void SuperPrecacheModel(const char[] model)
+{
+	char base[PLATFORM_MAX_PATH], path[PLATFORM_MAX_PATH];
+	strcopy(base, sizeof(base), model);
+	SplitString(base, ".mdl", base, sizeof(base));
+	
+	AddFileToDownloadsTable(model);
+	PrecacheModel(model);
+	
+	Format(path, sizeof(path), "%s.phy", base);
+	if (FileExists(path))
+	{
+		AddFileToDownloadsTable(path);
+	}
+	
+	Format(path, sizeof(path), "%s.vvd", base);
+	if (FileExists(path))
+	{
+		AddFileToDownloadsTable(path);
+	}
+	
+	Format(path, sizeof(path), "%s.dx80.vtx", base);
+	if (FileExists(path))
+	{
+		AddFileToDownloadsTable(path);
+	}
+	
+	Format(path, sizeof(path), "%s.dx90.vtx", base);
+	if (FileExists(path))
+	{
+		AddFileToDownloadsTable(path);
+	}
+	
+	Format(path, sizeof(path), "%s.sw.vtx", base);
+	if (FileExists(path))
+	{
+		AddFileToDownloadsTable(path);
+	}
+}
