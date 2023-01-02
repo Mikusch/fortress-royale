@@ -244,10 +244,10 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 	TeleportEntity(droppedWeapon, .velocity = vecImpulse);
 }
 
-bool ShouldDropWeapon(int client, int weapon)
+bool ShouldDropItem(int client, int weapon)
 {
 	// Don't drop engineer's toolbox
-	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
 		return false;
 	
 	if (IsWeaponFists(weapon))
@@ -421,8 +421,7 @@ int CountCharInString(const char[] str, char c)
 	return count;
 }
 
-// TODO: Make this less bad
-void TF2_CreateSetupTimer(int duration, EntityOutput callback)
+void TF2_CreateSetupTimer(int duration)
 {
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
@@ -435,7 +434,6 @@ void TF2_CreateSetupTimer(int duration, EntityOutput callback)
 		DispatchKeyValue(timer, "start_paused", "0");
 		if (DispatchSpawn(timer))
 		{
-			HookSingleEntityOutput(timer, "OnSetupFinished", callback, true);
 			AcceptEntityInput(timer, "Enable");
 			
 			Event event = CreateEvent("teamplay_update_timer");
@@ -499,4 +497,9 @@ void SuperPrecacheModel(const char[] model)
 	{
 		AddFileToDownloadsTable(path);
 	}
+}
+
+bool IsInWaitingForPlayers()
+{
+	return GameRules_GetProp("m_bInWaitingForPlayers") != 0;
 }

@@ -57,12 +57,6 @@
 				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
 				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\x04\x05\x00\x00\x00"
 			}
-			"CTFPlayer::GiveNamedItem"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer13GiveNamedItemEPKciPK13CEconItemViewb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x54\x80\x7D\x14\x00"
-			}
 			"CTFPlayer::GetLoadoutItem"
 			{
 				"library"	"server"
@@ -83,6 +77,11 @@
 				"library"	"server"
 				"linux"		"277"
 				"windows"	"276"
+			}
+			"CTFPlayer::GiveNamedItem"
+			{
+				"windows"	"486"
+				"linux"		"493"
 			}
 		}
 		"Functions"
@@ -112,6 +111,32 @@
 					"pWeapon"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::GiveNamedItem"
+			{
+				"offset"	"CTFPlayer::GiveNamedItem"
+				"hooktype"	"entity"
+				"return"	"cbaseentity"
+				"this"		"entity"
+				"arguments"
+				{
+					"pszName"
+					{
+						"type"	"charptr"
+					}
+					"iSubType"
+					{
+						"type"	"int"
+					}
+					"pScriptItem"
+					{
+						"type"	"objectptr"
+					}
+					"bForce"
+					{
+						"type"	"bool"
 					}
 				}
 			}

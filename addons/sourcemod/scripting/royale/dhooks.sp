@@ -26,13 +26,24 @@ enum struct DetourData
 }
 
 static ArrayList g_DynamicDetours;
+static ArrayList g_DynamicHookIds;
+
+static DynamicHook g_DHookGiveNamedItem;
 
 void DHooks_Init(GameData gamedata)
 {
 	g_DynamicDetours = new ArrayList(sizeof(DetourData));
+	g_DynamicHookIds = new ArrayList();
+	
+	g_DHookGiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
 	
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
+}
+
+void DHooks_OnClientPutInServer(int client)
+{
+	DHooks_HookEntity(g_DHookGiveNamedItem, Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre);
 }
 
 void DHooks_Toggle(bool enable)
@@ -59,6 +70,15 @@ void DHooks_Toggle(bool enable)
 			}
 		}
 	}
+	
+	if (!enable)
+	{
+		for (int i = g_DynamicHookIds.Length - 1; i >= 0; i--)
+		{
+			int hookid = g_DynamicHookIds.Get(i);
+			DynamicHook.RemoveHook(hookid);
+		}
+	}
 }
 
 static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callback_pre = INVALID_FUNCTION, DHookCallback callback_post = INVALID_FUNCTION)
@@ -77,6 +97,32 @@ static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookC
 	{
 		LogError("Failed to create detour setup handle for %s", name);
 	}
+}
+
+static DynamicHook DHooks_AddDynamicHook(GameData gamedata, const char[] name)
+{
+	DynamicHook hook = DynamicHook.FromConf(gamedata, name);
+	if (!hook)
+		LogError("Failed to create hook setup handle for %s", name);
+	
+	return hook;
+}
+
+static void DHooks_HookEntity(DynamicHook hook, HookMode mode, int entity, DHookCallback callback)
+{
+	if (!hook)
+		return;
+	
+	int hookid = hook.HookEntity(mode, entity, callback, DHookRemovalCB_OnHookRemoved);
+	if (hookid != INVALID_HOOK_ID)
+		g_DynamicHookIds.Push(hookid);
+}
+
+static void DHookRemovalCB_OnHookRemoved(int hookid)
+{
+	int index = g_DynamicHookIds.FindValue(hookid);
+	if (index != -1)
+		g_DynamicHookIds.Erase(index);
 }
 
 static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, DHookReturn ret, DHookParam params)
@@ -213,4 +259,36 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 	
 	ret.Value = CanWeaponBeUsedByClass(weapon, class);
 	return MRES_Supercede;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookReturn ret, DHookParam params)
+{
+	if (g_bBypassGiveNamedItemHook)
+		return MRES_Ignored;
+	
+	if (IsInWaitingForPlayers())
+		return MRES_Ignored;
+	
+	if (params.IsNull(3))
+		return MRES_Ignored;
+	
+	Address pScriptItem = params.GetAddress(3);
+	
+	// CEconItemView::m_iItemDefinitionIndex
+	int iItemDefIndex = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);
+	TFClassType nClass = TF2_GetPlayerClass(player);
+	int iLoadoutSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+	
+	if (iLoadoutSlot <= LOADOUT_POSITION_PDA2)
+	{
+		// Let Engineer keep his toolbox
+		if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
+			return MRES_Ignored;
+		
+		// Remove everything else
+		ret.Value = -1;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
 }

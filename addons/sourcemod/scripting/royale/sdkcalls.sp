@@ -106,7 +106,7 @@ static Handle PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(GameData 
 static Handle PrepSDKCall_CTFPlayer_GiveNamedItem(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Player);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::GiveNamedItem");
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CTFPlayer::GiveNamedItem");
 	PrepSDKCall_AddParameter(SDKType_String, SDKPass_Pointer);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
 	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
@@ -204,7 +204,11 @@ int SDKCall_CTFPlayer_GiveNamedItem(int player, const char[] szName, int iSubTyp
 {
 	if (g_SDKCall_CTFPlayer_GiveNamedItem)
 	{
-		return SDKCall(g_SDKCall_CTFPlayer_GiveNamedItem, player, szName, iSubType, pScriptItem, bForce);
+		g_bBypassGiveNamedItemHook = true;
+		int entity = SDKCall(g_SDKCall_CTFPlayer_GiveNamedItem, player, szName, iSubType, pScriptItem, bForce);
+		g_bBypassGiveNamedItemHook = false;
+		
+		return entity;
 	}
 	
 	return -1;

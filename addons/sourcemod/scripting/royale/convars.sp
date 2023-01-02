@@ -52,6 +52,8 @@ void ConVars_Init()
 	
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
+	mp_disable_respawn_times = FindConVar("mp_disable_respawn_times");
+	
 	ConVars_AddConVar("tf_powerup_mode", "1");
 	ConVars_AddConVar("tf_weapon_criticals", "0");
 	ConVars_AddConVar("tf_dropped_weapon_lifetime", "99999.9");

@@ -36,7 +36,7 @@ void Events_Init()
 	Events_Add("player_spawn", EventHook_PlayerSpawn);
 	Events_Add("player_death", EventHook_PlayerDeath);
 	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
-	Events_Add("teamplay_setup_finished", EventHook_SetupFinished);
+	Events_Add("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
 	Events_Add("teamplay_round_active", EventHook_TeamplayRoundActive);
 }
 
@@ -81,6 +81,9 @@ static void Events_Add(const char[] name, EventHook callback, EventHookMode mode
 
 static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
+	if (IsInWaitingForPlayers())
+		return;
+	
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
 	int weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
@@ -93,24 +96,49 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 
 static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
-	int client = GetClientOfUserId(event.GetInt("victim"));
+	if (IsInWaitingForPlayers())
+		return;
 	
-	// TODO
 }
 
 static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	if (IsInWaitingForPlayers())
+		return;
+	
 	Zone_OnRoundStart();
 }
 
 
 static void EventHook_TeamplayRoundActive(Event event, const char[] name, bool dontBroadcast)
 {
-	TF2_CreateSetupTimer(10, EntOutput_SetupFinished);
+	TF2_CreateSetupTimer(10);
 }
 
 
-static void EventHook_SetupFinished(Event event, const char[] name, bool dontBroadcast)
+static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool dontBroadcast)
 {
+	if (IsInWaitingForPlayers())
+		return;
 	
+	// TODO
+	/*if (g_RoundState != FRRoundState_Setup)
+		//return;
+	
+	g_RoundState = FRRoundState_Active;
+	
+	BattleBus_SpawnPlayerBus();
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			BattleBus_SpectateBus(client);
+	}
+	
+	g_PlayerCount = GetAlivePlayersCount();
+	
+	
+	Loot_SetupFinished();
+	Vehicles_SetupFinished();*/
+	Zone_OnSetupFinished();
 }

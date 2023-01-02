@@ -44,7 +44,10 @@ ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damage;
 
+ConVar mp_disable_respawn_times;
+
 bool g_bEnabled;
+bool g_bBypassGiveNamedItemHook;
 
 #include "royale/shareddefs.sp"
 
@@ -115,12 +118,28 @@ public void OnConfigsExecuted()
 
 public void OnGameFrame()
 {
+	if (!g_bEnabled)
+		return;
+	
 	Zone_Think();
+}
+
+public void TF2_OnWaitingForPlayersStart()
+{
+	mp_disable_respawn_times.BoolValue = true;
+}
+
+public void TF2_OnWaitingForPlayersEnd()
+{
+	mp_disable_respawn_times.BoolValue = false;
 }
 
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])
 {
 	if (!g_bEnabled)
+		return Plugin_Continue;
+	
+	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
 	
 	ProcessCrateOpening(client, buttons);
@@ -159,14 +178,6 @@ static bool TraceEntityFilter_HitCrates(int entity, int mask, int client)
 	return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client);
 }
 
-public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
-{
-	if (!g_bEnabled)
-		return Plugin_Continue;
-	
-	return Plugin_Handled;
-}
-
 public void OnClientPutInServer(int client)
 {
 	if (!g_bEnabled)
@@ -174,6 +185,7 @@ public void OnClientPutInServer(int client)
 	
 	FRPlayer(client).Init();
 	
+	DHooks_OnClientPutInServer(client);
 	SDKHooks_OnClientPutInServer(client);
 }
 
@@ -216,32 +228,4 @@ void FortressRoyale_Toggle(bool enable)
 			}
 		}
 	}
-}
-
-Action EntOutput_SetupFinished(const char[] output, int caller, int activator, float delay)
-{
-	RemoveEntity(caller);
-	
-	// TODO
-	/*if (g_RoundState != FRRoundState_Setup)
-		//return;
-	
-	g_RoundState = FRRoundState_Active;
-	
-	BattleBus_SpawnPlayerBus();
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			BattleBus_SpectateBus(client);
-	}
-	
-	g_PlayerCount = GetAlivePlayersCount();
-	
-	
-	Loot_SetupFinished();
-	Vehicles_SetupFinished();*/
-	Zone_OnSetupFinished();
-	
-	return Plugin_Continue;
 }

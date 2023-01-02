@@ -54,7 +54,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	// - weapons that can't be switched to (as determined by TF2)
 	
 	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	bool found = (weapon != -1) && ShouldDropWeapon(client, weapon);
+	bool found = (weapon != -1) && ShouldDropItem(client, weapon);
 	
 	if (!found)
 	{
@@ -72,7 +72,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			}
 			else
 			{
-				if (ShouldDropWeapon(client, weapon) && !SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+				if (ShouldDropItem(client, weapon) && !SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
 				{
 					found = true;
 					break;
