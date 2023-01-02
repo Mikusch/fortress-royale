@@ -67,7 +67,7 @@ static ZoneConfig g_zoneData;
 static bool g_bInitialized;
 static int g_zonePropRef;
 static int g_zoneGhostPropRef;
-static float g_vecOldPosition[3];		// Position where the zone starts moving
+static float g_vecOldPosition[3];	// Position where the zone starts moving
 static float g_vecNewPosition[3];	// Position where the zone finishes moving
 static Handle g_hZoneTimer;
 static int g_iShrinkLevel;

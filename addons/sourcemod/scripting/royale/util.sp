@@ -74,27 +74,27 @@ bool GetItemWorldModel(int item, char[] model, int size)
 
 float GetPercentInvisible(int client)
 {
-	static int offset = -1;
-	if (offset == -1)
-		offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
+	static int iOffset = -1;
+	if (iOffset == -1)
+		iOffset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
 	
-	return GetEntDataFloat(client, offset);
+	return GetEntDataFloat(client, iOffset);
 }
 
-void SendHudNotificationCustom(int client, const char[] text, const char[] icon, TFTeam team = TFTeam_Unassigned)
+void SendHudNotificationCustom(int client, const char[] szText, const char[] szIcon, TFTeam nTeam = TFTeam_Unassigned)
 {
 	BfWrite bf = UserMessageToBfWrite(StartMessageOne("HudNotifyCustom", client));
-	bf.WriteString(text);
-	bf.WriteString(icon);
-	bf.WriteByte(view_as<int>(team));
+	bf.WriteString(szText);
+	bf.WriteString(szIcon);
+	bf.WriteByte(view_as<int>(nTeam));
 	EndMessage();
 }
 
-void SendHudNotification(HudNotification_t type, bool forceShow = false)
+void SendHudNotification(HudNotification_t iType, bool bForceShow = false)
 {
 	BfWrite bf = UserMessageToBfWrite(StartMessageAll("HudNotify"));
-	bf.WriteByte(view_as<int>(type));
-	bf.WriteBool(forceShow);	// Display in cl_hud_minmode
+	bf.WriteByte(view_as<int>(iType));
+	bf.WriteBool(bForceShow);	// Display in cl_hud_minmode
 	EndMessage();
 }
 
@@ -367,11 +367,11 @@ int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle arra
 	list.GetArray(index1, content1);
 	list.GetArray(index2, content2);
 	
-	float rand = GetRandomFloat();
+	float flRand = GetRandomFloat();
 	
 	// Compare each element against a random number
-	int c1 = FloatCompare(rand, content1.chance);
-	int c2 = FloatCompare(rand, content2.chance);
+	int c1 = FloatCompare(flRand, content1.chance);
+	int c2 = FloatCompare(flRand, content2.chance);
 	
 	// If both are the same, pick a random one
 	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
@@ -386,10 +386,10 @@ int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vec
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "tf_dropped_weapon")) != -1)
 	{
-		int flags = GetEntProp(entity, Prop_Data, "m_iEFlags");
-		if (!(flags & EFL_KILLME))
+		int iEFlags = GetEntProp(entity, Prop_Data, "m_iEFlags");
+		if (!(iEFlags & EFL_KILLME))
 		{
-			SetEntProp(entity, Prop_Data, "m_iEFlags", flags | EFL_KILLME);
+			SetEntProp(entity, Prop_Data, "m_iEFlags", iEFlags | EFL_KILLME);
 			droppedWeapons.Push(entity);
 		}
 	}
@@ -399,20 +399,20 @@ int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vec
 	
 	for (int i = 0; i < droppedWeapons.Length; i++)
 	{
-		int flags = GetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags");
-		flags = flags &= ~EFL_KILLME;
-		SetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags", flags);
+		int iEFlags = GetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags");
+		iEFlags = iEFlags &= ~EFL_KILLME;
+		SetEntProp(droppedWeapons.Get(i), Prop_Data, "m_iEFlags", iEFlags);
 	}
 	
 	delete droppedWeapons;
 	return droppedWeapon;
 }
 
-int CountCharInString(const char[] str, char c) 
+int CountCharInString(const char[] str, char c)
 {
 	int i = 0, count = 0;
 	
-	while (str[i] != '\0') 
+	while (str[i] != '\0')
 	{
 		if (str[i++] == c)
 		{
@@ -431,9 +431,9 @@ void TF2_CreateSetupTimer(int duration)
 		char setup_length[8];
 		IntToString(duration, setup_length, sizeof(setup_length));
 		DispatchKeyValue(timer, "setup_length", setup_length);
-		
 		DispatchKeyValue(timer, "show_in_hud", "1");
 		DispatchKeyValue(timer, "start_paused", "0");
+		
 		if (DispatchSpawn(timer))
 		{
 			AcceptEntityInput(timer, "Enable");
@@ -450,54 +450,54 @@ void TF2_CreateSetupTimer(int duration)
 // TODO: Make this less bad
 int GetAlivePlayersCount()
 {
-	int count = 0;
+	int iCount = 0;
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client) && FRPlayer(client).IsAlive())
-			count++;
+			iCount++;
 	}
 	
-	return count;
+	return iCount;
 }
 
-void SuperPrecacheModel(const char[] model)
+void SuperPrecacheModel(const char[] szModel)
 {
-	char base[PLATFORM_MAX_PATH], path[PLATFORM_MAX_PATH];
-	strcopy(base, sizeof(base), model);
-	SplitString(base, ".mdl", base, sizeof(base));
+	char szBase[PLATFORM_MAX_PATH], szPath[PLATFORM_MAX_PATH];
+	strcopy(szBase, sizeof(szBase), szModel);
+	SplitString(szBase, ".mdl", szBase, sizeof(szBase));
 	
-	AddFileToDownloadsTable(model);
-	PrecacheModel(model);
+	AddFileToDownloadsTable(szModel);
+	PrecacheModel(szModel);
 	
-	Format(path, sizeof(path), "%s.phy", base);
-	if (FileExists(path))
+	Format(szPath, sizeof(szPath), "%s.phy", szBase);
+	if (FileExists(szPath))
 	{
-		AddFileToDownloadsTable(path);
+		AddFileToDownloadsTable(szPath);
 	}
 	
-	Format(path, sizeof(path), "%s.vvd", base);
-	if (FileExists(path))
+	Format(szPath, sizeof(szPath), "%s.vvd", szBase);
+	if (FileExists(szPath))
 	{
-		AddFileToDownloadsTable(path);
+		AddFileToDownloadsTable(szPath);
 	}
 	
-	Format(path, sizeof(path), "%s.dx80.vtx", base);
-	if (FileExists(path))
+	Format(szPath, sizeof(szPath), "%s.dx80.vtx", szBase);
+	if (FileExists(szPath))
 	{
-		AddFileToDownloadsTable(path);
+		AddFileToDownloadsTable(szPath);
 	}
 	
-	Format(path, sizeof(path), "%s.dx90.vtx", base);
-	if (FileExists(path))
+	Format(szPath, sizeof(szPath), "%s.dx90.vtx", szBase);
+	if (FileExists(szPath))
 	{
-		AddFileToDownloadsTable(path);
+		AddFileToDownloadsTable(szPath);
 	}
 	
-	Format(path, sizeof(path), "%s.sw.vtx", base);
-	if (FileExists(path))
+	Format(szPath, sizeof(szPath), "%s.sw.vtx", szBase);
+	if (FileExists(szPath))
 	{
-		AddFileToDownloadsTable(path);
+		AddFileToDownloadsTable(szPath);
 	}
 }
 

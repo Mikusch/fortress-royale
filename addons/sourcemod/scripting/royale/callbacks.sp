@@ -75,7 +75,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		weapon = GenerateDefaultItem(client, iItemDefIndex);
 	}
 	
-	// Weapon_Equip can cause weapon switches, just temporary prevent it
+	// Weapon_Equip can cause weapon switches, just temporarily prevent it
 	TF2Attrib_SetByName(weapon, "disable weapon switch", 1.0);
 	ItemGiveTo(client, weapon);
 	TF2Attrib_RemoveByName(weapon, "disable weapon switch");
