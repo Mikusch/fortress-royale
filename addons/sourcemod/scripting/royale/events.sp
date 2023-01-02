@@ -99,6 +99,45 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 	if (IsInWaitingForPlayers())
 		return;
 	
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	int death_flags = event.GetInt("death_flags");
+	
+	if (!(death_flags & TF_DEATHFLAG_DEADRINGER))
+	{
+		for (int iLoadoutSlot = 0; iLoadoutSlot <= LOADOUT_POSITION_PDA2; ++iLoadoutSlot)
+		{
+			int entity = GetEntityForLoadoutSlot(client, iLoadoutSlot);
+			
+			if (!IsValidEntity(entity))
+				continue;
+			
+			if (!ShouldDropItem(client, entity))
+				continue;
+			
+			float vecOrigin[3], vecAngles[3];
+			if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, entity, vecOrigin, vecAngles))
+				continue;
+			
+			char szWorldModel[PLATFORM_MAX_PATH];
+			if (GetItemWorldModel(entity, szWorldModel, sizeof(szWorldModel)))
+			{
+				int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(entity) + FindItemOffset(entity));
+				if (IsValidEntity(droppedWeapon))
+				{
+					if (TF2Util_IsEntityWeapon(entity))
+					{
+						SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, entity, false);
+					}
+					else if (TF2Util_IsEntityWearable(entity))
+					{
+						InitDroppedWearable(droppedWeapon, client, entity, false);
+					}
+				}
+			}
+			
+			TF2_RemovePlayerItem(client, entity);
+		}
+	}
 }
 
 static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -109,12 +148,10 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	Zone_OnRoundStart();
 }
 
-
 static void EventHook_TeamplayRoundActive(Event event, const char[] name, bool dontBroadcast)
 {
 	TF2_CreateSetupTimer(10);
 }
-
 
 static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool dontBroadcast)
 {

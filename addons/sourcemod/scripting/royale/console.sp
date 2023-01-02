@@ -96,25 +96,26 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, weapon, vecOrigin, vecAngles))
 		return Plugin_Continue;
 	
-	char model[PLATFORM_MAX_PATH];
-	GetItemWorldModel(weapon, model, sizeof(model));
-	
-	int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
-	if (IsValidEntity(droppedWeapon))
+	char szWorldModel[PLATFORM_MAX_PATH];
+	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 	{
-		if (TF2Util_IsEntityWeapon(weapon))
+		int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+		if (IsValidEntity(droppedWeapon))
 		{
-			SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
-			
-			// If the weapon we just dropped could not be switched to, stay on our current weapon
-			if (SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+			if (TF2Util_IsEntityWeapon(weapon))
 			{
-				SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
+				SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
+				
+				// If the weapon we just dropped could not be switched to, stay on our current weapon
+				if (SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+				{
+					SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
+				}
 			}
-		}
-		else if (TF2Util_IsEntityWearable(weapon))
-		{
-			InitDroppedWearable(droppedWeapon, client, weapon, true);
+			else if (TF2Util_IsEntityWearable(weapon))
+			{
+				InitDroppedWearable(droppedWeapon, client, weapon, true);
+			}
 		}
 		
 		bool bDroppedMelee = TF2Util_GetWeaponSlot(weapon) == TFWeaponSlot_Melee;

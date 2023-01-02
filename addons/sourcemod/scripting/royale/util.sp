@@ -162,26 +162,27 @@ int CreateViewModelWearable(int client, int weapon)
 	return wearable;
 }
 
-int GetEntityForLoadoutSlot(int client, int loadoutSlot)
+int GetEntityForLoadoutSlot(int client, int iLoadoutSlot)
 {
-	int entity = TF2Util_GetPlayerLoadoutEntity(client, loadoutSlot);
+	int entity = TF2Util_GetPlayerLoadoutEntity(client, iLoadoutSlot);
 	if (entity != -1)
 		return entity;
 	
 	// TF2Util_GetPlayerLoadoutEntity does not find weapons equipped by the wrong classes.
 	// Iterate all classes and check their weapons.
-	for (TFClassType class = TFClass_Scout; class <= TFClass_Engineer; class++)
+	for (TFClassType nClass = TFClass_Scout; nClass <= TFClass_Engineer; nClass++)
 	{
 		for (int i = 0; i < MAX_WEAPONS; i++)
 		{
 			int myWeapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", i);
 			if (myWeapon != -1)
 			{
-				int itemdef = GetEntProp(myWeapon, Prop_Send, "m_iItemDefinitionIndex");
-				if (itemdef == INVALID_ITEM_DEF_INDEX)
+				int iItemDefIndex = GetEntProp(myWeapon, Prop_Send, "m_iItemDefinitionIndex");
+				if (iItemDefIndex == INVALID_ITEM_DEF_INDEX)
 					continue;
 				
-				if (TF2Econ_GetItemLoadoutSlot(itemdef, class) == loadoutSlot)
+				// Only if our class does not have a matching loadout slot for this weapon
+				if (TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass) == iLoadoutSlot && TF2Econ_GetItemLoadoutSlot(iItemDefIndex, TF2_GetPlayerClass(client)) == -1)
 					return myWeapon;
 			}
 		}
@@ -393,7 +394,8 @@ int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vec
 		}
 	}
 	
-	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(lastOwner, vecOrigin, vecAngles, szModelName, pItem);
+	// Pass NULL for pLastOwner to avoid old weapons getting deleted
+	int droppedWeapon = SDKCall_CTFDroppedWeapon_Create(-1, vecOrigin, vecAngles, szModelName, pItem);
 	
 	for (int i = 0; i < droppedWeapons.Length; i++)
 	{

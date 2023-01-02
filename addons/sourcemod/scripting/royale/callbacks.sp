@@ -80,19 +80,20 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	ItemGiveTo(client, weapon);
 	TF2Attrib_RemoveByName(weapon, "disable weapon switch");
 	
-	char szModel[PLATFORM_MAX_PATH];
-	GetItemWorldModel(weapon, szModel, sizeof(szModel));
-	
-	int newDroppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
-	if (IsValidEntity(newDroppedWeapon))
+	char szWorldModel[PLATFORM_MAX_PATH];
+	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 	{
-		if (TF2Util_IsEntityWeapon(weapon))
+		int newDroppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+		if (IsValidEntity(newDroppedWeapon))
 		{
-			SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, client, weapon, false);
-		}
-		else if (TF2Util_IsEntityWearable(weapon))
-		{
-			InitDroppedWearable(newDroppedWeapon, client, weapon, true);
+			if (TF2Util_IsEntityWeapon(weapon))
+			{
+				SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, client, weapon, false);
+			}
+			else if (TF2Util_IsEntityWearable(weapon))
+			{
+				InitDroppedWearable(newDroppedWeapon, client, weapon, true);
+			}
 		}
 	}
 	

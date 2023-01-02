@@ -37,8 +37,9 @@ void DHooks_Init(GameData gamedata)
 	
 	g_DHookGiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
 	
+	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre, _);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre);
 }
 
 void DHooks_OnClientPutInServer(int client)
@@ -125,6 +126,21 @@ static void DHookRemovalCB_OnHookRemoved(int hookid)
 		g_DynamicHookIds.Erase(index);
 }
 
+static MRESReturn DHookCallback_CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHookParam params)
+{
+	if (IsInWaitingForPlayers())
+		return MRES_Ignored;
+	
+	// Prevent dropped weapon creation from TF2 itself, we pass NULL to pLastOwner
+	if (!params.IsNull(1))
+	{
+		ret.Value = -1;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
+}
+
 static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, DHookReturn ret, DHookParam params)
 {
 	int droppedWeapon = params.Get(1);
@@ -166,19 +182,20 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 				float vecPackOrigin[3], vecPackAngles[3];
 				SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(player, weapon, vecPackOrigin, vecPackAngles);
 				
-				char model[PLATFORM_MAX_PATH];
-				GetItemWorldModel(weapon, model, sizeof(model));
-				
-				int newDroppedWeapon = CreateDroppedWeapon(player, vecPackOrigin, vecPackAngles, model, GetEntityAddress(weapon) + FindItemOffset(weapon));
-				if (IsValidEntity(newDroppedWeapon))
+				char szWorldModel[PLATFORM_MAX_PATH];
+				if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 				{
-					if (TF2Util_IsEntityWeapon(weapon))
+					int newDroppedWeapon = CreateDroppedWeapon(player, vecPackOrigin, vecPackAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+					if (IsValidEntity(newDroppedWeapon))
 					{
-						SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
-					}
-					else if (TF2Util_IsEntityWearable(weapon))
-					{
-						InitDroppedWearable(newDroppedWeapon, player, weapon, true);
+						if (TF2Util_IsEntityWeapon(weapon))
+						{
+							SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
+						}
+						else if (TF2Util_IsEntityWearable(weapon))
+						{
+							InitDroppedWearable(newDroppedWeapon, player, weapon, true);
+						}
 					}
 				}
 				
