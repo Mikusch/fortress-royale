@@ -30,6 +30,8 @@ static ArrayList g_DynamicHookIds;
 
 static DynamicHook g_DHookGiveNamedItem;
 
+static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
+
 void DHooks_Init(GameData gamedata)
 {
 	g_DynamicDetours = new ArrayList(sizeof(DetourData));
@@ -44,7 +46,7 @@ void DHooks_Init(GameData gamedata)
 
 void DHooks_OnClientPutInServer(int client)
 {
-	DHooks_HookEntity(g_DHookGiveNamedItem, Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre);
+	DHooks_HookGiveNamedItem(client);
 }
 
 void DHooks_Toggle(bool enable)
@@ -79,7 +81,44 @@ void DHooks_Toggle(bool enable)
 			int hookid = g_DynamicHookIds.Get(i);
 			DynamicHook.RemoveHook(hookid);
 		}
+		
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			DHooks_UnhookGiveNamedItem(client);
+		}
 	}
+}
+
+void DHooks_HookGiveNamedItem(int client)
+{
+	if (g_DHookGiveNamedItem && !g_bTF2Items)
+	{
+		g_iHookIdGiveNamedItem[client] = g_DHookGiveNamedItem.HookEntity(Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre, DHookRemovalCB_OnHookRemoved);
+	}
+}
+
+void DHooks_UnhookGiveNamedItem(int client)
+{
+	if (g_iHookIdGiveNamedItem[client])
+	{
+		if (DynamicHook.RemoveHook(g_iHookIdGiveNamedItem[client]))
+		{
+			g_iHookIdGiveNamedItem[client] = 0;
+		}
+	}
+}
+
+bool DHooks_IsGiveNamedItemHookActive()
+{
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (g_iHookIdGiveNamedItem[client])
+		{
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callback_pre = INVALID_FUNCTION, DHookCallback callback_post = INVALID_FUNCTION)
@@ -280,29 +319,27 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 
 static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookReturn ret, DHookParam params)
 {
-	if (g_bBypassGiveNamedItemHook)
-		return MRES_Ignored;
+	// If pszWeaponName is NULL, don't generate an item
+	if (params.IsNull(1))
+	{
+		ret.Value = -1;
+		return MRES_Supercede;
+	}
 	
-	if (IsInWaitingForPlayers())
-		return MRES_Ignored;
-	
+	// If pScriptItem is NULL, let it through
 	if (params.IsNull(3))
+	{
 		return MRES_Ignored;
+	}
 	
-	Address pScriptItem = params.GetAddress(3);
+	char szWeaponName[64];
+	params.GetString(1, szWeaponName, sizeof(szWeaponName));
 	
 	// CEconItemView::m_iItemDefinitionIndex
-	int iItemDefIndex = LoadFromAddress(pScriptItem + view_as<Address>(0x4), NumberType_Int16);
-	TFClassType nClass = TF2_GetPlayerClass(player);
-	int iLoadoutSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+	int iItemDefIndex = params.GetObjectVar(3, 0x4, ObjectValueType_Int) & 0xFFFF;
 	
-	if (iLoadoutSlot <= LOADOUT_POSITION_PDA2)
+	if (FortressRoyale_OnGiveNamedItem(player, szWeaponName, iItemDefIndex) >= Plugin_Handled)
 	{
-		// Let Engineer keep his toolbox
-		if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
-			return MRES_Ignored;
-		
-		// Remove everything else
 		ret.Value = -1;
 		return MRES_Supercede;
 	}

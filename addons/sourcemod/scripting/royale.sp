@@ -27,6 +27,9 @@
 #include <tf_econ_data>
 #include <tf2attributes>
 #include <cbasenpc>
+#undef REQUIRE_EXTENSIONS
+#tryinclude <tf2items>
+#define REQUIRE_EXTENSIONS
 
 ConVar fr_enable;
 ConVar fr_crate_open_time;
@@ -46,6 +49,7 @@ ConVar fr_zone_damage;
 ConVar mp_disable_respawn_times;
 
 bool g_bEnabled;
+bool g_bTF2Items;
 bool g_bBypassGiveNamedItemHook;
 
 #include "royale/shareddefs.sp"
@@ -74,7 +78,10 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
+	LoadTranslations("common.phrases");
 	LoadTranslations("royale.phrases");
+	
+	g_bTF2Items = LibraryExists("TF2Items");
 	
 	ConVars_Init();
 	Events_Init();
@@ -90,6 +97,43 @@ public void OnPluginStart()
 	else
 	{
 		SetFailState("Could not find royale gamedata");
+	}
+}
+
+public void OnLibraryAdded(const char[] name)
+{
+	if (StrEqual(name, "TF2Items"))
+	{
+		g_bTF2Items = true;
+		
+		if (g_bEnabled)
+		{
+			// Loading TF2Items while the plugin is active leads to crashes, pull the plug!
+			if (DHooks_IsGiveNamedItemHookActive())
+			{
+				SetFailState("TF2Items was loaded while Fortress Royale is active, aborting plugin!");
+			}
+		}
+	}
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+	if (StrEqual(name, "TF2Items"))
+	{
+		g_bTF2Items = false;
+		
+		// If TF2Items is being unloaded, use our own hook
+		if (g_bEnabled)
+		{
+			for (int client = 1; client <= MaxClients; client++)
+			{
+				if (!IsClientInGame(client))
+					continue;
+				
+				DHooks_HookGiveNamedItem(client);
+			}
+		}
 	}
 }
 
@@ -131,6 +175,40 @@ public void TF2_OnWaitingForPlayersStart()
 public void TF2_OnWaitingForPlayersEnd()
 {
 	mp_disable_respawn_times.BoolValue = false;
+}
+
+public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
+{
+	if (!g_bEnabled)
+		return Plugin_Continue;
+	
+	return FortressRoyale_OnGiveNamedItem(client, classname, index);
+}
+
+public Action FortressRoyale_OnGiveNamedItem(int client, const char[] szWeaponName, int iItemDefIndex)
+{
+	if (g_bBypassGiveNamedItemHook)
+		return Plugin_Continue;
+	
+	if (IsInWaitingForPlayers())
+		return Plugin_Continue;
+	
+	TFClassType nClass = TF2_GetPlayerClass(client);
+	int iLoadoutSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+	
+	if (iLoadoutSlot == -1)
+		return Plugin_Continue;
+	
+	// Let Engineer keep his toolbox
+	if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
+		return Plugin_Continue;
+	
+	// Let players keep their cosmetics
+	if (iLoadoutSlot > LOADOUT_POSITION_PDA2)
+		return Plugin_Continue;
+	
+	// Remove everything else
+	return Plugin_Handled;
 }
 
 public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])

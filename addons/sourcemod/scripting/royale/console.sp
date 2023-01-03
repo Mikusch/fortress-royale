@@ -125,8 +125,11 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		if (bDroppedMelee)
 		{
 			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
-			ItemGiveTo(client, weapon);
-			TF2Util_SetPlayerActiveWeapon(client, weapon);
+			if (IsValidEntity(weapon))
+			{
+				ItemGiveTo(client, weapon);
+				TF2Util_SetPlayerActiveWeapon(client, weapon);
+			}
 		}
 	}
 	

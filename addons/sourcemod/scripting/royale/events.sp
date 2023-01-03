@@ -86,11 +86,14 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 	
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	
-	int weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
-	if (IsValidEntity(weapon))
+	if (IsPlayerAlive(client))
 	{
-		ItemGiveTo(client, weapon);
-		TF2Util_SetPlayerActiveWeapon(client, weapon);
+		int weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
+		if (IsValidEntity(weapon))
+		{
+			ItemGiveTo(client, weapon);
+			TF2Util_SetPlayerActiveWeapon(client, weapon);
+		}
 	}
 }
 
@@ -142,6 +145,36 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 
 static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	if (IsInWaitingForPlayers())
+		return;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		// Remove wearables
+		for (int wbl = 0; wbl < TF2Util_GetPlayerWearableCount(client); ++wbl)
+		{
+			int wearable = TF2Util_GetPlayerWearable(client, wbl);
+			if (wearable == -1)
+				continue;
+			
+			TF2_RemoveWearable(client, wearable);
+			wbl--;
+		}
+		// Remove weapons
+		for (int wpn = 0; wpn < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++wpn)
+		{
+			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", wpn);
+			if (weapon == -1)
+				continue;
+			
+			RemovePlayerItem(client, weapon);
+			RemoveEntity(weapon);
+		}
+	}
+	
 	Zone_OnRoundStart();
 }
 

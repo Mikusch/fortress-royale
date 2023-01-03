@@ -257,14 +257,22 @@ bool ShouldDropItem(int client, int weapon)
 	return true;
 }
 
-int GenerateDefaultItem(int client, int defindex)
+int GenerateDefaultItem(int client, int iItemDefIndex)
 {
 	char szWeaponName[64];
-	TF2Econ_GetItemClassName(defindex, szWeaponName, sizeof(szWeaponName));
-	TF2Econ_TranslateWeaponEntForClass(szWeaponName, sizeof(szWeaponName), TF2_GetPlayerClass(client));
+	if (!TF2Econ_GetItemClassName(iItemDefIndex, szWeaponName, sizeof(szWeaponName)))
+		return -1;
 	
-	// Force-create a random item using the weapon name
-	int weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, Address_Null, true);
+	TFClassType nClass = TF2_GetPlayerClass(client);
+	TF2Econ_TranslateWeaponEntForClass(szWeaponName, sizeof(szWeaponName), nClass);
+	
+	int weapon = CreateEntityByName(szWeaponName);
+	
+	if (!IsValidEntity(weapon))
+		return -1;
+	
+	SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", iItemDefIndex);
+	SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
 	
 	// Fake global id
 	static int s_nFakeID = 1;
@@ -273,6 +281,13 @@ int GenerateDefaultItem(int client, int defindex)
 	SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
 	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
 	
+	if (TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER && nClass == TFClass_Spy)
+	{
+		SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
+		SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
+	}
+	
+	DispatchSpawn(weapon);
 	return weapon;
 }
 
@@ -443,7 +458,7 @@ void TF2_CreateSetupTimer(int duration)
 	}
 }
 
-static void EntityOutput_OnSetupFinished (const char[] output, int caller, int activator, float delay)
+static void EntityOutput_OnSetupFinished(const char[] output, int caller, int activator, float delay)
 {
 	RemoveEntity(caller);
 }
