@@ -142,9 +142,6 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 
 static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	if (IsInWaitingForPlayers())
-		return;
-	
 	Zone_OnRoundStart();
 }
 

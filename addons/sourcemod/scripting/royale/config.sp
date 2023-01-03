@@ -98,7 +98,7 @@ enum struct ItemConfig
 
 enum struct CrateConfig
 {
-	Regex regex;
+	char name[CONFIG_MAX_LENGTH];
 	char model[PLATFORM_MAX_PATH];
 	int skin;
 	char sound[PLATFORM_MAX_PATH];
@@ -109,20 +109,7 @@ enum struct CrateConfig
 	
 	void Parse(KeyValues kv)
 	{
-		char pattern[CONFIG_MAX_LENGTH];
-		kv.GetString("pattern", pattern, sizeof(pattern));
-		if (pattern[0])
-		{
-			RegexError errcode;
-			char message[256];
-			this.regex = new Regex(pattern, _, message, sizeof(message), errcode);
-			
-			if (!this.regex)
-			{
-				LogError("Failed to compile regular expression [errcode %d]: %s", errcode, message);
-			}
-		}
-		
+		kv.GetString("name", this.name, sizeof(this.name));
 		kv.GetString("model", this.model, sizeof(this.model));
 		this.skin = kv.GetNum("skin");
 		
@@ -436,7 +423,7 @@ ArrayList Config_GetCratesByName(const char[] name)
 		CrateConfig crate;
 		if (g_crateConfigs.GetArray(i, crate) != 0)
 		{
-			if (crate.regex && crate.regex.Match(name) != 0)
+			if (StrEqual(crate.name, name))
 			{
 				list.PushArray(crate);
 			}
@@ -453,7 +440,7 @@ bool Config_IsValidCrateName(const char[] name)
 		CrateConfig crate;
 		if (g_crateConfigs.GetArray(i, crate) != 0)
 		{
-			if (crate.regex && crate.regex.Match(name) != 0)
+			if (StrEqual(crate.name, name))
 			{
 				return true;
 			}

@@ -259,17 +259,12 @@ bool ShouldDropItem(int client, int weapon)
 
 int GenerateDefaultItem(int client, int defindex)
 {
-	Handle item = TF2Items_CreateItem(FORCE_GENERATION | PRESERVE_ATTRIBUTES);
+	char szWeaponName[64];
+	TF2Econ_GetItemClassName(defindex, szWeaponName, sizeof(szWeaponName));
+	TF2Econ_TranslateWeaponEntForClass(szWeaponName, sizeof(szWeaponName), TF2_GetPlayerClass(client));
 	
-	char classname[64];
-	TF2Econ_GetItemClassName(defindex, classname, sizeof(classname));
-	TF2Econ_TranslateWeaponEntForClass(classname, sizeof(classname), TF2_GetPlayerClass(client));
-	
-	TF2Items_SetItemIndex(item, defindex);
-	TF2Items_SetClassname(item, classname);
-	
-	int weapon = TF2Items_GiveNamedItem(client, item);
-	delete item;
+	// Force-create a random item using the weapon name
+	int weapon = SDKCall_CTFPlayer_GiveNamedItem(client, szWeaponName, 0, Address_Null, true);
 	
 	// Fake global id
 	static int s_nFakeID = 1;
@@ -437,6 +432,7 @@ void TF2_CreateSetupTimer(int duration)
 		if (DispatchSpawn(timer))
 		{
 			AcceptEntityInput(timer, "Enable");
+			HookSingleEntityOutput(timer, "OnSetupFinished", EntityOutput_OnSetupFinished, true);
 			
 			Event event = CreateEvent("teamplay_update_timer");
 			if (event)
@@ -447,7 +443,11 @@ void TF2_CreateSetupTimer(int duration)
 	}
 }
 
-// TODO: Make this less bad
+static void EntityOutput_OnSetupFinished (const char[] output, int caller, int activator, float delay)
+{
+	RemoveEntity(caller);
+}
+
 int GetAlivePlayersCount()
 {
 	int iCount = 0;

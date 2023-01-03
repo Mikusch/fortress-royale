@@ -106,6 +106,7 @@ void Zone_OnRoundStart()
 	// Create our zone props
 	g_zonePropRef = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color));
 	g_zoneGhostPropRef = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color_ghost));
+	AcceptEntityInput(g_zoneGhostPropRef, "Disable");
 	
 	g_bInitialized = true;
 }
@@ -118,20 +119,22 @@ void Zone_Think()
 	float vecZoneOrigin[3], flShrinkPercentage;
 	float flShrinkDuration = Zone_GetShrinkDuration();
 	
-	if (g_flShrinkStartTime + flShrinkDuration > GetGameTime())
+	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration > GetGameTime())
 	{
 		// We are shrinking, update zone position and model scale
-		
-		// Progress from level x+1 to level x
-		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
-		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
-		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
-		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
-		TeleportEntity(g_zonePropRef, vecZoneOrigin);
-		
-		// Progress from 1.0 to 0.0 (starting zone to zero size)
-		flShrinkPercentage = (float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks);
-		SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(flShrinkPercentage));
+		if (IsValidEntity(g_zonePropRef))
+		{
+			// Progress from level x+1 to level x
+			float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
+			SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
+			ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
+			AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
+			TeleportEntity(g_zonePropRef, vecZoneOrigin);
+			
+			// Progress from 1.0 to 0.0 (starting zone to zero size)
+			flShrinkPercentage = (float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks);
+			SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(flShrinkPercentage));
+		}
 		
 	}
 	else
@@ -208,8 +211,8 @@ static void Zone_Reset()
 	g_vecNewPosition = NULL_VECTOR;
 	g_hZoneTimer = null;
 	g_iShrinkLevel = g_zoneData.num_shrinks;
-	g_flShrinkStartTime = 0.0;
-	g_flNextDamageTime = 0.0;
+	g_flShrinkStartTime = -1.0;
+	g_flNextDamageTime = GetGameTime();
 }
 
 static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
@@ -273,9 +276,12 @@ static Action Timer_StartDisplay(Handle hTimer)
 	if (g_iShrinkLevel > 1)
 	{
 		// Teleport ghost zone to the new center, then update size and display
-		TeleportEntity(g_zoneGhostPropRef, g_vecNewPosition);
-		SetEntPropFloat(g_zoneGhostPropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
-		AcceptEntityInput(g_zoneGhostPropRef, "Enable");
+		if (IsValidEntity(g_zoneGhostPropRef))
+		{
+			TeleportEntity(g_zoneGhostPropRef, g_vecNewPosition);
+			SetEntPropFloat(g_zoneGhostPropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			AcceptEntityInput(g_zoneGhostPropRef, "Enable");
+		}
 	}
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -325,7 +331,7 @@ static Action Timer_FinishShrink(Handle hTimer)
 		return Plugin_Continue;
 	
 	// Stop shrinking
-	g_flShrinkStartTime = 0.0;
+	g_flShrinkStartTime = -1.0;
 	
 	//BattleBus_SpawnLootBus();
 	
@@ -333,11 +339,17 @@ static Action Timer_FinishShrink(Handle hTimer)
 	{
 		g_vecOldPosition = g_vecNewPosition;
 		
-		// Hide the ghost zone
-		AcceptEntityInput(g_zoneGhostPropRef, "Disable");
+		if (IsValidEntity(g_zonePropRef))
+		{
+			TeleportEntity(g_zonePropRef, g_vecNewPosition);
+			SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+		}
 		
-		TeleportEntity(g_zonePropRef, g_vecNewPosition);
-		SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+		// Hide the ghost zone
+		if (IsValidEntity(g_zoneGhostPropRef))
+		{
+			AcceptEntityInput(g_zoneGhostPropRef, "Disable");
+		}
 		
 		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
 	}

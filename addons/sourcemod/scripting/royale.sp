@@ -25,7 +25,6 @@
 #include <regex>
 #include <tf2utils>
 #include <tf_econ_data>
-#include <tf2items>
 #include <tf2attributes>
 #include <cbasenpc>
 
