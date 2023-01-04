@@ -37,7 +37,6 @@ void Events_Init()
 	Events_Add("player_death", EventHook_PlayerDeath);
 	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_Add("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
-	Events_Add("teamplay_round_active", EventHook_TeamplayRoundActive);
 }
 
 void Events_Toggle(bool enable)
@@ -148,45 +147,21 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	if (IsInWaitingForPlayers())
 		return;
 	
-	for (int client = 1; client <= MaxClients; client++)
+	// Should the game start?
+	if (g_nRoundState == FRRoundState_Starting)
 	{
-		if (!IsClientInGame(client))
-			continue;
+		g_nRoundState = FRRoundState_Setup;
 		
-		// Remove wearables
-		for (int wbl = 0; wbl < TF2Util_GetPlayerWearableCount(client); ++wbl)
-		{
-			int wearable = TF2Util_GetPlayerWearable(client, wbl);
-			if (wearable == -1)
-				continue;
-			
-			TF2_RemoveWearable(client, wearable);
-			wbl--;
-		}
-		// Remove weapons
-		for (int wpn = 0; wpn < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++wpn)
-		{
-			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", wpn);
-			if (weapon == -1)
-				continue;
-			
-			RemovePlayerItem(client, weapon);
-			RemoveEntity(weapon);
-		}
+		FortressRoyale_SetupRound();
 	}
-	
-	Zone_OnRoundStart();
-}
-
-static void EventHook_TeamplayRoundActive(Event event, const char[] name, bool dontBroadcast)
-{
-	TF2_CreateSetupTimer(10);
 }
 
 static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return;
+	
+	g_nRoundState = RoundState_RoundRunning;
 	
 	// TODO
 	/*if (g_RoundState != FRRoundState_Setup)
@@ -202,7 +177,7 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 			BattleBus_SpectateBus(client);
 	}
 	
-	g_PlayerCount = GetAlivePlayersCount();
+	g_PlayerCount = GetAlivePlayerCount();
 	
 	
 	Loot_SetupFinished();

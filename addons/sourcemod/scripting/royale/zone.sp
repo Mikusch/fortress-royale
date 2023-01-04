@@ -425,22 +425,22 @@ float Zone_GetNewDiameter()
 
 float Zone_GetStartDisplayDuration()
 {
-	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayersCount()));
+	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 float Zone_GetDisplayDuration()
 {
-	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(GetAlivePlayersCount()));
+	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 float Zone_GetShrinkDuration()
 {
-	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(GetAlivePlayersCount()));
+	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 float Zone_GetNextDisplayDuration()
 {
-	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayersCount()));
+	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 bool TraceEntityFilter_OnlyHitWorld(int entity, int mask)

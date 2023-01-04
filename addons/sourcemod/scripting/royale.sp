@@ -32,6 +32,7 @@
 #define REQUIRE_EXTENSIONS
 
 ConVar fr_enable;
+ConVar fr_setup_length;
 ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
@@ -51,6 +52,7 @@ ConVar mp_disable_respawn_times;
 bool g_bEnabled;
 bool g_bTF2Items;
 bool g_bBypassGiveNamedItemHook;
+FRRoundState g_nRoundState;
 
 #include "royale/shareddefs.sp"
 
@@ -142,6 +144,8 @@ public void OnMapStart()
 	PrecacheSound(")ui/item_open_crate.wav");
 	PrecacheSound(")ui/itemcrate_smash_ultrarare_short.wav");
 	
+	g_nRoundState = FRRoundState_Init;
+	
 	Config_Parse();
 	Zone_Precache();
 }
@@ -164,6 +168,18 @@ public void OnGameFrame()
 	if (!g_bEnabled)
 		return;
 	
+	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+		return;
+	
+	// Do we have enough players to start the game?
+	if (ShouldStartGame() && g_nRoundState == FRRoundState_WaitingForPlayers)
+	{
+		g_nRoundState = FRRoundState_Starting;
+		
+		// Clean up the map...
+		ServerCommand("mp_restartgame_immediate 1");
+	}
+	
 	Zone_Think();
 }
 
@@ -175,6 +191,8 @@ public void TF2_OnWaitingForPlayersStart()
 public void TF2_OnWaitingForPlayersEnd()
 {
 	mp_disable_respawn_times.BoolValue = false;
+	
+	g_nRoundState = ShouldStartGame() ? FRRoundState_Starting : FRRoundState_WaitingForPlayers;
 }
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
@@ -211,7 +229,7 @@ public Action FortressRoyale_OnGiveNamedItem(int client, const char[] szWeaponNa
 	return Plugin_Handled;
 }
 
-public Action OnPlayerRunCmd(int client, int & buttons, int & impulse, float vel[3], float angles[3], int & weapon, int & subtype, int & cmdnum, int & tickcount, int & seed, int mouse[2])
+public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!g_bEnabled)
 		return Plugin_Continue;
@@ -305,4 +323,78 @@ void FortressRoyale_Toggle(bool enable)
 			}
 		}
 	}
+}
+
+void FortressRoyale_SetupRound()
+{
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		// Remove wearables
+		for (int wbl = 0; wbl < TF2Util_GetPlayerWearableCount(client); ++wbl)
+		{
+			int wearable = TF2Util_GetPlayerWearable(client, wbl);
+			if (wearable == -1)
+				continue;
+			
+			TF2_RemoveWearable(client, wearable);
+			wbl--;
+		}
+		// Remove weapons
+		for (int wpn = 0; wpn < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++wpn)
+		{
+			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", wpn);
+			if (weapon == -1)
+				continue;
+			
+			RemovePlayerItem(client, weapon);
+			RemoveEntity(weapon);
+		}
+		
+		if (TF2_GetClientTeam(client) > TFTeam_Spectator)
+		{
+			if (IsPlayerAlive(client))
+			{
+				// Make sure the player is actually dead
+				SetEntProp(client, Prop_Send, "m_lifeState", LIFE_DEAD);
+				TF2_ChangeClientTeam(client, TFTeam_Spectator);
+			}
+			
+			// Move all non-spectators to dead team
+			TF2_ChangeClientTeam(client, TFTeam_Blue);
+		}
+	}
+	
+	// Create a setup timer
+	int timer = CreateEntityByName("team_round_timer");
+	if (IsValidEntity(timer))
+	{
+		char szSetupLength[8];
+		fr_setup_length.GetString(szSetupLength, sizeof(szSetupLength));
+		
+		DispatchKeyValue(timer, "setup_length", szSetupLength);
+		DispatchKeyValue(timer, "show_in_hud", "1");
+		DispatchKeyValue(timer, "start_paused", "0");
+		
+		if (DispatchSpawn(timer))
+		{
+			AcceptEntityInput(timer, "Enable");
+			HookSingleEntityOutput(timer, "OnSetupFinished", EntityOutput_OnSetupFinished, true);
+			
+			Event event = CreateEvent("teamplay_update_timer");
+			if (event)
+			{
+				event.Fire();
+			}
+		}
+	}
+	
+	Zone_OnRoundStart();
+}
+
+static void EntityOutput_OnSetupFinished(const char[] output, int caller, int activator, float delay)
+{
+	RemoveEntity(caller);
 }

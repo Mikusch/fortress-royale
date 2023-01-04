@@ -35,6 +35,7 @@ void ConVars_Init()
 	g_ConVars = new StringMap();
 	
 	fr_enable = CreateConVar("fr_enable", "1", "Enable the plugin?");
+	fr_setup_length = CreateConVar("fr_setup_length", "15", "Time before the battle buss takes off.");
 	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3.f", "Amount of time to open a crate.");
 	fr_crate_open_range = CreateConVar("fr_crate_open_range", "100.f", "Range in HU that players may open crates from.");
 	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");

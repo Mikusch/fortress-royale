@@ -433,37 +433,25 @@ int CountCharInString(const char[] str, char c)
 	return count;
 }
 
-void TF2_CreateSetupTimer(int duration)
+bool ShouldStartGame()
 {
-	int timer = CreateEntityByName("team_round_timer");
-	if (IsValidEntity(timer))
+	return GetActivePlayerCount() > 1;
+}
+
+int GetActivePlayerCount()
+{
+	int iCount = 0;
+	
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		char setup_length[8];
-		IntToString(duration, setup_length, sizeof(setup_length));
-		DispatchKeyValue(timer, "setup_length", setup_length);
-		DispatchKeyValue(timer, "show_in_hud", "1");
-		DispatchKeyValue(timer, "start_paused", "0");
-		
-		if (DispatchSpawn(timer))
-		{
-			AcceptEntityInput(timer, "Enable");
-			HookSingleEntityOutput(timer, "OnSetupFinished", EntityOutput_OnSetupFinished, true);
-			
-			Event event = CreateEvent("teamplay_update_timer");
-			if (event)
-			{
-				event.Fire();
-			}
-		}
+		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
+			iCount++;
 	}
+	
+	return iCount;
 }
 
-static void EntityOutput_OnSetupFinished(const char[] output, int caller, int activator, float delay)
-{
-	RemoveEntity(caller);
-}
-
-int GetAlivePlayersCount()
+int GetAlivePlayerCount()
 {
 	int iCount = 0;
 	
@@ -518,5 +506,5 @@ void SuperPrecacheModel(const char[] szModel)
 
 bool IsInWaitingForPlayers()
 {
-	return GameRules_GetProp("m_bInWaitingForPlayers") != 0;
+	return GameRules_GetProp("m_bInWaitingForPlayers") != 0 || g_nRoundState == FRRoundState_WaitingForPlayers;
 }

@@ -28,6 +28,23 @@
 #define EFL_KILLME		(1<<0)
 #define EFL_IN_SKYBOX	(1<<17)
 
+// m_lifeState values
+#define LIFE_ALIVE				0 // alive
+#define LIFE_DYING				1 // playing death animation or still falling off of a ledge waiting to hit ground
+#define LIFE_DEAD				2 // dead. lying still.
+#define LIFE_RESPAWNABLE		3
+#define LIFE_DISCARDBODY		4
+
+enum FRRoundState
+{
+	FRRoundState_Init,
+	FRRoundState_WaitingForPlayers,
+	FRRoundState_Starting,
+	FRRoundState_Setup,
+	FRRoundState_RoundRunning,
+	FRRoundState_PlayerWin,
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Slots for items within loadouts
 //-----------------------------------------------------------------------------
