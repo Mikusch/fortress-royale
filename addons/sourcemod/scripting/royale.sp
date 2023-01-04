@@ -159,7 +159,7 @@ public void OnConfigsExecuted()
 {
 	if (g_bEnabled != fr_enable.BoolValue)
 	{
-		FortressRoyale_Toggle(fr_enable.BoolValue);
+		TogglePlugin(fr_enable.BoolValue);
 	}
 }
 
@@ -168,19 +168,30 @@ public void OnGameFrame()
 	if (!g_bEnabled)
 		return;
 	
-	if (GameRules_GetProp("m_bInWaitingForPlayers"))
-		return;
-	
-	// Do we have enough players to start the game?
-	if (ShouldStartGame() && g_nRoundState == FRRoundState_WaitingForPlayers)
-	{
-		g_nRoundState = FRRoundState_Starting;
-		
-		// Clean up the map...
-		ServerCommand("mp_restartgame_immediate 1");
-	}
-	
 	Zone_Think();
+	
+	switch (g_nRoundState)
+	{
+		case FRRoundState_WaitingForPlayers:
+		{
+			// Do we have enough players to start the game?
+			if (ShouldGoToSetup())
+			{
+				g_nRoundState = FRRoundState_Setup;
+				
+				// Clean up the map
+				ServerCommand("mp_restartgame_immediate 1");
+			}
+		}
+		case FRRoundState_RoundRunning:
+		{
+			// Have all valid players died?
+			if (ShouldTryToEndGame())
+			{
+				// Force win
+			}
+		}
+	}
 }
 
 public void TF2_OnWaitingForPlayersStart()
@@ -192,7 +203,8 @@ public void TF2_OnWaitingForPlayersEnd()
 {
 	mp_disable_respawn_times.BoolValue = false;
 	
-	g_nRoundState = ShouldStartGame() ? FRRoundState_Starting : FRRoundState_WaitingForPlayers;
+	// If we have enough players, go straight to setup
+	g_nRoundState = ShouldGoToSetup() ? FRRoundState_Setup : FRRoundState_WaitingForPlayers;
 }
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
@@ -200,10 +212,10 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, 
 	if (!g_bEnabled)
 		return Plugin_Continue;
 	
-	return FortressRoyale_OnGiveNamedItem(client, classname, index);
+	return FR_OnGiveNamedItem(client, classname, index);
 }
 
-public Action FortressRoyale_OnGiveNamedItem(int client, const char[] szWeaponName, int iItemDefIndex)
+public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iItemDefIndex)
 {
 	if (g_bBypassGiveNamedItemHook)
 		return Plugin_Continue;
@@ -300,20 +312,20 @@ public void OnEntityDestroyed(int entity)
 	FREntity(entity).Destroy();
 }
 
-void FortressRoyale_Toggle(bool enable)
+void TogglePlugin(bool bEnable)
 {
-	g_bEnabled = enable;
+	g_bEnabled = bEnable;
 	
-	Console_Toggle(enable);
-	ConVars_Toggle(enable);
-	DHooks_Toggle(enable);
-	Events_Toggle(enable);
+	Console_Toggle(bEnable);
+	ConVars_Toggle(bEnable);
+	DHooks_Toggle(bEnable);
+	Events_Toggle(bEnable);
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (IsClientInGame(client))
 		{
-			if (enable)
+			if (bEnable)
 			{
 				OnClientPutInServer(client);
 			}
@@ -325,7 +337,7 @@ void FortressRoyale_Toggle(bool enable)
 	}
 }
 
-void FortressRoyale_SetupRound()
+void OnRoundStart()
 {
 	for (int client = 1; client <= MaxClients; client++)
 	{

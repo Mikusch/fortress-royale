@@ -148,11 +148,9 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 		return;
 	
 	// Should the game start?
-	if (g_nRoundState == FRRoundState_Starting)
+	if (g_nRoundState == FRRoundState_Setup)
 	{
-		g_nRoundState = FRRoundState_Setup;
-		
-		FortressRoyale_SetupRound();
+		OnRoundStart();
 	}
 }
 
@@ -161,26 +159,12 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 	if (IsInWaitingForPlayers())
 		return;
 	
-	g_nRoundState = RoundState_RoundRunning;
-	
-	// TODO
-	/*if (g_RoundState != FRRoundState_Setup)
-		//return;
-	
-	g_RoundState = FRRoundState_Active;
-	
-	BattleBus_SpawnPlayerBus();
+	g_nRoundState = FRRoundState_RoundRunning;
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			BattleBus_SpectateBus(client);
+		FRPlayer(client).m_nPlayerState = FRPlayerState_InBus;
 	}
 	
-	g_PlayerCount = GetAlivePlayerCount();
-	
-	
-	Loot_SetupFinished();
-	Vehicles_SetupFinished();*/
 	Zone_OnSetupFinished();
 }

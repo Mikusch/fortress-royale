@@ -28,7 +28,8 @@ enum struct DetourData
 static ArrayList g_DynamicDetours;
 static ArrayList g_DynamicHookIds;
 
-static DynamicHook g_DHookGiveNamedItem;
+static DynamicHook g_DHook_CTFPlayer_GiveNamedItem;
+static DynamicHook g_DHook_CBasePlayer_ForceRespawn;
 
 static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
 
@@ -37,7 +38,8 @@ void DHooks_Init(GameData gamedata)
 	g_DynamicDetours = new ArrayList(sizeof(DetourData));
 	g_DynamicHookIds = new ArrayList();
 	
-	g_DHookGiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
+	g_DHook_CTFPlayer_GiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
+	g_DHook_CBasePlayer_ForceRespawn = DHooks_AddDynamicHook(gamedata, "CBasePlayer::ForceRespawn");
 	
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
@@ -47,6 +49,39 @@ void DHooks_Init(GameData gamedata)
 void DHooks_OnClientPutInServer(int client)
 {
 	DHooks_HookGiveNamedItem(client);
+	DHooks_HookEntity(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, client, DHookCallback_CBasePlayer_ForceRespawn_Pre);
+}
+
+void DHooks_HookGiveNamedItem(int client)
+{
+	if (g_DHook_CTFPlayer_GiveNamedItem && !g_bTF2Items)
+	{
+		g_iHookIdGiveNamedItem[client] = g_DHook_CTFPlayer_GiveNamedItem.HookEntity(Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre, DHookRemovalCB_OnHookRemoved);
+	}
+}
+
+void DHooks_UnhookGiveNamedItem(int client)
+{
+	if (g_iHookIdGiveNamedItem[client])
+	{
+		if (DynamicHook.RemoveHook(g_iHookIdGiveNamedItem[client]))
+		{
+			g_iHookIdGiveNamedItem[client] = 0;
+		}
+	}
+}
+
+bool DHooks_IsGiveNamedItemHookActive()
+{
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (g_iHookIdGiveNamedItem[client])
+		{
+			return true;
+		}
+	}
+	
+	return false;
 }
 
 void DHooks_Toggle(bool enable)
@@ -87,38 +122,6 @@ void DHooks_Toggle(bool enable)
 			DHooks_UnhookGiveNamedItem(client);
 		}
 	}
-}
-
-void DHooks_HookGiveNamedItem(int client)
-{
-	if (g_DHookGiveNamedItem && !g_bTF2Items)
-	{
-		g_iHookIdGiveNamedItem[client] = g_DHookGiveNamedItem.HookEntity(Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre, DHookRemovalCB_OnHookRemoved);
-	}
-}
-
-void DHooks_UnhookGiveNamedItem(int client)
-{
-	if (g_iHookIdGiveNamedItem[client])
-	{
-		if (DynamicHook.RemoveHook(g_iHookIdGiveNamedItem[client]))
-		{
-			g_iHookIdGiveNamedItem[client] = 0;
-		}
-	}
-}
-
-bool DHooks_IsGiveNamedItemHookActive()
-{
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (g_iHookIdGiveNamedItem[client])
-		{
-			return true;
-		}
-	}
-	
-	return false;
 }
 
 static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callback_pre = INVALID_FUNCTION, DHookCallback callback_post = INVALID_FUNCTION)
@@ -338,9 +341,22 @@ static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookRet
 	// CEconItemView::m_iItemDefinitionIndex
 	int iItemDefIndex = params.GetObjectVar(3, 0x4, ObjectValueType_Int) & 0xFFFF;
 	
-	if (FortressRoyale_OnGiveNamedItem(player, szWeaponName, iItemDefIndex) >= Plugin_Handled)
+	if (FR_OnGiveNamedItem(player, szWeaponName, iItemDefIndex) >= Plugin_Handled)
 	{
 		ret.Value = -1;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
+{
+	if (IsInWaitingForPlayers())
+		return MRES_Ignored;
+	
+	if (FRPlayer(player).m_nPlayerState == FRPlayerState_InBus)
+	{
 		return MRES_Supercede;
 	}
 	

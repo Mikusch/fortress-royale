@@ -78,10 +78,17 @@
 				"linux"		"277"
 				"windows"	"276"
 			}
+			"CBasePlayer::ForceRespawn"
+			{
+				"library"	"server"
+				"linux"		"337"
+				"windows"	"336"
+			}
 			"CTFPlayer::GiveNamedItem"
 			{
-				"windows"	"486"
+				"library"	"server"
 				"linux"		"493"
+				"windows"	"486"
 			}
 		}
 		"Functions"
@@ -143,6 +150,13 @@
 						"type"	"cbaseentity"
 					}
 				}
+			}
+			"CBasePlayer::ForceRespawn"
+			{
+				"offset"	"CBasePlayer::ForceRespawn"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{

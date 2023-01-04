@@ -39,10 +39,15 @@ enum FRRoundState
 {
 	FRRoundState_Init,
 	FRRoundState_WaitingForPlayers,
-	FRRoundState_Starting,
 	FRRoundState_Setup,
 	FRRoundState_RoundRunning,
 	FRRoundState_PlayerWin,
+}
+
+enum FRPlayerState
+{
+	FRPlayerState_Waiting,
+	FRPlayerState_InBus,
 }
 
 //-----------------------------------------------------------------------------

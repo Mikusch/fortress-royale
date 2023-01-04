@@ -20,6 +20,7 @@
 
 static int m_clientWearableVM[MAXPLAYERS + 1];
 static float m_flCrateOpenTime[MAXPLAYERS + 1];
+static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
 
 methodmap FRPlayer < CBaseCombatCharacter
 {
@@ -64,10 +65,21 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
+	property FRPlayerState m_nPlayerState
+	{
+		public get()
+		{
+			return m_nPlayerState[this.index];
+		}
+		public set(FRPlayerState nPlayerState)
+		{
+			m_nPlayerState[this.index] = nPlayerState;
+		}
+	}
+	
 	public bool IsAlive()
 	{
-		// TODO Respect player state
-		return IsPlayerAlive(this.index);
+		return IsPlayerAlive(this.index) || this.m_nPlayerState == FRPlayerState_InBus;
 	}
 	
 	public void SetWearableVM(int wearable)

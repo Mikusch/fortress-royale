@@ -160,6 +160,6 @@ static void ConVarChanged_OnEnableChanged(ConVar convar, const char[] oldValue, 
 {
 	if (g_bEnabled != convar.BoolValue)
 	{
-		FortressRoyale_Toggle(convar.BoolValue);
+		TogglePlugin(convar.BoolValue);
 	}
 }

@@ -356,8 +356,15 @@ static Action Timer_FinishShrink(Handle hTimer)
 	else
 	{
 		// Final shrink finished - remove the zone props
-		RemoveEntity(g_zonePropRef);
-		RemoveEntity(g_zoneGhostPropRef);
+		if (IsValidEntity(g_zonePropRef))
+		{
+			RemoveEntity(g_zonePropRef);
+		}
+		
+		if (IsValidEntity(g_zoneGhostPropRef))
+		{
+			RemoveEntity(g_zoneGhostPropRef);
+		}
 	}
 	
 	return Plugin_Continue;

@@ -433,9 +433,14 @@ int CountCharInString(const char[] str, char c)
 	return count;
 }
 
-bool ShouldStartGame()
+bool ShouldGoToSetup()
 {
 	return GetActivePlayerCount() > 1;
+}
+
+bool ShouldTryToEndGame()
+{
+	return GetAlivePlayerCount() <= 1;
 }
 
 int GetActivePlayerCount()
@@ -444,8 +449,13 @@ int GetActivePlayerCount()
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && TF2_GetClientTeam(client) > TFTeam_Spectator)
-			iCount++;
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
+			continue;
+		
+		iCount++;
 	}
 	
 	return iCount;
@@ -457,8 +467,13 @@ int GetAlivePlayerCount()
 	
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && FRPlayer(client).IsAlive())
-			iCount++;
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (!FRPlayer(client).IsAlive())
+			continue;
+		
+		iCount++;
 	}
 	
 	return iCount;
@@ -506,5 +521,5 @@ void SuperPrecacheModel(const char[] szModel)
 
 bool IsInWaitingForPlayers()
 {
-	return GameRules_GetProp("m_bInWaitingForPlayers") != 0 || g_nRoundState == FRRoundState_WaitingForPlayers;
+	return GameRules_GetProp("m_bInWaitingForPlayers") || g_nRoundState == FRRoundState_WaitingForPlayers;
 }
