@@ -185,7 +185,7 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
-		return;
+		return Plugin_Continue;
 	
 	char sound[PLATFORM_MAX_PATH];
 	event.GetString("sound", sound, sizeof(sound));

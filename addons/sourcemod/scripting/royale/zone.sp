@@ -119,7 +119,7 @@ void Zone_Think()
 	float vecZoneOrigin[3], flShrinkPercentage;
 	float flShrinkDuration = Zone_GetShrinkDuration();
 	
-	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration > GetGameTime())
+	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
 	{
 		// We are shrinking, update zone position and model scale
 		if (IsValidEntity(g_hZonePropEnt))

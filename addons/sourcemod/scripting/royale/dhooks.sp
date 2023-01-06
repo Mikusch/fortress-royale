@@ -44,6 +44,7 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
 }
 
 void DHooks_OnClientPutInServer(int client)
@@ -359,5 +360,16 @@ static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
 	if (g_bAllowForceRespawn)
 		return MRES_Ignored;
 	
+	return MRES_Supercede;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player, DHookReturn ret)
+{
+	if (IsInWaitingForPlayers())
+		return MRES_Ignored;
+	
+	// Increase class maximum health
+	int maxhealth = ret.Value;
+	ret.Value = maxhealth * 2;
 	return MRES_Supercede;
 }

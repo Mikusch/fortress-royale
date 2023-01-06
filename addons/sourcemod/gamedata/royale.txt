@@ -69,6 +69,12 @@
 				"linux"		"@_ZN20CBaseCombatCharacter22SwitchToNextBestWeaponEP17CBaseCombatWeapon"
 				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x56"
 			}
+			"CTFPlayer::GetMaxHealthForBuffing"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\x40\x22\x00\x00"
+			}
 		}
 		"Offsets"
 		{
@@ -156,6 +162,13 @@
 				"offset"	"CBasePlayer::ForceRespawn"
 				"hooktype"	"entity"
 				"return"	"void"
+				"this"		"entity"
+			}
+			"CTFPlayer::GetMaxHealthForBuffing"
+			{
+				"signature"	"CTFPlayer::GetMaxHealthForBuffing"
+				"callconv"	"thiscall"
+				"return"	"int"
 				"this"		"entity"
 			}
 			"CTFPlayer::GiveNamedItem"
