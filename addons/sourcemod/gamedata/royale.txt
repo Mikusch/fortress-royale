@@ -96,6 +96,18 @@
 				"linux"		"493"
 				"windows"	"486"
 			}
+			"CBaseCombatWeapon::SetSubType"
+			{
+				"library"	"server"
+				"linux"		"238"
+				"windows"	"232"
+			}
+			"CBaseCombatWeapon::GetWorldModel"
+			{
+				"library"	"server"
+				"linux"		"328"
+				"windows"	"322"
+			}
 		}
 		"Functions"
 		{

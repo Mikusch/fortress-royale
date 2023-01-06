@@ -48,7 +48,7 @@ any FindItemOffset(int entity)
 	return FindSendPropInfo(clsname, "m_Item");
 }
 
-bool GetItemWorldModel(int item, char[] model, int size)
+bool GetItemWorldModel(int item, char[] szWorldModel, int iMaxLength)
 {
 	int iItemDefIndex = GetEntProp(item, Prop_Send, "m_iItemDefinitionIndex");
 	
@@ -57,20 +57,28 @@ bool GetItemWorldModel(int item, char[] model, int size)
 	if (Config_GetWeaponDataByDefIndex(iItemDefIndex, data) && data.world_model[0])
 	{
 		PrecacheModel(data.world_model);
-		return strcopy(model, size, data.world_model) != 0;
+		return strcopy(szWorldModel, iMaxLength, data.world_model) != 0;
 	}
 	
-	int nModelIndex = 0;
-	if (HasEntProp(item, Prop_Send, "m_iWorldModelIndex"))
-		nModelIndex = GetEntProp(item, Prop_Send, "m_iWorldModelIndex");
+	if (TF2Util_IsEntityWeapon(item))
+	{
+		SDKCall_CBaseCombatWeapon_GetWorldModel(item, szWorldModel, iMaxLength);
+		return szWorldModel[0];
+	}
 	else
-		nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
-	
-	// Invalid model index
-	if (nModelIndex <= 0)
-		return false;
-	
-	return ModelIndexToString(nModelIndex, model, size);
+	{
+		if (HasEntProp(item, Prop_Send, "m_nWorldModelIndex"))
+		{
+			int nWorldModelIndex = GetEntProp(item, Prop_Send, "m_nWorldModelIndex");
+			if (nWorldModelIndex != 0)
+			{
+				return ModelIndexToString(nWorldModelIndex, szWorldModel, iMaxLength);
+			}
+		}
+		
+		int nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
+		return ModelIndexToString(nModelIndex, szWorldModel, iMaxLength);
+	}
 }
 
 float GetPercentInvisible(int client)
@@ -249,7 +257,7 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 bool ShouldDropItem(int client, int weapon)
 {
 	// Don't drop engineer's toolbox
-	if (TF2_GetPlayerClass(client) == TFClass_Engineer && TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER)
+	if (IsWeaponBuilder(weapon) && TF2_GetPlayerClass(client) == TFClass_Engineer)
 		return false;
 	
 	if (IsWeaponFists(weapon))
@@ -282,10 +290,9 @@ int GenerateDefaultItem(int client, int iItemDefIndex)
 	SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
 	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
 	
-	if (TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER && nClass == TFClass_Spy)
+	if (IsWeaponBuilder(weapon) && nClass == TFClass_Spy)
 	{
-		SetEntProp(weapon, Prop_Send, "m_iObjectType", TFObject_Sapper);
-		SetEntProp(weapon, Prop_Data, "m_iSubType", TFObject_Sapper);
+		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
 	}
 	
 	DispatchSpawn(weapon);
@@ -556,4 +563,9 @@ void DissolveEntity(int entity)
 		SetVariantString("!activator");
 		AcceptEntityInput(dissolver, "Dissolve", entity);
 	}
+}
+
+bool IsWeaponBuilder(int weapon)
+{
+	return TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER;
 }

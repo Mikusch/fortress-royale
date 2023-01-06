@@ -197,7 +197,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 	
 	if (GetEntProp(droppedWeapon, Prop_Send, "m_bInitialized"))
 	{
-		int iItemDefIndex = GetEntProp(droppedWeapon, Prop_Send, "m_iiItemDefIndexinitionIndex");
+		int iItemDefIndex = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
 		
 		TFClassType nClass = TF2_GetPlayerClass(player);
 		int iItemSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
@@ -212,10 +212,9 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, szTranslatedWeaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
-			if (StrEqual(szTranslatedWeaponName, "tf_weapon_builder") && nClass == TFClass_Spy)
+			if (IsWeaponBuilder(newItem) && nClass == TFClass_Spy)
 			{
-				SetEntProp(newItem, Prop_Send, "m_iObjectType", TFObject_Sapper);
-				SetEntProp(newItem, Prop_Data, "m_iSubType", TFObject_Sapper);
+				SDKCall_CBaseCombatWeapon_SetSubType(newItem, TFObject_Sapper);
 			}
 			
 			// make sure we removed our current weapon

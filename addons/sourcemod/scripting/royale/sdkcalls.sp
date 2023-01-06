@@ -26,6 +26,8 @@ static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
 static Handle g_SDKCall_CTFPlayer_GetLoadoutItem;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
+static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
+static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
 
 void SDKCalls_Init(GameData gamedata)
 {
@@ -37,6 +39,8 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFPlayer_GetLoadoutItem = PrepSDKCall_CTFPlayer_GetLoadoutItem(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
+	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
+	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
 }
 
 static Handle PrepSDKCall_CTFDroppedWeapon_Create(GameData gamedata)
@@ -164,6 +168,32 @@ static Handle PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(GameData g
 	return call;
 }
 
+static Handle PrepSDKCall_CBaseCombatWeapon_SetSubType(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseCombatWeapon::SetSubType");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseCombatWeapon::SetSubType");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CBaseCombatWeapon_GetWorldModel(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseCombatWeapon::GetWorldModel");
+	PrepSDKCall_SetReturnInfo(SDKType_String, SDKPass_Pointer);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CBaseCombatWeapon::GetWorldModel");
+	
+	return call;
+}
+
 int SDKCall_CTFDroppedWeapon_Create(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
 {
 	if (g_SDKCall_CTFDroppedWeapon_Create)
@@ -242,4 +272,20 @@ bool SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(int player, int current
 	}
 	
 	return false;
+}
+
+void SDKCall_CBaseCombatWeapon_SetSubType(int weapon, TFObjectType iSubType)
+{
+	if (g_SDKCall_CBaseCombatWeapon_SetSubType)
+	{
+		SDKCall(g_SDKCall_CBaseCombatWeapon_SetSubType, weapon, iSubType);
+	}
+}
+
+void SDKCall_CBaseCombatWeapon_GetWorldModel(int weapon, char[] szWorldModel, int iMaxLength)
+{
+	if (g_SDKCall_CBaseCombatWeapon_GetWorldModel)
+	{
+		SDKCall(g_SDKCall_CBaseCombatWeapon_GetWorldModel, weapon, szWorldModel, iMaxLength);
+	}
 }

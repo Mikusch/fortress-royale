@@ -81,6 +81,11 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		return false;
 	}
 	
+	if (IsWeaponBuilder(weapon) && nClass == TFClass_Spy)
+	{
+		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
+	}
+	
 	// Weapon_Equip can cause weapon switches, just temporarily prevent it
 	TF2Attrib_SetByName(weapon, "disable weapon switch", 1.0);
 	ItemGiveTo(client, weapon);
