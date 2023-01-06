@@ -65,6 +65,46 @@ void BattleBus_Parse(KeyValues kv)
 	g_battleBusData.Parse(kv);
 }
 
+void BattleBus_OnSetupFinished()
+{
+	int bus = BattleBus_CreateBusEntity();
+	if (!IsValidEntity(bus))
+	{
+		LogError("Failed to create bus entity!");
+		return;
+	}
+	
+	int camera = BattleBus_CreateCameraEntity();
+	if (!IsValidEntity(camera))
+	{
+		LogError("Failed to create camera entity!");
+		return;
+	}
+	
+	// Attach camera first, so it'll follow the bus when it is teleported
+	SetVariantString("!activator");
+	AcceptEntityInput(camera, "SetParent", bus);
+	TeleportEntity(camera, g_battleBusData.camera_offset, g_battleBusData.camera_angles);
+	
+	if (!BattleBus_InitBusEnt(bus, Timer_EndPlayerBus))
+		return;
+	
+	// Set all players into the bus
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
+			continue;
+		
+		FRPlayer(client).m_nPlayerState = FRPlayerState_InBattleBus;
+		
+		//SetVariantString("!activator");
+		//AcceptEntityInput(camera, "Enable", client);
+	}
+}
+
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
 {
 	// The bus travels along the safe diameter of the zone, using its center
@@ -123,51 +163,12 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 	return false;
 }
 
-void BattleBus_OnSetupFinished()
-{
-	int camera = BattleBus_CreateCameraEntity();
-	if (!IsValidEntity(camera))
-	{
-		LogError("Failed to create camera entity");
-		return;
-	}
-	
-	int bus = BattleBus_CreateBusEntity();
-	if (!IsValidEntity(bus))
-	{
-		LogError("Failed to create bus entity");
-		return;
-	}
-	
-	g_hActiveBusEnt = EntIndexToEntRef(bus);
-	
-	// Attach camera first, so it'll follow the bus when it is teleported
-	SetVariantString("!activator");
-	AcceptEntityInput(camera, "SetParent", bus);
-	TeleportEntity(camera, g_battleBusData.camera_offset, g_battleBusData.camera_angles);
-	
-	if (!BattleBus_InitBusEnt(bus, Timer_EndPlayerBus))
-		return;
-	
-	// Set all players into the bus
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (!IsClientInGame(client))
-			continue;
-		
-		FRPlayer(client).m_nPlayerState = FRPlayerState_InBattleBus;
-		
-		SetVariantString("!activator");
-		AcceptEntityInput(camera, "Enable", client);
-	}
-}
-
 void BattleBus_SpawnLootBus()
 {
 	int bus = BattleBus_CreateBusEntity();
 	if (!IsValidEntity(bus))
 	{
-		LogError("Failed to create bus entity");
+		LogError("Failed to create bus entity!");
 		return;
 	}
 	
@@ -187,7 +188,7 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
 	{
 		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
-		CreateTimer(g_battleBusData.travel_time, func, _, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(g_battleBusData.travel_time, func, EntIndexToEntRef(bus), TIMER_FLAG_NO_MAPCHANGE);
 		
 		// Play a sound for arriving
 		ArrayList sounds = g_battleBusData.sounds;
@@ -207,9 +208,9 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	return false;
 }
 
-static Action Timer_EndPlayerBus(Handle timer)
+static Action Timer_EndPlayerBus(Handle timer, int bus)
 {
-	if (!IsValidEntity(g_hActiveBusEnt))
+	if (!BattleBus_IsValidBus(bus))
 		return Plugin_Continue;
 	
 	// We reached our destination, eject all players still in here
@@ -224,13 +225,17 @@ static Action Timer_EndPlayerBus(Handle timer)
 		BattleBus_EjectPlayer(client);
 	}
 	
-	// Dissolve the bus entity
-	int dissolver = CreateEntityByName("env_entity_dissolver");
-	if (IsValidEntity(dissolver) && DispatchSpawn(dissolver))
-	{
-		SetVariantString("!activator");
-		AcceptEntityInput(dissolver, "Dissolve", g_hActiveBusEnt);
-	}
+	DissolveEntity(bus);
+	
+	return Plugin_Continue;
+}
+
+static Action Timer_EndLootBus(Handle timer, int bus)
+{
+	if (!BattleBus_IsValidBus(bus))
+		return Plugin_Continue;
+	
+	DissolveEntity(bus);
 	
 	return Plugin_Continue;
 }
@@ -238,16 +243,6 @@ static Action Timer_EndPlayerBus(Handle timer)
 static Action Timer_DropLootCrate(Handle timer)
 {
 	PrintToChatAll("TODO: Make the bus drop a crate here");
-	
-	return Plugin_Continue;
-}
-
-static Action Timer_EndLootBus(Handle timer)
-{
-	if (IsValidEntity(g_hActiveBusEnt))
-	{
-		RemoveEntity(g_hActiveBusEnt);
-	}
 	
 	return Plugin_Continue;
 }
@@ -282,7 +277,7 @@ void BattleBus_EjectPlayer(int client)
 	float vecOrigin[3];
 	CBaseEntity(g_hActiveBusEnt).GetAbsOrigin(vecOrigin);
 	
-	// Eject!
+	// Eject the player
 	TeleportEntity(client, vecOrigin);
 	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hActiveBusEnt);
 }
@@ -290,18 +285,18 @@ void BattleBus_EjectPlayer(int client)
 static int BattleBus_CreateBusEntity()
 {
 	int bus = CreateEntityByName("tf_projectile_rocket");
-	if (IsValidEntity(bus))
+	if (IsValidEntity(bus) && DispatchSpawn(bus))
 	{
-		if (DispatchSpawn(bus))
-		{
-			DispatchKeyValue(bus, "solid", "0");
-			
-			PrecacheModel(g_battleBusData.model);
-			SetEntityModel(bus, g_battleBusData.model);
-			SetModelScale(bus, g_battleBusData.model_scale);
-			
-			return bus;
-		}
+		DispatchKeyValue(bus, "solid", "0");
+		
+		PrecacheModel(g_battleBusData.model);
+		SetEntityModel(bus, g_battleBusData.model);
+		SetModelScale(bus, g_battleBusData.model_scale);
+		
+		// Store the bus reference
+		g_hActiveBusEnt = EntIndexToEntRef(bus);
+		
+		return bus;
 	}
 	
 	return -1;
@@ -310,13 +305,15 @@ static int BattleBus_CreateBusEntity()
 static int BattleBus_CreateCameraEntity()
 {
 	int viewcontrol = CreateEntityByName("point_viewcontrol");
-	if (IsValidEntity(viewcontrol))
+	if (IsValidEntity(viewcontrol) && DispatchSpawn(viewcontrol))
 	{
-		if (DispatchSpawn(viewcontrol))
-		{
-			return viewcontrol;
-		}
+		return viewcontrol;
 	}
 	
 	return -1;
+}
+
+static bool BattleBus_IsValidBus(int entity)
+{
+	return IsValidEntity(entity) && EntIndexToEntRef(EntRefToEntIndex(entity)) == g_hActiveBusEnt;
 }

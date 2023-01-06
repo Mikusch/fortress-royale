@@ -546,3 +546,13 @@ void SetWinningTeam(TFTeam team = TFTeam_Unassigned)
 		RemoveEntity(round_win);
 	}
 }
+
+void DissolveEntity(int entity)
+{
+	int dissolver = CreateEntityByName("env_entity_dissolver");
+	if (IsValidEntity(dissolver) && DispatchSpawn(dissolver))
+	{
+		SetVariantString("!activator");
+		AcceptEntityInput(dissolver, "Dissolve", entity);
+	}
+}

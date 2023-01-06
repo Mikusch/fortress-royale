@@ -224,6 +224,7 @@ static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
 		DispatchKeyValue(zone, "model", ZONE_MODEL);
 		DispatchKeyValueVector(zone, "origin", vecOrigin);
 		DispatchKeyValue(zone, "disableshadows", "1");
+		DispatchKeyValue(zone, "disablereceiveshadows", "1");
 		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropModelScale());
 		DispatchKeyValue(zone, "solid", "0");
 		

@@ -140,6 +140,8 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 			
 			TF2_RemovePlayerItem(client, entity);
 		}
+		
+		TF2_ChangeClientTeam(client, TFTeam_Blue);
 	}
 }
 
