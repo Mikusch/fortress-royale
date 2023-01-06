@@ -197,22 +197,22 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 	
 	if (GetEntProp(droppedWeapon, Prop_Send, "m_bInitialized"))
 	{
-		int itemdef = GetEntProp(droppedWeapon, Prop_Send, "m_iItemDefinitionIndex");
+		int iItemDefIndex = GetEntProp(droppedWeapon, Prop_Send, "m_iiItemDefIndexinitionIndex");
 		
-		TFClassType class = TF2_GetPlayerClass(player);
-		int itemSlot = TF2Econ_GetItemLoadoutSlot(itemdef, class);
-		int weapon = GetEntityForLoadoutSlot(player, itemSlot);
+		TFClassType nClass = TF2_GetPlayerClass(player);
+		int iItemSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+		int weapon = GetEntityForLoadoutSlot(player, iItemSlot);
 		
 		// we need to force translating the name here.
 		// GiveNamedItem will not translate if we force creating the item
-		char weaponName[64];
-		TF2Econ_GetItemClassName(itemdef, weaponName, sizeof(weaponName));
-		TF2Econ_TranslateWeaponEntForClass(weaponName, sizeof(weaponName), class);
+		char szTranslatedWeaponName[64];
+		TF2Econ_GetItemClassName(iItemDefIndex, szTranslatedWeaponName, sizeof(szTranslatedWeaponName));
+		TF2Econ_TranslateWeaponEntForClass(szTranslatedWeaponName, sizeof(szTranslatedWeaponName), nClass);
 		
-		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, weaponName, 0, pItem, true);
+		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, szTranslatedWeaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
-			if (TF2Util_IsEntityWeapon(newItem) && TF2Util_GetWeaponID(newItem) == TF_WEAPON_BUILDER && class == TFClass_Spy)
+			if (StrEqual(szTranslatedWeaponName, "tf_weapon_builder") && nClass == TFClass_Spy)
 			{
 				SetEntProp(newItem, Prop_Send, "m_iObjectType", TFObject_Sapper);
 				SetEntProp(newItem, Prop_Data, "m_iSubType", TFObject_Sapper);
@@ -292,8 +292,8 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 		return MRES_Supercede;
 	}
 	
-	TFClassType class = TF2_GetPlayerClass(player);
-	if (class == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || GetPercentInvisible(player) > 0.0))
+	TFClassType nClass = TF2_GetPlayerClass(player);
+	if (nClass == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || GetPercentInvisible(player) > 0.0))
 	{
 		ret.Value = false;
 		return MRES_Supercede;
@@ -317,13 +317,13 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 		return MRES_Supercede;
 	}
 	
-	ret.Value = CanWeaponBeUsedByClass(weapon, class);
+	ret.Value = CanWeaponBeUsedByClass(weapon, nClass);
 	return MRES_Supercede;
 }
 
 static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookReturn ret, DHookParam params)
 {
-	// If pszWeaponName is NULL, don't generate an item
+	// If szName is NULL, don't generate an item
 	if (params.IsNull(1))
 	{
 		ret.Value = -1;
@@ -336,13 +336,13 @@ static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookRet
 		return MRES_Ignored;
 	}
 	
-	char szWeaponName[64];
-	params.GetString(1, szWeaponName, sizeof(szWeaponName));
+	char szName[64];
+	params.GetString(1, szName, sizeof(szName));
 	
 	// CEconItemView::m_iItemDefinitionIndex
 	int iItemDefIndex = params.GetObjectVar(3, 0x4, ObjectValueType_Int) & 0xFFFF;
 	
-	if (FR_OnGiveNamedItem(player, szWeaponName, iItemDefIndex) >= Plugin_Handled)
+	if (FR_OnGiveNamedItem(player, szName, iItemDefIndex) >= Plugin_Handled)
 	{
 		ret.Value = -1;
 		return MRES_Supercede;
