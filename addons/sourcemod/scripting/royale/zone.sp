@@ -65,8 +65,8 @@ enum struct ZoneConfig
 static ZoneConfig g_zoneData;
 
 static bool g_bInitialized;
-static int g_hZonePropEnt;
-static int g_hZoneGhostPropEnt;
+static int g_hZonePropEnt = INVALID_ENT_REFERENCE;
+static int g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
 static float g_vecOldPosition[3];	// Position where the zone starts moving
 static float g_vecNewPosition[3];	// Position where the zone finishes moving
 static Handle g_hZoneTimer;

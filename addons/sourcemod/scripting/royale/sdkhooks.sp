@@ -22,12 +22,14 @@ void SDKHooks_OnClientPutInServer(int client)
 {
 	SDKHook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
 	SDKHook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
+	SDKHook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
 }
 
 void SDKHooks_UnhookClient(int client)
 {
 	SDKUnhook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
 	SDKUnhook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
+	SDKUnhook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
 }
 
 static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
@@ -59,4 +61,15 @@ static void SDKHookCB_Client_WeaponSwitchPost(int client, int weapon)
 	{
 		FRPlayer(client).RemoveWearableVM();
 	}
+}
+
+static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
+{
+	if (collisiongroup == COLLISION_GROUP_PLAYER_MOVEMENT && FRPlayer(entity).m_nPlayerState == FRPlayerState_Parachuting)
+	{
+		// Avoid getting stuck in players while parachuting
+		return false;
+	}
+	
+	return originalResult;
 }

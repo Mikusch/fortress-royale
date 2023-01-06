@@ -61,6 +61,7 @@ enum struct BattleBusData
 static BattleBusData g_battleBusData;
 
 static int g_hActiveBusEnt = INVALID_ENT_REFERENCE;
+static float g_flBattleBusSpawnTime;
 
 void BattleBus_Parse(KeyValues kv)
 {
@@ -105,6 +106,11 @@ void BattleBus_OnSetupFinished()
 		//SetVariantString("!activator");
 		//AcceptEntityInput(camera, "Enable", client);
 	}
+}
+
+bool BattleBus_IsActive()
+{
+	return g_flBattleBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
 }
 
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
@@ -181,6 +187,16 @@ void BattleBus_SpawnLootBus()
 	if (!BattleBus_InitBusEnt(bus, Timer_EndLootBus))
 		return;
 	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char szMessage[64];
+		Format(szMessage, sizeof(szMessage), "%T", "BattleBus_Incoming", client);
+		SendHudNotificationCustom(client, szMessage, "ico_build");
+	}
+	
 	// Calculate when the bus should drop its crate
 	float flTravelTime = g_battleBusData.travel_time;
 	float flTime = (flTravelTime - (flTravelTime * Zone_GetShrinkPercentage())) / 2.0;
@@ -193,8 +209,11 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	float vecOrigin[3], vecAngles[3], vecVelocity[3];
 	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
 	{
+		g_hActiveBusEnt = EntIndexToEntRef(bus);
+		g_flBattleBusSpawnTime = GetGameTime();
+		
 		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
-		CreateTimer(g_battleBusData.travel_time, func, EntIndexToEntRef(bus), TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(g_battleBusData.travel_time, func, g_hActiveBusEnt, TIMER_FLAG_NO_MAPCHANGE);
 		
 		// Play a sound for arriving
 		ArrayList sounds = g_battleBusData.sounds;
@@ -324,7 +343,6 @@ void BattleBus_EjectPlayer(int client)
 	if (FRPlayer(client).m_nPlayerState != FRPlayerState_InBattleBus)
 		return;
 	
-	FRPlayer(client).m_nPlayerState = FRPlayerState_Parachuting;
 	TF2_ChangeClientTeam(client, TFTeam_Red);
 	
 	g_bAllowForceRespawn = true;
@@ -361,9 +379,6 @@ static int BattleBus_CreateBusEntity()
 		PrecacheModel(g_battleBusData.model);
 		SetEntityModel(bus, g_battleBusData.model);
 		SetModelScale(bus, g_battleBusData.model_scale);
-		
-		// Store the bus reference
-		g_hActiveBusEnt = EntIndexToEntRef(bus);
 		
 		return bus;
 	}

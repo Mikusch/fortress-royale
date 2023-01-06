@@ -94,6 +94,9 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 			ItemGiveTo(client, weapon);
 			TF2Util_SetPlayerActiveWeapon(client, weapon);
 		}
+		
+		FRPlayer(client).m_nPlayerState = FRPlayerState_Parachuting;
+		TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
 	}
 }
 
@@ -141,6 +144,7 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 			TF2_RemovePlayerItem(client, entity);
 		}
 		
+		FRPlayer(client).m_nPlayerState = FRPlayerState_Dead;
 		TF2_ChangeClientTeam(client, TFTeam_Blue);
 	}
 }

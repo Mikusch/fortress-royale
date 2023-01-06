@@ -35,4 +35,8 @@
 	{
 		"en"		"The zone is shrinking, get moving!"
 	}
+	"BattleBus_Incoming"
+	{
+		"en"		"Incoming special supply drop from the sky!"
+	}
 }

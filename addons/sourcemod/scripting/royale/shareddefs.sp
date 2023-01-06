@@ -109,7 +109,7 @@ enum SolidFlags_t
 	FSOLID_MAX_BITS	= 10
 };
 
-enum Collision_Group_t
+enum
 {
 	COLLISION_GROUP_NONE  = 0,
 	COLLISION_GROUP_DEBRIS,			// Collides with nothing but world and static stuff

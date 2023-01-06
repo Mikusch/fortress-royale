@@ -262,9 +262,26 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			BattleBus_EjectPlayer(client);
 		}
+	} 
+	else if (buttons & IN_JUMP && FRPlayer(client).m_nPlayerState == FRPlayerState_Parachuting && TF2_IsPlayerInCondition(client, TFCond_Parachute) && BattleBus_IsActive())
+	{
+		// Don't allow closing the starting parachute while the bus is active
+		buttons &= ~IN_JUMP;
+		return Plugin_Changed;
 	}
 	
 	return Plugin_Continue;
+}
+
+public void TF2_OnConditionRemoved(int client, TFCond condition)
+{
+	if (!g_bEnabled)
+		return;
+	
+	if (condition == TFCond_Parachute && FRPlayer(client).m_nPlayerState == FRPlayerState_Parachuting)
+	{
+		FRPlayer(client).m_nPlayerState = FRPlayerState_Playing;
+	}
 }
 
 static bool ProcessCrateOpening(int client, int buttons)

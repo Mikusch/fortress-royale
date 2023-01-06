@@ -47,8 +47,8 @@ void ConVars_Init()
 	fr_zone_display_player = CreateConVar("fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
 	fr_zone_shrink = CreateConVar("fr_zone_shrink", "20.0", "Seconds to shrink zone to next level", _, true, 0.0);
 	fr_zone_shrink_player = CreateConVar("fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
-	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "0.0", "Seconds after shrink to display next zone", _, true, 0.0);
-	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0.0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
+	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "20.0", "Seconds after shrink to display next zone", _, true, 0.0);
+	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damage = CreateConVar("fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
 	
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
@@ -58,8 +58,14 @@ void ConVars_Init()
 	ConVars_AddConVar("tf_powerup_mode", "1");
 	ConVars_AddConVar("tf_weapon_criticals", "0");
 	ConVars_AddConVar("tf_dropped_weapon_lifetime", "99999.9");
+	ConVars_AddConVar("tf_parachute_maxspeed_xy", "600.0f");
+	ConVars_AddConVar("tf_parachute_maxspeed_z", "-200.0f");
+	ConVars_AddConVar("tf_spawn_glows_duration", "0");
 	ConVars_AddConVar("mp_teams_unbalance_limit", "0");
 	ConVars_AddConVar("mp_autoteambalance", "0");
+	ConVars_AddConVar("mp_scrambleteams_auto", "0");
+	ConVars_AddConVar("mp_respawnwavetime", "99999.9");
+	ConVars_AddConVar("mp_forcecamera", "0");
 }
 
 void ConVars_Toggle(bool enable)
