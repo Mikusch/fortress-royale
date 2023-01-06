@@ -100,55 +100,63 @@ enum struct CrateConfig
 {
 	char name[CONFIG_MAX_LENGTH];
 	char model[PLATFORM_MAX_PATH];
-	int skin;
-	char sound[PLATFORM_MAX_PATH];
 	ArrayList contents;
 	ArrayList extra_contents;
 	int max_drops;
 	int max_extra_drops;
 	
+	bool breakable;
+	int health;
+	
 	void Parse(KeyValues kv)
 	{
-		kv.GetString("name", this.name, sizeof(this.name));
-		kv.GetString("model", this.model, sizeof(this.model));
-		this.skin = kv.GetNum("skin");
-		
-		if (kv.JumpToKey("contents", false))
+		if (kv.GetSectionName(this.name, sizeof(this.name)))
 		{
-			this.contents = new ArrayList(sizeof(CrateContentConfig));
-			if (kv.GotoFirstSubKey(false))
+			kv.GetString("model", this.model, sizeof(this.model));
+			
+			if (kv.JumpToKey("contents", false))
 			{
-				do
+				this.contents = new ArrayList(sizeof(CrateContentConfig));
+				if (kv.GotoFirstSubKey(false))
 				{
-					CrateContentConfig content;
-					content.Parse(kv);
-					this.contents.PushArray(content);
+					do
+					{
+						CrateContentConfig content;
+						content.Parse(kv);
+						this.contents.PushArray(content);
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
 				}
-				while (kv.GotoNextKey(false));
 				kv.GoBack();
 			}
-			kv.GoBack();
-		}
-		
-		if (kv.JumpToKey("extra_contents", false))
-		{
-			this.extra_contents = new ArrayList(sizeof(CrateContentConfig));
-			if (kv.GotoFirstSubKey(false))
+			
+			if (kv.JumpToKey("extra_contents", false))
 			{
-				do
+				this.extra_contents = new ArrayList(sizeof(CrateContentConfig));
+				if (kv.GotoFirstSubKey(false))
 				{
-					CrateContentConfig extra_content;
-					extra_content.Parse(kv);
-					this.extra_contents.PushArray(extra_content);
+					do
+					{
+						CrateContentConfig extra_content;
+						extra_content.Parse(kv);
+						this.extra_contents.PushArray(extra_content);
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
 				}
-				while (kv.GotoNextKey(false));
 				kv.GoBack();
 			}
-			kv.GoBack();
+			
+			this.max_drops = kv.GetNum("max_drops", fr_crate_max_drops.IntValue);
+			this.max_extra_drops = kv.GetNum("max_extra_drops", fr_crate_max_extra_drops.IntValue);
+			
+			this.breakable = kv.GetNum("breakable") != 0;
+			if (this.breakable)
+			{
+				this.health = kv.GetNum("health");
+			}
 		}
-		
-		this.max_drops = kv.GetNum("max_drops", fr_crate_max_drops.IntValue);
-		this.max_extra_drops = kv.GetNum("max_extra_drops", fr_crate_max_extra_drops.IntValue);
 	}
 	
 	void Delete()
@@ -182,6 +190,37 @@ enum struct CrateConfig
 		}
 		
 		return false;
+	}
+	
+	void Open(int client, int crate)
+	{
+		// Normal crate drops (guaranteed)
+		for (int i = 0; i < this.max_drops; i++)
+		{
+			CrateContentConfig content;
+			if (this.GetRandomContent(content))
+			{
+				ItemConfig item;
+				if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
+				{
+					Config_CreateItem(client, crate, item);
+				}
+			}
+		}
+		
+		// Extra drops (random)
+		for (int i = 0; i < this.max_extra_drops; i++)
+		{
+			CrateContentConfig extra_content;
+			if (this.GetRandomExtraContent(extra_content))
+			{
+				ItemConfig item;
+				if (Config_GetRandomItemByType(client, extra_content.type, extra_content.subtype, item))
+				{
+					Config_CreateItem(client, crate, item);
+				}
+			}
+		}
 	}
 }
 
@@ -438,25 +477,6 @@ void Config_Delete()
 	delete g_weaponData;
 }
 
-ArrayList Config_GetCratesByName(const char[] name)
-{
-	ArrayList list = new ArrayList(sizeof(CrateConfig));
-	
-	for (int i = 0; i < g_crateConfigs.Length; i++)
-	{
-		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) != 0)
-		{
-			if (StrEqual(crate.name, name))
-			{
-				list.PushArray(crate);
-			}
-		}
-	}
-	
-	return list;
-}
-
 bool Config_IsValidCrateName(const char[] name)
 {
 	for (int i = 0; i < g_crateConfigs.Length; i++)
@@ -474,18 +494,20 @@ bool Config_IsValidCrateName(const char[] name)
 	return false;
 }
 
-bool Config_GetRandomCrateByName(const char[] name, CrateConfig crate)
+bool Config_GetCrateByName(const char[] name, CrateConfig crate)
 {
-	ArrayList crates = Config_GetCratesByName(name);
-	
-	if (!crates || crates.Length == 0)
+	for (int i = 0; i < g_crateConfigs.Length; i++)
 	{
-		LogError("Could not find crate entries for '%s'", name);
-		delete crates;
-		return false;
+		if (g_crateConfigs.GetArray(i, crate) != 0)
+		{
+			if (StrEqual(crate.name, name))
+			{
+				return true;
+			}
+		}
 	}
 	
-	return crates.GetArray(GetRandomInt(0, crates.Length - 1), crate) != 0;
+	return false;
 }
 
 ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)

@@ -238,8 +238,8 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
 		return Plugin_Continue;
 	
-	// Let players keep their cosmetics
-	if (iLoadoutSlot > LOADOUT_POSITION_PDA2)
+	// Let players keep their cosmetics and action items (except Grappling Hook)
+	if (iLoadoutSlot > LOADOUT_POSITION_PDA2 && !StrEqual(szWeaponName, "tf_weapon_grapplinghook"))
 		return Plugin_Continue;
 	
 	// Remove everything else
@@ -307,14 +307,6 @@ public void OnClientPutInServer(int client)
 	
 	DHooks_OnClientPutInServer(client);
 	SDKHooks_OnClientPutInServer(client);
-}
-
-public void OnEntityCreated(int entity, const char[] classname)
-{
-	if (!g_bEnabled)
-		return;
-	
-	SDKHooks_OnEntityCreated(entity, classname);
 }
 
 public void OnEntityDestroyed(int entity)

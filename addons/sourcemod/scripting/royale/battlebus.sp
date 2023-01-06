@@ -22,6 +22,7 @@ enum struct BattleBusData
 {
 	char model[PLATFORM_MAX_PATH];
 	float model_scale;
+	char crate_name[64];
 	float travel_height;
 	float travel_time;
 	float camera_offset[3];
@@ -32,6 +33,7 @@ enum struct BattleBusData
 	{
 		kv.GetString("model", this.model, sizeof(this.model), this.model);
 		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
+		kv.GetString("crate_name", this.crate_name, sizeof(this.crate_name), this.crate_name);
 		this.travel_height = kv.GetFloat("travel_height", this.travel_height);
 		this.travel_time = kv.GetFloat("travel_time", this.travel_time);
 		kv.GetVector("camera_offset", this.camera_offset, this.camera_offset);
@@ -133,7 +135,7 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
 		vecVelocity[1] = -Sine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
 		
-		// Check if the blimp can go along this path without being obstructed
+		// Check if the bus can go along this path without being obstructed
 		float vecEndPosition[3];
 		vecEndPosition = vecVelocity;
 		ScaleVector(vecEndPosition, g_battleBusData.travel_time);
@@ -165,6 +167,10 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 
 void BattleBus_SpawnLootBus()
 {
+	// No crate name set, do not spawn a loot bus
+	if (!g_battleBusData.crate_name[0])
+		return;
+	
 	int bus = BattleBus_CreateBusEntity();
 	if (!IsValidEntity(bus))
 	{
@@ -179,7 +185,7 @@ void BattleBus_SpawnLootBus()
 	float flTravelTime = g_battleBusData.travel_time;
 	float flTime = (flTravelTime - (flTravelTime * Zone_GetShrinkPercentage())) / 2.0;
 	
-	CreateTimer(GetRandomFloat(flTime, flTravelTime - flTime), Timer_DropLootCrate);
+	CreateTimer(GetRandomFloat(flTime, flTravelTime - flTime), Timer_DropLootCrate, EntIndexToEntRef(bus));
 }
 
 static bool BattleBus_InitBusEnt(int bus, Timer func)
@@ -240,11 +246,74 @@ static Action Timer_EndLootBus(Handle timer, int bus)
 	return Plugin_Continue;
 }
 
-static Action Timer_DropLootCrate(Handle timer)
+static Action Timer_DropLootCrate(Handle timer, int bus)
 {
-	PrintToChatAll("TODO: Make the bus drop a crate here");
+	if (!BattleBus_IsValidBus(bus))
+		return Plugin_Continue;
+	
+	// Create a physics-based crate
+	CrateConfig crate;
+	if (Config_GetCrateByName(g_battleBusData.crate_name, crate))
+	{
+		int prop = CreateEntityByName("prop_physics_override");
+		if (IsValidEntity(prop))
+		{
+			DispatchKeyValue(prop, "targetname", crate.name);
+			DispatchKeyValue(prop, "model", crate.model);
+			DispatchKeyValueFloat(prop, "massScale", 500.0);
+			
+			if (DispatchSpawn(prop))
+			{
+				if (crate.breakable)
+				{
+					SetEntProp(prop, Prop_Data, "m_iMaxHealth", crate.health);
+					SetEntProp(prop, Prop_Data, "m_iHealth", crate.health);
+					SetEntProp(prop, Prop_Data, "m_takedamage", DAMAGE_YES);
+				}
+				
+				float origin[3], angles[3], velocity[3];
+				CBaseEntity(bus).GetAbsOrigin(origin);
+				CBaseEntity(bus).GetAbsAngles(angles);
+				CBaseEntity(bus).GetAbsVelocity(velocity);
+				
+				TeleportEntity(prop, origin, angles, velocity);
+				
+				int glow = CreateEntityByName("tf_glow");
+				if (IsValidEntity(glow))
+				{
+					// We can just set this directly if we never spawn the entity
+					SetEntPropEnt(glow, Prop_Send, "m_hTarget", prop);
+					
+					SetVariantString("!activator");
+					AcceptEntityInput(glow, "SetParent", prop);
+					
+					SetVariantColor( { 255, 255, 0, 255 } );
+					AcceptEntityInput(glow, "SetGlowColor");
+				}
+				
+				HookSingleEntityOutput(prop, "OnBreak", EntityOutput_OnBreak, true);
+			}
+		}
+	}
+	else
+	{
+		LogError("Failed to find crate with name '%s'", g_battleBusData.crate_name);
+	}
 	
 	return Plugin_Continue;
+}
+
+static void EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
+{
+	char name[64];
+	if (GetEntPropString(caller, Prop_Data, "m_iName", name, sizeof(name)) != 0)
+	{
+		CrateConfig crate;
+		if (Config_GetCrateByName(name, crate))
+		{
+			crate.Open(activator, caller);
+		}
+	}
 }
 
 void BattleBus_EjectPlayer(int client)

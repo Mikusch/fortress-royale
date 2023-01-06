@@ -30,11 +30,6 @@ void SDKHooks_UnhookClient(int client)
 	SDKUnhook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
 }
 
-void SDKHooks_OnEntityCreated(int entity, const char[] classname)
-{
-	
-}
-
 static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
 {
 	if (ShouldUseCustomViewModel(client, weapon))

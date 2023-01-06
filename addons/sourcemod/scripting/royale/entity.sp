@@ -78,7 +78,7 @@ methodmap FREntity < CBaseEntity
 	public bool IsValidCrate()
 	{
 		char classname[64];
-		if (!this.GetClassname(classname, sizeof(classname)) || !StrEqual(classname, "prop_dynamic"))
+		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_dynamic", 12) != 0)
 			return false;
 		
 		char name[64];
@@ -192,35 +192,9 @@ methodmap FRCrate < FREntity
 		
 		// Grab a random crate config
 		CrateConfig crate;
-		if (Config_GetRandomCrateByName(name, crate))
+		if (Config_GetCrateByName(name, crate))
 		{
-			// Normal crate drops (guaranteed)
-			for (int i = 0; i < crate.max_drops; i++)
-			{
-				CrateContentConfig content;
-				if (crate.GetRandomContent(content))
-				{
-					ItemConfig item;
-					if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
-					{
-						Config_CreateItem(client, this.index, item);
-					}
-				}
-			}
-			
-			// Extra drops (random)
-			for (int i = 0; i < crate.max_extra_drops; i++)
-			{
-				CrateContentConfig extra_content;
-				if (crate.GetRandomExtraContent(extra_content))
-				{
-					ItemConfig item;
-					if (Config_GetRandomItemByType(client, extra_content.type, extra_content.subtype, item))
-					{
-						Config_CreateItem(client, this.index, item);
-					}
-				}
-			}
+			crate.Open(client, this.index);
 		}
 	}
 }

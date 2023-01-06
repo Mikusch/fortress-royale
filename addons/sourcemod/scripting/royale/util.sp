@@ -66,7 +66,8 @@ bool GetItemWorldModel(int item, char[] model, int size)
 	else
 		nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
 	
-	if (nModelIndex == 0)
+	// Invalid model index
+	if (nModelIndex <= 0)
 		return false;
 	
 	return ModelIndexToString(nModelIndex, model, size);
