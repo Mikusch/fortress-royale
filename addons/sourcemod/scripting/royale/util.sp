@@ -387,7 +387,7 @@ int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle arra
 	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
 }
 
-int CreateDroppedWeapon(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
+int CreateDroppedWeapon(const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
 {
 	ArrayList droppedWeapons = new ArrayList();
 	

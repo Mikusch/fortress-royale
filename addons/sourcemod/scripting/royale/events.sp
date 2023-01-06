@@ -124,7 +124,7 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 			char szWorldModel[PLATFORM_MAX_PATH];
 			if (GetItemWorldModel(entity, szWorldModel, sizeof(szWorldModel)))
 			{
-				int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(entity) + FindItemOffset(entity));
+				int droppedWeapon = CreateDroppedWeapon(vecOrigin, vecAngles, szWorldModel, GetEntityAddress(entity) + FindItemOffset(entity));
 				if (IsValidEntity(droppedWeapon))
 				{
 					if (TF2Util_IsEntityWeapon(entity))
@@ -147,6 +147,9 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 {
 	if (IsInWaitingForPlayers())
 		return;
+	
+	EmitGameSoundToAll("MatchMaking.MatchEndWinMusicCasual", _, SND_STOPLOOPING);
+	EmitGameSoundToAll("MatchMaking.MatchEndLoseMusicCasual", _, SND_STOPLOOPING);
 	
 	// Should the game start?
 	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_PlayerWin)
@@ -183,7 +186,7 @@ static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, b
 	}
 	else if (StrEqual(sound, "Game.YourTeamLost") || StrEqual(sound, "Game.Stalemate"))
 	{
-		event.SetString("sound", "MatchMaking.MatchEndLoseMusicCasua");
+		event.SetString("sound", "MatchMaking.MatchEndLoseMusicCasual");
 		return Plugin_Changed;
 	}
 	

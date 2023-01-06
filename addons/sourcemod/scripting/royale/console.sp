@@ -99,7 +99,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 	char szWorldModel[PLATFORM_MAX_PATH];
 	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 	{
-		int droppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+		int droppedWeapon = CreateDroppedWeapon(vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
 		if (IsValidEntity(droppedWeapon))
 		{
 			if (TF2Util_IsEntityWeapon(weapon))

@@ -65,10 +65,8 @@ enum struct ZoneConfig
 static ZoneConfig g_zoneData;
 
 static bool g_bInitialized;
-
-static int g_hZonePropEnt = INVALID_ENT_REFERENCE;
-static int g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
-
+static int g_hZonePropEnt;
+static int g_hZoneGhostPropEnt;
 static float g_vecOldPosition[3];	// Position where the zone starts moving
 static float g_vecNewPosition[3];	// Position where the zone finishes moving
 static Handle g_hZoneTimer;
@@ -135,7 +133,7 @@ void Zone_Think()
 			
 			// Progress from 1.0 to 0.0 (starting zone to zero size)
 			flShrinkPercentage = (float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks);
-			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(flShrinkPercentage));
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(flShrinkPercentage));
 		}
 		
 	}
@@ -222,10 +220,11 @@ static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
 	int zone = CreateEntityByName("prop_dynamic");
 	if (IsValidEntity(zone))
 	{
+		DispatchKeyValue(zone, "targetname", "fr_zone");
 		DispatchKeyValue(zone, "model", ZONE_MODEL);
 		DispatchKeyValueVector(zone, "origin", vecOrigin);
 		DispatchKeyValue(zone, "disableshadows", "1");
-		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropScale());
+		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropModelScale());
 		DispatchKeyValue(zone, "solid", "0");
 		
 		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
@@ -281,7 +280,7 @@ static Action Timer_StartDisplay(Handle hTimer)
 		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
 			TeleportEntity(g_hZoneGhostPropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
 			AcceptEntityInput(g_hZoneGhostPropEnt, "Enable");
 		}
 	}
@@ -335,7 +334,7 @@ static Action Timer_FinishShrink(Handle hTimer)
 	// Stop shrinking
 	g_flShrinkStartTime = -1.0;
 	
-	//BattleBus_SpawnLootBus();
+	BattleBus_SpawnLootBus();
 	
 	if (g_iShrinkLevel > 0)
 	{
@@ -344,7 +343,7 @@ static Action Timer_FinishShrink(Handle hTimer)
 		if (IsValidEntity(g_hZonePropEnt))
 		{
 			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
 		}
 		
 		// Hide the ghost zone
@@ -389,7 +388,7 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 			if (TR_GetPointContents(vecStart) & MASK_SOLID)
 				continue;
 			
-			TR_TraceRayFilter(vecStart, view_as<float>( { 90.0, 0.0, 0.0 } ), MASK_SOLID, RayType_Infinite, TraceEntityFilter_OnlyHitWorld, _, TRACE_WORLD_ONLY);
+			TR_TraceRayFilter(vecStart, view_as<float>( { 90.0, 0.0, 0.0 } ), MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
 			if (!TR_DidHit())
 				continue;
 			
@@ -426,38 +425,42 @@ void Zone_GetNewPosition(float center[3])
 	center = g_vecNewPosition;
 }
 
-float Zone_GetPropScale(float flPercentage = 1.0)
+float Zone_GetSafeDiameter()
+{
+	return g_zoneData.diameter_safe;
+}
+
+float Zone_GetShrinkPercentage()
+{
+	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+}
+
+static float Zone_GetPropModelScale(float flPercentage = 1.0)
 {
 	return SquareRoot(g_zoneData.diameter_max / ZONE_MODEL_DIAMETER * flPercentage);
 }
 
-float Zone_GetNewDiameter()
-{
-	// Return diameter wherever new center zone would be at
-	return g_zoneData.diameter_max * (float(g_iShrinkLevel) / float(g_zoneData.num_shrinks));
-}
-
-float Zone_GetStartDisplayDuration()
+static float Zone_GetStartDisplayDuration()
 {
 	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-float Zone_GetDisplayDuration()
+static float Zone_GetDisplayDuration()
 {
 	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-float Zone_GetShrinkDuration()
+static float Zone_GetShrinkDuration()
 {
 	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-float Zone_GetNextDisplayDuration()
+static float Zone_GetNextDisplayDuration()
 {
 	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-bool TraceEntityFilter_OnlyHitWorld(int entity, int mask)
+static bool TraceEntityFilter_HitWorld(int entity, int mask)
 {
 	return entity == 0;
 }

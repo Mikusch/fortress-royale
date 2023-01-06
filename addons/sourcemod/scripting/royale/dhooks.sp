@@ -227,7 +227,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 				char szWorldModel[PLATFORM_MAX_PATH];
 				if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 				{
-					int newDroppedWeapon = CreateDroppedWeapon(player, vecPackOrigin, vecPackAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+					int newDroppedWeapon = CreateDroppedWeapon(vecPackOrigin, vecPackAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
 					if (IsValidEntity(newDroppedWeapon))
 					{
 						if (TF2Util_IsEntityWeapon(weapon))

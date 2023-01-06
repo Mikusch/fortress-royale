@@ -89,7 +89,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	char szWorldModel[PLATFORM_MAX_PATH];
 	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 	{
-		int newDroppedWeapon = CreateDroppedWeapon(client, vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+		int newDroppedWeapon = CreateDroppedWeapon(vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
 		if (IsValidEntity(newDroppedWeapon))
 		{
 			if (TF2Util_IsEntityWeapon(weapon))

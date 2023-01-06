@@ -23,7 +23,6 @@ enum struct BattleBusData
 	char model[PLATFORM_MAX_PATH];
 	float model_scale;
 	float travel_height;
-	float travel_diameter;
 	float travel_time;
 	float camera_offset[3];
 	float camera_angles[3];
@@ -34,7 +33,6 @@ enum struct BattleBusData
 		kv.GetString("model", this.model, sizeof(this.model), this.model);
 		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
 		this.travel_height = kv.GetFloat("travel_height", this.travel_height);
-		this.travel_diameter = kv.GetFloat("travel_diameter", this.travel_diameter);
 		this.travel_time = kv.GetFloat("travel_time", this.travel_time);
 		kv.GetVector("camera_offset", this.camera_offset, this.camera_offset);
 		kv.GetVector("camera_angles", this.camera_angles, this.camera_angles);
@@ -67,9 +65,10 @@ void BattleBus_Parse(KeyValues kv)
 	g_battleBusData.Parse(kv);
 }
 
-bool BattleBus_CalculateBusPath(int bus, float flLength, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
+bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
 {
-	// Get origin by zone's current origin
+	// The bus travels along the safe diameter of the zone, using its center
+	float flDiameter = Zone_GetSafeDiameter();
 	Zone_GetNewPosition(vecOrigin);
 	
 	// Collect possible yaw angles and shuffle them
@@ -85,14 +84,14 @@ bool BattleBus_CalculateBusPath(int bus, float flLength, float vecOrigin[3], flo
 	{
 		float flYaw = aYaws[i];
 		
-		vecOrigin[0] = (Cosine(DegToRad(flYaw)) * flLength / 2.0) + vecOrigin[0];
-		vecOrigin[1] = (Sine(DegToRad(flYaw)) * flLength / 2.0) + vecOrigin[1];
+		vecOrigin[0] = (Cosine(DegToRad(flYaw)) * flDiameter / 2.0) + vecOrigin[0];
+		vecOrigin[1] = (Sine(DegToRad(flYaw)) * flDiameter / 2.0) + vecOrigin[1];
 		vecOrigin[2] = g_battleBusData.travel_height;
 		
 		vecAngles[1] = (flYaw >= 180.0) ? (flYaw - 180.0) : (flYaw + 180.0);
 		
-		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * flLength / g_battleBusData.travel_time;
-		vecVelocity[1] = -Sine(DegToRad(flYaw)) * flLength / g_battleBusData.travel_time;
+		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
+		vecVelocity[1] = -Sine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
 		
 		// Check if the blimp can go along this path without being obstructed
 		float vecEndPosition[3];
@@ -126,6 +125,13 @@ bool BattleBus_CalculateBusPath(int bus, float flLength, float vecOrigin[3], flo
 
 void BattleBus_OnSetupFinished()
 {
+	int camera = BattleBus_CreateCameraEntity();
+	if (!IsValidEntity(camera))
+	{
+		LogError("Failed to create camera entity");
+		return;
+	}
+	
 	int bus = BattleBus_CreateBusEntity();
 	if (!IsValidEntity(bus))
 	{
@@ -135,25 +141,53 @@ void BattleBus_OnSetupFinished()
 	
 	g_hActiveBusEnt = EntIndexToEntRef(bus);
 	
-	int camera = BattleBus_CreateCameraEntity();
-	if (!IsValidEntity(camera))
+	// Attach camera first, so it'll follow the bus when it is teleported
+	SetVariantString("!activator");
+	AcceptEntityInput(camera, "SetParent", bus);
+	TeleportEntity(camera, g_battleBusData.camera_offset, g_battleBusData.camera_angles);
+	
+	if (!BattleBus_InitBusEnt(bus, Timer_EndPlayerBus))
+		return;
+	
+	// Set all players into the bus
+	for (int client = 1; client <= MaxClients; client++)
 	{
-		LogError("Failed to create camera entity");
+		if (!IsClientInGame(client))
+			continue;
+		
+		FRPlayer(client).m_nPlayerState = FRPlayerState_InBattleBus;
+		
+		SetVariantString("!activator");
+		AcceptEntityInput(camera, "Enable", client);
+	}
+}
+
+void BattleBus_SpawnLootBus()
+{
+	int bus = BattleBus_CreateBusEntity();
+	if (!IsValidEntity(bus))
+	{
+		LogError("Failed to create bus entity");
 		return;
 	}
 	
-	// Attach the camera to the bus
-	SetVariantString("!activator");
-	AcceptEntityInput(camera, "SetParent", bus);
+	if (!BattleBus_InitBusEnt(bus, Timer_EndLootBus))
+		return;
 	
-	// Teleport bus after the camera, so camera can follow where bus is teleporting
-	TeleportEntity(camera, g_battleBusData.camera_offset, g_battleBusData.camera_angles);
+	// Calculate when the bus should drop its crate
+	float flTravelTime = g_battleBusData.travel_time;
+	float flTime = (flTravelTime - (flTravelTime * Zone_GetShrinkPercentage())) / 2.0;
 	
+	CreateTimer(GetRandomFloat(flTime, flTravelTime - flTime), Timer_DropLootCrate);
+}
+
+static bool BattleBus_InitBusEnt(int bus, Timer func)
+{
 	float vecOrigin[3], vecAngles[3], vecVelocity[3];
-	if (BattleBus_CalculateBusPath(bus, g_battleBusData.travel_diameter, vecOrigin, vecAngles, vecVelocity))
+	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
 	{
 		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
-		CreateTimer(g_battleBusData.travel_time, BattleBus_EndPlayerBus, _, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(g_battleBusData.travel_time, func, _, TIMER_FLAG_NO_MAPCHANGE);
 		
 		// Play a sound for arriving
 		ArrayList sounds = g_battleBusData.sounds;
@@ -167,21 +201,13 @@ void BattleBus_OnSetupFinished()
 			}
 		}
 		
-		// Set all players into the bus
-		for (int client = 1; client <= MaxClients; client++)
-		{
-			if (!IsClientInGame(client))
-				continue;
-			
-			FRPlayer(client).m_nPlayerState = FRPlayerState_InBattleBus;
-			
-			SetVariantString("!activator");
-			AcceptEntityInput(camera, "Enable", client);
-		}
+		return true;
 	}
+	
+	return false;
 }
 
-static Action BattleBus_EndPlayerBus(Handle timer)
+static Action Timer_EndPlayerBus(Handle timer)
 {
 	if (!IsValidEntity(g_hActiveBusEnt))
 		return Plugin_Continue;
@@ -204,6 +230,23 @@ static Action BattleBus_EndPlayerBus(Handle timer)
 	{
 		SetVariantString("!activator");
 		AcceptEntityInput(dissolver, "Dissolve", g_hActiveBusEnt);
+	}
+	
+	return Plugin_Continue;
+}
+
+static Action Timer_DropLootCrate(Handle timer)
+{
+	PrintToChatAll("TODO: Make the bus drop a crate here");
+	
+	return Plugin_Continue;
+}
+
+static Action Timer_EndLootBus(Handle timer)
+{
+	if (IsValidEntity(g_hActiveBusEnt))
+	{
+		RemoveEntity(g_hActiveBusEnt);
 	}
 	
 	return Plugin_Continue;
