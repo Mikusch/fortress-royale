@@ -66,6 +66,7 @@ void ConVars_Init()
 	ConVars_AddConVar("mp_scrambleteams_auto", "0");
 	ConVars_AddConVar("mp_respawnwavetime", "99999.9");
 	ConVars_AddConVar("mp_forcecamera", "0");
+	ConVars_AddConVar("mp_friendlyfire", "1");
 }
 
 void ConVars_Toggle(bool enable)

@@ -160,7 +160,14 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	// Should the game start?
 	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_PlayerWin)
 	{
-		OnRoundStart();
+		if (ShouldGoToSetup())
+		{
+			OnRoundStart();
+		}
+		else
+		{
+			g_nRoundState = FRRoundState_WaitingForPlayers;
+		}
 	}
 }
 
@@ -177,6 +184,9 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 
 static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, bool dontBroadcast)
 {
+	if (IsInWaitingForPlayers())
+		return;
+	
 	char sound[PLATFORM_MAX_PATH];
 	event.GetString("sound", sound, sizeof(sound));
 	
