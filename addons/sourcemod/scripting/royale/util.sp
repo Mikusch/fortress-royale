@@ -523,3 +523,26 @@ bool IsInWaitingForPlayers()
 {
 	return GameRules_GetProp("m_bInWaitingForPlayers") || g_nRoundState == FRRoundState_WaitingForPlayers;
 }
+
+void SetModelScale(int entity, float scale, float duration = 0.0)
+{
+	float vecScale[3];
+	vecScale[0] = scale;
+	vecScale[1] = duration;
+	
+	SetVariantVector3D(vecScale);
+	AcceptEntityInput(entity, "SetModelScale");
+}
+
+void SetWinningTeam(TFTeam team = TFTeam_Unassigned)
+{
+	int round_win = CreateEntityByName("game_round_win");
+	if (round_win != -1)
+	{
+		DispatchKeyValue(round_win, "force_map_reset", "1");
+		SetEntProp(round_win, Prop_Data, "m_iTeamNum", team);
+		
+		AcceptEntityInput(round_win, "RoundWin");
+		RemoveEntity(round_win);
+	}
+}

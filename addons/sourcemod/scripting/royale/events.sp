@@ -37,6 +37,7 @@ void Events_Init()
 	Events_Add("player_death", EventHook_PlayerDeath);
 	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_Add("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
+	Events_Add("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
 }
 
 void Events_Toggle(bool enable)
@@ -148,7 +149,7 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 		return;
 	
 	// Should the game start?
-	if (g_nRoundState == FRRoundState_Setup)
+	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_PlayerWin)
 	{
 		OnRoundStart();
 	}
@@ -161,10 +162,30 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 	
 	g_nRoundState = FRRoundState_RoundRunning;
 	
-	for (int client = 1; client <= MaxClients; client++)
+	BattleBus_OnSetupFinished();
+	Zone_OnSetupFinished();
+}
+
+static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, bool dontBroadcast)
+{
+	char sound[PLATFORM_MAX_PATH];
+	event.GetString("sound", sound, sizeof(sound));
+	
+	if (strncmp(sound, "Game.TeamRoundStart", 19) == 0)
 	{
-		FRPlayer(client).m_nPlayerState = FRPlayerState_InBus;
+		event.SetString("sound", "MatchMaking.RoundStartCasual");
+		return Plugin_Changed;
+	}
+	else if (StrEqual(sound, "Game.YourTeamWon"))
+	{
+		event.SetString("sound", "MatchMaking.MatchEndWinMusicCasual");
+		return Plugin_Changed;
+	}
+	else if (StrEqual(sound, "Game.YourTeamLost") || StrEqual(sound, "Game.Stalemate"))
+	{
+		event.SetString("sound", "MatchMaking.MatchEndLoseMusicCasua");
+		return Plugin_Changed;
 	}
 	
-	Zone_OnSetupFinished();
+	return Plugin_Continue;
 }

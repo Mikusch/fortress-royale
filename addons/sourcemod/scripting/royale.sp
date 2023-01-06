@@ -52,10 +52,12 @@ ConVar mp_disable_respawn_times;
 bool g_bEnabled;
 bool g_bTF2Items;
 bool g_bBypassGiveNamedItemHook;
+bool g_bAllowForceRespawn;
 FRRoundState g_nRoundState;
 
 #include "royale/shareddefs.sp"
 
+#include "royale/battlebus.sp"
 #include "royale/callbacks.sp"
 #include "royale/config.sp"
 #include "royale/console.sp"
@@ -179,7 +181,7 @@ public void OnGameFrame()
 			{
 				g_nRoundState = FRRoundState_Setup;
 				
-				// Clean up the map
+				// Restart the map to go to setup
 				ServerCommand("mp_restartgame_immediate 1");
 			}
 		}
@@ -188,7 +190,10 @@ public void OnGameFrame()
 			// Have all valid players died?
 			if (ShouldTryToEndGame())
 			{
-				// Force win
+				g_nRoundState = FRRoundState_PlayerWin;
+				
+				// Declare a winner!
+				SetWinningTeam(TFTeam_Red);
 			}
 		}
 	}
@@ -250,6 +255,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		return Plugin_Continue;
 	
 	ProcessCrateOpening(client, buttons);
+	
+	if (FRPlayer(client).m_nPlayerState == FRPlayerState_InBattleBus)
+	{
+		if (buttons & IN_RELOAD)
+		{
+			BattleBus_EjectPlayer(client);
+		}
+	}
 	
 	return Plugin_Continue;
 }

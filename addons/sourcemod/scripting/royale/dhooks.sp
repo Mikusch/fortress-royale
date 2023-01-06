@@ -355,10 +355,9 @@ static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
 	if (IsInWaitingForPlayers())
 		return MRES_Ignored;
 	
-	if (FRPlayer(player).m_nPlayerState == FRPlayerState_InBus)
-	{
-		return MRES_Supercede;
-	}
+	// Never allow respawning unless we explicitly request it
+	if (g_bAllowForceRespawn)
+		return MRES_Ignored;
 	
-	return MRES_Ignored;
+	return MRES_Supercede;
 }

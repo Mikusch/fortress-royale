@@ -79,7 +79,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public bool IsAlive()
 	{
-		return IsPlayerAlive(this.index) || this.m_nPlayerState == FRPlayerState_InBus;
+		return IsPlayerAlive(this.index) || this.m_nPlayerState == FRPlayerState_InBattleBus;
 	}
 	
 	public void SetWearableVM(int wearable)

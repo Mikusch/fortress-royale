@@ -246,7 +246,7 @@ void Config_Parse()
 {
 	char file[PLATFORM_MAX_PATH];
 	
-	// Parse global config
+	// Parse global config (for all maps)
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/global.cfg");
 	Config_ParseMapConfig(file);
 	
@@ -258,76 +258,76 @@ void Config_Parse()
 	}
 	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
-	KeyValues items = new KeyValues("items");
-	if (items.ImportFromFile(file))
+	KeyValues kv = new KeyValues("items");
+	if (kv.ImportFromFile(file))
 	{
 		g_itemConfigs = new ArrayList(sizeof(ItemConfig));
 		
-		if (items.GotoFirstSubKey(false))
+		if (kv.GotoFirstSubKey(false))
 		{
 			do
 			{
 				ItemConfig item;
-				item.Parse(items);
+				item.Parse(kv);
 				g_itemConfigs.PushArray(item);
 			}
-			while (items.GotoNextKey(false));
-			items.GoBack();
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
 		}
 	}
 	else
 	{
 		LogError("Failed to import config '%s'", file);
 	}
-	delete items;
+	delete kv;
 	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/crates.cfg");
-	KeyValues crates = new KeyValues("crates");
-	if (crates.ImportFromFile(file))
+	kv = new KeyValues("crates");
+	if (kv.ImportFromFile(file))
 	{
 		g_crateConfigs = new ArrayList(sizeof(CrateConfig));
 		
-		if (crates.GotoFirstSubKey(false))
+		if (kv.GotoFirstSubKey(false))
 		{
 			do
 			{
 				CrateConfig crate;
-				crate.Parse(crates);
+				crate.Parse(kv);
 				g_crateConfigs.PushArray(crate);
 			}
-			while (crates.GotoNextKey(false));
-			crates.GoBack();
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
 		}
 	}
 	else
 	{
 		LogError("Failed to import config '%s'", file);
 	}
-	delete crates;
+	delete kv;
 	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/weapons.cfg");
-	KeyValues weapons = new KeyValues("weapons");
-	if (weapons.ImportFromFile(file))
+	kv = new KeyValues("weapons");
+	if (kv.ImportFromFile(file))
 	{
 		g_weaponData = new ArrayList(sizeof(WeaponData));
 		
-		if (weapons.GotoFirstSubKey(false))
+		if (kv.GotoFirstSubKey(false))
 		{
 			do
 			{
 				WeaponData data;
-				data.Parse(weapons);
+				data.Parse(kv);
 				g_weaponData.PushArray(data);
 			}
-			while (weapons.GotoNextKey(false));
-			weapons.GoBack();
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
 		}
 	}
 	else
 	{
 		LogError("Failed to import config '%s'", file);
 	}
-	delete weapons;
+	delete kv;
 }
 
 void Config_ParseMapConfig(const char[] file)
@@ -338,6 +338,28 @@ void Config_ParseMapConfig(const char[] file)
 		if (kv.JumpToKey("zone", false))
 		{
 			Zone_Parse(kv);
+			kv.GoBack();
+		}
+		
+		if (kv.JumpToKey("battlebus", false))
+		{
+			BattleBus_Parse(kv);
+			kv.GoBack();
+		}
+		
+		if (kv.JumpToKey("downloadables", false))
+		{
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					char filename[PLATFORM_MAX_PATH];
+					kv.GetString(NULL_STRING, filename, sizeof(filename));
+					AddFileToDownloadsTable(filename);
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+			}
 			kv.GoBack();
 		}
 	}
@@ -375,7 +397,9 @@ bool Config_GetMapConfigFilepath(char[] filePath, int length)
 		
 		// Find the most specific config
 		if (FileExists(filePathBuffer))
+		{
 			strcopy(filePath, length, filePathBuffer);
+		}
 	}
 	
 	return FileExists(filePath);
@@ -456,7 +480,7 @@ bool Config_GetRandomCrateByName(const char[] name, CrateConfig crate)
 	
 	if (!crates || crates.Length == 0)
 	{
-		LogError("No crate configs for '%s' found", name);
+		LogError("Could not find crate entries for '%s'", name);
 		delete crates;
 		return false;
 	}
@@ -489,7 +513,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 	
 	if (!items || items.Length == 0)
 	{
-		LogError("No item configs for '%s/%s' found", type, subtype);
+		LogError("Could not find item entries for '%s' and '%s'", type, subtype);
 		delete items;
 		return false;
 	}
@@ -507,7 +531,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 			Call_PushCell(client);
 			Call_PushCell(item.callback_data);
 			
-			// If we can not equip this item, remove it from the list
+			// If we can not use item, remove it from the list
 			bool result;
 			if (Call_Finish(result) != SP_ERROR_NONE)
 			{
@@ -524,7 +548,6 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 	if (items.Length == 0)
 	{
 		delete items;
-		LogError("No valid items for '%s/%s' found!", type, subtype);
 		return false;
 	}
 	

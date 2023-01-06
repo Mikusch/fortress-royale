@@ -65,8 +65,10 @@ enum struct ZoneConfig
 static ZoneConfig g_zoneData;
 
 static bool g_bInitialized;
-static int g_zonePropRef;
-static int g_zoneGhostPropRef;
+
+static int g_hZonePropEnt = INVALID_ENT_REFERENCE;
+static int g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
+
 static float g_vecOldPosition[3];	// Position where the zone starts moving
 static float g_vecNewPosition[3];	// Position where the zone finishes moving
 static Handle g_hZoneTimer;
@@ -104,9 +106,9 @@ void Zone_OnRoundStart()
 	g_vecNewPosition = vecCenter;
 	
 	// Create our zone props
-	g_zonePropRef = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color));
-	g_zoneGhostPropRef = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color_ghost));
-	AcceptEntityInput(g_zoneGhostPropRef, "Disable");
+	g_hZonePropEnt = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color));
+	g_hZoneGhostPropEnt = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color_ghost));
+	AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
 	
 	g_bInitialized = true;
 }
@@ -122,18 +124,18 @@ void Zone_Think()
 	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration > GetGameTime())
 	{
 		// We are shrinking, update zone position and model scale
-		if (IsValidEntity(g_zonePropRef))
+		if (IsValidEntity(g_hZonePropEnt))
 		{
 			// Progress from level x+1 to level x
 			float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
 			SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
 			ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
 			AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
-			TeleportEntity(g_zonePropRef, vecZoneOrigin);
+			TeleportEntity(g_hZonePropEnt, vecZoneOrigin);
 			
 			// Progress from 1.0 to 0.0 (starting zone to zero size)
 			flShrinkPercentage = (float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks);
-			SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(flShrinkPercentage));
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(flShrinkPercentage));
 		}
 		
 	}
@@ -205,8 +207,8 @@ void Zone_OnSetupFinished()
 static void Zone_Reset()
 {
 	g_bInitialized = false;
-	g_zonePropRef = INVALID_ENT_REFERENCE;
-	g_zoneGhostPropRef = INVALID_ENT_REFERENCE;
+	g_hZonePropEnt = INVALID_ENT_REFERENCE;
+	g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
 	g_vecOldPosition = NULL_VECTOR;
 	g_vecNewPosition = NULL_VECTOR;
 	g_hZoneTimer = null;
@@ -276,11 +278,11 @@ static Action Timer_StartDisplay(Handle hTimer)
 	if (g_iShrinkLevel > 1)
 	{
 		// Teleport ghost zone to the new center, then update size and display
-		if (IsValidEntity(g_zoneGhostPropRef))
+		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
-			TeleportEntity(g_zoneGhostPropRef, g_vecNewPosition);
-			SetEntPropFloat(g_zoneGhostPropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
-			AcceptEntityInput(g_zoneGhostPropRef, "Enable");
+			TeleportEntity(g_hZoneGhostPropEnt, g_vecNewPosition);
+			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			AcceptEntityInput(g_hZoneGhostPropEnt, "Enable");
 		}
 	}
 	
@@ -339,16 +341,16 @@ static Action Timer_FinishShrink(Handle hTimer)
 	{
 		g_vecOldPosition = g_vecNewPosition;
 		
-		if (IsValidEntity(g_zonePropRef))
+		if (IsValidEntity(g_hZonePropEnt))
 		{
-			TeleportEntity(g_zonePropRef, g_vecNewPosition);
-			SetEntPropFloat(g_zonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
 		}
 		
 		// Hide the ghost zone
-		if (IsValidEntity(g_zoneGhostPropRef))
+		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
-			AcceptEntityInput(g_zoneGhostPropRef, "Disable");
+			AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
 		}
 		
 		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
@@ -356,14 +358,14 @@ static Action Timer_FinishShrink(Handle hTimer)
 	else
 	{
 		// Final shrink finished - remove the zone props
-		if (IsValidEntity(g_zonePropRef))
+		if (IsValidEntity(g_hZonePropEnt))
 		{
-			RemoveEntity(g_zonePropRef);
+			RemoveEntity(g_hZonePropEnt);
 		}
 		
-		if (IsValidEntity(g_zoneGhostPropRef))
+		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
-			RemoveEntity(g_zoneGhostPropRef);
+			RemoveEntity(g_hZoneGhostPropEnt);
 		}
 	}
 	
@@ -417,6 +419,11 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 	vecOrigin[2] /= heights.Length;
 	delete heights;
 	return true;
+}
+
+void Zone_GetNewPosition(float center[3])
+{
+	center = g_vecNewPosition;
 }
 
 float Zone_GetPropScale(float flPercentage = 1.0)

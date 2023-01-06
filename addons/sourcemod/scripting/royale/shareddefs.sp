@@ -47,7 +47,10 @@ enum FRRoundState
 enum FRPlayerState
 {
 	FRPlayerState_Waiting,
-	FRPlayerState_InBus,
+	FRPlayerState_InBattleBus,
+	FRPlayerState_Parachuting,
+	FRPlayerState_Playing,
+	FRPlayerState_Dead,
 }
 
 //-----------------------------------------------------------------------------
