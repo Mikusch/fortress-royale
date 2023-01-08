@@ -19,8 +19,7 @@
 {
 	"Crate_Opening"
 	{
-		"#format"	"{1:N}"
-		"en"		"{1} is opening"
+		"en"		"Opening"
 	}
 	"Weapon_CannotDropFists"
 	{

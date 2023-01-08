@@ -35,6 +35,7 @@ void Events_Init()
 	
 	Events_Add("player_spawn", EventHook_PlayerSpawn);
 	Events_Add("player_death", EventHook_PlayerDeath);
+	Events_Add("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
 	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_Add("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
 	Events_Add("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
@@ -95,7 +96,9 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 			TF2Util_SetPlayerActiveWeapon(client, weapon);
 		}
 		
-		FRPlayer(client).m_nPlayerState = FRPlayerState_Parachuting;
+		FRPlayer(client).SetPlayerState(FRPlayerState_Playing);
+		FRPlayer(client).m_bIsParachuting = true;
+		
 		TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
 	}
 }
@@ -105,23 +108,24 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 	if (IsInWaitingForPlayers())
 		return;
 	
-	int client = GetClientOfUserId(event.GetInt("userid"));
+	int userid = event.GetInt("userid");
+	int victim = GetClientOfUserId(userid);
 	int death_flags = event.GetInt("death_flags");
 	
 	if (!(death_flags & TF_DEATHFLAG_DEADRINGER))
 	{
 		for (int iLoadoutSlot = 0; iLoadoutSlot <= LOADOUT_POSITION_PDA2; ++iLoadoutSlot)
 		{
-			int entity = GetEntityForLoadoutSlot(client, iLoadoutSlot);
+			int entity = GetEntityForLoadoutSlot(victim, iLoadoutSlot);
 			
 			if (!IsValidEntity(entity))
 				continue;
 			
-			if (!ShouldDropItem(client, entity))
+			if (!ShouldDropItem(victim, entity))
 				continue;
 			
 			float vecOrigin[3], vecAngles[3];
-			if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, entity, vecOrigin, vecAngles))
+			if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(victim, entity, vecOrigin, vecAngles))
 				continue;
 			
 			char szWorldModel[PLATFORM_MAX_PATH];
@@ -132,21 +136,63 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 				{
 					if (TF2Util_IsEntityWeapon(entity))
 					{
-						SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, entity, false);
+						SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, victim, entity, false);
 					}
 					else if (TF2Util_IsEntityWearable(entity))
 					{
-						InitDroppedWearable(droppedWeapon, client, entity, false);
+						InitDroppedWearable(droppedWeapon, victim, entity, false);
 					}
 				}
 			}
 			
-			TF2_RemovePlayerItem(client, entity);
+			TF2_RemovePlayerItem(victim, entity);
 		}
 		
-		FRPlayer(client).m_nPlayerState = FRPlayerState_Dead;
-		TF2_ChangeClientTeam(client, TFTeam_Blue);
+		if (FRPlayer(victim).GetPlayerState() == FRPlayerState_Playing)
+		{
+			// Set player state to dead now
+			FRPlayer(victim).SetPlayerState(FRPlayerState_Dying);
+			
+			// Delay team switch so ragdolls can appear as the correct team
+			float flDelay = TF_DEATH_ANIMATION_TIME + spec_freeze_traveltime.FloatValue;
+			CreateTimer(flDelay, Timer_MovePlayerToDeadTeam, userid);
+		}
 	}
+}
+
+static Action Timer_MovePlayerToDeadTeam(Handle timer, int userid)
+{
+	int client = GetClientOfUserId(userid);
+	if (client == 0)
+		return Plugin_Continue;
+	
+	if (IsPlayerAlive(client))
+		return Plugin_Continue;
+	
+	if (FRPlayer(client).m_nPlayerState != FRPlayerState_Dying)
+		return Plugin_Continue;
+	
+	if (TF2_GetClientTeam(client) != TFTeam_Red)
+		return Plugin_Continue;
+	
+	FRPlayer(client).SetPlayerState(FRPlayerState_Waiting);
+	TF2_ChangeClientTeam(client, TFTeam_Blue);
+	
+	return Plugin_Continue;
+}
+
+static Action EventHook_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
+{
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
+	
+	if (!IsInWaitingForPlayers() && team != TFTeam_Red)
+	{
+		FRPlayer(client).SetPlayerState(FRPlayerState_Waiting);
+	}
+	
+	event.BroadcastDisabled = true;
+	return Plugin_Changed;
 }
 
 static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
@@ -154,6 +200,7 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	if (IsInWaitingForPlayers())
 		return;
 	
+	// Stop the round end sounds
 	EmitGameSoundToAll("MatchMaking.MatchEndWinMusicCasual", _, SND_STOPLOOPING);
 	EmitGameSoundToAll("MatchMaking.MatchEndLoseMusicCasual", _, SND_STOPLOOPING);
 	
@@ -190,12 +237,7 @@ static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, b
 	char sound[PLATFORM_MAX_PATH];
 	event.GetString("sound", sound, sizeof(sound));
 	
-	if (strncmp(sound, "Game.TeamRoundStart", 19) == 0)
-	{
-		event.SetString("sound", "MatchMaking.RoundStartCasual");
-		return Plugin_Changed;
-	}
-	else if (StrEqual(sound, "Game.YourTeamWon"))
+	if (StrEqual(sound, "Game.YourTeamWon"))
 	{
 		event.SetString("sound", "MatchMaking.MatchEndWinMusicCasual");
 		return Plugin_Changed;

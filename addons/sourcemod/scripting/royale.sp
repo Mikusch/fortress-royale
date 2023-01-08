@@ -48,6 +48,7 @@ ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damage;
 
 ConVar mp_disable_respawn_times;
+ConVar spec_freeze_traveltime;
 
 bool g_bEnabled;
 bool g_bTF2Items;
@@ -256,14 +257,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	
 	ProcessCrateOpening(client, buttons);
 	
-	if (FRPlayer(client).m_nPlayerState == FRPlayerState_InBattleBus)
+	if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
 	{
 		if (buttons & IN_RELOAD)
 		{
 			BattleBus_EjectPlayer(client);
 		}
 	} 
-	else if (buttons & IN_JUMP && FRPlayer(client).m_nPlayerState == FRPlayerState_Parachuting && TF2_IsPlayerInCondition(client, TFCond_Parachute) && BattleBus_IsActive())
+	else if (buttons & IN_JUMP && FRPlayer(client).m_bIsParachuting && TF2_IsPlayerInCondition(client, TFCond_Parachute) && BattleBus_IsActive())
 	{
 		// Don't allow closing the starting parachute while the bus is active
 		buttons &= ~IN_JUMP;
@@ -278,9 +279,12 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 	if (!g_bEnabled)
 		return;
 	
-	if (condition == TFCond_Parachute && FRPlayer(client).m_nPlayerState == FRPlayerState_Parachuting)
+	if (!IsPlayerAlive(client))
+		return;
+	
+	if (condition == TFCond_Parachute && FRPlayer(client).m_bIsParachuting)
 	{
-		FRPlayer(client).m_nPlayerState = FRPlayerState_Playing;
+		// TODO: Remove parachute
 	}
 }
 
@@ -302,7 +306,8 @@ static bool ProcessCrateOpening(int client, int buttons)
 		
 		if (TR_GetFraction() != 1.0 && TR_DidHit())
 		{
-			return FRPlayer(client).TryToOpenCrate(TR_GetEntityIndex());
+			int entity = TR_GetEntityIndex();
+			return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client) && FRPlayer(client).TryToOpenCrate(entity);
 		}
 	}
 	
@@ -366,6 +371,8 @@ void OnRoundStart()
 		if (!IsClientInGame(client))
 			continue;
 		
+		FRPlayer(client).Init();
+		
 		// Remove wearables
 		for (int wbl = 0; wbl < TF2Util_GetPlayerWearableCount(client); ++wbl)
 		{
@@ -389,6 +396,8 @@ void OnRoundStart()
 		
 		if (TF2_GetClientTeam(client) > TFTeam_Spectator)
 		{
+			FRPlayer(client).SetPlayerState(FRPlayerState_Waiting);
+			
 			if (IsPlayerAlive(client))
 			{
 				// Make sure the player is actually dead

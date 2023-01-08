@@ -65,7 +65,7 @@ static void SDKHookCB_Client_WeaponSwitchPost(int client, int weapon)
 
 static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
 {
-	if (collisiongroup == COLLISION_GROUP_PLAYER_MOVEMENT && FRPlayer(entity).m_nPlayerState == FRPlayerState_Parachuting)
+	if (collisiongroup == COLLISION_GROUP_PLAYER_MOVEMENT && FRPlayer(entity).m_bIsParachuting)
 	{
 		// Avoid getting stuck in players while parachuting
 		return false;

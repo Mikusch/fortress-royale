@@ -20,6 +20,8 @@
 
 #define MAX_WEAPONS				48	// Max number of weapons available
 
+#define TF_DEATH_ANIMATION_TIME			2.0
+
 #define TF_DEFINDEX_FISTS				5
 #define TF_DEFINDEX_UPGRADEABLE_FISTS	195
 
@@ -48,9 +50,8 @@ enum FRPlayerState
 {
 	FRPlayerState_Waiting,
 	FRPlayerState_InBattleBus,
-	FRPlayerState_Parachuting,
 	FRPlayerState_Playing,
-	FRPlayerState_Dead,
+	FRPlayerState_Dying,
 }
 
 //-----------------------------------------------------------------------------

@@ -218,7 +218,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 			}
 			
 			// make sure we removed our current weapon
-			if (IsValidEntity(weapon))
+			if (IsValidEntity(weapon) && ShouldDropItem(player, weapon))
 			{
 				// drop current weapon
 				float vecPackOrigin[3], vecPackAngles[3];

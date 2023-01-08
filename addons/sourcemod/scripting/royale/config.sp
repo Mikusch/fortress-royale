@@ -183,9 +183,7 @@ enum struct CrateConfig
 	{
 		if (this.extra_contents && this.extra_contents.Length != 0)
 		{
-			ArrayList extra_contents = this.extra_contents.Clone();
-			extra_contents.GetArray(GetRandomInt(0, extra_contents.Length - 1), extra_content);
-			delete extra_contents;
+			this.extra_contents.GetArray(GetRandomInt(0, this.extra_contents.Length - 1), extra_content);
 			return GetRandomFloat() <= extra_content.chance;
 		}
 		

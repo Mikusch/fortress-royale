@@ -18,7 +18,8 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-static int m_clientWearableVM[MAXPLAYERS + 1];
+static bool m_bIsParachuting[MAXPLAYERS + 1];
+static int m_hClientWearableVM[MAXPLAYERS + 1];
 static float m_flCrateOpenTime[MAXPLAYERS + 1];
 static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
 
@@ -41,15 +42,27 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
-	property int m_clientWearableVM
+	property bool m_bIsParachuting
 	{
 		public get()
 		{
-			return m_clientWearableVM[this.index];
+			return m_bIsParachuting[this.index];
+		}
+		public set(bool bIsParachuting)
+		{
+			m_bIsParachuting[this.index] = bIsParachuting;
+		}
+	}
+	
+	property int m_hClientWearableVM
+	{
+		public get()
+		{
+			return m_hClientWearableVM[this.index];
 		}
 		public set(int clientWearableVM)
 		{
-			m_clientWearableVM[this.index] = clientWearableVM;
+			m_hClientWearableVM[this.index] = clientWearableVM;
 		}
 	}
 	
@@ -77,24 +90,36 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
+	public FRPlayerState GetPlayerState()
+	{
+		return this.m_nPlayerState;
+	}
+	
+	public void SetPlayerState(FRPlayerState nState)
+	{
+		LogMessage("Changing state to %d for %N", nState, this.index);
+		
+		this.m_nPlayerState = nState;
+	}
+	
 	public bool IsAlive()
 	{
-		return IsPlayerAlive(this.index) || this.m_nPlayerState == FRPlayerState_InBattleBus;
+		return IsPlayerAlive(this.index) || this.GetPlayerState() == FRPlayerState_InBattleBus;
 	}
 	
 	public void SetWearableVM(int wearable)
 	{
-		this.m_clientWearableVM = wearable;
+		this.m_hClientWearableVM = wearable;
 	}
 	
 	public void RemoveWearableVM()
 	{
-		if (IsValidEntity(this.m_clientWearableVM))
+		if (IsValidEntity(this.m_hClientWearableVM))
 		{
-			RemoveEntity(this.m_clientWearableVM);
+			RemoveEntity(this.m_hClientWearableVM);
 		}
 		
-		this.m_clientWearableVM = INVALID_ENT_REFERENCE;
+		this.m_hClientWearableVM = INVALID_ENT_REFERENCE;
 	}
 	
 	public bool TryToOpenCrate(int crate)
@@ -116,7 +141,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 		if (this.m_flCrateOpenTime + fr_crate_open_time.FloatValue > GetGameTime())
 		{
 			char szMessage[64];
-			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index, this.index);
+			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index);
 			
 			int iSeconds = RoundToCeil(GetGameTime() - this.m_flCrateOpenTime);
 			for (int i = 0; i < iSeconds; i++)
@@ -178,6 +203,9 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public void Init()
 	{
-		this.m_clientWearableVM = INVALID_ENT_REFERENCE;
+		this.m_bIsParachuting = false;
+		this.m_flCrateOpenTime = 0.0;
+		this.m_hClientWearableVM = INVALID_ENT_REFERENCE;
+		this.m_nPlayerState = FRPlayerState_Waiting;
 	}
 }

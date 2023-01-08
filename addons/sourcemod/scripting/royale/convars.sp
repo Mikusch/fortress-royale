@@ -54,6 +54,7 @@ void ConVars_Init()
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
 	mp_disable_respawn_times = FindConVar("mp_disable_respawn_times");
+	spec_freeze_traveltime = FindConVar("spec_freeze_traveltime");
 	
 	ConVars_AddConVar("tf_powerup_mode", "1");
 	ConVars_AddConVar("tf_weapon_criticals", "0");
@@ -64,7 +65,6 @@ void ConVars_Init()
 	ConVars_AddConVar("mp_teams_unbalance_limit", "0");
 	ConVars_AddConVar("mp_autoteambalance", "0");
 	ConVars_AddConVar("mp_scrambleteams_auto", "0");
-	ConVars_AddConVar("mp_respawnwavetime", "99999.9");
 	ConVars_AddConVar("mp_forcecamera", "0");
 	ConVars_AddConVar("mp_friendlyfire", "1");
 }

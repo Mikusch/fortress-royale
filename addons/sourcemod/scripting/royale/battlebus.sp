@@ -101,7 +101,7 @@ void BattleBus_OnSetupFinished()
 		if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
 			continue;
 		
-		FRPlayer(client).m_nPlayerState = FRPlayerState_InBattleBus;
+		FRPlayer(client).SetPlayerState(FRPlayerState_InBattleBus);
 		
 		//SetVariantString("!activator");
 		//AcceptEntityInput(camera, "Enable", client);
