@@ -212,36 +212,39 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, szTranslatedWeaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
-			if (IsWeaponBuilder(newItem) && nClass == TFClass_Spy)
+			if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 			{
 				SDKCall_CBaseCombatWeapon_SetSubType(newItem, TFObject_Sapper);
 			}
 			
 			// make sure we removed our current weapon
-			if (IsValidEntity(weapon) && ShouldDropItem(player, weapon))
+			if (IsValidEntity(weapon))
 			{
-				// drop current weapon
-				float vecPackOrigin[3], vecPackAngles[3];
-				SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(player, weapon, vecPackOrigin, vecPackAngles);
-				
-				char szWorldModel[PLATFORM_MAX_PATH];
-				if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
+				if (ShouldDropItem(player, weapon))
 				{
-					int newDroppedWeapon = CreateDroppedWeapon(vecPackOrigin, vecPackAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
-					if (IsValidEntity(newDroppedWeapon))
+					// drop current weapon
+					float vecPackOrigin[3], vecPackAngles[3];
+					SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(player, weapon, vecPackOrigin, vecPackAngles);
+					
+					char szWorldModel[PLATFORM_MAX_PATH];
+					if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 					{
-						if (TF2Util_IsEntityWeapon(weapon))
+						int newDroppedWeapon = CreateDroppedWeapon(vecPackOrigin, vecPackAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+						if (IsValidEntity(newDroppedWeapon))
 						{
-							SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
-						}
-						else if (TF2Util_IsEntityWearable(weapon))
-						{
-							InitDroppedWearable(newDroppedWeapon, player, weapon, true);
+							if (TF2Util_IsEntityWeapon(weapon))
+							{
+								SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, player, weapon, true);
+							}
+							else if (TF2Util_IsEntityWearable(weapon))
+							{
+								InitDroppedWearable(newDroppedWeapon, player, weapon, true);
+							}
 						}
 					}
 				}
 				
-				TF2_RemovePlayerItem(player, weapon);
+				FRPlayer(player).RemoveItem(weapon);
 			}
 			
 			int lastWeapon = GetEntPropEnt(player, Prop_Send, "m_hLastWeapon");

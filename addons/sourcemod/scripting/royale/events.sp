@@ -89,17 +89,24 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 	
 	if (IsPlayerAlive(client))
 	{
-		int weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
-		if (IsValidEntity(weapon))
+		FRPlayer(client).SetPlayerState(FRPlayerState_Playing);
+		
+		// Create the starting fists
+		int fists = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
+		if (IsValidEntity(fists))
 		{
-			ItemGiveTo(client, weapon);
-			TF2Util_SetPlayerActiveWeapon(client, weapon);
+			ItemGiveTo(client, fists);
+			TF2Util_SetPlayerActiveWeapon(client, fists);
 		}
 		
-		FRPlayer(client).SetPlayerState(FRPlayerState_Playing);
-		FRPlayer(client).m_bIsParachuting = true;
-		
-		TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
+		// Create the starting parachute
+		int parachute = GenerateDefaultItem(client, TF_DEFINDEX_PARACHUTE);
+		if (IsValidEntity(parachute))
+		{
+			ItemGiveTo(client, parachute);
+			FRPlayer(client).m_bIsParachuting = true;
+			TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
+		}
 	}
 }
 
@@ -145,7 +152,7 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 				}
 			}
 			
-			TF2_RemovePlayerItem(victim, entity);
+			FRPlayer(victim).RemoveItem(entity);
 		}
 		
 		if (FRPlayer(victim).GetPlayerState() == FRPlayerState_Playing)

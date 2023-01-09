@@ -81,7 +81,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		return false;
 	}
 	
-	if (IsWeaponBuilder(weapon) && nClass == TFClass_Spy)
+	if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 	{
 		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
 	}
@@ -108,7 +108,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		}
 	}
 	
-	TF2_RemovePlayerItem(client, weapon);
+	FRPlayer(client).RemoveItem(weapon);
 	
 	return true;
 }

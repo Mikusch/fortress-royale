@@ -284,7 +284,24 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 	
 	if (condition == TFCond_Parachute && FRPlayer(client).m_bIsParachuting)
 	{
-		// TODO: Remove parachute
+		FRPlayer(client).m_bIsParachuting = false;
+		
+		// Remove the starting parachute
+		for (int i = 0; i < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++i)
+		{
+			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", i);
+			if (weapon == -1)
+				continue;
+			
+			if (!TF2Util_IsEntityWeapon(weapon))
+				continue;
+			
+			if (TF2Util_GetWeaponID(weapon) != TF_WEAPON_PARACHUTE)
+				continue;
+			
+			FRPlayer(client).RemoveItem(weapon);
+			break;
+		}
 	}
 }
 
@@ -371,32 +388,12 @@ void OnRoundStart()
 		if (!IsClientInGame(client))
 			continue;
 		
+		// Init player and set them into waiting state
 		FRPlayer(client).Init();
-		
-		// Remove wearables
-		for (int wbl = 0; wbl < TF2Util_GetPlayerWearableCount(client); ++wbl)
-		{
-			int wearable = TF2Util_GetPlayerWearable(client, wbl);
-			if (wearable == -1)
-				continue;
-			
-			TF2_RemoveWearable(client, wearable);
-			wbl--;
-		}
-		// Remove weapons
-		for (int wpn = 0; wpn < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++wpn)
-		{
-			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", wpn);
-			if (weapon == -1)
-				continue;
-			
-			RemovePlayerItem(client, weapon);
-			RemoveEntity(weapon);
-		}
 		
 		if (TF2_GetClientTeam(client) > TFTeam_Spectator)
 		{
-			FRPlayer(client).SetPlayerState(FRPlayerState_Waiting);
+			FRPlayer(client).RemoveAllItems();
 			
 			if (IsPlayerAlive(client))
 			{

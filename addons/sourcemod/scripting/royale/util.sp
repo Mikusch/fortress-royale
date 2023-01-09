@@ -77,8 +77,13 @@ bool GetItemWorldModel(int item, char[] szWorldModel, int iMaxLength)
 		}
 		
 		int nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
-		return ModelIndexToString(nModelIndex, szWorldModel, iMaxLength);
+		if (nModelIndex > 0)
+		{
+			return ModelIndexToString(nModelIndex, szWorldModel, iMaxLength);
+		}
 	}
+	
+	return false;
 }
 
 float GetPercentInvisible(int client)
@@ -107,32 +112,21 @@ void SendHudNotification(HudNotification_t iType, bool bForceShow = false)
 	EndMessage();
 }
 
-void TF2_RemovePlayerItem(int client, int item)
+void RemoveExtraWearables(int item)
 {
-	if (TF2Util_IsEntityWeapon(item))
+	int hExtraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
+	if (hExtraWearable != -1)
 	{
-		// Remove any extra wearables associated with the weapon
-		int extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearable");
-		if (extraWearable != -1)
-		{
-			TF2_RemoveWearable(client, extraWearable);
-		}
-		
-		// And their viewmodel too
-		extraWearable = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
-		if (extraWearable != -1)
-		{
-			TF2_RemoveWearable(client, extraWearable);
-		}
-		
-		RemovePlayerItem(client, item);
-	}
-	else if (TF2Util_IsEntityWearable(item))
-	{
-		TF2_RemoveWearable(client, item);
+		TF2_RemoveWearable(GetEntPropEnt(hExtraWearable, Prop_Send, "m_hOwnerEntity"), hExtraWearable);
+		SetEntPropEnt(item, Prop_Send, "m_hExtraWearable", -1);
 	}
 	
-	RemoveEntity(item);
+	int hExtraWearableViewModel = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
+	if (hExtraWearableViewModel != -1)
+	{
+		TF2_RemoveWearable(GetEntPropEnt(hExtraWearable, Prop_Send, "m_hOwnerEntity"), hExtraWearableViewModel);
+		SetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel", -1);
+	}
 }
 
 bool ShouldUseCustomViewModel(int client, int weapon)
@@ -257,7 +251,11 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 bool ShouldDropItem(int client, int weapon)
 {
 	// Don't drop engineer's toolbox
-	if (IsWeaponBuilder(weapon) && TF2_GetPlayerClass(client) == TFClass_Engineer)
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
+		return false;
+	
+	// Don't allow dropping our starting parachute
+	if (FRPlayer(client).m_bIsParachuting && IsWeaponOfID(weapon, TF_WEAPON_PARACHUTE))
 		return false;
 	
 	if (IsWeaponFists(weapon))
@@ -290,7 +288,7 @@ int GenerateDefaultItem(int client, int iItemDefIndex)
 	SetEntProp(weapon, Prop_Send, "m_iAccountID", GetSteamAccountID(client, false));
 	SetEntProp(weapon, Prop_Send, "m_bValidatedAttachedEntity", true);
 	
-	if (IsWeaponBuilder(weapon) && nClass == TFClass_Spy)
+	if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 	{
 		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
 	}
@@ -460,10 +458,8 @@ int GetActivePlayerCount()
 		if (!IsClientInGame(client))
 			continue;
 		
-		if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
-			continue;
-		
-		iCount++;
+		if (TF2_GetClientTeam(client) > TFTeam_Spectator)
+			iCount++;
 	}
 	
 	return iCount;
@@ -478,10 +474,8 @@ int GetAlivePlayerCount()
 		if (!IsClientInGame(client))
 			continue;
 		
-		if (!FRPlayer(client).IsAlive())
-			continue;
-		
-		iCount++;
+		if (IsPlayerAlive(client) || FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
+			iCount++;
 	}
 	
 	return iCount;
@@ -565,7 +559,7 @@ void DissolveEntity(int entity)
 	}
 }
 
-bool IsWeaponBuilder(int weapon)
+bool IsWeaponOfID(int weapon, int weaponID)
 {
-	return TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == TF_WEAPON_BUILDER;
+	return TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == weaponID;
 }

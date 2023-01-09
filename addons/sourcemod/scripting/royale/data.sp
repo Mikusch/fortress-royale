@@ -19,7 +19,7 @@
 #pragma semicolon 1
 
 static bool m_bIsParachuting[MAXPLAYERS + 1];
-static int m_hClientWearableVM[MAXPLAYERS + 1];
+static int m_hWearableVM[MAXPLAYERS + 1];
 static float m_flCrateOpenTime[MAXPLAYERS + 1];
 static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
 
@@ -54,15 +54,15 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
-	property int m_hClientWearableVM
+	property int m_hWearableVM
 	{
 		public get()
 		{
-			return m_hClientWearableVM[this.index];
+			return m_hWearableVM[this.index];
 		}
 		public set(int clientWearableVM)
 		{
-			m_hClientWearableVM[this.index] = clientWearableVM;
+			m_hWearableVM[this.index] = clientWearableVM;
 		}
 	}
 	
@@ -102,24 +102,19 @@ methodmap FRPlayer < CBaseCombatCharacter
 		this.m_nPlayerState = nState;
 	}
 	
-	public bool IsAlive()
-	{
-		return IsPlayerAlive(this.index) || this.GetPlayerState() == FRPlayerState_InBattleBus;
-	}
-	
 	public void SetWearableVM(int wearable)
 	{
-		this.m_hClientWearableVM = wearable;
+		this.m_hWearableVM = wearable;
 	}
 	
 	public void RemoveWearableVM()
 	{
-		if (IsValidEntity(this.m_hClientWearableVM))
+		if (IsValidEntity(this.m_hWearableVM))
 		{
-			RemoveEntity(this.m_hClientWearableVM);
+			RemoveEntity(this.m_hWearableVM);
 		}
 		
-		this.m_hClientWearableVM = INVALID_ENT_REFERENCE;
+		this.m_hWearableVM = INVALID_ENT_REFERENCE;
 	}
 	
 	public bool TryToOpenCrate(int crate)
@@ -196,6 +191,42 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
+	public void RemoveItem(int item)
+	{
+		if (TF2Util_IsEntityWeapon(item))
+		{
+			RemovePlayerItem(this.index, item);
+			RemoveExtraWearables(item);
+		}
+		else if (TF2Util_IsEntityWearable(item))
+		{
+			TF2_RemoveWearable(this.index, item);
+		}
+		
+		RemoveEntity(item);
+	}
+	
+	public void RemoveAllItems()
+	{
+		for (int i = 0; i < this.GetPropArraySize(Prop_Send, "m_hMyWeapons"); ++i)
+		{
+			int weapon = this.GetPropEnt(Prop_Send, "m_hMyWeapons", i);
+			if (weapon == -1)
+				continue;
+			
+			this.RemoveItem(weapon);
+		}
+		
+		for (int wbl = TF2Util_GetPlayerWearableCount(this.index) - 1; wbl >= 0; wbl--)
+		{
+			int wearable = TF2Util_GetPlayerWearable(this.index, wbl);
+			if (wearable == -1)
+				continue;
+			
+			this.RemoveItem(wearable);
+		}
+	}
+	
 	public bool IsInAVehicle()
 	{
 		return this.GetPropEnt(Prop_Data, "m_hVehicle") != -1;
@@ -205,7 +236,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 	{
 		this.m_bIsParachuting = false;
 		this.m_flCrateOpenTime = 0.0;
-		this.m_hClientWearableVM = INVALID_ENT_REFERENCE;
-		this.m_nPlayerState = FRPlayerState_Waiting;
+		this.m_hWearableVM = INVALID_ENT_REFERENCE;
+		this.SetPlayerState(FRPlayerState_Waiting);
 	}
 }
