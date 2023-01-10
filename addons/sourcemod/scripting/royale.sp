@@ -46,6 +46,7 @@ ConVar fr_zone_shrink_player;
 ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damage;
+ConVar fr_parachute_auto_height;
 
 ConVar mp_disable_respawn_times;
 ConVar spec_freeze_traveltime;
@@ -145,7 +146,7 @@ public void OnLibraryRemoved(const char[] name)
 public void OnMapStart()
 {
 	PrecacheSound(")ui/item_open_crate.wav");
-	PrecacheSound(")ui/itemcrate_smash_ultrarare_short.wav");
+	PrecacheSound(")ui/itemcrate_smash_rare.wav");
 	
 	g_nRoundState = FRRoundState_Init;
 	
@@ -263,12 +264,39 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			BattleBus_EjectPlayer(client);
 		}
-	} 
-	else if (buttons & IN_JUMP && FRPlayer(client).m_bIsParachuting && TF2_IsPlayerInCondition(client, TFCond_Parachute) && BattleBus_IsActive())
+	}
+	
+	// We are falling from the bus...
+	if (FRPlayer(client).m_bIsParachuting)
 	{
-		// Don't allow closing the starting parachute while the bus is active
-		buttons &= ~IN_JUMP;
-		return Plugin_Changed;
+		if (TF2_IsPlayerInCondition(client, TFCond_Parachute))
+		{
+			// Don't allow closing the starting parachute
+			if (buttons & IN_JUMP)
+			{
+				buttons &= ~IN_JUMP;
+				return Plugin_Changed;
+			}
+		}
+		else
+		{
+			float vecOrigin[3];
+			CBaseCombatCharacter(client).GetAbsOrigin(vecOrigin);
+			
+			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_DontHitPlayers, client);
+			if (TR_DidHit())
+			{
+				float vecEndPos[3];
+				TR_GetEndPosition(vecEndPos);
+				
+				// Automatically open our parachute
+				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
+				{
+					buttons |= IN_JUMP;
+					return Plugin_Changed;
+				}
+			}
+		}
 	}
 	
 	return Plugin_Continue;
@@ -335,6 +363,11 @@ static bool ProcessCrateOpening(int client, int buttons)
 static bool TraceEntityFilter_HitCrates(int entity, int mask, int client)
 {
 	return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client);
+}
+
+static bool TraceEntityFilter_DontHitPlayers(int entity, int mask, int client)
+{
+	return !(0 < entity <= MaxClients);
 }
 
 public void OnClientPutInServer(int client)

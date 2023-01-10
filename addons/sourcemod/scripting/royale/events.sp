@@ -105,7 +105,6 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 		{
 			ItemGiveTo(client, parachute);
 			FRPlayer(client).m_bIsParachuting = true;
-			TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
 		}
 	}
 }

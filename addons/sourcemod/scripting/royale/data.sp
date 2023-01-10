@@ -151,7 +151,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 			this.StopOpeningCrate(crate);
 			FRCrate(crate).DropItem(this.index);
 			
-			EmitSoundToAll(")ui/itemcrate_smash_ultrarare_short.wav", crate, SNDCHAN_STATIC);
+			EmitSoundToAll(")ui/itemcrate_smash_rare.wav", crate, SNDCHAN_STATIC);
 			
 			float origin[3];
 			CBaseEntity(crate).WorldSpaceCenter(origin);

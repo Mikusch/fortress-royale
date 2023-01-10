@@ -118,13 +118,15 @@ void RemoveExtraWearables(int item)
 	if (hExtraWearable != -1)
 	{
 		TF2_RemoveWearable(GetEntPropEnt(hExtraWearable, Prop_Send, "m_hOwnerEntity"), hExtraWearable);
+		RemoveEntity(hExtraWearable);
 		SetEntPropEnt(item, Prop_Send, "m_hExtraWearable", -1);
 	}
 	
 	int hExtraWearableViewModel = GetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel");
 	if (hExtraWearableViewModel != -1)
 	{
-		TF2_RemoveWearable(GetEntPropEnt(hExtraWearable, Prop_Send, "m_hOwnerEntity"), hExtraWearableViewModel);
+		TF2_RemoveWearable(GetEntPropEnt(hExtraWearableViewModel, Prop_Send, "m_hOwnerEntity"), hExtraWearableViewModel);
+		RemoveEntity(hExtraWearableViewModel);
 		SetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel", -1);
 	}
 }

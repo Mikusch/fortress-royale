@@ -290,12 +290,12 @@ static Action Timer_DropLootCrate(Handle timer, int bus)
 					SetEntProp(prop, Prop_Data, "m_takedamage", DAMAGE_YES);
 				}
 				
-				float origin[3], angles[3], velocity[3];
-				CBaseEntity(bus).GetAbsOrigin(origin);
-				CBaseEntity(bus).GetAbsAngles(angles);
-				CBaseEntity(bus).GetAbsVelocity(velocity);
+				float vecOrigin[3], vecAngles[3], vecVelocity[3];
+				CBaseEntity(bus).GetAbsOrigin(vecOrigin);
+				CBaseEntity(bus).GetAbsAngles(vecAngles);
+				CBaseEntity(bus).GetAbsVelocity(vecVelocity);
 				
-				TeleportEntity(prop, origin, angles, velocity);
+				TeleportEntity(prop, vecOrigin, vecAngles, vecVelocity);
 				
 				int glow = CreateEntityByName("tf_glow");
 				if (IsValidEntity(glow))

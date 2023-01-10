@@ -50,6 +50,7 @@ void ConVars_Init()
 	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "20.0", "Seconds after shrink to display next zone", _, true, 0.0);
 	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damage = CreateConVar("fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
+	fr_parachute_auto_height = CreateConVar("fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
 	
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
