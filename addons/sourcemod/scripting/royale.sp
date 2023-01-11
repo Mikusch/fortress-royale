@@ -261,15 +261,30 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
 	
-	ProcessCrateOpening(client, buttons);
+	int afButtonsChanged = GetEntProp(client, Prop_Data, "m_afButtonPressed") | GetEntProp(client, Prop_Data, "m_afButtonReleased");
+	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonsChanged & IN_ATTACK2);
+	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonsChanged & IN_ATTACK3);
+	bool bInReload = (buttons & IN_RELOAD && afButtonsChanged & IN_RELOAD);
 	
+	// Allow picking up weapons with +attack2, +attack3 and +reload
+	if (bInAttack2 || bInAttack3 || bInReload)
+	{
+		if (SDKCall_CTFPlayer_TryToPickupDroppedWeapon(client))
+			return Plugin_Continue;
+	}
+	
+	// Ejecting from the bus (only allows +attack3 and +reload)
 	if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
 	{
-		if (buttons & IN_RELOAD)
+		if (bInAttack3 || bInReload)
 		{
 			BattleBus_EjectPlayer(client);
+			return Plugin_Continue;
 		}
 	}
+	
+	// Opening crates with +reload
+	ProcessCrateOpening(client, buttons);
 	
 	Action action = Plugin_Continue;
 	

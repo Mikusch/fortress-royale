@@ -24,6 +24,7 @@ static Handle g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon;
 static Handle g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
 static Handle g_SDKCall_CTFPlayer_GetLoadoutItem;
+static Handle g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
 static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
@@ -38,6 +39,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles = PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(gamedata);
 	g_SDKCall_CTFPlayer_GiveNamedItem = PrepSDKCall_CTFPlayer_GiveNamedItem(gamedata);
 	g_SDKCall_CTFPlayer_GetLoadoutItem = PrepSDKCall_CTFPlayer_GetLoadoutItem(gamedata);
+	g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon = PrepSDKCall_CTFPlayer_TryToPickupDroppedWeapon(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
 	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
@@ -138,6 +140,19 @@ static Handle PrepSDKCall_CTFPlayer_GetLoadoutItem(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::GetLoadoutItem");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CTFPlayer_TryToPickupDroppedWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::TryToPickupDroppedWeapon");
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::TryToPickupDroppedWeapon");
 	
 	return call;
 }
@@ -270,6 +285,16 @@ Address SDKCall_CTFPlayer_GetLoadoutItem(int player, TFClassType nClass, int iSl
 	}
 	
 	return Address_Null;
+}
+
+bool SDKCall_CTFPlayer_TryToPickupDroppedWeapon(int player)
+{
+	if (g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon)
+	{
+		return SDKCall(g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon, player);
+	}
+	
+	return false;
 }
 
 bool SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(int player, int weapon)
