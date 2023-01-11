@@ -366,6 +366,7 @@ void BattleBus_EjectPlayer(int client)
 	
 	// Eject the player
 	TeleportEntity(client, vecOrigin);
+	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
 	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hActiveBusEnt);
 }
 

@@ -18,6 +18,11 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+bool IsEntityClient(int entity)
+{
+	return 0 < entity <= MaxClients;
+}
+
 void ItemGiveTo(int client, int item)
 {
 	if (TF2Util_IsEntityWearable(item))

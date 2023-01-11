@@ -36,18 +36,18 @@ void ConVars_Init()
 	
 	fr_enable = CreateConVar("fr_enable", "1", "Enable the plugin?");
 	fr_setup_length = CreateConVar("fr_setup_length", "15", "Time before the battle buss takes off.");
-	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3.f", "Amount of time to open a crate.");
-	fr_crate_open_range = CreateConVar("fr_crate_open_range", "100.f", "Range in HU that players may open crates from.");
+	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3", "Amount of time to open a crate.");
+	fr_crate_open_range = CreateConVar("fr_crate_open_range", "64", "Range in HU that players may open crates from.");
 	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
 	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
 	
-	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30.0", "Seconds from round start to start zone display", _, true, 0.0);
-	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1.0", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
-	fr_zone_display = CreateConVar("fr_zone_display", "15.0", "Seconds to display next zone before shrink", _, true, 0.0);
+	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
+	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
+	fr_zone_display = CreateConVar("fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
 	fr_zone_display_player = CreateConVar("fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
-	fr_zone_shrink = CreateConVar("fr_zone_shrink", "20.0", "Seconds to shrink zone to next level", _, true, 0.0);
+	fr_zone_shrink = CreateConVar("fr_zone_shrink", "20", "Seconds to shrink zone to next level", _, true, 0.0);
 	fr_zone_shrink_player = CreateConVar("fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
-	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "20.0", "Seconds after shrink to display next zone", _, true, 0.0);
+	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
 	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	fr_zone_damage = CreateConVar("fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
 	fr_parachute_auto_height = CreateConVar("fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");

@@ -55,6 +55,7 @@ bool g_bEnabled;
 bool g_bTF2Items;
 bool g_bBypassGiveNamedItemHook;
 bool g_bAllowForceRespawn;
+bool g_bFoundCrate;
 FRRoundState g_nRoundState;
 
 #include "royale/shareddefs.sp"
@@ -266,7 +267,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		}
 	}
 	
-	// We are falling from the bus...
+	// We jumped from the bus
 	if (FRPlayer(client).m_bIsParachuting)
 	{
 		if (TF2_IsPlayerInCondition(client, TFCond_Parachute))
@@ -281,7 +282,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		else
 		{
 			float vecOrigin[3];
-			CBaseCombatCharacter(client).GetAbsOrigin(vecOrigin);
+			CBaseEntity(client).GetAbsOrigin(vecOrigin);
 			
 			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_DontHitPlayers, client);
 			if (TR_DidHit())
@@ -289,7 +290,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				float vecEndPos[3];
 				TR_GetEndPosition(vecEndPos);
 				
-				// Automatically open our parachute
+				// Open parachute when we are a certain distance from the ground
 				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
 				{
 					buttons |= IN_JUMP;
@@ -337,22 +338,27 @@ static bool ProcessCrateOpening(int client, int buttons)
 {
 	if (IsPlayerAlive(client) && (buttons & IN_RELOAD) && !FRPlayer(client).IsInAVehicle())
 	{
-		float vecEyePosition[3], vecEyeAngles[3];
-		GetClientEyePosition(client, vecEyePosition);
+		float vecEyeAngles[3], vecForward[3];
 		GetClientEyeAngles(client, vecEyeAngles);
-		
-		float vecForward[3];
 		GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, NULL_VECTOR);
 		
+		float vecCenter[3];
+		CBaseEntity(client).WorldSpaceCenter(vecCenter);
+		
 		ScaleVector(vecForward, fr_crate_open_range.FloatValue);
-		AddVectors(vecForward, vecEyePosition, vecForward);
+		AddVectors(vecCenter, vecForward, vecCenter);
+		float vecSize[3] = { 24.0, 24.0, 24.0 };
 		
-		TR_TraceRayFilter(vecEyePosition, vecForward, MASK_SOLID, RayType_EndPoint, TraceEntityFilter_HitCrates, client, TRACE_ENTITIES_ONLY);
+		float vecMins[3], vecMaxs[3];
+		SubtractVectors(vecCenter, vecSize, vecMins);
+		AddVectors(vecCenter, vecSize, vecMaxs);
 		
-		if (TR_GetFraction() != 1.0 && TR_DidHit())
+		g_bFoundCrate = false;
+		TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_Test, client);
+		
+		if (g_bFoundCrate)
 		{
-			int entity = TR_GetEntityIndex();
-			return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client) && FRPlayer(client).TryToOpenCrate(entity);
+			return true;
 		}
 	}
 	
@@ -360,14 +366,21 @@ static bool ProcessCrateOpening(int client, int buttons)
 	return false;
 }
 
-static bool TraceEntityFilter_HitCrates(int entity, int mask, int client)
+static bool TraceEntityEnumerator_Test(int entity, int client)
 {
-	return FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client);
+	if (FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client))
+	{
+		g_bFoundCrate = true;
+		FRPlayer(client).TryToOpenCrate(entity);
+		return false;
+	}
+	
+	return true;
 }
 
 static bool TraceEntityFilter_DontHitPlayers(int entity, int mask, int client)
 {
-	return !(0 < entity <= MaxClients);
+	return !IsEntityClient(client);
 }
 
 public void OnClientPutInServer(int client)
