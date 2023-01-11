@@ -33,12 +33,12 @@ void Events_Init()
 {
 	g_Events = new ArrayList(sizeof(EventData));
 	
-	Events_Add("player_spawn", EventHook_PlayerSpawn);
-	Events_Add("player_death", EventHook_PlayerDeath);
-	Events_Add("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
-	Events_Add("teamplay_round_start", EventHook_TeamplayRoundStart);
-	Events_Add("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
-	Events_Add("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
+	Events_AddEvent("player_spawn", EventHook_PlayerSpawn);
+	Events_AddEvent("player_death", EventHook_PlayerDeath);
+	Events_AddEvent("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
+	Events_AddEvent("teamplay_round_start", EventHook_TeamplayRoundStart);
+	Events_AddEvent("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
+	Events_AddEvent("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
 }
 
 void Events_Toggle(bool enable)
@@ -46,7 +46,7 @@ void Events_Toggle(bool enable)
 	for (int i = 0; i < g_Events.Length; i++)
 	{
 		EventData data;
-		if (g_Events.GetArray(i, data) > 0)
+		if (g_Events.GetArray(i, data) != 0)
 		{
 			if (enable)
 			{
@@ -60,7 +60,7 @@ void Events_Toggle(bool enable)
 	}
 }
 
-static void Events_Add(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
+static void Events_AddEvent(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
 {
 	Event event = CreateEvent(name, true);
 	if (event)

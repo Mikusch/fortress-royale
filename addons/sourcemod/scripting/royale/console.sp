@@ -18,26 +18,52 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+enum struct CommandListenerData
+{
+	CommandListener callback;
+	char command[64];
+}
+
+static ArrayList g_commandListenerData;
+
+void Console_Init()
+{
+	g_commandListenerData = new ArrayList(sizeof(CommandListenerData));
+	
+	Console_AddCommandListener(CommandListener_DropItem, "dropitem");
+	Console_AddCommandListener(CommandListener_JoinTeam, "jointeam");
+	Console_AddCommandListener(CommandListener_JoinTeam, "autoteam");
+	Console_AddCommandListener(CommandListener_JoinTeam, "spectate");
+	Console_AddCommandListener(CommandListener_Build, "build");
+	Console_AddCommandListener(CommandListener_Destroy, "destroy");
+	Console_AddCommandListener(CommandListener_EurekaTeleport, "eureka_teleport");
+}
+
 void Console_Toggle(bool enable)
 {
-	if (enable)
+	for (int i = 0; i < g_commandListenerData.Length; i++)
 	{
-		AddCommandListener(CommandListener_DropItem, "dropitem");
-		AddCommandListener(CommandListener_JoinTeam, "jointeam");
-		AddCommandListener(CommandListener_JoinTeam, "autoteam");
-		AddCommandListener(CommandListener_JoinTeam, "spectate");
-		AddCommandListener(CommandListener_Build, "build");
-		AddCommandListener(CommandListener_Destroy, "destroy");
+		CommandListenerData data;
+		if (g_commandListenerData.GetArray(i, data))
+		{
+			if (enable)
+			{
+				AddCommandListener(data.callback, data.command);
+			}
+			else
+			{
+				RemoveCommandListener(data.callback, data.command);
+			}
+		}
 	}
-	else
-	{
-		RemoveCommandListener(CommandListener_DropItem, "dropitem");
-		RemoveCommandListener(CommandListener_JoinTeam, "jointeam");
-		RemoveCommandListener(CommandListener_JoinTeam, "autoteam");
-		RemoveCommandListener(CommandListener_JoinTeam, "spectate");
-		RemoveCommandListener(CommandListener_Build, "build");
-		RemoveCommandListener(CommandListener_Destroy, "destroy");
-	}
+}
+
+static void Console_AddCommandListener(CommandListener callback, const char[] command = "")
+{
+	CommandListenerData data;
+	data.callback = callback;
+	strcopy(data.command, sizeof(data.command), command);
+	g_commandListenerData.PushArray(data);
 }
 
 static Action CommandListener_DropItem(int client, const char[] command, int argc)
@@ -196,4 +222,21 @@ static Action CommandListener_Destroy(int client, const char[] command, int argc
 	}
 	
 	return Plugin_Handled;
+}
+
+static Action CommandListener_EurekaTeleport(int client, const char[] command, int argc)
+{
+	if (argc < 1)
+	{
+		// No argument teleports home by default
+		return Plugin_Handled;
+	}
+	
+	if (view_as<eEurekaTeleportTargets>(GetCmdArgInt(1)) == EUREKA_TELEPORT_HOME)
+	{
+		// Prevent home teleport by Eureka Effect
+		return Plugin_Handled;
+	}
+	
+	return Plugin_Continue;
 }

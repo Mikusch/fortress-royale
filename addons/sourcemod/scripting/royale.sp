@@ -94,6 +94,7 @@ public void OnPluginStart()
 	
 	g_bTF2Items = LibraryExists("TF2Items");
 	
+	Console_Init();
 	ConVars_Init();
 	Events_Init();
 	
@@ -396,11 +397,6 @@ static bool TraceEntityEnumerator_EnumerateCrates(int entity, int client)
 	}
 	
 	return true;
-}
-
-static bool TraceEntityFilter_DontHitPlayers(int entity, int mask, int client)
-{
-	return !IsEntityClient(client);
 }
 
 public void OnClientPutInServer(int client)

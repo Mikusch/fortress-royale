@@ -207,6 +207,18 @@ enum HudNotification_t
 	NUM_STOCK_NOTIFICATIONS
 };
 
+enum eEurekaTeleportTargets
+{
+	EUREKA_FIRST_TARGET = 0,
+
+	EUREKA_TELEPORT_HOME = 0,
+	EUREKA_TELEPORT_TELEPORTER_EXIT,
+
+	EUREKA_LAST_TARGET = EUREKA_TELEPORT_TELEPORTER_EXIT,
+		
+	EUREKA_NUM_TARGETS
+};
+
 char g_viewModelArms[][] = {
 	"",
 	"models/weapons/c_models/c_scout_arms.mdl",
