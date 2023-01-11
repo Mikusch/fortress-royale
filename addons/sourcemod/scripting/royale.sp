@@ -304,8 +304,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			float vecOrigin[3];
 			CBaseEntity(client).GetAbsOrigin(vecOrigin);
 			
-			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_DontHitPlayers, client);
-			if (TR_DidHit())
+			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
+			if (TR_DidHit() && TR_GetEntityIndex() == 0)
 			{
 				float vecEndPos[3];
 				TR_GetEndPosition(vecEndPos);
@@ -374,7 +374,7 @@ static bool ProcessCrateOpening(int client, int buttons)
 		AddVectors(vecCenter, vecSize, vecMaxs);
 		
 		g_bFoundCrate = false;
-		TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_Test, client);
+		TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_EnumerateCrates, client);
 		
 		if (g_bFoundCrate)
 		{
@@ -386,7 +386,7 @@ static bool ProcessCrateOpening(int client, int buttons)
 	return false;
 }
 
-static bool TraceEntityEnumerator_Test(int entity, int client)
+static bool TraceEntityEnumerator_EnumerateCrates(int entity, int client)
 {
 	if (FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client))
 	{

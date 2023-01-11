@@ -601,3 +601,8 @@ int FindParentOwnerEntity(int entity)
 		return entity;
 	}
 }
+
+bool TraceEntityFilter_HitWorld(int entity, int mask)
+{
+	return entity == 0;
+}

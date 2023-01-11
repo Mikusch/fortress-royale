@@ -390,7 +390,7 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 				continue;
 			
 			TR_TraceRayFilter(vecStart, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
-			if (!TR_DidHit())
+			if (!TR_DidHit() || TR_GetEntityIndex() != 0)
 				continue;
 			
 			float vecEnd[3];
@@ -459,9 +459,4 @@ static float Zone_GetShrinkDuration()
 static float Zone_GetNextDisplayDuration()
 {
 	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
-}
-
-static bool TraceEntityFilter_HitWorld(int entity, int mask)
-{
-	return entity == 0;
 }
