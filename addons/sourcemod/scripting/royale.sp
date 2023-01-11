@@ -48,6 +48,7 @@ ConVar fr_zone_nextdisplay;
 ConVar fr_zone_nextdisplay_player;
 ConVar fr_zone_damage;
 ConVar fr_parachute_auto_height;
+ConVar fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
 
 ConVar mp_disable_respawn_times;
 ConVar spec_freeze_traveltime;

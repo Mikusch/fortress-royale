@@ -389,8 +389,11 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 	if (IsInWaitingForPlayers())
 		return MRES_Ignored;
 	
+	TFClassType nClass = TF2_GetPlayerClass(player);
+	if (nClass == TFClass_Unknown)
+		return MRES_Ignored;
+	
 	// Increase class maximum health
-	int maxhealth = ret.Value;
-	ret.Value = maxhealth * 2;
+	ret.Value *= fr_health_multiplier[nClass].IntValue;
 	return MRES_Supercede;
 }

@@ -53,6 +53,16 @@ void ConVars_Init()
 	fr_zone_damage = CreateConVar("fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
 	fr_parachute_auto_height = CreateConVar("fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
 	
+	fr_health_multiplier[TFClass_Scout] = CreateConVar("fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
+	fr_health_multiplier[TFClass_Sniper] = CreateConVar("fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
+	fr_health_multiplier[TFClass_Soldier] = CreateConVar("fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");
+	fr_health_multiplier[TFClass_DemoMan] = CreateConVar("fr_health_multiplier_demoman", "2", "Multiplier to maximum health for Demoman.");
+	fr_health_multiplier[TFClass_Medic] = CreateConVar("fr_health_multiplier_medic", "1.5", "Multiplier to maximum health for Medic.");
+	fr_health_multiplier[TFClass_Heavy] = CreateConVar("fr_health_multiplier_heavy", "1.75", "Multiplier to maximum health for Heavy.");
+	fr_health_multiplier[TFClass_Pyro] = CreateConVar("fr_health_multiplier_pyro", "1.6", "Multiplier to maximum health for Pyro.");
+	fr_health_multiplier[TFClass_Spy] = CreateConVar("fr_health_multiplier_spy", "1.6", "Multiplier to maximum health for Spy.");
+	fr_health_multiplier[TFClass_Engineer] = CreateConVar("fr_health_multiplier_engineer", "1.6", "Multiplier to maximum health for Engineer.");
+	
 	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
 	mp_disable_respawn_times = FindConVar("mp_disable_respawn_times");
