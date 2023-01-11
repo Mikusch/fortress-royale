@@ -394,6 +394,7 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 		return MRES_Ignored;
 	
 	// Increase class maximum health
-	ret.Value *= fr_health_multiplier[nClass].IntValue;
+	int iMaxHealth = ret.Value;
+	ret.Value = RoundToFloor(iMaxHealth * fr_health_multiplier[nClass].FloatValue);
 	return MRES_Supercede;
 }
