@@ -195,7 +195,7 @@ enum struct CrateConfig
 		if (!IsValidEntity(crate))
 			return;
 		
-		if (!IsEntityClient(client) || !IsClientInGame(client))
+		if (!IsValidClient(client))
 			return;
 		
 		// Normal crate drops (guaranteed)
@@ -208,10 +208,11 @@ enum struct CrateConfig
 				ItemConfig item;
 				if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
 				{
-					if (Config_CreateItem(client, crate, item) && (++nDropped <= this.max_drops))
+					if (Config_CreateItem(client, crate, item))
 					{
-						// Only exit once we have generated everything
-						break;
+						// Keep going until we have generated everything we want
+						if (++nDropped <= this.max_drops)
+							break;
 					}
 				}
 			}
@@ -540,7 +541,7 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 
 bool Config_GetRandomItemByType(int client, const char[] type, const char[] subtype, ItemConfig item)
 {
-	if (!IsEntityClient(client) || !IsClientInGame(client))
+	if (!IsValidClient(client))
 		return false;
 	
 	ArrayList items = Config_GetItemsByType(type, subtype);
@@ -603,7 +604,7 @@ bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
 
 bool Config_CreateItem(int client, int crate, ItemConfig item)
 {
-	if (!IsEntityClient(client) || !IsClientInGame(client))
+	if (!IsValidClient(client))
 		return false;
 	
 	if (!IsValidEntity(crate))

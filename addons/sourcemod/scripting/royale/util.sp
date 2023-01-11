@@ -18,9 +18,9 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-bool IsEntityClient(int entity)
+bool IsValidClient(int client)
 {
-	return 0 < entity <= MaxClients;
+	return (0 < client <= MaxClients) && IsValidEntity(client) && IsClientInGame(client);
 }
 
 void ItemGiveTo(int client, int item)
@@ -451,7 +451,7 @@ bool ShouldGoToSetup()
 	return GetActivePlayerCount() > 1;
 }
 
-bool ShouldTryToEndGame()
+bool ShouldTryToEndMatch()
 {
 	return GetAlivePlayerCount() <= 1;
 }
@@ -481,7 +481,7 @@ int GetAlivePlayerCount()
 		if (!IsClientInGame(client))
 			continue;
 		
-		if (IsPlayerAlive(client) || FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
+		if (FRPlayer(client).IsAlive())
 			iCount++;
 	}
 	

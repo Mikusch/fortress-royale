@@ -90,6 +90,11 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
+	public bool IsAlive()
+	{
+		return IsPlayerAlive(this.index) || this.GetPlayerState() == FRPlayerState_InBattleBus;
+	}
+	
 	public FRPlayerState GetPlayerState()
 	{
 		return this.m_nPlayerState;
@@ -179,7 +184,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 		else
 		{
-			while ((crate = FindEntityByClassname(crate, "prop_dynamic")) != -1)
+			while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
 			{
 				// Find our current crate
 				if (FREntity(crate).IsValidCrate() && FRCrate(crate).m_claimedBy == this.index)

@@ -55,6 +55,7 @@ ConVar spec_freeze_traveltime;
 
 bool g_bEnabled;
 bool g_bTF2Items;
+bool g_bIsMapRunning;
 bool g_bBypassGiveNamedItemHook;
 bool g_bAllowForceRespawn;
 bool g_bInHealthKitTouch;
@@ -151,10 +152,11 @@ public void OnLibraryRemoved(const char[] name)
 
 public void OnMapStart()
 {
+	g_bIsMapRunning = true;
+	g_nRoundState = FRRoundState_Init;
+	
 	PrecacheSound(")ui/item_open_crate.wav");
 	PrecacheSound(")ui/itemcrate_smash_rare.wav");
-	
-	g_nRoundState = FRRoundState_Init;
 	
 	Config_Parse();
 	Truce_Precache();
@@ -163,6 +165,8 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
+	g_bIsMapRunning = false;
+	
 	Config_Delete();
 }
 
@@ -197,12 +201,9 @@ public void OnGameFrame()
 		case FRRoundState_RoundRunning:
 		{
 			// Have all valid players died?
-			if (ShouldTryToEndGame())
+			if (ShouldTryToEndMatch())
 			{
-				g_nRoundState = FRRoundState_PlayerWin;
-				
-				// Declare a winner!
-				SetWinningTeam(TFTeam_Red);
+				TryToEndMatch();
 			}
 		}
 	}
@@ -496,6 +497,40 @@ void OnRoundStart()
 	}
 	
 	Zone_OnRoundStart();
+}
+
+void TryToEndMatch()
+{
+	int winner = -1;
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (!FRPlayer(client).IsAlive())
+			continue;
+		
+		// There is still more than one player alive, exit now
+		if (IsValidClient(winner))
+			return;
+		
+		winner = client;
+	}
+	
+	g_nRoundState = FRRoundState_RoundEnd;
+	
+	if (IsValidClient(winner))
+	{
+		SetWinningTeam(TFTeam_Red);
+		PrintToChatAll("%t", "MatchEnd_PlayerWin", winner);
+	}
+	else
+	{
+		// Stalemate
+		SetWinningTeam(TFTeam_Spectator);
+		PrintToChatAll("%t", "MatchEnd_Stalemate");
+	}
 }
 
 static void EntityOutput_OnSetupFinished(const char[] output, int caller, int activator, float delay)

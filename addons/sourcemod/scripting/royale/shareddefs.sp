@@ -48,7 +48,7 @@ enum FRRoundState
 	FRRoundState_WaitingForPlayers,
 	FRRoundState_Setup,
 	FRRoundState_RoundRunning,
-	FRRoundState_PlayerWin,
+	FRRoundState_RoundEnd,
 }
 
 enum FRPlayerState

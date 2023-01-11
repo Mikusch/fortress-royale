@@ -38,4 +38,13 @@
 	{
 		"en"		"Incoming special supply drop from the sky!"
 	}
+	"MatchEnd_Stalemate"
+	{
+		"en"		"Stalemate! You are all losers!"
+	}
+	"MatchEnd_PlayerWin"
+	{
+		"#format"	"{1:N}"
+		"en"		"The winner of the game is {1}!"
+	}
 }

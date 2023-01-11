@@ -34,7 +34,11 @@ void SDKHooks_UnhookClient(int client)
 
 void SDKHooks_OnEntityCreated(int entity, const char[] classname)
 {
-	if (strncmp(classname, "item_healthkit_", 15) == 0)
+	if (strncmp(classname, "prop_dynamic", 12) == 0)
+	{
+		SDKHook(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
+	}
+	else if (strncmp(classname, "item_healthkit_", 15) == 0)
 	{
 		SDKHook(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
 		SDKHook(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
@@ -74,13 +78,23 @@ static void SDKHookCB_Client_WeaponSwitchPost(int client, int weapon)
 
 static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
 {
+	// Avoid getting stuck in players while parachuting
 	if (collisiongroup == COLLISION_GROUP_PLAYER_MOVEMENT && FRPlayer(entity).m_bIsParachuting)
-	{
-		// Avoid getting stuck in players while parachuting
 		return false;
-	}
 	
 	return originalResult;
+}
+
+static void SDKHookCB_PropDynamic_SpawnPost(int entity)
+{
+	if (!g_bIsMapRunning || !IsInWaitingForPlayers())
+		return;
+	
+	// Remove all valid crates during waiting for players
+	if (FRCrate(entity).IsValidCrate())
+	{
+		RemoveEntity(entity);
+	}
 }
 
 static Action SDKHookCB_ItemHealthKit_Touch(int entity, int other)

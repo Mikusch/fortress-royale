@@ -82,7 +82,7 @@ methodmap FREntity < CBaseEntity
 			return false;
 		
 		char name[64];
-		return this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) && Config_IsValidCrateName(name);
+		return this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) != 0 && Config_IsValidCrateName(name);
 	}
 	
 	public void Destroy()

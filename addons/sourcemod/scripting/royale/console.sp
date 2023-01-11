@@ -234,7 +234,7 @@ static Action CommandListener_EurekaTeleport(int client, const char[] command, i
 	
 	if (view_as<eEurekaTeleportTargets>(GetCmdArgInt(1)) == EUREKA_TELEPORT_HOME)
 	{
-		// Prevent home teleport by Eureka Effect
+		// Prevent home teleport from Eureka Effect
 		return Plugin_Handled;
 	}
 	

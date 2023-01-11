@@ -211,7 +211,7 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	EmitGameSoundToAll("MatchMaking.MatchEndLoseMusicCasual", _, SND_STOPLOOPING);
 	
 	// Should the game start?
-	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_PlayerWin)
+	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_RoundEnd)
 	{
 		if (ShouldGoToSetup())
 		{

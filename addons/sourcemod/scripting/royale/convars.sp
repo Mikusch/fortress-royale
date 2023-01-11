@@ -107,7 +107,7 @@ static void ConVars_AddConVar(const char[] name, const char[] value, bool enforc
 	ConVar convar = FindConVar(name);
 	if (convar)
 	{
-		// Store ConVar data
+		// Store convar data
 		ConVarData data;
 		strcopy(data.name, sizeof(data.name), name);
 		strcopy(data.value, sizeof(data.value), value);
@@ -128,7 +128,7 @@ static void ConVars_Enable(const char[] name)
 	{
 		ConVar convar = FindConVar(data.name);
 		
-		// Store the current value so we can later reset the ConVar to it
+		// Store the current value so we can later reset the convar to it
 		convar.GetString(data.initial_value, sizeof(data.initial_value));
 		g_ConVars.SetArray(name, data, sizeof(data));
 		
