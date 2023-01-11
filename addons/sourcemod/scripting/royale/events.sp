@@ -232,6 +232,7 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 	g_nRoundState = FRRoundState_RoundRunning;
 	
 	BattleBus_OnSetupFinished();
+	Truce_OnSetupFinished();
 	Zone_OnSetupFinished();
 }
 

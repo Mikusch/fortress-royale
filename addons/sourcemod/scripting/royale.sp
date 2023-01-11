@@ -33,6 +33,7 @@
 
 ConVar fr_enable;
 ConVar fr_setup_length;
+ConVar fr_truce_duration;
 ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
@@ -71,6 +72,7 @@ FRRoundState g_nRoundState;
 #include "royale/events.sp"
 #include "royale/sdkcalls.sp"
 #include "royale/sdkhooks.sp"
+#include "royale/truce.sp"
 #include "royale/util.sp"
 #include "royale/zone.sp"
 
@@ -152,6 +154,7 @@ public void OnMapStart()
 	g_nRoundState = FRRoundState_Init;
 	
 	Config_Parse();
+	Truce_Precache();
 	Zone_Precache();
 }
 
@@ -267,19 +270,19 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		}
 	}
 	
-	// We jumped from the bus
+	Action action = Plugin_Continue;
+	
+	// We are gliding down...
 	if (FRPlayer(client).m_bIsParachuting)
 	{
-		if (TF2_IsPlayerInCondition(client, TFCond_Parachute))
+		// Do not allow manual opening/closing of the parachute
+		if (buttons & IN_JUMP)
 		{
-			// Don't allow closing the starting parachute
-			if (buttons & IN_JUMP)
-			{
-				buttons &= ~IN_JUMP;
-				return Plugin_Changed;
-			}
+			buttons &= ~IN_JUMP;
+			action = Plugin_Changed;
 		}
-		else
+		
+		if (!TF2_IsPlayerInCondition(client, TFCond_Parachute))
 		{
 			float vecOrigin[3];
 			CBaseEntity(client).GetAbsOrigin(vecOrigin);
@@ -294,13 +297,13 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
 				{
 					buttons |= IN_JUMP;
-					return Plugin_Changed;
+					action = Plugin_Changed;
 				}
 			}
 		}
 	}
 	
-	return Plugin_Continue;
+	return action;
 }
 
 public void TF2_OnConditionRemoved(int client, TFCond condition)
@@ -457,10 +460,7 @@ void OnRoundStart()
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
 	{
-		char szSetupLength[8];
-		fr_setup_length.GetString(szSetupLength, sizeof(szSetupLength));
-		
-		DispatchKeyValue(timer, "setup_length", szSetupLength);
+		DispatchKeyValueFloat(timer, "setup_length", fr_setup_length.FloatValue);
 		DispatchKeyValue(timer, "show_in_hud", "1");
 		DispatchKeyValue(timer, "start_paused", "0");
 		
