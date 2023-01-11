@@ -194,7 +194,7 @@ methodmap FRCrate < FREntity
 		CrateConfig crate;
 		if (Config_GetCrateByName(name, crate))
 		{
-			crate.Open(client, this.index);
+			crate.Open(this.index, client);
 		}
 	}
 }

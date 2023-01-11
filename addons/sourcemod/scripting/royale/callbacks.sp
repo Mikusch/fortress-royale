@@ -150,7 +150,7 @@ public bool ItemCallback_CreateSingleInstancePowerup(int client, KeyValues data,
 	}
 	
 	DispatchSpawn(entity);
-	TeleportEntity(entity, vecOrigin, vecAngles);
+	TeleportEntity(entity, vecOrigin);
 	
 	float vecLaunchVel[3];
 	vecLaunchVel[0] = GetRandomFloat(-50.0, 50.0);

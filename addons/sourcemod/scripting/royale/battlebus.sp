@@ -330,7 +330,13 @@ static void EntityOutput_OnBreak(const char[] output, int caller, int activator,
 		CrateConfig crate;
 		if (Config_GetCrateByName(name, crate))
 		{
-			crate.Open(activator, caller);
+			// We might have been broken by a non-player entity e.g. rocket projectile, find our real owner
+			int owner = IsValidEntity(activator) ? FindParentOwnerEntity(activator) : -1;
+			
+			if (IsEntityClient(owner) && IsClientInGame(owner))
+			{
+				crate.Open(caller, owner);
+			}
 		}
 	}
 }

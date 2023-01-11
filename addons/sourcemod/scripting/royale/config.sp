@@ -190,8 +190,14 @@ enum struct CrateConfig
 		return false;
 	}
 	
-	void Open(int client, int crate)
+	void Open(int crate, int client)
 	{
+		if (!IsValidEntity(crate))
+			return;
+		
+		if (!IsEntityClient(client) || !IsClientInGame(client))
+			return;
+		
 		// Normal crate drops (guaranteed)
 		int nDropped = 0;
 		for (;;)
@@ -534,6 +540,9 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 
 bool Config_GetRandomItemByType(int client, const char[] type, const char[] subtype, ItemConfig item)
 {
+	if (!IsEntityClient(client) || !IsClientInGame(client))
+		return false;
+	
 	ArrayList items = Config_GetItemsByType(type, subtype);
 	
 	if (!items || items.Length == 0)
@@ -594,6 +603,12 @@ bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
 
 bool Config_CreateItem(int client, int crate, ItemConfig item)
 {
+	if (!IsEntityClient(client) || !IsClientInGame(client))
+		return false;
+	
+	if (!IsValidEntity(crate))
+		return false;
+	
 	Function callback = item.GetCallbackFunction("create");
 	if (callback == INVALID_FUNCTION)
 		return false;
