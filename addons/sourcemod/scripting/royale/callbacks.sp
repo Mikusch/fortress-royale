@@ -86,6 +86,26 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
 	}
 	
+	// Apply attributes
+	if (data.JumpToKey("attributes", false))
+	{
+		if (data.GotoFirstSubKey(false))
+		{
+			do
+			{
+				char name[64];
+				if (data.GetSectionName(name, sizeof(name)))
+				{
+					float flValue = data.GetFloat(NULL_STRING);
+					TF2Attrib_SetByName(weapon, name, flValue);
+				}
+			}
+			while (data.GotoNextKey(false));
+			data.GoBack();
+		}
+		data.GoBack();
+	}
+	
 	// Weapon_Equip can cause weapon switches, just temporarily prevent it
 	TF2Attrib_SetByName(weapon, "disable weapon switch", 1.0);
 	ItemGiveTo(client, weapon);
