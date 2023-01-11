@@ -215,7 +215,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		int newItem = SDKCall_CTFPlayer_GiveNamedItem(player, szTranslatedWeaponName, 0, pItem, true);
 		if (IsValidEntity(newItem))
 		{
-			if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
+			if (nClass == TFClass_Spy && IsWeaponOfID(newItem, TF_WEAPON_BUILDER))
 			{
 				SDKCall_CBaseCombatWeapon_SetSubType(newItem, TFObject_Sapper);
 			}

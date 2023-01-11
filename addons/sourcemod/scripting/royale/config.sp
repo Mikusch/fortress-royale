@@ -193,7 +193,8 @@ enum struct CrateConfig
 	void Open(int client, int crate)
 	{
 		// Normal crate drops (guaranteed)
-		for (int i = 0; i < this.max_drops; i++)
+		int nDropped = 0;
+		for (;;)
 		{
 			CrateContentConfig content;
 			if (this.GetRandomContent(content))
@@ -201,7 +202,11 @@ enum struct CrateConfig
 				ItemConfig item;
 				if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
 				{
-					Config_CreateItem(client, crate, item);
+					if (Config_CreateItem(client, crate, item) && (++nDropped <= this.max_drops))
+					{
+						// Only exit once we have generated everything
+						break;
+					}
 				}
 			}
 		}

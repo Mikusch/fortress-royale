@@ -146,7 +146,7 @@ void Zone_Think()
 	
 	float flRadius = g_zoneData.diameter_max * flShrinkPercentage / 2.0;
 	
-	if (GetGameTime() >= g_flNextDamageTime)
+	if (GetGameTime() >= g_flNextDamageTime && g_nRoundState != FRRoundState_PlayerWin)
 	{
 		g_flNextDamageTime = GetGameTime() + 0.5;
 		
