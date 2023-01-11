@@ -28,6 +28,7 @@ static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
 static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
 static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
+static Handle g_SDKCall_CTFPowerup_DropSingleInstance;
 
 void SDKCalls_Init(GameData gamedata)
 {
@@ -41,6 +42,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
 	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
 	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
+	g_SDKCall_CTFPowerup_DropSingleInstance = PrepSDKCall_CTFPowerup_DropSingleInstance(gamedata);
 }
 
 static Handle PrepSDKCall_CTFDroppedWeapon_Create(GameData gamedata)
@@ -194,6 +196,22 @@ static Handle PrepSDKCall_CBaseCombatWeapon_GetWorldModel(GameData gamedata)
 	return call;
 }
 
+static Handle PrepSDKCall_CTFPowerup_DropSingleInstance(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPowerup::DropSingleInstance");
+	PrepSDKCall_AddParameter(SDKType_Vector, SDKPass_ByRef);
+	PrepSDKCall_AddParameter(SDKType_CBaseEntity, SDKPass_Pointer);
+	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_ByValue);
+	PrepSDKCall_AddParameter(SDKType_Float, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPowerup::DropSingleInstance");
+	
+	return call;
+}
+
 int SDKCall_CTFDroppedWeapon_Create(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
 {
 	if (g_SDKCall_CTFDroppedWeapon_Create)
@@ -287,5 +305,13 @@ void SDKCall_CBaseCombatWeapon_GetWorldModel(int weapon, char[] szWorldModel, in
 	if (g_SDKCall_CBaseCombatWeapon_GetWorldModel)
 	{
 		SDKCall(g_SDKCall_CBaseCombatWeapon_GetWorldModel, weapon, szWorldModel, iMaxLength);
+	}
+}
+
+void SDKCall_CTFPowerup_DropSingleInstance(int entity, const float vecLaunchVel[3], int thrower, float flThrowerTouchDelay, float flResetTime = 0.0)
+{
+	if (g_SDKCall_CTFPowerup_DropSingleInstance)
+	{
+		SDKCall(g_SDKCall_CTFPowerup_DropSingleInstance, entity, vecLaunchVel, thrower, flThrowerTouchDelay, flResetTime);
 	}
 }

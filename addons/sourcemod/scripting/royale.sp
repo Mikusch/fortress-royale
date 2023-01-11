@@ -56,6 +56,7 @@ bool g_bEnabled;
 bool g_bTF2Items;
 bool g_bBypassGiveNamedItemHook;
 bool g_bAllowForceRespawn;
+bool g_bInHealthKitTouch;
 bool g_bFoundCrate;
 FRRoundState g_nRoundState;
 
@@ -296,7 +297,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				// Open parachute when we are a certain distance from the ground
 				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
 				{
-					buttons |= IN_JUMP;
+					TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
 					action = Plugin_Changed;
 				}
 			}
@@ -318,7 +319,7 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 	{
 		FRPlayer(client).m_bIsParachuting = false;
 		
-		// Remove the starting parachute
+		// Remove our starting parachute
 		for (int i = 0; i < GetEntPropArraySize(client, Prop_Send, "m_hMyWeapons"); ++i)
 		{
 			int weapon = GetEntPropEnt(client, Prop_Send, "m_hMyWeapons", i);
@@ -395,6 +396,11 @@ public void OnClientPutInServer(int client)
 	
 	DHooks_OnClientPutInServer(client);
 	SDKHooks_OnClientPutInServer(client);
+}
+
+public void OnEntityCreated(int entity, const char[] classname)
+{
+	SDKHooks_OnEntityCreated(entity, classname);
 }
 
 public void OnEntityDestroyed(int entity)

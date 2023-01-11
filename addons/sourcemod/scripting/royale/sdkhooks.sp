@@ -32,6 +32,15 @@ void SDKHooks_UnhookClient(int client)
 	SDKUnhook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
 }
 
+void SDKHooks_OnEntityCreated(int entity, const char[] classname)
+{
+	if (strncmp(classname, "item_healthkit_", 15) == 0)
+	{
+		SDKHook(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
+		SDKHook(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
+	}
+}
+
 static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
 {
 	if (ShouldUseCustomViewModel(client, weapon))
@@ -72,4 +81,16 @@ static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int c
 	}
 	
 	return originalResult;
+}
+
+static Action SDKHookCB_ItemHealthKit_Touch(int entity, int other)
+{
+	g_bInHealthKitTouch = true;
+	
+	return Plugin_Continue;
+}
+
+static void SDKHookCB_ItemHealthKit_TouchPost(int entity, int other)
+{
+	g_bInHealthKitTouch = false;
 }

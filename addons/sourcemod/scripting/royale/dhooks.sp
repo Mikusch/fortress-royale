@@ -29,6 +29,7 @@ static ArrayList g_DynamicDetours;
 static ArrayList g_DynamicHookIds;
 
 static DynamicHook g_DHook_CTFPlayer_GiveNamedItem;
+static DynamicHook g_DHook_CBaseCombatCharacter_TakeHealth;
 static DynamicHook g_DHook_CBasePlayer_ForceRespawn;
 
 static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
@@ -39,6 +40,7 @@ void DHooks_Init(GameData gamedata)
 	g_DynamicHookIds = new ArrayList();
 	
 	g_DHook_CTFPlayer_GiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
+	g_DHook_CBaseCombatCharacter_TakeHealth = DHooks_AddDynamicHook(gamedata, "CBaseCombatCharacter::TakeHealth");
 	g_DHook_CBasePlayer_ForceRespawn = DHooks_AddDynamicHook(gamedata, "CBasePlayer::ForceRespawn");
 	
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
@@ -50,6 +52,7 @@ void DHooks_Init(GameData gamedata)
 void DHooks_OnClientPutInServer(int client)
 {
 	DHooks_HookGiveNamedItem(client);
+	DHooks_HookEntity(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, client, DHookCallback_CBaseCombatCharacter_TakeHealth_Pre);
 	DHooks_HookEntity(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, client, DHookCallback_CBasePlayer_ForceRespawn_Pre);
 }
 
@@ -348,6 +351,22 @@ static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookRet
 	{
 		ret.Value = -1;
 		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CBaseCombatCharacter_TakeHealth_Pre(int player, DHookReturn ret, DHookParam params)
+{
+	if (g_bInHealthKitTouch)
+	{
+		// The health kit will not call its post-hook
+		g_bInHealthKitTouch = false;
+		
+		int bitsDamageType = params.Get(2);
+		params.Set(2, bitsDamageType | DMG_IGNORE_MAXHEALTH);
+		
+		return MRES_ChangedHandled;
 	}
 	
 	return MRES_Ignored;

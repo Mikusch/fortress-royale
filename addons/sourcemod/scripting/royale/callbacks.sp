@@ -133,6 +133,35 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	return true;
 }
 
+public bool ItemCallback_CreateSingleInstancePowerup(int client, KeyValues data, const float vecOrigin[3], const float vecAngles[3])
+{
+	char szClassname[64];
+	if (!data.GetString("classname", szClassname, sizeof(szClassname)))
+	{
+		LogError("Failed to find required callback parameter 'classname'");
+		return false;
+	}
+	
+	int entity = CreateEntityByName(szClassname);
+	if (!IsValidEntity(entity))
+	{
+		LogError("Failed to create entity with classname '%s'", szClassname);
+		return false;
+	}
+	
+	DispatchSpawn(entity);
+	TeleportEntity(entity, vecOrigin, vecAngles);
+	
+	float vecLaunchVel[3];
+	vecLaunchVel[0] = GetRandomFloat(-50.0, 50.0);
+	vecLaunchVel[1] = GetRandomFloat(-50.0, 50.0);
+	vecLaunchVel[2] = GetRandomFloat(100.0, 150.0);
+	
+	SDKCall_CTFPowerup_DropSingleInstance(entity, vecLaunchVel, client, 0.3);
+	
+	return true;
+}
+
 public bool ItemCallback_CanBeUsedByPlayer(int client, KeyValues data)
 {
 	int iItemDefIndex = data.GetNum("item_def_index", INVALID_ITEM_DEF_INDEX);

@@ -75,9 +75,21 @@
 				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\x40\x22\x00\x00"
 			}
+			"CTFPowerup::DropSingleInstance"
+			{
+				"library"	"server"
+				"linux"		"@_ZN10CTFPowerup18DropSingleInstanceER6VectorP20CBaseCombatCharacterff"
+				"windows"	"\x55\x8B\xEC\x53\x56\x57\x6A\x01"
+			}
 		}
 		"Offsets"
 		{
+			"CBaseCombatCharacter::TakeHealth"
+			{
+				"library"	"server"
+				"linux"		"67"
+				"windows"	"66"
+			}
 			"CBaseCombatCharacter::Weapon_CanSwitchTo"
 			{
 				"library"	"server"
@@ -166,6 +178,24 @@
 					"pWeapon"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CBaseCombatCharacter::TakeHealth"
+			{
+				"offset"	"CBaseCombatCharacter::TakeHealth"
+				"hooktype"	"entity"
+				"return"	"int"
+				"this"		"entity"
+				"arguments"
+				{
+					"flHealth"
+					{
+						"type"	"float"
+					}
+					"bitsDamageType"
+					{
+						"type"	"int"
 					}
 				}
 			}

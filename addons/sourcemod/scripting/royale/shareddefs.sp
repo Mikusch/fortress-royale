@@ -31,6 +31,10 @@
 #define EFL_KILLME		(1<<0)
 #define EFL_IN_SKYBOX	(1<<17)
 
+// This can only ever be used on a TakeHealth call, since it re-uses a dmg flag that means something else
+#define DMG_IGNORE_MAXHEALTH	(DMG_BULLET)
+#define DMG_IGNORE_DEBUFFS		(DMG_SLASH)
+
 // m_lifeState values
 #define LIFE_ALIVE				0 // alive
 #define LIFE_DYING				1 // playing death animation or still falling off of a ledge waiting to hit ground
