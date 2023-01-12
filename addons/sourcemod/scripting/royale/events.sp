@@ -163,6 +163,29 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 			float flDelay = TF_DEATH_ANIMATION_TIME + spec_freeze_traveltime.FloatValue;
 			CreateTimer(flDelay, Timer_MovePlayerToDeadTeam, userid);
 		}
+		
+		float vecSrc[3];
+		CBaseEntity(victim).WorldSpaceCenter(vecSrc);
+		
+		// Drop a small health kit on death
+		int medKit = CreateEntityByName("item_healthkit_small");
+		if (IsValidEntity(medKit))
+		{
+			DispatchKeyValueVector(medKit, "origin", vecSrc);
+			
+			if (DispatchSpawn(medKit))
+			{
+				float vecImpulse[3];
+				vecImpulse[0] = GetRandomFloat(-1.0, 1.0);
+				vecImpulse[1] = GetRandomFloat(-1.0, 1.0);
+				vecImpulse[2] = 1.0;
+				
+				NormalizeVector(vecImpulse, vecImpulse);
+				ScaleVector(vecImpulse, 250.0);
+				
+				SDKCall_CTFPowerup_DropSingleInstance(medKit, vecImpulse, victim, 0.0);
+			}
+		}
 	}
 }
 
