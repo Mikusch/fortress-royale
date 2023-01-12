@@ -341,13 +341,13 @@ static void EntityOutput_OnBreak(const char[] output, int caller, int activator,
 	}
 }
 
-void BattleBus_EjectPlayer(int client)
+bool BattleBus_EjectPlayer(int client)
 {
 	if (!IsValidEntity(g_hActiveBusEnt))
-		return;
+		return false;
 	
 	if (FRPlayer(client).m_nPlayerState != FRPlayerState_InBattleBus)
-		return;
+		return false;
 	
 	TF2_ChangeClientTeam(client, TFTeam_Red);
 	
@@ -374,6 +374,8 @@ void BattleBus_EjectPlayer(int client)
 	TeleportEntity(client, vecOrigin);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
 	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hActiveBusEnt);
+	
+	return true;
 }
 
 static int BattleBus_CreateBusEntity()

@@ -269,6 +269,13 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonsChanged & IN_ATTACK3);
 	bool bInReload = (buttons & IN_RELOAD && afButtonsChanged & IN_RELOAD);
 	
+	// Ejecting from the bus (only allows +attack3 and +reload)
+	if (bInAttack3 || bInReload)
+	{
+		if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus && BattleBus_EjectPlayer(client))
+			return Plugin_Continue;
+	}
+	
 	// Allow picking up weapons with +attack2, +attack3 and +reload
 	if (bInAttack2 || bInAttack3 || bInReload)
 	{
@@ -276,18 +283,11 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			return Plugin_Continue;
 	}
 	
-	// Ejecting from the bus (only allows +attack3 and +reload)
-	if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
+	// Opening crate in range
+	if (!OpenCrateInRange(client, buttons))
 	{
-		if (bInAttack3 || bInReload)
-		{
-			BattleBus_EjectPlayer(client);
-			return Plugin_Continue;
-		}
+		FRPlayer(client).StopOpeningCrate();
 	}
-	
-	// Opening crates with +reload
-	ProcessCrateOpening(client, buttons);
 	
 	Action action = Plugin_Continue;
 	
@@ -356,36 +356,37 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 	}
 }
 
-static bool ProcessCrateOpening(int client, int buttons)
+static bool OpenCrateInRange(int client, int buttons)
 {
-	if (IsPlayerAlive(client) && (buttons & IN_RELOAD) && !FRPlayer(client).IsInAVehicle())
-	{
-		float vecEyeAngles[3], vecForward[3];
-		GetClientEyeAngles(client, vecEyeAngles);
-		GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, NULL_VECTOR);
-		
-		float vecCenter[3];
-		CBaseEntity(client).WorldSpaceCenter(vecCenter);
-		
-		ScaleVector(vecForward, fr_crate_open_range.FloatValue);
-		AddVectors(vecCenter, vecForward, vecCenter);
-		float vecSize[3] = { 24.0, 24.0, 24.0 };
-		
-		float vecMins[3], vecMaxs[3];
-		SubtractVectors(vecCenter, vecSize, vecMins);
-		AddVectors(vecCenter, vecSize, vecMaxs);
-		
-		g_bFoundCrate = false;
-		TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_EnumerateCrates, client);
-		
-		if (g_bFoundCrate)
-		{
-			return true;
-		}
-	}
+	if (!IsPlayerAlive(client))
+		return false;
 	
-	FRPlayer(client).StopOpeningCrate();
-	return false;
+	if (FRPlayer(client).IsInAVehicle())
+		return false;
+	
+	// Pressing and holding +attack2, +attack3 or +reload
+	if (!(buttons & IN_ATTACK2 || buttons & IN_ATTACK3 || buttons & IN_RELOAD))
+		return false;
+	
+	float vecEyeAngles[3], vecForward[3];
+	GetClientEyeAngles(client, vecEyeAngles);
+	GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, NULL_VECTOR);
+	
+	float vecCenter[3];
+	CBaseEntity(client).WorldSpaceCenter(vecCenter);
+	
+	ScaleVector(vecForward, fr_crate_open_range.FloatValue);
+	AddVectors(vecCenter, vecForward, vecCenter);
+	float vecSize[3] = { 24.0, 24.0, 24.0 };
+	
+	float vecMins[3], vecMaxs[3];
+	SubtractVectors(vecCenter, vecSize, vecMins);
+	AddVectors(vecCenter, vecSize, vecMaxs);
+	
+	g_bFoundCrate = false;
+	TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_EnumerateCrates, client);
+	
+	return g_bFoundCrate;
 }
 
 static bool TraceEntityEnumerator_EnumerateCrates(int entity, int client)
@@ -394,10 +395,9 @@ static bool TraceEntityEnumerator_EnumerateCrates(int entity, int client)
 	{
 		g_bFoundCrate = true;
 		FRPlayer(client).TryToOpenCrate(entity);
-		return false;
 	}
 	
-	return true;
+	return !g_bFoundCrate;
 }
 
 public void OnClientPutInServer(int client)
