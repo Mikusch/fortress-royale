@@ -25,8 +25,8 @@ static ArrayList g_entityProperties;
  */
 enum struct EntityProperties
 {
-	int m_index;
-	int m_claimedBy;
+	int m_iIndex;
+	int m_hClaimedBy;
 }
 
 methodmap FREntity < CBaseEntity
@@ -46,20 +46,21 @@ methodmap FREntity < CBaseEntity
 		// Convert it twice to ensure we store it as an entity reference
 		entity = EntIndexToEntRef(EntRefToEntIndex(entity));
 		
-		if (g_entityProperties.FindValue(entity, EntityProperties::m_index) == -1)
+		if (g_entityProperties.FindValue(entity, EntityProperties::m_iIndex) == -1)
 		{
 			// Fill basic properties
 			EntityProperties properties;
-			properties.m_index = entity;
-			properties.m_claimedBy = -1;
+			properties.m_iIndex = entity;
+			properties.m_hClaimedBy = -1;
 			
 			g_entityProperties.PushArray(properties);
 		}
 		
-		return view_as<FREntity>(entity);
+		return view_as<FREntity>(CBaseEntity(entity));
 	}
 	
-	property int ref
+	// Similar naming to CBaseEntity.index
+	property int reference
 	{
 		public get()
 		{
@@ -67,31 +68,31 @@ methodmap FREntity < CBaseEntity
 		}
 	}
 	
-	property int _listIndex
+	property int m_iListIndex
 	{
 		public get()
 		{
-			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::m_index);
+			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::m_iIndex);
 		}
 	}
 	
 	public bool IsValidCrate()
 	{
-		char classname[64];
-		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_dynamic", 12) != 0)
+		char szClassname[64];
+		if (!this.GetClassname(szClassname, sizeof(szClassname)) || strncmp(szClassname, "prop_dynamic", 12) != 0)
 			return false;
 		
-		char name[64];
-		return this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) != 0 && Config_IsValidCrateName(name);
+		char szName[64];
+		return this.GetPropString(Prop_Data, "m_iName", szName, sizeof(szName)) != 0 && Config_IsValidCrateName(szName);
 	}
 	
 	public void Destroy()
 	{
-		if (this._listIndex == -1)
+		if (this.m_iListIndex == -1)
 			return;
 		
 		// Remove the entry from local storage
-		g_entityProperties.Erase(this._listIndex);
+		g_entityProperties.Erase(this.m_iListIndex);
 	}
 }
 
@@ -102,46 +103,46 @@ methodmap FRCrate < FREntity
 		return view_as<FRCrate>(FREntity(entity));
 	}
 	
-	property int m_claimedBy
+	property int m_hClaimedBy
 	{
 		public get()
 		{
-			return g_entityProperties.Get(this._listIndex, EntityProperties::m_claimedBy);
+			return g_entityProperties.Get(this.m_iListIndex, EntityProperties::m_hClaimedBy);
 		}
-		public set(int claimedBy)
+		public set(int hClaimedBy)
 		{
-			g_entityProperties.Set(this._listIndex, claimedBy, EntityProperties::m_claimedBy);
+			g_entityProperties.Set(this.m_iListIndex, hClaimedBy, EntityProperties::m_hClaimedBy);
 		}
 	}
 	
-	public void SetText(const char[] message)
+	public void SetText(const char[] szMessage)
 	{
 		// Existing point_worldtext, update the message
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.reference))
 				continue;
 			
-			SetVariantString(message);
+			SetVariantString(szMessage);
 			AcceptEntityInput(worldtext, "SetText");
 			return;
 		}
 		
-		float origin[3], angles[3];
-		this.GetAbsOrigin(origin);
-		this.GetAbsAngles(angles);
+		float vecOrigin[3], vecAngles[3];
+		this.GetAbsOrigin(vecOrigin);
+		this.GetAbsAngles(vecAngles);
 		
 		// Make it sit at the top of the bounding box
-		float maxs[3];
-		this.GetPropVector(Prop_Data, "m_vecMaxs", maxs);
-		origin[2] += maxs[2] + 10.0;
+		float vecMaxs[3];
+		this.GetPropVector(Prop_Data, "m_vecMaxs", vecMaxs);
+		vecOrigin[2] += vecMaxs[2] + 10.0;
 		
 		// Don't set a message yet, allow it to teleport first
 		worldtext = CreateEntityByName("point_worldtext");
 		DispatchKeyValue(worldtext, "orientation", "1");
-		DispatchKeyValueVector(worldtext, "origin", origin);
-		DispatchKeyValueVector(worldtext, "angles", angles);
+		DispatchKeyValueVector(worldtext, "origin", vecOrigin);
+		DispatchKeyValueVector(worldtext, "angles", vecAngles);
 		
 		if (DispatchSpawn(worldtext))
 		{
@@ -155,7 +156,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.reference))
 				continue;
 			
 			RemoveEntity(worldtext);
@@ -165,26 +166,26 @@ methodmap FRCrate < FREntity
 	
 	public void StartOpen(int client)
 	{
-		this.m_claimedBy = client;
+		this.m_hClaimedBy = client;
 		EmitSoundToAll(")ui/item_open_crate.wav", this.index, SNDCHAN_STATIC);
 	}
 	
 	public void CancelOpen()
 	{
-		this.m_claimedBy = -1;
+		this.m_hClaimedBy = -1;
 		this.ClearText();
 		StopSound(this.index, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
 	}
 	
 	public bool CanUse(int client)
 	{
-		return this.m_claimedBy == -1 || this.m_claimedBy == client;
+		return this.m_claimedBy == -1 || this.m_hClaimedBy == client;
 	}
 	
 	public void DropItem(int client)
 	{
-		char name[64];
-		if (this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)) == 0)
+		char szName[64];
+		if (this.GetPropString(Prop_Data, "m_iName", szName, sizeof(szName)) == 0)
 		{
 			LogError("Failed to get targetname for entity '%d'", this.index);
 			return;
@@ -192,7 +193,7 @@ methodmap FRCrate < FREntity
 		
 		// Grab a random crate config
 		CrateConfig crate;
-		if (Config_GetCrateByName(name, crate))
+		if (Config_GetCrateByName(szName, crate))
 		{
 			crate.Open(this.index, client);
 		}

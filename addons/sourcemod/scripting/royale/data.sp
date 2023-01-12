@@ -187,7 +187,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 			while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
 			{
 				// Find our current crate
-				if (FREntity(crate).IsValidCrate() && FRCrate(crate).m_claimedBy == this.index)
+				if (FREntity(crate).IsValidCrate() && FRCrate(crate).m_hClaimedBy == this.index)
 				{
 					FRCrate(crate).CancelOpen();
 					break;
