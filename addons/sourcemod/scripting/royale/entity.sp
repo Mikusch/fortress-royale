@@ -179,7 +179,7 @@ methodmap FRCrate < FREntity
 	
 	public bool CanUse(int client)
 	{
-		return this.m_claimedBy == -1 || this.m_hClaimedBy == client;
+		return this.m_hClaimedBy == -1 || this.m_hClaimedBy == client;
 	}
 	
 	public void DropItem(int client)
