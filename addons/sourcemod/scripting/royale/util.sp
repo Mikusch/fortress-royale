@@ -23,6 +23,11 @@ bool IsValidClient(int client)
 	return (0 < client <= MaxClients) && IsValidEntity(client) && IsClientInGame(client);
 }
 
+any Max(any a, any b)
+{
+	return (a >= b) ? a : b;
+}
+
 void ItemGiveTo(int client, int item)
 {
 	if (TF2Util_IsEntityWearable(item))

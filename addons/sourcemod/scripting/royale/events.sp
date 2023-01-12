@@ -234,6 +234,19 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 	BattleBus_OnSetupFinished();
 	Truce_OnSetupFinished();
 	Zone_OnSetupFinished();
+	
+	int nCount = GetActivePlayerCount();
+	float flPercentage = Max(0.25, float(nCount) / float(MaxClients));
+	
+	int crate = -1;
+	while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
+	{
+		// Remove crates on low player counts
+		if (FREntity(crate).IsValidCrate() && GetRandomFloat() > flPercentage)
+		{
+			RemoveEntity(crate);
+		}
+	}
 }
 
 static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, bool dontBroadcast)
