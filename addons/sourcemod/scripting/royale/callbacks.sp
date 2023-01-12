@@ -162,7 +162,7 @@ public bool ItemCallback_CreateSingleInstancePowerup(int client, KeyValues data,
 	return true;
 }
 
-public bool ItemCallback_CanBeUsedByPlayer(int client, KeyValues data)
+public bool ItemCallback_ShouldDropItem(int client, KeyValues data)
 {
 	int iItemDefIndex = data.GetNum("item_def_index", INVALID_ITEM_DEF_INDEX);
 	if (iItemDefIndex == INVALID_ITEM_DEF_INDEX)

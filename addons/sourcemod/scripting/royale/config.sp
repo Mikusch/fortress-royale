@@ -558,7 +558,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 	{
 		if (items.GetArray(i, item) != 0)
 		{
-			Function callback = item.GetCallbackFunction("can_be_used");
+			Function callback = item.GetCallbackFunction("should_drop");
 			if (callback == INVALID_FUNCTION)
 				continue;
 			
@@ -570,7 +570,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 			bool result;
 			if (Call_Finish(result) != SP_ERROR_NONE)
 			{
-				LogError("Failed to call callback 'can_be_used' for item '%s'", item.name);
+				LogError("Failed to call callback 'should_drop' for item '%s'", item.name);
 				items.Erase(i--);
 			}
 			else if (!result)
