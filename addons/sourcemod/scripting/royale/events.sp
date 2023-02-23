@@ -218,7 +218,7 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 		}
 	}
 	
-	if (BattleBus_IsActive())
+	if (IsValidClient(attacker) && BattleBus_IsActive())
 	{
 		EmitSoundToAll(g_aSoundPlayerKill[GetRandomInt(0, sizeof(g_aSoundPlayerKill) - 1)], BattleBus_GetEntity(), SNDCHAN_VOICE_BASE, 150);
 	}
