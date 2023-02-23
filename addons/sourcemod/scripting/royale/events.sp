@@ -27,6 +27,25 @@ enum struct EventData
 	EventHookMode mode;
 }
 
+static char g_aSoundPlayerKill[][] = 
+{
+	")vo/announcer_dec_kill01.mp3", 
+	")vo/announcer_dec_kill02.mp3", 
+	")vo/announcer_dec_kill03.mp3", 
+	")vo/announcer_dec_kill04.mp3", 
+	")vo/announcer_dec_kill05.mp3", 
+	")vo/announcer_dec_kill06.mp3", 
+	")vo/announcer_dec_kill07.mp3", 
+	")vo/announcer_dec_kill08.mp3", 
+	")vo/announcer_dec_kill09.mp3", 
+	")vo/announcer_dec_kill10.mp3", 
+	")vo/announcer_dec_kill11.mp3", 
+	")vo/announcer_dec_kill12.mp3", 
+	")vo/announcer_dec_kill13.mp3", 
+	")vo/announcer_dec_kill14.mp3", 
+	")vo/announcer_dec_kill15.mp3", 
+};
+
 ArrayList g_Events;
 
 void Events_Init()
@@ -34,11 +53,19 @@ void Events_Init()
 	g_Events = new ArrayList(sizeof(EventData));
 	
 	Events_AddEvent("player_spawn", EventHook_PlayerSpawn);
-	Events_AddEvent("player_death", EventHook_PlayerDeath);
+	Events_AddEvent("player_death", EventHook_PlayerDeath, EventHookMode_Pre);
 	Events_AddEvent("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
 	Events_AddEvent("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_AddEvent("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
 	Events_AddEvent("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
+}
+
+void Events_Precache()
+{
+	for (int i = 0; i < sizeof(g_aSoundPlayerKill); i++)
+	{
+		PrecacheSound(g_aSoundPlayerKill[i]);
+	}
 }
 
 void Events_Toggle(bool enable)
@@ -109,14 +136,17 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 	}
 }
 
-static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
+static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
-		return;
+		return Plugin_Continue;
 	
 	int userid = event.GetInt("userid");
 	int victim = GetClientOfUserId(userid);
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int assister = GetClientOfUserId(event.GetInt("assister"));
 	int death_flags = event.GetInt("death_flags");
+	bool silent_kill = event.GetBool("silent_kill");
 	
 	if (!(death_flags & TF_DEATHFLAG_DEADRINGER))
 	{
@@ -187,6 +217,37 @@ static void EventHook_PlayerDeath(Event event, const char[] name, bool dontBroad
 			}
 		}
 	}
+	
+	if (BattleBus_IsActive())
+	{
+		EmitSoundToAll(g_aSoundPlayerKill[GetRandomInt(0, sizeof(g_aSoundPlayerKill) - 1)], BattleBus_GetEntity(), SNDCHAN_VOICE_BASE, 150);
+	}
+	
+	// Disable broadcasting to control who receives the event
+	event.BroadcastDisabled = true;
+	
+	// Only send the event to players involved in the kill, everyone else gets a generic "death" notification
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (!IsValidClient(attacker) || client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
+		{
+			event.FireToClient(client);
+		}
+		else if (!silent_kill)
+		{
+			Event hNewEvent = CreateEvent("player_death");
+			if (hNewEvent)
+			{
+				hNewEvent.SetInt("userid", userid);
+				hNewEvent.FireToClient(client);
+			}
+		}
+	}
+	
+	return Plugin_Changed;
 }
 
 static Action Timer_MovePlayerToDeadTeam(Handle timer, int userid)

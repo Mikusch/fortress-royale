@@ -1,7 +1,7 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-char g_szSoundTruceOn1MinRemain[][] =
+char g_aSoundTruceOn1MinRemain[][] =
 {
 	"vo/announcer_dec_missionbegins60s01.mp3",
 	"vo/announcer_dec_missionbegins60s02.mp3",
@@ -11,7 +11,7 @@ char g_szSoundTruceOn1MinRemain[][] =
 	"vo/announcer_dec_missionbegins60s06.mp3",
 };
 
-char g_szSoundTruceOn30SecRemain[][] =
+char g_aSoundTruceOn30SecRemain[][] =
 {
 	"vo/announcer_dec_missionbegins30s01.mp3",
 	"vo/announcer_dec_missionbegins30s02.mp3",
@@ -21,26 +21,26 @@ char g_szSoundTruceOn30SecRemain[][] =
 	"vo/announcer_dec_missionbegins30s06.mp3",
 };
 
-char g_szSoundTruceOn10SecRemain[][] =
+char g_aSoundTruceOn10SecRemain[][] =
 {
 	"vo/announcer_dec_missionbegins10s01.mp3",
 };
 
 void Truce_Precache()
 {
-	for (int i = 0; i < sizeof(g_szSoundTruceOn1MinRemain); i++)
+	for (int i = 0; i < sizeof(g_aSoundTruceOn1MinRemain); i++)
 	{
-		PrecacheSound(g_szSoundTruceOn1MinRemain[i]);
+		PrecacheSound(g_aSoundTruceOn1MinRemain[i]);
 	}
 	
-	for (int i = 0; i < sizeof(g_szSoundTruceOn30SecRemain); i++)
+	for (int i = 0; i < sizeof(g_aSoundTruceOn30SecRemain); i++)
 	{
-		PrecacheSound(g_szSoundTruceOn30SecRemain[i]);
+		PrecacheSound(g_aSoundTruceOn30SecRemain[i]);
 	}
 	
-	for (int i = 0; i < sizeof(g_szSoundTruceOn10SecRemain); i++)
+	for (int i = 0; i < sizeof(g_aSoundTruceOn10SecRemain); i++)
 	{
-		PrecacheSound(g_szSoundTruceOn10SecRemain[i]);
+		PrecacheSound(g_aSoundTruceOn10SecRemain[i]);
 	}
 }
 
@@ -75,18 +75,18 @@ void Truce_OnSetupFinished()
 
 static void EntityOutput_OnTruce1MinRemain(const char[] output, int caller, int activator, float delay)
 {
-	EmitSoundToAll(g_szSoundTruceOn1MinRemain[GetRandomInt(0, sizeof(g_szSoundTruceOn1MinRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
+	EmitSoundToAll(g_aSoundTruceOn1MinRemain[GetRandomInt(0, sizeof(g_aSoundTruceOn1MinRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
 }
 
 static void EntityOutput_OnTruce30SecRemain(const char[] output, int caller, int activator, float delay)
 {
-	EmitSoundToAll(g_szSoundTruceOn30SecRemain[GetRandomInt(0, sizeof(g_szSoundTruceOn30SecRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
+	EmitSoundToAll(g_aSoundTruceOn30SecRemain[GetRandomInt(0, sizeof(g_aSoundTruceOn30SecRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
 }
 
 static void EntityOutput_OnTruce10SecRemain(const char[] output, int caller, int activator, float delay)
 {
 	EmitGameSoundToAll("MatchMaking.RoundStartCasual");
-	EmitSoundToAll(g_szSoundTruceOn10SecRemain[GetRandomInt(0, sizeof(g_szSoundTruceOn10SecRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
+	EmitSoundToAll(g_aSoundTruceOn10SecRemain[GetRandomInt(0, sizeof(g_aSoundTruceOn10SecRemain) - 1)], _, SNDCHAN_VOICE_BASE, SNDLEVEL_NONE);
 }
 
 static void EntityOutput_OnTruce5SecRemain(const char[] output, int caller, int activator, float delay)

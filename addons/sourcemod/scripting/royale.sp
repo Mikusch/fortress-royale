@@ -159,6 +159,7 @@ public void OnMapStart()
 	PrecacheSound(")ui/itemcrate_smash_rare.wav");
 	
 	Config_Parse();
+	Events_Precache();
 	Truce_Precache();
 	Zone_Precache();
 }
@@ -175,6 +176,10 @@ public void OnConfigsExecuted()
 	if (g_bEnabled != fr_enable.BoolValue)
 	{
 		TogglePlugin(fr_enable.BoolValue);
+	}
+	else if (g_bEnabled)
+	{
+		OnPluginEnabled();
 	}
 }
 
@@ -433,19 +438,41 @@ void TogglePlugin(bool bEnable)
 	DHooks_Toggle(bEnable);
 	Events_Toggle(bEnable);
 	
+	if (bEnable)
+	{
+		OnPluginEnabled();
+	}
+	else
+	{
+		OnPluginDisabled();
+	}
+}
+
+void OnPluginEnabled()
+{
+	SetVariantString("ForceEnableUpgrades(2)");
+	AcceptEntityInput(0, "RunScriptCode");
+	
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client))
-		{
-			if (bEnable)
-			{
-				OnClientPutInServer(client);
-			}
-			else
-			{
-				SDKHooks_UnhookClient(client);
-			}
-		}
+		if (!IsClientInGame(client))
+			continue;
+		
+		OnClientPutInServer(client);
+	}
+}
+
+void OnPluginDisabled()
+{
+	SetVariantString("ForceEnableUpgrades(0)");
+	AcceptEntityInput(0, "RunScriptCode");
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		SDKHooks_UnhookClient(client);
 	}
 }
 

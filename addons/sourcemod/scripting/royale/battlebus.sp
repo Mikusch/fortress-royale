@@ -113,6 +113,11 @@ bool BattleBus_IsActive()
 	return g_flBattleBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
 }
 
+int BattleBus_GetEntity()
+{
+	return g_hActiveBusEnt;
+}
+
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
 {
 	// The bus travels along the safe diameter of the zone, using its center
@@ -223,7 +228,7 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)) != 0)
 			{
 				PrecacheSound(szSound);
-				EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 155);
+				EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
 			}
 		}
 		
