@@ -330,30 +330,6 @@ void Config_Parse()
 	}
 	delete kv;
 	
-	BuildPath(Path_SM, file, sizeof(file), "configs/royale/crates.cfg");
-	kv = new KeyValues("crates");
-	if (kv.ImportFromFile(file))
-	{
-		g_crateConfigs = new ArrayList(sizeof(CrateConfig));
-		
-		if (kv.GotoFirstSubKey(false))
-		{
-			do
-			{
-				CrateConfig crate;
-				crate.Parse(kv);
-				g_crateConfigs.PushArray(crate);
-			}
-			while (kv.GotoNextKey(false));
-			kv.GoBack();
-		}
-	}
-	else
-	{
-		LogError("Failed to import config '%s'", file);
-	}
-	delete kv;
-	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/weapons.cfg");
 	kv = new KeyValues("weapons");
 	if (kv.ImportFromFile(file))
@@ -379,6 +355,37 @@ void Config_Parse()
 	delete kv;
 }
 
+void Config_ParseCrates(KeyValues kv)
+{
+	if (!g_crateConfigs)
+	{
+		g_crateConfigs = new ArrayList(sizeof(CrateConfig));
+	}
+	
+	if (kv.GotoFirstSubKey(false))
+	{
+		do
+		{
+			CrateConfig crate;
+			crate.Parse(kv);
+			
+			int index = g_crateConfigs.FindString(crate.name);
+			if (index == -1)
+			{
+				// Insert new crate
+				g_crateConfigs.PushArray(crate);
+			}
+			else
+			{
+				// Update existing crate
+				g_crateConfigs.SetArray(index, crate);
+			}
+		}
+		while (kv.GotoNextKey(false));
+		kv.GoBack();
+	}
+}
+
 void Config_ParseMapConfig(const char[] file)
 {
 	KeyValues kv = new KeyValues("global");
@@ -393,6 +400,12 @@ void Config_ParseMapConfig(const char[] file)
 		if (kv.JumpToKey("battlebus", false))
 		{
 			BattleBus_Parse(kv);
+			kv.GoBack();
+		}
+		
+		if (kv.JumpToKey("crates", false))
+		{
+			Config_ParseCrates(kv);
 			kv.GoBack();
 		}
 		
