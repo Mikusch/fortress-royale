@@ -306,7 +306,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			float vecOrigin[3];
 			CBaseEntity(client).GetAbsOrigin(vecOrigin);
 			
-			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
+			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld);
 			if (TR_DidHit() && TR_GetEntityIndex() == 0)
 			{
 				float vecEndPos[3];
@@ -315,7 +315,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				// Open parachute when we are a certain distance from the ground
 				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
 				{
-					TF2_AddCondition(client, TFCond_Parachute, TFCondDuration_Infinite);
+					TF2_AddCondition(client, TFCond_Parachute);
 					action = Plugin_Changed;
 				}
 			}

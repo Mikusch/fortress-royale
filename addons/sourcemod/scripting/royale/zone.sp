@@ -389,7 +389,7 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 			if (TR_GetPointContents(vecStart) & MASK_SOLID)
 				continue;
 			
-			TR_TraceRayFilter(vecStart, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
+			TR_TraceRayFilter(vecStart, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld);
 			if (!TR_DidHit() || TR_GetEntityIndex() != 0)
 				continue;
 			
