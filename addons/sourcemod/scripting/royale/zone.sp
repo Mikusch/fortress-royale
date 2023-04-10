@@ -241,10 +241,10 @@ static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
 	return -1;
 }
 
-static Action Timer_StartDisplay(Handle hTimer)
+static void Timer_StartDisplay(Handle hTimer)
 {
 	if (g_hZoneTimer != hTimer)
-		return Plugin_Continue;
+		return;
 	
 	// Maximum diameter to walk away from previous center
 	float flSearchDiameter = 1.0 / float(g_zoneData.num_shrinks) * g_zoneData.diameter_max;
@@ -298,13 +298,13 @@ static Action Timer_StartDisplay(Handle hTimer)
 	
 	g_hZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 	
-	return Plugin_Continue;
+	return;
 }
 
-static Action Timer_StartShrink(Handle hTimer)
+static void Timer_StartShrink(Handle hTimer)
 {
 	if (g_hZoneTimer != hTimer)
-		return Plugin_Continue;
+		return;
 	
 	g_iShrinkLevel--;
 	
@@ -323,14 +323,12 @@ static Action Timer_StartShrink(Handle hTimer)
 	// Begin shrinking
 	g_flShrinkStartTime = GetGameTime();
 	g_hZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
-	
-	return Plugin_Continue;
 }
 
-static Action Timer_FinishShrink(Handle hTimer)
+static void Timer_FinishShrink(Handle hTimer)
 {
 	if (g_hZoneTimer != hTimer)
-		return Plugin_Continue;
+		return;
 	
 	// Stop shrinking
 	g_flShrinkStartTime = -1.0;
@@ -368,8 +366,6 @@ static Action Timer_FinishShrink(Handle hTimer)
 			RemoveEntity(g_hZoneGhostPropEnt);
 		}
 	}
-	
-	return Plugin_Continue;
 }
 
 static bool Zone_GetValidHeight(float vecOrigin[3])

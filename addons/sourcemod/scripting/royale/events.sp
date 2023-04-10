@@ -218,7 +218,7 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 		}
 	}
 	
-	if (IsValidClient(attacker) && BattleBus_IsActive())
+	if (IsValidClient(attacker) && attacker != victim && BattleBus_IsActive())
 	{
 		EmitSoundToAll(g_aSoundPlayerKill[GetRandomInt(0, sizeof(g_aSoundPlayerKill) - 1)], BattleBus_GetEntity(), SNDCHAN_VOICE_BASE, 150);
 	}
@@ -250,25 +250,23 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 	return Plugin_Changed;
 }
 
-static Action Timer_MovePlayerToDeadTeam(Handle timer, int userid)
+static void Timer_MovePlayerToDeadTeam(Handle timer, int userid)
 {
 	int client = GetClientOfUserId(userid);
 	if (client == 0)
-		return Plugin_Continue;
+		return;
 	
 	if (IsPlayerAlive(client))
-		return Plugin_Continue;
+		return;
 	
 	if (FRPlayer(client).m_nPlayerState != FRPlayerState_Dying)
-		return Plugin_Continue;
+		return;
 	
 	if (TF2_GetClientTeam(client) != TFTeam_Red)
-		return Plugin_Continue;
+		return;
 	
 	FRPlayer(client).SetPlayerState(FRPlayerState_Waiting);
 	TF2_ChangeClientTeam(client, TFTeam_Blue);
-	
-	return Plugin_Continue;
 }
 
 static Action EventHook_PlayerTeam(Event event, const char[] name, bool dontBroadcast)

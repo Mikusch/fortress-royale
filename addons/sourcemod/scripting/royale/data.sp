@@ -114,9 +114,10 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public void RemoveWearableVM()
 	{
-		if (IsValidEntity(this.m_hWearableVM))
+		int wearable = EntRefToEntIndex(this.m_hWearableVM);
+		if (wearable != -1)
 		{
-			RemoveEntity(this.m_hWearableVM);
+			TF2_RemoveWearable(this.index, wearable);
 		}
 		
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;

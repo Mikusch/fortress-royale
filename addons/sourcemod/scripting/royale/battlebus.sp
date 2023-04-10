@@ -238,10 +238,10 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	return false;
 }
 
-static Action Timer_EndPlayerBus(Handle timer, int bus)
+static void Timer_EndPlayerBus(Handle timer, int bus)
 {
 	if (!BattleBus_IsValidBus(bus))
-		return Plugin_Continue;
+		return;
 	
 	// We reached our destination, eject all players still in here
 	for (int client = 1; client <= MaxClients; client++)
@@ -256,24 +256,20 @@ static Action Timer_EndPlayerBus(Handle timer, int bus)
 	}
 	
 	DissolveEntity(bus);
-	
-	return Plugin_Continue;
 }
 
-static Action Timer_EndLootBus(Handle timer, int bus)
+static void Timer_EndLootBus(Handle timer, int bus)
 {
 	if (!BattleBus_IsValidBus(bus))
-		return Plugin_Continue;
+		return;
 	
 	DissolveEntity(bus);
-	
-	return Plugin_Continue;
 }
 
-static Action Timer_DropLootCrate(Handle timer, int bus)
+static void Timer_DropLootCrate(Handle timer, int bus)
 {
 	if (!BattleBus_IsValidBus(bus))
-		return Plugin_Continue;
+		return;
 	
 	// Create a physics-based crate
 	CrateConfig crate;
@@ -323,8 +319,6 @@ static Action Timer_DropLootCrate(Handle timer, int bus)
 	{
 		LogError("Failed to find crate with name '%s'", g_battleBusData.crate_name);
 	}
-	
-	return Plugin_Continue;
 }
 
 static void EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)

@@ -154,7 +154,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			}
 		}
 		
-		bool bDroppedMelee = TF2Util_GetWeaponSlot(weapon) == TFWeaponSlot_Melee;
+		bool bDroppedMelee = TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponSlot(weapon) == TFWeaponSlot_Melee;
 		FRPlayer(client).RemoveItem(weapon);
 		
 		// If we dropped our melee weapon, get our fists back
