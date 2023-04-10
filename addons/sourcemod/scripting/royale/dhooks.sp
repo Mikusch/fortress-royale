@@ -47,6 +47,7 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", _, DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
 }
 
 void DHooks_OnClientPutInServer(int client)
@@ -397,4 +398,16 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 	int iMaxHealth = ret.Value;
 	ret.Value = RoundToFloor(iMaxHealth * fr_health_multiplier[nClass].FloatValue);
 	return MRES_Supercede;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre(int player, DHookReturn ret)
+{
+	// Don't allow using class special skills with fists
+	if (IsWeaponFists(GetEntPropEnt(player, Prop_Send, "m_hActiveWeapon")))
+	{
+		ret.Value = false;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
 }

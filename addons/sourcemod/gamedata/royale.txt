@@ -81,6 +81,11 @@
 				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\x40\x22\x00\x00"
 			}
+			"CTFPlayer::DoClassSpecialSkill"
+			{
+				"linux"		"@_ZN9CTFPlayer19DoClassSpecialSkillEv"
+				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x75\x2A\x32\xC0\x5E\xC3\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
+			}
 			"CTFPowerup::DropSingleInstance"
 			{
 				"library"	"server"
@@ -218,6 +223,13 @@
 				"callconv"	"thiscall"
 				"return"	"int"
 				"this"		"entity"
+			}
+			"CTFPlayer::DoClassSpecialSkill"
+			{
+				"signature"		"CTFPlayer::DoClassSpecialSkill"
+				"callconv"		"thiscall"
+				"return"		"bool"
+				"this"			"entity"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{

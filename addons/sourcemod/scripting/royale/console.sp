@@ -74,7 +74,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 		return Plugin_Continue;
 	}
 	
-	if (TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	if (TF2_IsPlayerInCondition(client, TFCond_Taunting) || TF2_IsPlayerInCondition(client, TFCond_Cloaked))
 	{
 		return Plugin_Continue;
 	}
