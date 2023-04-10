@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2022  Mikusch
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 
 #define CONFIG_MAX_LENGTH	256
 
-static ArrayList g_itemConfigs;
-static ArrayList g_crateConfigs;
-static ArrayList g_weaponData;
+static ArrayList g_hItemConfigs;
+static ArrayList g_hCrateConfigs;
+static ArrayList g_hWeaponData;
 
 enum struct ItemConfig
 {
@@ -310,7 +310,7 @@ void Config_Parse()
 	KeyValues kv = new KeyValues("items");
 	if (kv.ImportFromFile(file))
 	{
-		g_itemConfigs = new ArrayList(sizeof(ItemConfig));
+		g_hItemConfigs = new ArrayList(sizeof(ItemConfig));
 		
 		if (kv.GotoFirstSubKey(false))
 		{
@@ -318,7 +318,7 @@ void Config_Parse()
 			{
 				ItemConfig item;
 				item.Parse(kv);
-				g_itemConfigs.PushArray(item);
+				g_hItemConfigs.PushArray(item);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -334,7 +334,7 @@ void Config_Parse()
 	kv = new KeyValues("weapons");
 	if (kv.ImportFromFile(file))
 	{
-		g_weaponData = new ArrayList(sizeof(WeaponData));
+		g_hWeaponData = new ArrayList(sizeof(WeaponData));
 		
 		if (kv.GotoFirstSubKey(false))
 		{
@@ -342,7 +342,7 @@ void Config_Parse()
 			{
 				WeaponData data;
 				data.Parse(kv);
-				g_weaponData.PushArray(data);
+				g_hWeaponData.PushArray(data);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -357,9 +357,9 @@ void Config_Parse()
 
 void Config_ParseCrates(KeyValues kv)
 {
-	if (!g_crateConfigs)
+	if (!g_hCrateConfigs)
 	{
-		g_crateConfigs = new ArrayList(sizeof(CrateConfig));
+		g_hCrateConfigs = new ArrayList(sizeof(CrateConfig));
 	}
 	
 	if (kv.GotoFirstSubKey(false))
@@ -369,16 +369,16 @@ void Config_ParseCrates(KeyValues kv)
 			CrateConfig crate;
 			crate.Parse(kv);
 			
-			int index = g_crateConfigs.FindString(crate.name);
+			int index = g_hCrateConfigs.FindString(crate.name);
 			if (index == -1)
 			{
 				// Insert new crate
-				g_crateConfigs.PushArray(crate);
+				g_hCrateConfigs.PushArray(crate);
 			}
 			else
 			{
 				// Update existing crate
-				g_crateConfigs.SetArray(index, crate);
+				g_hCrateConfigs.SetArray(index, crate);
 			}
 		}
 		while (kv.GotoNextKey(false));
@@ -469,43 +469,43 @@ bool Config_GetMapConfigFilepath(char[] filePath, int length)
 
 void Config_Delete()
 {
-	for (int i = 0; i < g_itemConfigs.Length; i++)
+	for (int i = 0; i < g_hItemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) != 0)
+		if (g_hItemConfigs.GetArray(i, item) != 0)
 		{
 			item.Delete();
 		}
 	}
-	delete g_itemConfigs;
+	delete g_hItemConfigs;
 	
-	for (int i = 0; i < g_crateConfigs.Length; i++)
+	for (int i = 0; i < g_hCrateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) != 0)
+		if (g_hCrateConfigs.GetArray(i, crate) != 0)
 		{
 			crate.Delete();
 		}
 	}
-	delete g_crateConfigs;
+	delete g_hCrateConfigs;
 	
-	for (int i = 0; i < g_weaponData.Length; i++)
+	for (int i = 0; i < g_hWeaponData.Length; i++)
 	{
 		WeaponData data;
-		if (g_weaponData.GetArray(i, data) != 0)
+		if (g_hWeaponData.GetArray(i, data) != 0)
 		{
 			data.Delete();
 		}
 	}
-	delete g_weaponData;
+	delete g_hWeaponData;
 }
 
 bool Config_IsValidCrateName(const char[] name)
 {
-	for (int i = 0; i < g_crateConfigs.Length; i++)
+	for (int i = 0; i < g_hCrateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_crateConfigs.GetArray(i, crate) != 0)
+		if (g_hCrateConfigs.GetArray(i, crate) != 0)
 		{
 			if (StrEqual(crate.name, name))
 			{
@@ -519,9 +519,9 @@ bool Config_IsValidCrateName(const char[] name)
 
 bool Config_GetCrateByName(const char[] name, CrateConfig crate)
 {
-	for (int i = 0; i < g_crateConfigs.Length; i++)
+	for (int i = 0; i < g_hCrateConfigs.Length; i++)
 	{
-		if (g_crateConfigs.GetArray(i, crate) != 0)
+		if (g_hCrateConfigs.GetArray(i, crate) != 0)
 		{
 			if (StrEqual(crate.name, name))
 			{
@@ -537,10 +537,10 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 {
 	ArrayList list = new ArrayList(sizeof(ItemConfig));
 	
-	for (int i = 0; i < g_itemConfigs.Length; i++)
+	for (int i = 0; i < g_hItemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_itemConfigs.GetArray(i, item) != 0)
+		if (g_hItemConfigs.GetArray(i, item) != 0)
 		{
 			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
 			{
@@ -606,10 +606,10 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 
 bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
 {
-	int index = g_weaponData.FindValue(defindex);
+	int index = g_hWeaponData.FindValue(defindex);
 	if (index != -1)
 	{
-		return g_weaponData.GetArray(index, data) != 0;
+		return g_hWeaponData.GetArray(index, data) != 0;
 	}
 	
 	return false;
