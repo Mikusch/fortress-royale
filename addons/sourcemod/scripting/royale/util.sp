@@ -128,7 +128,6 @@ void RemoveExtraWearables(int item)
 	if (hExtraWearable != -1)
 	{
 		TF2_RemoveWearable(GetEntPropEnt(hExtraWearable, Prop_Send, "m_hOwnerEntity"), hExtraWearable);
-		RemoveEntity(hExtraWearable);
 		SetEntPropEnt(item, Prop_Send, "m_hExtraWearable", -1);
 	}
 	
@@ -136,7 +135,6 @@ void RemoveExtraWearables(int item)
 	if (hExtraWearableViewModel != -1)
 	{
 		TF2_RemoveWearable(GetEntPropEnt(hExtraWearableViewModel, Prop_Send, "m_hOwnerEntity"), hExtraWearableViewModel);
-		RemoveEntity(hExtraWearableViewModel);
 		SetEntPropEnt(item, Prop_Send, "m_hExtraWearableViewModel", -1);
 	}
 }
@@ -326,21 +324,21 @@ bool CanWeaponBeUsedByClass(int weapon, TFClassType class)
 	return TF2Econ_GetItemLoadoutSlot(iItemDefIndex, class) != -1;
 }
 
-void TE_TFParticleEffect(const char[] name, const float vecOrigin[3] = NULL_VECTOR,
+void TE_TFParticleEffect(const char[] szName, const float vecOrigin[3] = NULL_VECTOR,
 	const float vecStart[3] = NULL_VECTOR, const float vecAngles[3] = NULL_VECTOR,
-	int entity = -1, ParticleAttachment_t attachType = PATTACH_ABSORIGIN,
-	int attachPoint = -1, bool bResetParticles = false)
+	int entindex = -1, ParticleAttachment_t iAttachType = PATTACH_ABSORIGIN,
+	int iAttachmentPointIndex = -1, bool bResetParticles = false)
 {
-	int particleTable, particleIndex;
+	int iParticleTable, iParticleSystemIndex;
 	
-	if ((particleTable = FindStringTable("ParticleEffectNames")) == INVALID_STRING_TABLE)
+	if ((iParticleTable = FindStringTable("ParticleEffectNames")) == INVALID_STRING_TABLE)
 	{
 		ThrowError("Could not find string table: ParticleEffectNames");
 	}
 	
-	if ((particleIndex = FindStringIndex(particleTable, name)) == INVALID_STRING_INDEX)
+	if ((iParticleSystemIndex = FindStringIndex(iParticleTable, szName)) == INVALID_STRING_INDEX)
 	{
-		ThrowError("Could not find particle index: %s", name);
+		ThrowError("Could not find particle index: %s", szName);
 	}
 	
 	TE_Start("TFParticleEffect");
@@ -351,23 +349,10 @@ void TE_TFParticleEffect(const char[] name, const float vecOrigin[3] = NULL_VECT
 	TE_WriteFloat("m_vecStart[1]", vecStart[1]);
 	TE_WriteFloat("m_vecStart[2]", vecStart[2]);
 	TE_WriteVector("m_vecAngles", vecAngles);
-	TE_WriteNum("m_iParticleSystemIndex", particleIndex);
-	
-	if (entity != -1)
-	{
-		TE_WriteNum("entindex", entity);
-	}
-	
-	if (attachType != PATTACH_ABSORIGIN)
-	{
-		TE_WriteNum("m_iAttachType", view_as<int>(attachType));
-	}
-	
-	if (attachPoint != -1)
-	{
-		TE_WriteNum("m_iAttachmentPointIndex", attachPoint);
-	}
-	
+	TE_WriteNum("m_iParticleSystemIndex", iParticleSystemIndex);
+	TE_WriteNum("entindex", entindex);
+	TE_WriteNum("m_iAttachType", view_as<int>(iAttachType));
+	TE_WriteNum("m_iAttachmentPointIndex", iAttachmentPointIndex);
 	TE_WriteNum("m_bResetParticles", bResetParticles ? 1 : 0);
 	
 	TE_SendToAll();

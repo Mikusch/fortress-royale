@@ -161,8 +161,8 @@ methodmap FRPlayer < CBaseCombatCharacter
 			
 			float origin[3];
 			CBaseEntity(crate).WorldSpaceCenter(origin);
-			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin);
-			TE_TFParticleEffect("mvm_loot_explosion", origin);
+			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin, .iAttachType = PATTACH_WORLDORIGIN);
+			TE_TFParticleEffect("mvm_loot_explosion", origin, .iAttachType = PATTACH_WORLDORIGIN);
 			
 			AcceptEntityInput(crate, "Break");
 		}
