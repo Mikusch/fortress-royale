@@ -22,6 +22,7 @@ enum struct BattleBusData
 {
 	char model[PLATFORM_MAX_PATH];
 	float model_scale;
+	char default_anim[PLATFORM_MAX_PATH];
 	char crate_name[64];
 	float travel_height;
 	float travel_diameter;
@@ -34,6 +35,7 @@ enum struct BattleBusData
 	{
 		kv.GetString("model", this.model, sizeof(this.model), this.model);
 		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
+		kv.GetString("default_anim", this.default_anim, sizeof(this.default_anim), this.default_anim);
 		kv.GetString("crate_name", this.crate_name, sizeof(this.crate_name), this.crate_name);
 		this.travel_height = kv.GetFloat("travel_height", this.travel_height);
 		this.travel_diameter = kv.GetFloat("travel_diameter", this.travel_diameter);
@@ -380,16 +382,21 @@ bool BattleBus_EjectPlayer(int client)
 
 static int BattleBus_CreateBusEntity()
 {
-	int bus = CreateEntityByName("tf_projectile_rocket");
-	if (IsValidEntity(bus) && DispatchSpawn(bus))
+	int bus = CreateEntityByName("prop_dynamic");
+	if (IsValidEntity(bus))
 	{
-		DispatchKeyValue(bus, "solid", "0");
+		DispatchKeyValue(bus, "model", g_battleBusData.model);
+		DispatchKeyValueFloat(bus, "modelscale", g_battleBusData.model_scale);
+		DispatchKeyValue(bus, "defaultanim", g_battleBusData.default_anim);
 		
-		PrecacheModel(g_battleBusData.model);
-		SetEntityModel(bus, g_battleBusData.model);
-		SetModelScale(bus, g_battleBusData.model_scale);
-		
-		return bus;
+		if (DispatchSpawn(bus))
+		{
+			// Needs to be set after CBaseProp::Spawn! 
+			SDKCall_CBaseEntity_SetMoveType(bus, MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
+			CBaseEntity(bus).SetNextThink(GetGameTime());
+			
+			return bus;
+		}
 	}
 	
 	return -1;

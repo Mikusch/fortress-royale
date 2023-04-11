@@ -21,6 +21,12 @@
 	{
 		"Signatures"
 		{
+			"CBaseEntity::SetMoveType"
+			{
+				"library"	"server"
+				"linux"		"@_ZN11CBaseEntity11SetMoveTypeE10MoveType_t13MoveCollide_t"
+				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x0F\xB6\x86\x76\x01\x00\x00"
+			}
 			"CTFDroppedWeapon::Create"
 			{
 				"library"	"server"
