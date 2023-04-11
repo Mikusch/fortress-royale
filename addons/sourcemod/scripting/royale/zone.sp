@@ -422,11 +422,6 @@ void Zone_GetNewPosition(float center[3])
 	center = g_vecNewPosition;
 }
 
-float Zone_GetSafeDiameter()
-{
-	return g_zoneData.diameter_safe;
-}
-
 float Zone_GetShrinkPercentage()
 {
 	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);

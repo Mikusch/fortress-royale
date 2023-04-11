@@ -24,6 +24,7 @@ enum struct BattleBusData
 	float model_scale;
 	char crate_name[64];
 	float travel_height;
+	float travel_diameter;
 	float travel_time;
 	float camera_offset[3];
 	float camera_angles[3];
@@ -35,6 +36,7 @@ enum struct BattleBusData
 		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
 		kv.GetString("crate_name", this.crate_name, sizeof(this.crate_name), this.crate_name);
 		this.travel_height = kv.GetFloat("travel_height", this.travel_height);
+		this.travel_diameter = kv.GetFloat("travel_diameter", this.travel_diameter);
 		this.travel_time = kv.GetFloat("travel_time", this.travel_time);
 		kv.GetVector("camera_offset", this.camera_offset, this.camera_offset);
 		kv.GetVector("camera_angles", this.camera_angles, this.camera_angles);
@@ -120,8 +122,7 @@ int BattleBus_GetEntity()
 
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
 {
-	// The bus travels along the safe diameter of the zone, using its center
-	float flDiameter = Zone_GetSafeDiameter();
+	// The bus travels along the center of the zone
 	Zone_GetNewPosition(vecOrigin);
 	
 	// Collect possible yaw angles and shuffle them
@@ -137,14 +138,14 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 	{
 		float flYaw = aYaws[i];
 		
-		vecOrigin[0] = (Cosine(DegToRad(flYaw)) * flDiameter / 2.0) + vecOrigin[0];
-		vecOrigin[1] = (Sine(DegToRad(flYaw)) * flDiameter / 2.0) + vecOrigin[1];
+		vecOrigin[0] = (Cosine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / 2.0) + vecOrigin[0];
+		vecOrigin[1] = (Sine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / 2.0) + vecOrigin[1];
 		vecOrigin[2] = g_battleBusData.travel_height;
 		
 		vecAngles[1] = (flYaw >= 180.0) ? (flYaw - 180.0) : (flYaw + 180.0);
 		
-		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
-		vecVelocity[1] = -Sine(DegToRad(flYaw)) * flDiameter / g_battleBusData.travel_time;
+		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
+		vecVelocity[1] = -Sine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
 		
 		// Check if the bus can go along this path without being obstructed
 		float vecEndPosition[3];
