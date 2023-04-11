@@ -426,6 +426,8 @@ public void OnEntityDestroyed(int entity)
 	if (!g_bEnabled)
 		return;
 	
+	BattleBus_OnEntityDestroyed(entity);
+	
 	FREntity(entity).Destroy();
 }
 

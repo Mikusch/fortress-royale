@@ -523,16 +523,6 @@ bool IsInWaitingForPlayers()
 	return GameRules_GetProp("m_bInWaitingForPlayers") || g_nRoundState == FRRoundState_WaitingForPlayers;
 }
 
-void SetModelScale(int entity, float scale, float duration = 0.0)
-{
-	float vecScale[3];
-	vecScale[0] = scale;
-	vecScale[1] = duration;
-	
-	SetVariantVector3D(vecScale);
-	AcceptEntityInput(entity, "SetModelScale");
-}
-
 void SetWinningTeam(TFTeam team = TFTeam_Unassigned)
 {
 	int round_win = CreateEntityByName("game_round_win");

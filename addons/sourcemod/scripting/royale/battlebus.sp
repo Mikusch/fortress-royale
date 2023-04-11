@@ -45,7 +45,7 @@ enum struct BattleBusData
 		
 		if (kv.JumpToKey("sounds", false))
 		{
-			this.sounds = new ArrayList(PLATFORM_MAX_PATH);
+			this.sounds = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
 			if (kv.GotoFirstSubKey(false))
 			{
 				do
@@ -109,6 +109,30 @@ void BattleBus_OnSetupFinished()
 		
 		//SetVariantString("!activator");
 		//AcceptEntityInput(camera, "Enable", client);
+	}
+}
+
+void BattleBus_OnEntityDestroyed(int entity)
+{
+	if (entity == EntRefToEntIndex(g_hActiveBusEnt))
+	{
+		// Stop any lingering sounds when the bus gets destroyed
+		ArrayList sounds = g_battleBusData.sounds;
+		if (sounds && sounds.Length != 0)
+		{
+			char szSound[PLATFORM_MAX_PATH];
+			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)) != 0)
+			{
+				if (PrecacheScriptSound(szSound))
+				{
+					EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
+				}
+				else if (PrecacheSound(szSound))
+				{
+					StopSound(entity, SNDCHAN_STATIC, szSound);
+				}
+			}
+		}
 	}
 }
 
@@ -231,8 +255,14 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 			char szSound[PLATFORM_MAX_PATH];
 			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)) != 0)
 			{
-				PrecacheSound(szSound);
-				EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
+				if (PrecacheScriptSound(szSound))
+				{
+					EmitGameSoundToAll(szSound, bus);
+				}
+				else if (PrecacheSound(szSound))
+				{
+					EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
+				}
 			}
 		}
 		
