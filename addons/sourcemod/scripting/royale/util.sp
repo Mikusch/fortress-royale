@@ -552,6 +552,9 @@ void DissolveEntity(int entity)
 	if (IsValidEntity(dissolver) && DispatchSpawn(dissolver))
 	{
 		SetVariantString("!activator");
+		AcceptEntityInput(dissolver, "SetParent", entity);
+		
+		SetVariantString("!activator");
 		AcceptEntityInput(dissolver, "Dissolve", entity);
 	}
 }

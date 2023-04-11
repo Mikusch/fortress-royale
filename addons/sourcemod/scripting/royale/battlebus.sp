@@ -125,29 +125,30 @@ int BattleBus_GetEntity()
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
 {
 	// The bus travels along the center of the zone
-	Zone_GetNewPosition(vecOrigin);
+	float vecCenter[3];
+	Zone_GetNewPosition(vecCenter);
 	
 	// Collect possible yaw angles and shuffle them
-	float aYaws[360];
-	for (int i = 0; i < sizeof(aYaws); i++)
+	float aDegs[360];
+	for (int i = 0; i < sizeof(aDegs); i++)
 	{
-		aYaws[i] = float(i);
+		aDegs[i] = float(i);
 	}
 	
-	SortFloats(aYaws, sizeof(aYaws), Sort_Random);
+	SortFloats(aDegs, sizeof(aDegs), Sort_Random);
 	
-	for (int i = 0; i < sizeof(aYaws); i++)
+	for (int i = 0; i < sizeof(aDegs); i++)
 	{
-		float flYaw = aYaws[i];
+		float flDeg = aDegs[i];
 		
-		vecOrigin[0] = (Cosine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / 2.0) + vecOrigin[0];
-		vecOrigin[1] = (Sine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / 2.0) + vecOrigin[1];
+		vecOrigin[0] = (Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / 2.0) + vecCenter[0];
+		vecOrigin[1] = (Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / 2.0) + vecCenter[1];
 		vecOrigin[2] = g_battleBusData.travel_height;
 		
-		vecAngles[1] = (flYaw >= 180.0) ? (flYaw - 180.0) : (flYaw + 180.0);
+		vecAngles[1] = (flDeg >= 180.0) ? (flDeg - 180.0) : (flDeg + 180.0);
 		
-		vecVelocity[0] = -Cosine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
-		vecVelocity[1] = -Sine(DegToRad(flYaw)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
+		vecVelocity[0] = -Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
+		vecVelocity[1] = -Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
 		
 		// Check if the bus can go along this path without being obstructed
 		float vecEndPosition[3];
