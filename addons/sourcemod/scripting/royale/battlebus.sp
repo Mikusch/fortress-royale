@@ -93,7 +93,11 @@ void BattleBus_OnSetupFinished()
 	// Attach camera first, so it'll follow the bus when it is teleported
 	SetVariantString("!activator");
 	AcceptEntityInput(camera, "SetParent", bus);
-	TeleportEntity(camera, g_battleBusData.camera_offset, g_battleBusData.camera_angles);
+	
+	float angles[3];
+	AddVectors(g_battleBusData.camera_angles, g_battleBusData.model_angles, angles);
+	
+	TeleportEntity(camera, g_battleBusData.camera_offset, angles);
 	
 	if (!BattleBus_InitBusEnt(bus, Timer_EndPlayerBus))
 		return;
@@ -175,9 +179,7 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 		vecOrigin[2] = g_battleBusData.travel_height;
 		
 		vecAngles[1] = (flDeg >= 180.0) ? (flDeg - 180.0) : (flDeg + 180.0);
-		vecAngles[0] += g_battleBusData.model_angles[0];
-		vecAngles[1] += g_battleBusData.model_angles[1];
-		vecAngles[2] += g_battleBusData.model_angles[2];
+		AddVectors(vecAngles, g_battleBusData.model_angles, vecAngles);
 		
 		vecVelocity[0] = -Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
 		vecVelocity[1] = -Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
