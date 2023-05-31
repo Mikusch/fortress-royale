@@ -21,6 +21,7 @@
 enum struct BattleBusData
 {
 	char model[PLATFORM_MAX_PATH];
+	float model_angles[3];
 	float model_scale;
 	char default_anim[PLATFORM_MAX_PATH];
 	char crate_name[64];
@@ -34,6 +35,7 @@ enum struct BattleBusData
 	void Parse(KeyValues kv)
 	{
 		kv.GetString("model", this.model, sizeof(this.model), this.model);
+		kv.GetVector("model_angles", this.model_angles, this.model_angles);
 		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
 		kv.GetString("default_anim", this.default_anim, sizeof(this.default_anim), this.default_anim);
 		kv.GetString("crate_name", this.crate_name, sizeof(this.crate_name), this.crate_name);
@@ -170,6 +172,9 @@ bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3],
 		vecOrigin[2] = g_battleBusData.travel_height;
 		
 		vecAngles[1] = (flDeg >= 180.0) ? (flDeg - 180.0) : (flDeg + 180.0);
+		vecAngles[0] += g_battleBusData.model_angles[0];
+		vecAngles[1] += g_battleBusData.model_angles[1];
+		vecAngles[2] += g_battleBusData.model_angles[2];
 		
 		vecVelocity[0] = -Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
 		vecVelocity[1] = -Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
