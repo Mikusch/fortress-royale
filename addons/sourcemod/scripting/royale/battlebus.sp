@@ -120,18 +120,21 @@ void BattleBus_OnEntityDestroyed(int entity)
 	{
 		// Stop any lingering sounds when the bus gets destroyed
 		ArrayList sounds = g_battleBusData.sounds;
-		if (sounds && sounds.Length != 0)
+		if (sounds)
 		{
-			char szSound[PLATFORM_MAX_PATH];
-			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)) != 0)
+			for (int i = 0; i < sounds.Length; i++)
 			{
-				if (PrecacheScriptSound(szSound))
+				char szSound[PLATFORM_MAX_PATH];
+				if (sounds.GetString(i, szSound, sizeof(szSound)) != 0)
 				{
-					EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
-				}
-				else if (PrecacheSound(szSound))
-				{
-					StopSound(entity, SNDCHAN_STATIC, szSound);
+					if (PrecacheScriptSound(szSound))
+					{
+						EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
+					}
+					else if (PrecacheSound(szSound))
+					{
+						StopSound(entity, SNDCHAN_STATIC, szSound);
+					}
 				}
 			}
 		}
