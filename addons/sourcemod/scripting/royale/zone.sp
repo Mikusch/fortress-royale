@@ -132,7 +132,7 @@ void Zone_Think()
 			TeleportEntity(g_hZonePropEnt, vecZoneOrigin);
 			
 			// Progress from 1.0 to 0.0 (starting zone to zero size)
-			flShrinkPercentage = (float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks);
+			flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
 			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(flShrinkPercentage));
 		}
 		

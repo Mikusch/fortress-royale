@@ -23,9 +23,19 @@ bool IsValidClient(int client)
 	return (0 < client <= MaxClients) && IsValidEntity(client) && IsClientInGame(client);
 }
 
+any Min(any a, any b)
+{
+	return (a <= b) ? a : b;
+}
+
 any Max(any a, any b)
 {
 	return (a >= b) ? a : b;
+}
+
+any Clamp(any val, any min, any max)
+{
+	return Min(Max(val, min), max);
 }
 
 void ItemGiveTo(int client, int item)
