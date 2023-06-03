@@ -249,6 +249,10 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	if (iLoadoutSlot == -1)
 		return Plugin_Continue;
 	
+	// Let players keep their PDAs
+	if (iLoadoutSlot == LOADOUT_POSITION_PDA || iLoadoutSlot == LOADOUT_POSITION_PDA2)
+		return Plugin_Continue;
+	
 	// Let Engineer keep his toolbox
 	if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
 		return Plugin_Continue;
@@ -269,10 +273,10 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
 	
-	int afButtonsChanged = GetEntProp(client, Prop_Data, "m_afButtonPressed") | GetEntProp(client, Prop_Data, "m_afButtonReleased");
-	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonsChanged & IN_ATTACK2);
-	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonsChanged & IN_ATTACK3);
-	bool bInReload = (buttons & IN_RELOAD && afButtonsChanged & IN_RELOAD);
+	int afButtonChanged = GetEntProp(client, Prop_Data, "m_afButtonPressed") | GetEntProp(client, Prop_Data, "m_afButtonReleased");
+	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonChanged & IN_ATTACK2);
+	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonChanged & IN_ATTACK3);
+	bool bInReload = (buttons & IN_RELOAD && afButtonChanged & IN_RELOAD);
 	
 	// Ejecting from the bus (only allows +attack3 and +reload)
 	if (bInAttack3 || bInReload)
