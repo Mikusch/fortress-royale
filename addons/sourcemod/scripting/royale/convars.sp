@@ -41,6 +41,7 @@ void ConVars_Init()
 	fr_crate_open_range = CreateConVar("fr_crate_open_range", "64", "Range in HU that players may open crates from.");
 	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
 	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
+	fr_max_ammo_boost = CreateConVar("fr_max_ammo_boost", "1.5", "Maximum amount of excess ammo that players can carry.", _, true, 1.0);
 	
 	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
 	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);

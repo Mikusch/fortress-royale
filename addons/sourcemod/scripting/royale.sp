@@ -38,6 +38,7 @@ ConVar fr_crate_open_time;
 ConVar fr_crate_open_range;
 ConVar fr_crate_max_drops;
 ConVar fr_crate_max_extra_drops;
+ConVar fr_max_ammo_boost;
 ConVar fr_zone_startdisplay;
 ConVar fr_zone_startdisplay_player;
 ConVar fr_zone_display;
@@ -59,6 +60,7 @@ bool g_bIsMapRunning;
 bool g_bBypassGiveNamedItemHook;
 bool g_bAllowForceRespawn;
 bool g_bInHealthKitTouch;
+bool g_bInGiveAmmo;
 bool g_bFoundCrate;
 FRRoundState g_nRoundState;
 

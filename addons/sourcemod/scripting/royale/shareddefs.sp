@@ -235,6 +235,13 @@ enum eEurekaTeleportTargets
 	EUREKA_NUM_TARGETS
 };
 
+enum EAmmoSource
+{
+	kAmmoSource_Pickup,					// this came from either a box of ammo or a player's dropped weapon
+	kAmmoSource_Resupply,				// resupply cabinet and/or full respawn
+	kAmmoSource_DispenserOrCart,		// the player is standing next to an engineer's dispenser or pushing the cart in a payload game
+};
+
 char g_viewModelArms[][] = {
 	"",
 	"models/weapons/c_models/c_scout_arms.mdl",

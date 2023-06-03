@@ -75,6 +75,18 @@
 				"linux"		"@_ZN9CTFPlayer14GetLoadoutItemEiib"
 				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x57\x89\x75\xFC"
 			}
+			"CTFPlayer::GetMaxAmmo"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
+				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF"
+			}
+			"CTFPlayer::GiveAmmo"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer8GiveAmmoEiib11EAmmoSource"
+				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x08\x8B\xD9\x89\x75\xFC"
+			}
 			"CBaseCombatCharacter::SwitchToNextBestWeapon"
 			{
 				"library"	"server"
@@ -195,6 +207,50 @@
 					"pWeapon"
 					{
 						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::GetMaxAmmo"
+			{
+				"signature"	"CTFPlayer::GetMaxAmmo"
+				"callconv"	"thiscall"
+				"return"	"int"
+				"this"		"entity"
+				"arguments"
+				{
+					"iAmmoIndex"
+					{
+						"type"	"int"
+					}
+					"iClassIndex"
+					{
+						"type"	"int"
+					}
+				}
+			}
+			"CTFPlayer::GiveAmmo"
+			{
+				"signature"	"CTFPlayer::GiveAmmo"
+				"callconv"	"thiscall"
+				"return"	"int"
+				"this"		"entity"
+				"arguments"
+				{
+					"iCount"
+					{
+						"type"	"int"
+					}
+					"iAmmoIndex"
+					{
+						"type"	"int"
+					}
+					"bSuppressSound"
+					{
+						"type"	"bool"
+					}
+					"eAmmoSource"
+					{
+						"type"	"int"
 					}
 				}
 			}

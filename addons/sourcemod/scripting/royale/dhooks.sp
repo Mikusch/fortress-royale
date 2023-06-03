@@ -46,6 +46,8 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxAmmo", _, DHookCallback_CTFPlayer_GetMaxAmmo_Post);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GiveAmmo", DHookCallback_CTFPlayer_GiveAmmo_Pre, DHookCallback_CTFPlayer_GiveAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", _, DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
 }
@@ -178,7 +180,7 @@ static MRESReturn DHookCallback_CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHo
 	if (IsInWaitingForPlayers())
 		return MRES_Ignored;
 	
-	// Prevent dropped weapon creation from TF2 itself, we pass NULL to pLastOwner
+	// Prevent dropped weapon creation from TF2 itself by setting pLastOwner to NULL
 	if (!params.IsNull(1))
 	{
 		ret.Value = -1;
@@ -327,6 +329,18 @@ static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player,
 	return MRES_Supercede;
 }
 
+static MRESReturn DHookCallback_CTFPlayer_GetMaxAmmo_Post(int player, DHookReturn ret, DHookParam params)
+{
+	if (g_bInGiveAmmo)
+	{
+		// Allow extra ammo from packs
+		ret.Value = ret.Value * fr_max_ammo_boost.FloatValue;
+		return MRES_Supercede;
+	}
+	
+	return MRES_Ignored;
+}
+
 static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookReturn ret, DHookParam params)
 {
 	// If szName is NULL, don't generate an item
@@ -361,13 +375,33 @@ static MRESReturn DHookCallback_CBaseCombatCharacter_TakeHealth_Pre(int player, 
 {
 	if (g_bInHealthKitTouch)
 	{
-		// The health kit will not call its post-hook
+		// The health kit will not call its post-hook, so we'll have to do this here
 		g_bInHealthKitTouch = false;
 		
 		int bitsDamageType = params.Get(2);
 		params.Set(2, bitsDamageType | DMG_IGNORE_MAXHEALTH);
 		
 		return MRES_ChangedHandled;
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Pre(int player, DHookReturn ret, DHookParam params)
+{
+	if (params.Get(4) == kAmmoSource_Pickup)
+	{
+		g_bInGiveAmmo = true;
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Post(int player, DHookReturn ret, DHookParam params)
+{
+	if (params.Get(4) == kAmmoSource_Pickup)
+	{
+		g_bInGiveAmmo = false;
 	}
 	
 	return MRES_Ignored;
