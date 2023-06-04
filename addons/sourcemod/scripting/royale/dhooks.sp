@@ -334,7 +334,7 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxAmmo_Post(int player, DHookRetur
 	if (g_bInGiveAmmo)
 	{
 		// Allow extra ammo from packs
-		ret.Value = ret.Value * sm_fr_max_ammo_boost.FloatValue;
+		ret.Value = RoundToNearest(float(ret.Value) * sm_fr_max_ammo_boost.FloatValue);
 		return MRES_Supercede;
 	}
 	
