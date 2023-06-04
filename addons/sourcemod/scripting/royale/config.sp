@@ -148,8 +148,8 @@ enum struct CrateConfig
 				kv.GoBack();
 			}
 			
-			this.max_drops = kv.GetNum("max_drops", fr_crate_max_drops.IntValue);
-			this.max_extra_drops = kv.GetNum("max_extra_drops", fr_crate_max_extra_drops.IntValue);
+			this.max_drops = kv.GetNum("max_drops", sm_fr_crate_max_drops.IntValue);
+			this.max_extra_drops = kv.GetNum("max_extra_drops", sm_fr_crate_max_extra_drops.IntValue);
 			
 			this.breakable = kv.GetNum("breakable") != 0;
 			if (this.breakable)

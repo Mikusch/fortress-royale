@@ -34,37 +34,37 @@ void ConVars_Init()
 {
 	g_ConVars = new StringMap();
 	
-	fr_enable = CreateConVar("fr_enable", "1", "Enable the plugin?");
-	fr_setup_length = CreateConVar("fr_setup_length", "15", "Time before the battle bus takes off.");
-	fr_truce_duration = CreateConVar("fr_truce_duration", "60", "Length of the truce period.");
-	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3", "Amount of time to open a crate.");
-	fr_crate_open_range = CreateConVar("fr_crate_open_range", "64", "Range in HU that players may open crates from.");
-	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
-	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
-	fr_max_ammo_boost = CreateConVar("fr_max_ammo_boost", "1.5", "Maximum amount of excess ammo that players can carry.", _, true, 1.0);
+	sm_fr_enable = CreateConVar("sm_fr_enable", "1", "Enable the plugin?");
+	sm_fr_setup_length = CreateConVar("sm_fr_setup_length", "15", "Time before the battle bus takes off.");
+	sm_fr_truce_duration = CreateConVar("sm_fr_truce_duration", "60", "Length of the truce period.");
+	sm_fr_crate_open_time = CreateConVar("sm_fr_crate_open_time", "3", "Amount of time to open a crate.");
+	sm_fr_crate_open_range = CreateConVar("sm_fr_crate_open_range", "64", "Range in HU that players may open crates from.");
+	sm_fr_crate_max_drops = CreateConVar("sm_fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
+	sm_fr_crate_max_extra_drops = CreateConVar("sm_fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
+	sm_fr_max_ammo_boost = CreateConVar("sm_fr_max_ammo_boost", "1.5", "Maximum amount of excess ammo that players can carry.", _, true, 1.0);
+	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
 	
-	fr_zone_startdisplay = CreateConVar("fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
-	fr_zone_startdisplay_player = CreateConVar("fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
-	fr_zone_display = CreateConVar("fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
-	fr_zone_display_player = CreateConVar("fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
-	fr_zone_shrink = CreateConVar("fr_zone_shrink", "20", "Seconds to shrink zone to next level", _, true, 0.0);
-	fr_zone_shrink_player = CreateConVar("fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
-	fr_zone_nextdisplay = CreateConVar("fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
-	fr_zone_nextdisplay_player = CreateConVar("fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
-	fr_zone_damage = CreateConVar("fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
-	fr_parachute_auto_height = CreateConVar("fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
+	sm_fr_zone_startdisplay = CreateConVar("sm_fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
+	sm_fr_zone_startdisplay_player = CreateConVar("sm_fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
+	sm_fr_zone_display = CreateConVar("sm_fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
+	sm_fr_zone_display_player = CreateConVar("sm_fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
+	sm_fr_zone_shrink = CreateConVar("sm_fr_zone_shrink", "20", "Seconds to shrink zone to next level", _, true, 0.0);
+	sm_fr_zone_shrink_player = CreateConVar("sm_fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
+	sm_fr_zone_nextdisplay = CreateConVar("sm_fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
+	sm_fr_zone_nextdisplay_player = CreateConVar("sm_fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
+	sm_fr_zone_damage = CreateConVar("sm_fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
 	
-	fr_health_multiplier[TFClass_Scout] = CreateConVar("fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
-	fr_health_multiplier[TFClass_Sniper] = CreateConVar("fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
-	fr_health_multiplier[TFClass_Soldier] = CreateConVar("fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");
-	fr_health_multiplier[TFClass_DemoMan] = CreateConVar("fr_health_multiplier_demoman", "2", "Multiplier to maximum health for Demoman.");
-	fr_health_multiplier[TFClass_Medic] = CreateConVar("fr_health_multiplier_medic", "1.5", "Multiplier to maximum health for Medic.");
-	fr_health_multiplier[TFClass_Heavy] = CreateConVar("fr_health_multiplier_heavy", "1.75", "Multiplier to maximum health for Heavy.");
-	fr_health_multiplier[TFClass_Pyro] = CreateConVar("fr_health_multiplier_pyro", "1.6", "Multiplier to maximum health for Pyro.");
-	fr_health_multiplier[TFClass_Spy] = CreateConVar("fr_health_multiplier_spy", "1.6", "Multiplier to maximum health for Spy.");
-	fr_health_multiplier[TFClass_Engineer] = CreateConVar("fr_health_multiplier_engineer", "1.6", "Multiplier to maximum health for Engineer.");
+	sm_fr_health_multiplier[TFClass_Scout] = CreateConVar("sm_fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
+	sm_fr_health_multiplier[TFClass_Sniper] = CreateConVar("sm_fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
+	sm_fr_health_multiplier[TFClass_Soldier] = CreateConVar("sm_fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");
+	sm_fr_health_multiplier[TFClass_DemoMan] = CreateConVar("sm_fr_health_multiplier_demoman", "2", "Multiplier to maximum health for Demoman.");
+	sm_fr_health_multiplier[TFClass_Medic] = CreateConVar("sm_fr_health_multiplier_medic", "1.5", "Multiplier to maximum health for Medic.");
+	sm_fr_health_multiplier[TFClass_Heavy] = CreateConVar("sm_fr_health_multiplier_heavy", "1.75", "Multiplier to maximum health for Heavy.");
+	sm_fr_health_multiplier[TFClass_Pyro] = CreateConVar("sm_fr_health_multiplier_pyro", "1.6", "Multiplier to maximum health for Pyro.");
+	sm_fr_health_multiplier[TFClass_Spy] = CreateConVar("sm_fr_health_multiplier_spy", "1.6", "Multiplier to maximum health for Spy.");
+	sm_fr_health_multiplier[TFClass_Engineer] = CreateConVar("sm_fr_health_multiplier_engineer", "1.6", "Multiplier to maximum health for Engineer.");
 	
-	fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
+	sm_fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
 	
 	mp_disable_respawn_times = FindConVar("mp_disable_respawn_times");
 	spec_freeze_traveltime = FindConVar("spec_freeze_traveltime");

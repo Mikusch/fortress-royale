@@ -70,7 +70,7 @@ void Truce_OnSetupFinished()
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
 	{
-		DispatchKeyValueFloat(timer, "timer_length", fr_truce_duration.FloatValue);
+		DispatchKeyValueFloat(timer, "timer_length", sm_fr_truce_duration.FloatValue);
 		DispatchKeyValue(timer, "show_in_hud", "1");
 		DispatchKeyValue(timer, "auto_countdown", "0");
 		

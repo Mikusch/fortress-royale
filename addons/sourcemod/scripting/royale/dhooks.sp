@@ -334,7 +334,7 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxAmmo_Post(int player, DHookRetur
 	if (g_bInGiveAmmo)
 	{
 		// Allow extra ammo from packs
-		ret.Value = ret.Value * fr_max_ammo_boost.FloatValue;
+		ret.Value = ret.Value * sm_fr_max_ammo_boost.FloatValue;
 		return MRES_Supercede;
 	}
 	
@@ -430,7 +430,7 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 	
 	// Increase class maximum health
 	int iMaxHealth = ret.Value;
-	ret.Value = RoundToFloor(iMaxHealth * fr_health_multiplier[nClass].FloatValue);
+	ret.Value = RoundToFloor(iMaxHealth * sm_fr_health_multiplier[nClass].FloatValue);
 	return MRES_Supercede;
 }
 

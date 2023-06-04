@@ -31,25 +31,25 @@
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
 
-ConVar fr_enable;
-ConVar fr_setup_length;
-ConVar fr_truce_duration;
-ConVar fr_crate_open_time;
-ConVar fr_crate_open_range;
-ConVar fr_crate_max_drops;
-ConVar fr_crate_max_extra_drops;
-ConVar fr_max_ammo_boost;
-ConVar fr_zone_startdisplay;
-ConVar fr_zone_startdisplay_player;
-ConVar fr_zone_display;
-ConVar fr_zone_display_player;
-ConVar fr_zone_shrink;
-ConVar fr_zone_shrink_player;
-ConVar fr_zone_nextdisplay;
-ConVar fr_zone_nextdisplay_player;
-ConVar fr_zone_damage;
-ConVar fr_parachute_auto_height;
-ConVar fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
+ConVar sm_fr_enable;
+ConVar sm_fr_setup_length;
+ConVar sm_fr_truce_duration;
+ConVar sm_fr_crate_open_time;
+ConVar sm_fr_crate_open_range;
+ConVar sm_fr_crate_max_drops;
+ConVar sm_fr_crate_max_extra_drops;
+ConVar sm_fr_max_ammo_boost;
+ConVar sm_fr_parachute_auto_height;
+ConVar sm_fr_zone_startdisplay;
+ConVar sm_fr_zone_startdisplay_player;
+ConVar sm_fr_zone_display;
+ConVar sm_fr_zone_display_player;
+ConVar sm_fr_zone_shrink;
+ConVar sm_fr_zone_shrink_player;
+ConVar sm_fr_zone_nextdisplay;
+ConVar sm_fr_zone_nextdisplay_player;
+ConVar sm_fr_zone_damage;
+ConVar sm_fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
 
 ConVar mp_disable_respawn_times;
 ConVar spec_freeze_traveltime;
@@ -175,9 +175,9 @@ public void OnMapEnd()
 
 public void OnConfigsExecuted()
 {
-	if (g_bEnabled != fr_enable.BoolValue)
+	if (g_bEnabled != sm_fr_enable.BoolValue)
 	{
-		TogglePlugin(fr_enable.BoolValue);
+		TogglePlugin(sm_fr_enable.BoolValue);
 	}
 	else if (g_bEnabled)
 	{
@@ -324,7 +324,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				TR_GetEndPosition(vecEndPos);
 				
 				// Open parachute when we are a certain distance from the ground
-				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
+				if (GetVectorDistance(vecOrigin, vecEndPos) <= sm_fr_parachute_auto_height.FloatValue)
 				{
 					TF2_AddCondition(client, TFCond_Parachute);
 					action = Plugin_Changed;
@@ -386,7 +386,7 @@ static bool OpenCrateInRange(int client, int buttons)
 	float vecCenter[3];
 	CBaseEntity(client).WorldSpaceCenter(vecCenter);
 	
-	ScaleVector(vecForward, fr_crate_open_range.FloatValue);
+	ScaleVector(vecForward, sm_fr_crate_open_range.FloatValue);
 	AddVectors(vecCenter, vecForward, vecCenter);
 	float vecSize[3] = { 24.0, 24.0, 24.0 };
 	
@@ -514,7 +514,7 @@ void OnRoundStart()
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
 	{
-		DispatchKeyValueFloat(timer, "setup_length", fr_setup_length.FloatValue);
+		DispatchKeyValueFloat(timer, "setup_length", sm_fr_setup_length.FloatValue);
 		DispatchKeyValue(timer, "show_in_hud", "1");
 		DispatchKeyValue(timer, "start_paused", "0");
 		

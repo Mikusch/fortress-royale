@@ -163,11 +163,11 @@ void Zone_Think()
 			GetClientAbsOrigin(client, vecOrigin);
 			
 			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
-			bool isOutsideZone = ratio > 1.0;
+			bool bIsOutsideZone = ratio > 1.0;
 			
-			if (isOutsideZone)
+			if (bIsOutsideZone)
 			{
-				TF2Util_MakePlayerBleed(client, client, 0.5, _, fr_zone_damage.IntValue);
+				TF2Util_MakePlayerBleed(client, client, 0.5, _, sm_fr_zone_damage.IntValue);
 			}
 		}
 		
@@ -179,11 +179,11 @@ void Zone_Think()
 			GetEntPropVector(obj, Prop_Data, "m_vecAbsOrigin", vecOrigin);
 			
 			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
-			bool isOutsideZone = ratio > 1.0;
+			bool bIsOutsideZone = ratio > 1.0;
 			
-			if (isOutsideZone)
+			if (bIsOutsideZone)
 			{
-				SDKHooks_TakeDamage(obj, 0, 0, fr_zone_damage.FloatValue);
+				SDKHooks_TakeDamage(obj, 0, 0, sm_fr_zone_damage.FloatValue);
 				AcceptEntityInput(obj, "Disable");
 			}
 			else
@@ -434,20 +434,20 @@ static float Zone_GetPropModelScale(float flPercentage = 1.0)
 
 static float Zone_GetStartDisplayDuration()
 {
-	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayerCount()));
+	return sm_fr_zone_startdisplay.FloatValue + (sm_fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 static float Zone_GetDisplayDuration()
 {
-	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
+	return sm_fr_zone_display.FloatValue + (sm_fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 static float Zone_GetShrinkDuration()
 {
-	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
+	return sm_fr_zone_shrink.FloatValue + (sm_fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 static float Zone_GetNextDisplayDuration()
 {
-	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
+	return sm_fr_zone_nextdisplay.FloatValue + (sm_fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }

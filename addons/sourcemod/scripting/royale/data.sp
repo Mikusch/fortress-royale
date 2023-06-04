@@ -139,7 +139,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 			FRCrate(crate).StartOpen(this.index);
 		}
 		
-		if (this.m_flCrateOpenTime + fr_crate_open_time.FloatValue > GetGameTime())
+		if (this.m_flCrateOpenTime + sm_fr_crate_open_time.FloatValue > GetGameTime())
 		{
 			char szMessage[64];
 			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index);
