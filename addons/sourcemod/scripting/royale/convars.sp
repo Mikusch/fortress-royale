@@ -52,7 +52,8 @@ void ConVars_Init()
 	sm_fr_zone_shrink_player = CreateConVar("sm_fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
 	sm_fr_zone_nextdisplay = CreateConVar("sm_fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
 	sm_fr_zone_nextdisplay_player = CreateConVar("sm_fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
-	sm_fr_zone_damage = CreateConVar("sm_fr_zone_damage", "4", "Damage of the zone", _, true, 0.0);
+	sm_fr_zone_damage_min = CreateConVar("sm_fr_zone_damage_min", "1", "Minimum damage of the zone, when it hasn't shrunk yet.", _, true, 0.0);
+	sm_fr_zone_damage_max = CreateConVar("sm_fr_zone_damage_max", "10", "Maximum damage of the zone, when it's fully shrunk.", _, true, 0.0);
 	
 	sm_fr_health_multiplier[TFClass_Scout] = CreateConVar("sm_fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
 	sm_fr_health_multiplier[TFClass_Sniper] = CreateConVar("sm_fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");

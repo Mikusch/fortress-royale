@@ -146,6 +146,11 @@ void Zone_Think()
 	
 	float flRadius = g_zoneData.diameter_max * flShrinkPercentage / 2.0;
 	
+	// Zone damage ramps up gradually each time it shrinks
+	float flMin = sm_fr_zone_damage_min.FloatValue;
+	float flMax = sm_fr_zone_damage_max.FloatValue;
+	float flDamage = flMax - ((flMax - flMin) / g_zoneData.num_shrinks) * g_iShrinkLevel;
+	
 	if (GetGameTime() >= g_flNextDamageTime && g_nRoundState != FRRoundState_RoundEnd)
 	{
 		g_flNextDamageTime = GetGameTime() + 0.5;
@@ -167,7 +172,7 @@ void Zone_Think()
 			
 			if (bIsOutsideZone)
 			{
-				TF2Util_MakePlayerBleed(client, client, 0.5, _, sm_fr_zone_damage.IntValue);
+				TF2Util_MakePlayerBleed(client, client, 0.5, _, flDamage);
 			}
 		}
 		
@@ -183,7 +188,7 @@ void Zone_Think()
 			
 			if (bIsOutsideZone)
 			{
-				SDKHooks_TakeDamage(obj, 0, 0, sm_fr_zone_damage.FloatValue);
+				SDKHooks_TakeDamage(obj, 0, 0, flDamage);
 				AcceptEntityInput(obj, "Disable");
 			}
 			else

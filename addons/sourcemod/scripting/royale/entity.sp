@@ -71,14 +71,14 @@ methodmap FREntity < CBaseEntity
 	{
 		public get()
 		{
-			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::ref);
+			return g_entityProperties.FindValue(this, EntityProperties::ref);
 		}
 	}
 	
 	public bool IsValidCrate()
 	{
 		char classname[64];
-		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_dynamic", 12) != 0)
+		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_", 5) != 0)
 			return false;
 		
 		CrateConfig data;

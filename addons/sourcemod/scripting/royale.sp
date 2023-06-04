@@ -48,7 +48,8 @@ ConVar sm_fr_zone_shrink;
 ConVar sm_fr_zone_shrink_player;
 ConVar sm_fr_zone_nextdisplay;
 ConVar sm_fr_zone_nextdisplay_player;
-ConVar sm_fr_zone_damage;
+ConVar sm_fr_zone_damage_min;
+ConVar sm_fr_zone_damage_max;
 ConVar sm_fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
 
 ConVar mp_disable_respawn_times;
@@ -85,7 +86,7 @@ public Plugin myinfo =
 {
 	name = "Fortress Royale",
 	author = "Mikusch",
-	description = "FFA Battle Royale gamemode in Team Fortress 2.",
+	description = "FFA Battle Royale gamemode for Team Fortress 2.",
 	version = "2.0.0",
 	url = "https://github.com/Mikusch/fortress-royale"
 }
@@ -115,19 +116,27 @@ public void OnPluginStart()
 	}
 }
 
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	if (GetEngineVersion() != Engine_TF2)
+	{
+		strcopy(error, err_max, "This plugin is only compatible with Team Fortress 2!");
+		return APLRes_Failure;
+	}
+	
+	return APLRes_Success;
+}
+
 public void OnLibraryAdded(const char[] name)
 {
 	if (StrEqual(name, "TF2Items"))
 	{
 		g_bTF2Items = true;
 		
-		if (g_bEnabled)
+		// Loading TF2Items while our own GiveNamedItem hook is active leads to crashes. Abort now!
+		if (g_bEnabled && DHooks_IsGiveNamedItemHookActive())
 		{
-			// Loading TF2Items while the plugin is active leads to crashes, pull the plug!
-			if (DHooks_IsGiveNamedItemHookActive())
-			{
-				SetFailState("TF2Items was loaded while Fortress Royale is active, aborting plugin!");
-			}
+			SetFailState("TF2Items was loaded while Fortress Royale is active!");
 		}
 	}
 }
@@ -138,7 +147,7 @@ public void OnLibraryRemoved(const char[] name)
 	{
 		g_bTF2Items = false;
 		
-		// If TF2Items is being unloaded, use our own hook
+		// If TF2Items is being unloaded, use our own hook instead
 		if (g_bEnabled)
 		{
 			for (int client = 1; client <= MaxClients; client++)
