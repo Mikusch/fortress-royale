@@ -43,7 +43,7 @@ methodmap FREntity < CBaseEntity
 			g_entityProperties = new ArrayList(sizeof(EntityProperties));
 		}
 		
-		// Convert it twice to ensure we store it as an entity reference
+		// Ensure we store it as an entity reference
 		entity = EntIndexToEntRef(EntRefToEntIndex(entity));
 		
 		if (g_entityProperties.FindValue(entity, EntityProperties::m_iIndex) == -1)
@@ -59,8 +59,7 @@ methodmap FREntity < CBaseEntity
 		return view_as<FREntity>(CBaseEntity(entity));
 	}
 	
-	// Similar naming to CBaseEntity.index
-	property int reference
+	property int ref
 	{
 		public get()
 		{
@@ -78,12 +77,12 @@ methodmap FREntity < CBaseEntity
 	
 	public bool IsValidCrate()
 	{
-		char szClassname[64];
-		if (!this.GetClassname(szClassname, sizeof(szClassname)) || strncmp(szClassname, "prop_dynamic", 12) != 0)
+		char classname[64];
+		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_dynamic", 12) != 0)
 			return false;
 		
-		char szName[64];
-		return this.GetPropString(Prop_Data, "m_iName", szName, sizeof(szName)) != 0 && Config_IsValidCrateName(szName);
+		CrateConfig data;
+		return FRCrate(this.index).GetConfig(data);
 	}
 	
 	public void Destroy()
@@ -121,7 +120,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.reference))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
 				continue;
 			
 			SetVariantString(szMessage);
@@ -156,7 +155,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.reference))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
 				continue;
 			
 			RemoveEntity(worldtext);
@@ -177,25 +176,26 @@ methodmap FRCrate < FREntity
 		StopSound(this.index, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
 	}
 	
-	public bool CanUse(int client)
+	public bool CanBeOpenedBy(int client)
 	{
 		return this.m_hClaimedBy == -1 || this.m_hClaimedBy == client;
 	}
 	
 	public void DropItem(int client)
 	{
-		char szName[64];
-		if (this.GetPropString(Prop_Data, "m_iName", szName, sizeof(szName)) == 0)
+		CrateConfig data;
+		if (this.GetConfig(data))
 		{
-			LogError("Failed to get targetname for entity '%d'", this.index);
-			return;
+			data.Open(this.index, client);
 		}
+	}
+	
+	public bool GetConfig(CrateConfig config)
+	{
+		char name[64];
+		if (!this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)))
+			return false;
 		
-		// Grab a random crate config
-		CrateConfig crate;
-		if (Config_GetCrateByName(szName, crate))
-		{
-			crate.Open(this.index, client);
-		}
+		return Config_GetCrateByName(name, config);
 	}
 }

@@ -280,6 +280,12 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonChanged & IN_ATTACK3);
 	bool bInReload = (buttons & IN_RELOAD && afButtonChanged & IN_RELOAD);
 	
+	// Find a crate in range and open it
+	if (OpenCrateInRange(client, buttons))
+		return Plugin_Continue;
+	else
+		FRPlayer(client).StopOpeningCrate();
+	
 	// Ejecting from the bus (only allows +attack3 and +reload)
 	if (bInAttack3 || bInReload)
 	{
@@ -294,15 +300,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			return Plugin_Continue;
 	}
 	
-	// Opening crate in range
-	if (!OpenCrateInRange(client, buttons))
-	{
-		FRPlayer(client).StopOpeningCrate();
-	}
-	
 	Action action = Plugin_Continue;
 	
-	// We are gliding down...
 	if (FRPlayer(client).m_bIsParachuting)
 	{
 		// Do not allow manual opening/closing of the parachute
@@ -323,7 +322,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				float vecEndPos[3];
 				TR_GetEndPosition(vecEndPos);
 				
-				// Open parachute when we are a certain distance from the ground
+				// Automatically open parachute a certain distance from the ground
 				if (GetVectorDistance(vecOrigin, vecEndPos) <= sm_fr_parachute_auto_height.FloatValue)
 				{
 					TF2_AddCondition(client, TFCond_Parachute);
@@ -355,10 +354,7 @@ public void TF2_OnConditionRemoved(int client, TFCond condition)
 			if (weapon == -1)
 				continue;
 			
-			if (!TF2Util_IsEntityWeapon(weapon))
-				continue;
-			
-			if (TF2Util_GetWeaponID(weapon) != TF_WEAPON_PARACHUTE)
+			if (!TF2Util_IsEntityWeapon(weapon) || TF2Util_GetWeaponID(weapon) != TF_WEAPON_PARACHUTE)
 				continue;
 			
 			FRPlayer(client).RemoveItem(weapon);
@@ -395,14 +391,14 @@ static bool OpenCrateInRange(int client, int buttons)
 	AddVectors(vecCenter, vecSize, vecMaxs);
 	
 	g_bFoundCrate = false;
-	TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, TraceEntityEnumerator_EnumerateCrates, client);
+	TR_EnumerateEntitiesBox(vecMins, vecMaxs, PARTITION_NON_STATIC_EDICTS, EnumerateCrates, client);
 	
 	return g_bFoundCrate;
 }
 
-static bool TraceEntityEnumerator_EnumerateCrates(int entity, int client)
+static bool EnumerateCrates(int entity, int client)
 {
-	if (FREntity(entity).IsValidCrate() && FRCrate(entity).CanUse(client))
+	if (FREntity(entity).IsValidCrate() && FRCrate(entity).CanBeOpenedBy(client))
 	{
 		g_bFoundCrate = true;
 		FRPlayer(client).TryToOpenCrate(entity);

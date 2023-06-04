@@ -367,19 +367,15 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 
 static void EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
 {
-	char name[64];
-	if (GetEntPropString(caller, Prop_Data, "m_iName", name, sizeof(name)) != 0)
+	CrateConfig crate;
+	if (FRCrate(caller).GetConfig(crate))
 	{
-		CrateConfig crate;
-		if (Config_GetCrateByName(name, crate))
+		// We might have been broken by a non-player entity e.g. rocket projectile, find our real owner
+		int owner = IsValidEntity(activator) ? FindParentOwnerEntity(activator) : -1;
+		
+		if (IsValidClient(owner))
 		{
-			// We might have been broken by a non-player entity e.g. rocket projectile, find our real owner
-			int owner = IsValidEntity(activator) ? FindParentOwnerEntity(activator) : -1;
-			
-			if (IsValidClient(owner))
-			{
-				crate.Open(caller, owner);
-			}
+			crate.Open(caller, owner);
 		}
 	}
 }

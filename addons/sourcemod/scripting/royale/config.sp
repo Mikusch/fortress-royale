@@ -102,6 +102,7 @@ enum struct CrateConfig
 	char model[PLATFORM_MAX_PATH];
 	ArrayList contents;
 	ArrayList extra_contents;
+	float time_to_open;
 	int max_drops;
 	int max_extra_drops;
 	
@@ -148,6 +149,7 @@ enum struct CrateConfig
 				kv.GoBack();
 			}
 			
+			this.time_to_open = kv.GetFloat("time_to_open", sm_fr_crate_open_time.FloatValue);
 			this.max_drops = kv.GetNum("max_drops", sm_fr_crate_max_drops.IntValue);
 			this.max_extra_drops = kv.GetNum("max_extra_drops", sm_fr_crate_max_extra_drops.IntValue);
 			
@@ -498,23 +500,6 @@ void Config_Delete()
 		}
 	}
 	delete g_hWeaponData;
-}
-
-bool Config_IsValidCrateName(const char[] name)
-{
-	for (int i = 0; i < g_hCrateConfigs.Length; i++)
-	{
-		CrateConfig crate;
-		if (g_hCrateConfigs.GetArray(i, crate) != 0)
-		{
-			if (StrEqual(crate.name, name))
-			{
-				return true;
-			}
-		}
-	}
-	
-	return false;
 }
 
 bool Config_GetCrateByName(const char[] name, CrateConfig crate)
