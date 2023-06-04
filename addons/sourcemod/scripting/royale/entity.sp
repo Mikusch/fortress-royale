@@ -25,7 +25,7 @@ static ArrayList g_entityProperties;
  */
 enum struct EntityProperties
 {
-	int m_iIndex;
+	int ref;
 	int m_hClaimedBy;
 }
 
@@ -46,11 +46,11 @@ methodmap FREntity < CBaseEntity
 		// Ensure we store it as an entity reference
 		entity = EntIndexToEntRef(EntRefToEntIndex(entity));
 		
-		if (g_entityProperties.FindValue(entity, EntityProperties::m_iIndex) == -1)
+		if (g_entityProperties.FindValue(entity, EntityProperties::ref) == -1)
 		{
 			// Fill basic properties
 			EntityProperties properties;
-			properties.m_iIndex = entity;
+			properties.ref = entity;
 			properties.m_hClaimedBy = -1;
 			
 			g_entityProperties.PushArray(properties);
@@ -71,7 +71,7 @@ methodmap FREntity < CBaseEntity
 	{
 		public get()
 		{
-			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::m_iIndex);
+			return g_entityProperties.FindValue(view_as<int>(this), EntityProperties::ref);
 		}
 	}
 	
@@ -82,7 +82,7 @@ methodmap FREntity < CBaseEntity
 			return false;
 		
 		CrateConfig data;
-		return FRCrate(this.index).GetConfig(data);
+		return view_as<FRCrate>(this).GetConfig(data);
 	}
 	
 	public void Destroy()
