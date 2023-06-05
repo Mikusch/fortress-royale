@@ -121,35 +121,31 @@ void Zone_Think()
 	
 	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
 	{
-		// We are shrinking, update zone position and model scale
+		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
+		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
+		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
+		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
+		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
+		
+		// Total shrink percentage from 0 to 1 (starting zone to zero size)
+		flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
+		
+		// Let the zone prop wander
 		if (IsValidEntity(g_hZonePropEnt))
 		{
-			// Progress from level x+1 to level x
-			float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
-			SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
-			ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
-			AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
 			TeleportEntity(g_hZonePropEnt, vecZoneOrigin);
-			
-			// Progress from 1.0 to 0.0 (starting zone to zero size)
-			flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
 			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(flShrinkPercentage));
 		}
-		
 	}
 	else
 	{
-		// Zone is not shrinking
+		// Not shrinking, enforce expected values
 		vecZoneOrigin = g_vecOldPosition;
 		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
 	}
 	
-	float flRadius = g_zoneData.diameter_max * flShrinkPercentage / 2.0;
-	
-	// Zone damage ramps up gradually each time it shrinks
-	float flMin = sm_fr_zone_damage_min.FloatValue;
-	float flMax = sm_fr_zone_damage_max.FloatValue;
-	float flDamage = flMax - ((flMax - flMin) / g_zoneData.num_shrinks) * g_iShrinkLevel;
+	float flRadius = Zone_GetRadius(flShrinkPercentage);
+	float flDamage = Zone_GetDamage();
 	
 	if (GetGameTime() >= g_flNextDamageTime && g_nRoundState != FRRoundState_RoundEnd)
 	{
@@ -172,7 +168,7 @@ void Zone_Think()
 			
 			if (bIsOutsideZone)
 			{
-				TF2Util_MakePlayerBleed(client, client, 0.5, _, flDamage);
+				TF2Util_MakePlayerBleed(client, client, 0.5, _, RoundToNearest(flDamage));
 			}
 		}
 		
@@ -325,9 +321,10 @@ static void Timer_StartShrink(Handle hTimer)
 		SendHudNotificationCustom(client, szMessage, "ico_notify_ten_seconds");
 	}
 	
-	// Begin shrinking
+	float flShrinkDuration = Zone_GetShrinkDuration();
+	
 	g_flShrinkStartTime = GetGameTime();
-	g_hZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	g_hZoneTimer = CreateTimer(flShrinkDuration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void Timer_FinishShrink(Handle hTimer)
@@ -335,7 +332,6 @@ static void Timer_FinishShrink(Handle hTimer)
 	if (g_hZoneTimer != hTimer)
 		return;
 	
-	// Stop shrinking
 	g_flShrinkStartTime = -1.0;
 	
 	BattleBus_SpawnLootBus();
@@ -350,7 +346,6 @@ static void Timer_FinishShrink(Handle hTimer)
 			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
 		}
 		
-		// Hide the ghost zone
 		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
 			AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
@@ -430,6 +425,16 @@ void Zone_GetNewPosition(float center[3])
 float Zone_GetShrinkPercentage()
 {
 	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+}
+
+static float Zone_GetDamage()
+{
+	return sm_fr_zone_damage_max.FloatValue - ((sm_fr_zone_damage_max.FloatValue - sm_fr_zone_damage_min.FloatValue) / g_zoneData.num_shrinks * g_iShrinkLevel);
+}
+
+static float Zone_GetRadius(float flPercentage)
+{
+	return g_zoneData.diameter_max * flPercentage / 2.0;
 }
 
 static float Zone_GetPropModelScale(float flPercentage = 1.0)
