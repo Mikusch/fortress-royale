@@ -321,7 +321,7 @@ static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool
 	float flPercentage = Max(0.25, float(nCount) / float(MaxClients));
 	
 	int crate = -1;
-	while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
+	while ((crate = FindEntityByClassname(crate, "prop_*")) != -1)
 	{
 		// Remove crates on low player counts
 		if (FREntity(crate).IsValidCrate() && GetRandomFloat() > flPercentage)

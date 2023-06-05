@@ -106,9 +106,6 @@ enum struct CrateConfig
 	int max_drops;
 	int max_extra_drops;
 	
-	bool breakable;
-	int health;
-	
 	void Parse(KeyValues kv)
 	{
 		if (kv.GetSectionName(this.name, sizeof(this.name)))
@@ -152,12 +149,6 @@ enum struct CrateConfig
 			this.time_to_open = kv.GetFloat("time_to_open", sm_fr_crate_open_time.FloatValue);
 			this.max_drops = kv.GetNum("max_drops", sm_fr_crate_max_drops.IntValue);
 			this.max_extra_drops = kv.GetNum("max_extra_drops", sm_fr_crate_max_extra_drops.IntValue);
-			
-			this.breakable = kv.GetNum("breakable") != 0;
-			if (this.breakable)
-			{
-				this.health = kv.GetNum("health");
-			}
 		}
 	}
 	

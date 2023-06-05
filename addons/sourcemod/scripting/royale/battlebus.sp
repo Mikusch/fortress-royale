@@ -328,13 +328,6 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 			
 			if (DispatchSpawn(prop))
 			{
-				if (crate.breakable)
-				{
-					SetEntProp(prop, Prop_Data, "m_iMaxHealth", crate.health);
-					SetEntProp(prop, Prop_Data, "m_iHealth", crate.health);
-					SetEntProp(prop, Prop_Data, "m_takedamage", DAMAGE_YES);
-				}
-				
 				float vecOrigin[3], vecAngles[3], vecVelocity[3];
 				CBaseEntity(bus).GetAbsOrigin(vecOrigin);
 				CBaseEntity(bus).GetAbsAngles(vecAngles);
@@ -354,29 +347,12 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 					SetVariantColor( { 255, 255, 0, 255 } );
 					AcceptEntityInput(glow, "SetGlowColor");
 				}
-				
-				HookSingleEntityOutput(prop, "OnBreak", EntityOutput_OnBreak, true);
 			}
 		}
 	}
 	else
 	{
 		LogError("Failed to find crate with name '%s'", g_battleBusData.crate_name);
-	}
-}
-
-static void EntityOutput_OnBreak(const char[] output, int caller, int activator, float delay)
-{
-	CrateConfig crate;
-	if (FRCrate(caller).GetConfig(crate))
-	{
-		// We might have been broken by a non-player entity e.g. rocket projectile, find our real owner
-		int owner = IsValidEntity(activator) ? FindParentOwnerEntity(activator) : -1;
-		
-		if (IsValidClient(owner))
-		{
-			crate.Open(caller, owner);
-		}
 	}
 }
 

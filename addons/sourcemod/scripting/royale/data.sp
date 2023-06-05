@@ -181,7 +181,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 		if (crate == -1)
 		{
 			// Find any crates in the world still claimed by us
-			while ((crate = FindEntityByClassname(crate, "prop_dynamic*")) != -1)
+			while ((crate = FindEntityByClassname(crate, "prop_*")) != -1)
 			{
 				if (FREntity(crate).IsValidCrate() && FRCrate(crate).m_hClaimedBy == this.index)
 				{

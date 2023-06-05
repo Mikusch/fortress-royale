@@ -34,7 +34,7 @@ void SDKHooks_UnhookClient(int client)
 
 void SDKHooks_OnEntityCreated(int entity, const char[] classname)
 {
-	if (strncmp(classname, "prop_dynamic", 12) == 0)
+	if (strncmp(classname, "prop_", 5) == 0)
 	{
 		SDKHook(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
 	}
