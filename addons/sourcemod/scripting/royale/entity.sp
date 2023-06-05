@@ -168,15 +168,23 @@ methodmap FRCrate < FREntity
 	
 	public void StartOpen(int client)
 	{
+		CrateConfig data;
+		if (!this.GetConfig(data))
+			return;
+		
 		this.m_hClaimedBy = client;
-		EmitSoundToAll(")ui/item_open_crate.wav", this.index, SNDCHAN_STATIC);
+		EmitSoundToAll(data.open_sound, this.index, SNDCHAN_STATIC);
 	}
 	
 	public void CancelOpen()
 	{
+		CrateConfig data;
+		if (!this.GetConfig(data))
+			return;
+		
 		this.m_hClaimedBy = -1;
 		this.ClearText();
-		StopSound(this.index, SNDCHAN_STATIC, ")ui/item_open_crate.wav");
+		StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
 	}
 	
 	public bool CanBeOpenedBy(int client)
@@ -187,10 +195,10 @@ methodmap FRCrate < FREntity
 	public void DropItem(int client)
 	{
 		CrateConfig data;
-		if (this.GetConfig(data))
-		{
-			data.Open(this.index, client);
-		}
+		if (!this.GetConfig(data))
+			return;
+		
+		data.Open(this.index, client);
 	}
 	
 	public bool GetConfig(CrateConfig config)

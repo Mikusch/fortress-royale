@@ -166,9 +166,6 @@ public void OnMapStart()
 	g_bIsMapRunning = true;
 	g_nRoundState = FRRoundState_Init;
 	
-	PrecacheSound(")ui/item_open_crate.wav");
-	PrecacheSound(")ui/itemcrate_smash_rare.wav");
-	
 	Config_Parse();
 	Events_Precache();
 	Truce_Precache();

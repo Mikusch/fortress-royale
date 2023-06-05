@@ -105,6 +105,8 @@ enum struct CrateConfig
 	float time_to_open;
 	int max_drops;
 	int max_extra_drops;
+	char open_sound[PLATFORM_MAX_PATH];
+	char opened_sound[PLATFORM_MAX_PATH];
 	
 	void Parse(KeyValues kv)
 	{
@@ -149,6 +151,12 @@ enum struct CrateConfig
 			this.time_to_open = kv.GetFloat("time_to_open", sm_fr_crate_open_time.FloatValue);
 			this.max_drops = kv.GetNum("max_drops", sm_fr_crate_max_drops.IntValue);
 			this.max_extra_drops = kv.GetNum("max_extra_drops", sm_fr_crate_max_extra_drops.IntValue);
+			
+			kv.GetString("open_sound", this.open_sound, sizeof(this.open_sound), ")ui/item_open_crate.wav");
+			PrecacheSound(this.open_sound);
+			
+			kv.GetString("opened_sound", this.opened_sound, sizeof(this.opened_sound), ")ui/itemcrate_smash_rare.wav");
+			PrecacheSound(this.opened_sound);
 		}
 	}
 	
