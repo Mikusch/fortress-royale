@@ -40,6 +40,7 @@ ConVar sm_fr_crate_max_drops;
 ConVar sm_fr_crate_max_extra_drops;
 ConVar sm_fr_max_ammo_boost;
 ConVar sm_fr_parachute_auto_height;
+ConVar sm_fr_fists_damage_multiplier;
 ConVar sm_fr_zone_startdisplay;
 ConVar sm_fr_zone_startdisplay_player;
 ConVar sm_fr_zone_display;
@@ -257,8 +258,8 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	if (iLoadoutSlot == -1)
 		return Plugin_Continue;
 	
-	// Let players keep their PDAs
-	if (iLoadoutSlot == LOADOUT_POSITION_PDA || iLoadoutSlot == LOADOUT_POSITION_PDA2)
+	// Engineers keep both their PDAs, and spies keep their invis watch
+	if ((nClass == TFClass_Engineer && iLoadoutSlot == LOADOUT_POSITION_PDA) || iLoadoutSlot == LOADOUT_POSITION_PDA2)
 		return Plugin_Continue;
 	
 	// Let Engineer keep his toolbox

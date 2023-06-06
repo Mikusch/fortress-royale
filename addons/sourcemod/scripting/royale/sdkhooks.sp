@@ -23,6 +23,7 @@ void SDKHooks_OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
 	SDKHook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
 	SDKHook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
+	SDKHook(client, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
 }
 
 void SDKHooks_UnhookClient(int client)
@@ -30,6 +31,7 @@ void SDKHooks_UnhookClient(int client)
 	SDKUnhook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
 	SDKUnhook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
 	SDKUnhook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
+	SDKUnhook(client, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
 }
 
 void SDKHooks_OnEntityCreated(int entity, const char[] classname)
@@ -83,6 +85,22 @@ static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int c
 		return false;
 	
 	return originalResult;
+}
+
+static Action SDKHookCB_Client_OnTakeDamage (int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+{
+	if (0 < attacker <= MaxClients)
+	{
+		// Starting fists should be weaker than other melees
+		int weapon = GetEntPropEnt(attacker, Prop_Send, "m_hActiveWeapon");
+		if (IsWeaponFists(weapon))
+		{
+			damage *= sm_fr_fists_damage_multiplier.FloatValue;
+			return Plugin_Changed;
+		}
+	}
+	
+	return Plugin_Continue;
 }
 
 static void SDKHookCB_PropDynamic_SpawnPost(int entity)
