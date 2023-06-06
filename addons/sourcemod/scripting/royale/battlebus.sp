@@ -382,11 +382,13 @@ bool BattleBus_EjectPlayer(int client)
 		break;
 	}
 	
-	float vecOrigin[3];
+	float vecOrigin[3], angRotation[3], vecVelocity[3];
 	CBaseEntity(g_hActiveBusEnt).GetAbsOrigin(vecOrigin);
+	CBaseEntity(g_hActiveBusEnt).GetAbsAngles(angRotation);
+	CBaseEntity(g_hActiveBusEnt).GetAbsVelocity(vecVelocity);
 	
 	// Eject the player
-	TeleportEntity(client, vecOrigin);
+	TeleportEntity(client, vecOrigin, angRotation, vecVelocity);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
 	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hActiveBusEnt);
 	
