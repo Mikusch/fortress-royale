@@ -129,16 +129,13 @@ methodmap FRCrate < FREntity
 		}
 		
 		float vecOrigin[3], vecAngles[3];
-		this.GetAbsOrigin(vecOrigin);
+		this.WorldSpaceCenter(vecOrigin);
 		this.GetAbsAngles(vecAngles);
 		
 		// Make it sit at the top of the bounding box
-		float vecMaxs[3], vecMins[3];
+		float vecMaxs[3];
 		this.GetPropVector(Prop_Data, "m_vecMaxs", vecMaxs);
-		this.GetPropVector(Prop_Data, "m_vecMins", vecMins);
-		
-		// Make it sit at the highest point of the bounding box
-		vecOrigin[2] += vecMaxs[2] - vecMins[2] + 10.0;
+		vecOrigin[2] += vecMaxs[2];
 		
 		// Don't set a message yet, allow it to teleport first
 		worldtext = CreateEntityByName("point_worldtext");
