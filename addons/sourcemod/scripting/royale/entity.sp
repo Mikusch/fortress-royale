@@ -26,7 +26,7 @@ static ArrayList g_entityProperties;
 enum struct EntityProperties
 {
 	int ref;
-	int m_hClaimedBy;
+	int m_claimedBy;
 }
 
 methodmap FREntity < CBaseEntity
@@ -51,7 +51,7 @@ methodmap FREntity < CBaseEntity
 			// Fill basic properties
 			EntityProperties properties;
 			properties.ref = entity;
-			properties.m_hClaimedBy = -1;
+			properties.m_claimedBy = -1;
 			
 			g_entityProperties.PushArray(properties);
 		}
@@ -67,7 +67,15 @@ methodmap FREntity < CBaseEntity
 		}
 	}
 	
-	property int m_iListIndex
+	property int entindex
+	{
+		public get()
+		{
+			return EntRefToEntIndex(this.ref);
+		}
+	}
+	
+	property int m_listIndex
 	{
 		public get()
 		{
@@ -87,11 +95,11 @@ methodmap FREntity < CBaseEntity
 	
 	public void Destroy()
 	{
-		if (this.m_iListIndex == -1)
+		if (this.m_listIndex == -1)
 			return;
 		
 		// Remove the entry from local storage
-		g_entityProperties.Erase(this.m_iListIndex);
+		g_entityProperties.Erase(this.m_listIndex);
 	}
 }
 
@@ -102,16 +110,21 @@ methodmap FRCrate < FREntity
 		return view_as<FRCrate>(FREntity(entity));
 	}
 	
-	property int m_hClaimedBy
+	property int m_claimedBy
 	{
 		public get()
 		{
-			return g_entityProperties.Get(this.m_iListIndex, EntityProperties::m_hClaimedBy);
+			return g_entityProperties.Get(this.m_listIndex, EntityProperties::m_claimedBy);
 		}
-		public set(int hClaimedBy)
+		public set(int claimedBy)
 		{
-			g_entityProperties.Set(this.m_iListIndex, hClaimedBy, EntityProperties::m_hClaimedBy);
+			g_entityProperties.Set(this.m_listIndex, claimedBy, EntityProperties::m_claimedBy);
 		}
+	}
+	
+	public bool IsClaimedBy(int client)
+	{
+		return this.m_claimedBy == client;
 	}
 	
 	public void SetText(const char[] szMessage)
@@ -120,7 +133,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != this.entindex)
 				continue;
 			
 			SetVariantString(szMessage);
@@ -165,37 +178,39 @@ methodmap FRCrate < FREntity
 	
 	public void StartOpen(int client)
 	{
-		CrateConfig data;
-		if (!this.GetConfig(data))
-			return;
+		this.m_claimedBy = client;
 		
-		this.m_hClaimedBy = client;
-		EmitSoundToAll(data.open_sound, this.index, SNDCHAN_STATIC);
+		CrateConfig data;
+		if (this.GetConfig(data) && data.open_sound[0])
+		{
+			EmitSoundToAll(data.open_sound, this.index, SNDCHAN_STATIC);
+		}
 	}
 	
 	public void CancelOpen()
 	{
-		CrateConfig data;
-		if (!this.GetConfig(data))
-			return;
-		
-		this.m_hClaimedBy = -1;
+		this.m_claimedBy = -1;
 		this.ClearText();
-		StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
+		
+		CrateConfig data;
+		if (this.GetConfig(data) && data.open_sound[0])
+		{
+			StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
+		}
 	}
 	
 	public bool CanBeOpenedBy(int client)
 	{
-		return this.m_hClaimedBy == -1 || this.m_hClaimedBy == client;
+		return this.m_claimedBy == -1 || this.IsClaimedBy(client);
 	}
 	
 	public void DropItem(int client)
 	{
 		CrateConfig data;
-		if (!this.GetConfig(data))
-			return;
-		
-		data.Open(this.index, client);
+		if (this.GetConfig(data))
+		{
+			data.Open(this.index, client);
+		}
 	}
 	
 	public bool GetConfig(CrateConfig config)

@@ -431,12 +431,12 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void OnEntityDestroyed(int entity)
 {
+	FREntity(entity).Destroy();
+	
 	if (!g_bEnabled)
 		return;
 	
 	BattleBus_OnEntityDestroyed(entity);
-	
-	FREntity(entity).Destroy();
 }
 
 void TogglePlugin(bool bEnable)
