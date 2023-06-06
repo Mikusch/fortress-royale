@@ -426,6 +426,9 @@ public void OnClientPutInServer(int client)
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
+	if (!g_bEnabled)
+		return;
+	
 	SDKHooks_OnEntityCreated(entity, classname);
 }
 
