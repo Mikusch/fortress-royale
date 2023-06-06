@@ -324,7 +324,7 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 		{
 			DispatchKeyValue(prop, "targetname", crate.name);
 			DispatchKeyValue(prop, "model", crate.model);
-			DispatchKeyValueFloat(prop, "massScale", 500.0);
+			DispatchKeyValueFloat(prop, "massScale", 1000.0);
 			
 			if (DispatchSpawn(prop))
 			{
