@@ -258,15 +258,23 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	if (iLoadoutSlot == -1)
 		return Plugin_Continue;
 	
-	// Engineers keep both their PDAs, and spies keep their invis watch
-	if ((nClass == TFClass_Engineer && iLoadoutSlot == LOADOUT_POSITION_PDA) || iLoadoutSlot == LOADOUT_POSITION_PDA2)
-		return Plugin_Continue;
+	switch (nClass)
+	{
+		case TFClass_Engineer:
+		{
+			// Engineers keep their toolbox and their PDAs
+			if (iLoadoutSlot == LOADOUT_POSITION_BUILDING || iLoadoutSlot == LOADOUT_POSITION_PDA || iLoadoutSlot == LOADOUT_POSITION_PDA2)
+				return Plugin_Continue;
+		}
+		case TFClass_Spy:
+		{
+			// Spies keep their invis watch
+			if (iLoadoutSlot == LOADOUT_POSITION_PDA)
+				return Plugin_Continue;
+		}
+	}
 	
-	// Let Engineer keep his toolbox
-	if (iLoadoutSlot == LOADOUT_POSITION_BUILDING && nClass == TFClass_Engineer)
-		return Plugin_Continue;
-	
-	// Let players keep their cosmetics and action items (except Grappling Hook)
+	// Keep cosmetics and action items (except Grappling Hook)
 	if (iLoadoutSlot > LOADOUT_POSITION_PDA2 && !StrEqual(szWeaponName, "tf_weapon_grapplinghook"))
 		return Plugin_Continue;
 	

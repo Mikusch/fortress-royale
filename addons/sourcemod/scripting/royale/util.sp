@@ -559,6 +559,19 @@ void DissolveEntity(int entity)
 	}
 }
 
+void ScreenFade(int client, int r, int g, int b, int a, int duration, int holdTime, int fadeFlags)
+{
+	BfWrite bf = UserMessageToBfWrite(StartMessageOne("Fade", client));
+	bf.WriteShort(duration);	// fade lasts this long
+	bf.WriteShort(holdTime);	// fade lasts this long
+	bf.WriteShort(fadeFlags);	// fade type (in / out)
+	bf.WriteByte(r);			// fade red
+	bf.WriteByte(g);			// fade green
+	bf.WriteByte(b);			// fade blue
+	bf.WriteByte(a);			// fade alpha
+	EndMessage();
+}
+
 bool IsWeaponOfID(int weapon, int weaponID)
 {
 	return TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == weaponID;

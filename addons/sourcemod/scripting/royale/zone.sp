@@ -18,6 +18,10 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+#define ZONE_FADE_START_RATIO	0.95
+#define ZONE_FADE_ALPHA_MAX		64
+#define ZONE_DAMAGE_INTERVAL	0.5
+
 #define ZONE_MODEL				"models/kirillian/brsphere_huge_v3.mdl"
 #define ZONE_MODEL_DIAMETER		20000.0
 
@@ -147,9 +151,15 @@ void Zone_Think()
 	float flRadius = Zone_GetRadius(flShrinkPercentage);
 	float flDamage = Zone_GetDamage();
 	
-	if (GetGameTime() >= g_flNextDamageTime && g_nRoundState != FRRoundState_RoundEnd)
+	if (g_nRoundState != FRRoundState_RoundEnd)
 	{
-		g_flNextDamageTime = GetGameTime() + 0.5;
+		bool bIsDamageTick = false;
+		
+		if (GetGameTime() >= g_flNextDamageTime)
+		{
+			bIsDamageTick = true;
+			g_flNextDamageTime = GetGameTime() + ZONE_DAMAGE_INTERVAL;
+		}
 		
 		// Players take bleed damage
 		for (int client = 1; client <= MaxClients; client++)
@@ -166,9 +176,15 @@ void Zone_Think()
 			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
 			bool bIsOutsideZone = ratio > 1.0;
 			
-			if (bIsOutsideZone)
+			if (ratio >= ZONE_FADE_START_RATIO)
 			{
-				TF2Util_MakePlayerBleed(client, client, 0.5, _, RoundToNearest(flDamage));
+				int alpha = RoundToNearest(Max((ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX, ZONE_FADE_ALPHA_MAX));
+				ScreenFade(client, g_zoneData.color[0], g_zoneData.color[1], g_zoneData.color[3], alpha, 1000, 0, FFADE_IN);
+			}
+			
+			if (bIsOutsideZone && bIsDamageTick)
+			{
+				TF2Util_MakePlayerBleed(client, client, ZONE_DAMAGE_INTERVAL, _, RoundToNearest(flDamage));
 			}
 		}
 		
@@ -177,19 +193,22 @@ void Zone_Think()
 		while ((obj = FindEntityByClassname(obj, "obj_*")) != -1)
 		{
 			float vecOrigin[3];
-			GetEntPropVector(obj, Prop_Data, "m_vecAbsOrigin", vecOrigin);
+			CBaseEntity(obj).GetAbsOrigin(vecOrigin);
 			
 			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
 			bool bIsOutsideZone = ratio > 1.0;
 			
-			if (bIsOutsideZone)
+			if (bIsDamageTick)
 			{
-				SDKHooks_TakeDamage(obj, 0, 0, flDamage);
-				AcceptEntityInput(obj, "Disable");
-			}
-			else
-			{
-				AcceptEntityInput(obj, "Enable");
+				if (bIsOutsideZone)
+				{
+					SDKHooks_TakeDamage(obj, 0, 0, flDamage);
+					AcceptEntityInput(obj, "Disable");
+				}
+				else
+				{
+					AcceptEntityInput(obj, "Enable");
+				}
 			}
 		}
 	}

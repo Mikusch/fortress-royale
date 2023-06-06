@@ -87,9 +87,9 @@ static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int c
 	return originalResult;
 }
 
-static Action SDKHookCB_Client_OnTakeDamage (int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+static Action SDKHookCB_Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
-	if (0 < attacker <= MaxClients)
+	if (victim != attacker && IsValidClient(attacker))
 	{
 		// Starting fists should be weaker than other melees
 		int weapon = GetEntPropEnt(attacker, Prop_Send, "m_hActiveWeapon");
