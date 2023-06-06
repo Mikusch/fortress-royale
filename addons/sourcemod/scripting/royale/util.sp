@@ -564,37 +564,6 @@ bool IsWeaponOfID(int weapon, int weaponID)
 	return TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponID(weapon) == weaponID;
 }
 
-int FindParentOwnerEntity(int entity)
-{
-	int parent = -1;
-	
-	if (HasEntProp(entity, Prop_Send, "m_hThrower"))
-	{
-		parent = GetEntPropEnt(entity, Prop_Send, "m_hThrower");
-	}
-	else if (HasEntProp(entity, Prop_Send, "m_hLauncher"))
-	{
-		parent = GetEntPropEnt(entity, Prop_Send, "m_hLauncher");
-	}
-	else if (HasEntProp(entity, Prop_Send, "m_hBuilder"))
-	{
-		parent = GetEntPropEnt(entity, Prop_Send, "m_hBuilder");
-	}
-	else if (HasEntProp(entity, Prop_Send, "m_hOwnerEntity"))
-	{
-		parent = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	}
-	
-	if (parent != -1 && parent != entity)
-	{
-		return FindParentOwnerEntity(parent);
-	}
-	else
-	{
-		return entity;
-	}
-}
-
 bool TraceEntityFilter_HitWorld(int entity, int mask)
 {
 	return entity == 0;
