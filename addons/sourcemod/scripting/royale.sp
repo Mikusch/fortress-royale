@@ -269,7 +269,7 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 		case TFClass_Spy:
 		{
 			// Spies keep their invis watch
-			if (iLoadoutSlot == LOADOUT_POSITION_PDA)
+			if (iLoadoutSlot == LOADOUT_POSITION_PDA2)
 				return Plugin_Continue;
 		}
 	}
