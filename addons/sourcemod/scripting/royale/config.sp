@@ -166,31 +166,6 @@ enum struct CrateConfig
 		delete this.extra_contents;
 	}
 	
-	bool GetRandomContent(CrateContentConfig content)
-	{
-		if (this.contents && this.contents.Length != 0)
-		{
-			ArrayList contents = this.contents.Clone();
-			contents.SortCustom(SortFuncADTArray_SortCrateContentsRandom);
-			contents.GetArray(0, content);
-			delete contents;
-			return true;
-		}
-		
-		return false;
-	}
-	
-	bool GetRandomExtraContent(CrateContentConfig extra_content)
-	{
-		if (this.extra_contents && this.extra_contents.Length != 0)
-		{
-			this.extra_contents.GetArray(GetRandomInt(0, this.extra_contents.Length - 1), extra_content);
-			return GetRandomFloat() <= extra_content.chance;
-		}
-		
-		return false;
-	}
-	
 	void Open(int crate, int client)
 	{
 		if (!IsValidEntity(crate))
@@ -200,37 +175,91 @@ enum struct CrateConfig
 			return;
 		
 		// Normal crate drops (guaranteed)
-		int nDropped = 0;
-		for (;;)
+		if (this.contents)
 		{
-			CrateContentConfig content;
-			if (this.GetRandomContent(content))
+			ArrayList contents = this.contents.Clone();
+			
+			int nDropped = 0;
+			while (nDropped < this.max_drops)
 			{
-				ItemConfig item;
-				if (Config_GetRandomItemByType(client, content.type, content.subtype, item))
+				// Re-shuffle contents for every drop
+				contents.SortCustom(SortFuncADTArray_SortCrateContentsRandom);
+				
+				// Go through each category and try to drop an item
+				for (int i = 0; i < contents.Length; i++)
 				{
-					if (Config_CreateItem(client, crate, item))
+					CrateContentConfig content;
+					if (contents.GetArray(i, content) != 0)
 					{
-						// Keep going until we have generated everything we want
-						if (++nDropped <= this.max_drops)
-							break;
+						ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
+						
+						if (items.Length == 0)
+						{
+							// Remove categories with no items
+							contents.Erase(i);
+							continue;
+						}
+						
+						// Now that we filtered everything, grab a random item
+						ItemConfig item;
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0)
+						{
+							if (Config_CreateItem(client, crate, item))
+							{
+								++nDropped;
+								break;
+							}
+						}
+						
+						delete items;
 					}
 				}
-			}
-		}
-		
-		// Extra drops (random)
-		for (int i = 0; i < this.max_extra_drops; i++)
-		{
-			CrateContentConfig extra_content;
-			if (this.GetRandomExtraContent(extra_content))
-			{
-				ItemConfig item;
-				if (Config_GetRandomItemByType(client, extra_content.type, extra_content.subtype, item))
+				
+				// If we failed to drop a single item after our first iteration, something is very wrong
+				if (nDropped == 0)
 				{
-					Config_CreateItem(client, crate, item);
+					LogError("Could not find any items to drop from '%s' for %L.", this.name, client);
+					break;
 				}
 			}
+			
+			delete contents;
+		}
+		
+		// Extra crate drops (random, not guaranteed)
+		if (this.extra_contents)
+		{
+			ArrayList extra_contents = this.extra_contents.Clone();
+			
+			for (int i = 0; i < this.max_extra_drops; i++)
+			{
+				CrateContentConfig content;
+				if (extra_contents.GetArray(GetRandomInt(0, extra_contents.Length - 1), content) != 0)
+				{
+					ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
+					
+					if (items.Length == 0)
+					{
+						// Remove categories with no items
+						extra_contents.Erase(i);
+						continue;
+					}
+					
+					// Now that we filtered everything, grab a random item
+					if (GetRandomFloat() <= content.chance)
+					{
+						ItemConfig item;
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0)
+						{
+							Config_CreateItem(client, crate, item);
+						}
+					}
+					
+					delete items;
+				}
+			}
+			
+			delete extra_contents;
 		}
 	}
 }
@@ -296,17 +325,6 @@ void Config_Parse()
 {
 	char file[PLATFORM_MAX_PATH];
 	
-	// Parse global config (for all maps)
-	BuildPath(Path_SM, file, sizeof(file), "configs/royale/global.cfg");
-	Config_ParseMapConfig(file);
-	
-	// Parse map specific config to override global settings
-	file[0] = '\0';
-	if (Config_GetMapConfigFilepath(file, sizeof(file)))
-	{
-		Config_ParseMapConfig(file);
-	}
-	
 	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
 	KeyValues kv = new KeyValues("items");
 	if (kv.ImportFromFile(file))
@@ -354,6 +372,17 @@ void Config_Parse()
 		LogError("Failed to import config '%s'", file);
 	}
 	delete kv;
+	
+	// Parse global config (for all maps)
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/global.cfg");
+	Config_ParseMapConfig(file);
+	
+	// Parse map specific config to override global settings
+	file[0] = '\0';
+	if (Config_GetMapConfigFilepath(file, sizeof(file)))
+	{
+		Config_ParseMapConfig(file);
+	}
 }
 
 void Config_ParseCrates(KeyValues kv)
@@ -378,8 +407,13 @@ void Config_ParseCrates(KeyValues kv)
 			}
 			else
 			{
-				// Update existing crate
-				g_hCrateConfigs.SetArray(index, crate);
+				// Override existing crate
+				CrateConfig oldCrate;
+				if (g_hCrateConfigs.GetArray(index, oldCrate))
+				{
+					oldCrate.Delete();
+					g_hCrateConfigs.SetArray(index, crate);
+				}
 			}
 		}
 		while (kv.GotoNextKey(false));
@@ -536,23 +570,14 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 	return list;
 }
 
-bool Config_GetRandomItemByType(int client, const char[] type, const char[] subtype, ItemConfig item)
+ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype, int client)
 {
-	if (!IsValidClient(client))
-		return false;
-	
 	ArrayList items = Config_GetItemsByType(type, subtype);
 	
-	if (!items || items.Length == 0)
-	{
-		LogError("Could not find item entries for '%s' and '%s'", type, subtype);
-		delete items;
-		return false;
-	}
-	
-	// Go through each item until one matches our criteria
 	for (int i = 0; i < items.Length; i++)
 	{
+		// Go through each item until one matches our criteria
+		ItemConfig item;
 		if (items.GetArray(i, item) != 0)
 		{
 			Function callback = item.GetCallbackFunction("should_drop");
@@ -577,15 +602,7 @@ bool Config_GetRandomItemByType(int client, const char[] type, const char[] subt
 		}
 	}
 	
-	if (items.Length == 0)
-	{
-		delete items;
-		return false;
-	}
-	
-	bool success = items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0;
-	delete items;
-	return success;
+	return items;
 }
 
 bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
