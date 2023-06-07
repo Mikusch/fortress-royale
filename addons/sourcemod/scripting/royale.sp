@@ -320,7 +320,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	if (FRPlayer(client).m_bIsParachuting)
 	{
 		// Do not allow manual opening/closing of the parachute
-		if (buttons & IN_JUMP)
+		if (TF2_IsPlayerInCondition(client, TFCond_Parachute) && buttons & IN_JUMP)
 		{
 			buttons &= ~IN_JUMP;
 			action = Plugin_Changed;
