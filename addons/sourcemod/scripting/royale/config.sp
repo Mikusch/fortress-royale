@@ -186,7 +186,7 @@ enum struct CrateConfig
 				contents.SortCustom(SortFuncADTArray_SortCrateContentsRandom);
 				
 				// Go through each category and try to drop an item
-				for (int i = 0; i < contents.Length; i++)
+				for (int i = contents.Length - 1; i >= 0; i--)
 				{
 					CrateContentConfig content;
 					if (contents.GetArray(i, content) != 0)
@@ -231,7 +231,7 @@ enum struct CrateConfig
 		{
 			ArrayList extra_contents = this.extra_contents.Clone();
 			
-			for (int i = 0; i < this.max_extra_drops; i++)
+			for (int i = this.max_extra_drops - 1; i >= 0; i--)
 			{
 				CrateContentConfig content;
 				if (extra_contents.GetArray(GetRandomInt(0, extra_contents.Length - 1), content) != 0)
@@ -574,7 +574,7 @@ ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype,
 {
 	ArrayList items = Config_GetItemsByType(type, subtype);
 	
-	for (int i = 0; i < items.Length; i++)
+	for (int i = items.Length - 1; i >= 0; i--)
 	{
 		// Go through each item until one matches our criteria
 		ItemConfig item;
@@ -593,11 +593,11 @@ ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype,
 			if (Call_Finish(result) != SP_ERROR_NONE)
 			{
 				LogError("Failed to call callback 'should_drop' for item '%s'", item.name);
-				items.Erase(i--);
+				items.Erase(i);
 			}
 			else if (!result)
 			{
-				items.Erase(i--);
+				items.Erase(i);
 			}
 		}
 	}
