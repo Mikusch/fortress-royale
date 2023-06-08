@@ -106,10 +106,8 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		data.GoBack();
 	}
 	
-	// Weapon_Equip can cause weapon switches, just temporarily prevent it
-	TF2Attrib_SetByName(weapon, "disable weapon switch", 1.0);
-	ItemGiveTo(client, weapon);
-	TF2Attrib_RemoveByName(weapon, "disable weapon switch");
+	// Set the skin up properly for the dropped weapon
+	SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
 	
 	char szWorldModel[PLATFORM_MAX_PATH];
 	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
@@ -128,7 +126,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 		}
 	}
 	
-	FRPlayer(client).RemoveItem(weapon);
+	RemoveEntity(weapon);
 	
 	return true;
 }
