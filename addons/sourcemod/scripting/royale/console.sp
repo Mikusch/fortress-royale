@@ -167,6 +167,8 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 				TF2Util_SetPlayerActiveWeapon(client, weapon);
 			}
 		}
+		
+		SDKCall_CTFPlayer_PostInventoryApplication(client);
 	}
 	
 	return Plugin_Continue;

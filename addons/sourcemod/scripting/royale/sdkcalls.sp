@@ -26,6 +26,7 @@ static Handle g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
 static Handle g_SDKCall_CTFPlayer_GetLoadoutItem;
 static Handle g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon;
+static Handle g_SDKCall_CTFPlayer_PostInventoryApplication;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
 static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
@@ -42,6 +43,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFPlayer_GiveNamedItem = PrepSDKCall_CTFPlayer_GiveNamedItem(gamedata);
 	g_SDKCall_CTFPlayer_GetLoadoutItem = PrepSDKCall_CTFPlayer_GetLoadoutItem(gamedata);
 	g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon = PrepSDKCall_CTFPlayer_TryToPickupDroppedWeapon(gamedata);
+	g_SDKCall_CTFPlayer_PostInventoryApplication = PrepSDKCall_CTFPlayer_PostInventoryApplication(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
 	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
@@ -169,6 +171,18 @@ static Handle PrepSDKCall_CTFPlayer_TryToPickupDroppedWeapon(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFPlayer::TryToPickupDroppedWeapon");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CTFPlayer_PostInventoryApplication(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::PostInventoryApplication");
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::PostInventoryApplication");
 	
 	return call;
 }
@@ -319,6 +333,14 @@ bool SDKCall_CTFPlayer_TryToPickupDroppedWeapon(int player)
 	}
 	
 	return false;
+}
+
+void SDKCall_CTFPlayer_PostInventoryApplication(int player)
+{
+	if (g_SDKCall_CTFPlayer_PostInventoryApplication)
+	{
+		SDKCall(g_SDKCall_CTFPlayer_PostInventoryApplication, player);
+	}
 }
 
 bool SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(int player, int weapon)

@@ -281,6 +281,8 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 			// delay pickup weapon message
 			FRPlayer(player).m_flSendPickupWeaponMessageTime = GetGameTime() + 0.1;
 			
+			SDKCall_CTFPlayer_PostInventoryApplication(player);
+			
 			ret.Value = true;
 			return MRES_Supercede;
 		}
