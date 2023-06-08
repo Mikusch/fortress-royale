@@ -42,7 +42,7 @@ void ConVars_Init()
 	sm_fr_crate_max_drops = CreateConVar("sm_fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
 	sm_fr_crate_max_extra_drops = CreateConVar("sm_fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
 	sm_fr_max_ammo_boost = CreateConVar("sm_fr_max_ammo_boost", "1.5", "Maximum ammo factor that players are allowed to carry.", _, true, 1.0);
-	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
+	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "3000", "Minimum height from the ground for parachute to auto-activate.");
 	sm_fr_fists_damage_multiplier = CreateConVar("sm_fr_fists_damage_multiplier", "0.7", "Damage multiplier to starting fists.");
 	
 	sm_fr_zone_startdisplay = CreateConVar("sm_fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);

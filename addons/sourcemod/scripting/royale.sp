@@ -331,7 +331,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 			float vecOrigin[3];
 			CBaseEntity(client).GetAbsOrigin(vecOrigin);
 			
-			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld);
+			TR_TraceRayFilter(vecOrigin, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld, _, TRACE_WORLD_ONLY);
 			if (TR_DidHit() && TR_GetEntityIndex() == 0)
 			{
 				float vecEndPos[3];
