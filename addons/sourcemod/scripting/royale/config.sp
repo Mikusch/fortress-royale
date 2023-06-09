@@ -234,14 +234,15 @@ enum struct CrateConfig
 			for (int i = this.max_extra_drops - 1; i >= 0; i--)
 			{
 				CrateContentConfig content;
-				if (extra_contents.GetArray(GetRandomInt(0, extra_contents.Length - 1), content) != 0)
+				int index = GetRandomInt(0, extra_contents.Length - 1);
+				if (extra_contents.GetArray(index, content) != 0)
 				{
 					ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
 					
 					if (items.Length == 0)
 					{
 						// Remove categories with no items
-						extra_contents.Erase(i);
+						extra_contents.Erase(index);
 						continue;
 					}
 					
