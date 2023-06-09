@@ -128,7 +128,7 @@ void BattleBus_OnEntityDestroyed(int entity)
 			for (int i = 0; i < sounds.Length; i++)
 			{
 				char szSound[PLATFORM_MAX_PATH];
-				if (sounds.GetString(i, szSound, sizeof(szSound)) != 0)
+				if (sounds.GetString(i, szSound, sizeof(szSound)))
 				{
 					if (PrecacheScriptSound(szSound))
 					{
@@ -259,10 +259,10 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 		
 		// Play a sound for arriving
 		ArrayList sounds = g_battleBusData.sounds;
-		if (sounds && sounds.Length != 0)
+		if (sounds && sounds.Length)
 		{
 			char szSound[PLATFORM_MAX_PATH];
-			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)) != 0)
+			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)))
 			{
 				if (PrecacheScriptSound(szSound))
 				{

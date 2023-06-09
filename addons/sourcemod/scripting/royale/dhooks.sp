@@ -96,7 +96,7 @@ void DHooks_Toggle(bool enable)
 	for (int i = 0; i < g_DynamicDetours.Length; i++)
 	{
 		DetourData data;
-		if (g_DynamicDetours.GetArray(i, data) != 0)
+		if (g_DynamicDetours.GetArray(i, data))
 		{
 			if (data.callback_pre != INVALID_FUNCTION)
 			{

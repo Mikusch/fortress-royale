@@ -73,7 +73,7 @@ void Events_Toggle(bool enable)
 	for (int i = 0; i < g_Events.Length; i++)
 	{
 		EventData data;
-		if (g_Events.GetArray(i, data) != 0)
+		if (g_Events.GetArray(i, data))
 		{
 			if (enable)
 			{
@@ -253,7 +253,7 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 static void Timer_MovePlayerToDeadTeam(Handle timer, int userid)
 {
 	int client = GetClientOfUserId(userid);
-	if (client == 0)
+	if (!client)
 		return;
 	
 	if (IsPlayerAlive(client))

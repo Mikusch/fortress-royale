@@ -86,7 +86,7 @@ methodmap FREntity < CBaseEntity
 	public bool IsValidCrate()
 	{
 		char classname[64];
-		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_", 5) != 0)
+		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_", 5))
 			return false;
 		
 		CrateConfig data;

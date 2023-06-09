@@ -97,7 +97,7 @@ bool GetItemWorldModel(int item, char[] szWorldModel, int iMaxLength)
 		}
 		
 		int nModelIndex = GetEntProp(item, Prop_Send, "m_nModelIndex");
-		if (nModelIndex > 0)
+		if (nModelIndex != 0)
 		{
 			return ModelIndexToString(nModelIndex, szWorldModel, iMaxLength);
 		}

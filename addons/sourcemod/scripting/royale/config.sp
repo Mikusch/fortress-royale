@@ -189,11 +189,11 @@ enum struct CrateConfig
 				for (int i = contents.Length - 1; i >= 0; i--)
 				{
 					CrateContentConfig content;
-					if (contents.GetArray(i, content) != 0)
+					if (contents.GetArray(i, content))
 					{
 						ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
 						
-						if (items.Length == 0)
+						if (!items.Length)
 						{
 							// Remove categories with no items
 							contents.Erase(i);
@@ -202,7 +202,7 @@ enum struct CrateConfig
 						
 						// Now that we filtered everything, grab a random item
 						ItemConfig item;
-						if (items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0)
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
 						{
 							if (Config_CreateItem(client, crate, item))
 							{
@@ -216,7 +216,7 @@ enum struct CrateConfig
 				}
 				
 				// If we failed to drop a single item after our first iteration, something is very wrong
-				if (nDropped == 0)
+				if (!nDropped)
 				{
 					LogError("Could not find any items to drop from '%s' for %L.", this.name, client);
 					break;
@@ -235,11 +235,11 @@ enum struct CrateConfig
 			{
 				CrateContentConfig content;
 				int index = GetRandomInt(0, extra_contents.Length - 1);
-				if (extra_contents.GetArray(index, content) != 0)
+				if (extra_contents.GetArray(index, content))
 				{
 					ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
 					
-					if (items.Length == 0)
+					if (!items.Length)
 					{
 						// Remove categories with no items
 						extra_contents.Erase(index);
@@ -250,7 +250,7 @@ enum struct CrateConfig
 					if (GetRandomFloat() <= content.chance)
 					{
 						ItemConfig item;
-						if (items.GetArray(GetRandomInt(0, items.Length - 1), item) != 0)
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
 						{
 							Config_CreateItem(client, crate, item);
 						}
@@ -302,7 +302,7 @@ enum struct WeaponData
 						if (kv.GetSectionName(section, sizeof(section)))
 						{
 							int reskin = StringToInt(section);
-							if (kv.GetNum(NULL_STRING) != 0)
+							if (kv.GetNum(NULL_STRING))
 							{
 								this.reskins.Push(reskin);
 							}
@@ -508,7 +508,7 @@ void Config_Delete()
 	for (int i = 0; i < g_hItemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_hItemConfigs.GetArray(i, item) != 0)
+		if (g_hItemConfigs.GetArray(i, item))
 		{
 			item.Delete();
 		}
@@ -518,7 +518,7 @@ void Config_Delete()
 	for (int i = 0; i < g_hCrateConfigs.Length; i++)
 	{
 		CrateConfig crate;
-		if (g_hCrateConfigs.GetArray(i, crate) != 0)
+		if (g_hCrateConfigs.GetArray(i, crate))
 		{
 			crate.Delete();
 		}
@@ -528,7 +528,7 @@ void Config_Delete()
 	for (int i = 0; i < g_hWeaponData.Length; i++)
 	{
 		WeaponData data;
-		if (g_hWeaponData.GetArray(i, data) != 0)
+		if (g_hWeaponData.GetArray(i, data))
 		{
 			data.Delete();
 		}
@@ -540,7 +540,7 @@ bool Config_GetCrateByName(const char[] name, CrateConfig crate)
 {
 	for (int i = 0; i < g_hCrateConfigs.Length; i++)
 	{
-		if (g_hCrateConfigs.GetArray(i, crate) != 0)
+		if (g_hCrateConfigs.GetArray(i, crate))
 		{
 			if (StrEqual(crate.name, name))
 			{
@@ -559,7 +559,7 @@ ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 	for (int i = 0; i < g_hItemConfigs.Length; i++)
 	{
 		ItemConfig item;
-		if (g_hItemConfigs.GetArray(i, item) != 0)
+		if (g_hItemConfigs.GetArray(i, item))
 		{
 			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
 			{
@@ -579,7 +579,7 @@ ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype,
 	{
 		// Go through each item until one matches our criteria
 		ItemConfig item;
-		if (items.GetArray(i, item) != 0)
+		if (items.GetArray(i, item))
 		{
 			Function callback = item.GetCallbackFunction("should_drop");
 			if (callback == INVALID_FUNCTION)

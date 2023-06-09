@@ -36,11 +36,11 @@ void SDKHooks_UnhookClient(int client)
 
 void SDKHooks_OnEntityCreated(int entity, const char[] classname)
 {
-	if (strncmp(classname, "prop_", 5) == 0)
+	if (!strncmp(classname, "prop_", 5))
 	{
 		SDKHook(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
 	}
-	else if (strncmp(classname, "item_healthkit_", 15) == 0)
+	else if (!strncmp(classname, "item_healthkit_", 15))
 	{
 		SDKHook(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
 		SDKHook(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
