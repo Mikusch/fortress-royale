@@ -113,8 +113,7 @@ void BattleBus_OnSetupFinished()
 		
 		FRPlayer(client).SetPlayerState(FRPlayerState_InBattleBus);
 		
-		//SetVariantString("!activator");
-		//AcceptEntityInput(camera, "Enable", client);
+		SetClientViewEntity(client, camera);
 	}
 }
 
@@ -372,13 +371,12 @@ bool BattleBus_EjectPlayer(int client)
 	
 	// Disable the attached camera for this player
 	int viewcontrol = -1;
-	while ((viewcontrol = FindEntityByClassname(viewcontrol, "point_viewcontrol")) != -1)
+	while ((viewcontrol = FindEntityByClassname(viewcontrol, "prop_dynamic")) != -1)
 	{
 		if (GetEntPropEnt(viewcontrol, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(g_hActiveBusEnt))
 			continue;
 		
-		SetVariantString("!activator");
-		AcceptEntityInput(viewcontrol, "Disable", client);
+		SetClientViewEntity(client, client);
 		break;
 	}
 	
@@ -419,10 +417,13 @@ static int BattleBus_CreateBusEntity()
 
 static int BattleBus_CreateCameraEntity()
 {
-	int viewcontrol = CreateEntityByName("point_viewcontrol");
-	if (IsValidEntity(viewcontrol) && DispatchSpawn(viewcontrol))
+	int viewcontrol = CreateEntityByName("prop_dynamic");
+	if (IsValidEntity(viewcontrol))
 	{
-		return viewcontrol;
+		SetEntityModel(viewcontrol, "models/empty.mdl");
+		
+		if (DispatchSpawn(viewcontrol))
+			return viewcontrol;
 	}
 	
 	return -1;
