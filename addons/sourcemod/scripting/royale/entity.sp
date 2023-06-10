@@ -89,8 +89,8 @@ methodmap FREntity < CBaseEntity
 		if (!this.GetClassname(classname, sizeof(classname)) || strncmp(classname, "prop_", 5) != 0)
 			return false;
 		
-		CrateConfig data;
-		return view_as<FRCrate>(this).GetConfig(data);
+		CrateData data;
+		return view_as<FRCrate>(this).GetData(data);
 	}
 	
 	public void Destroy()
@@ -180,8 +180,8 @@ methodmap FRCrate < FREntity
 	{
 		this.m_claimedBy = client;
 		
-		CrateConfig data;
-		if (this.GetConfig(data) && data.open_sound[0])
+		CrateData data;
+		if (this.GetData(data) && data.open_sound[0])
 		{
 			EmitSoundToAll(data.open_sound, this.index, SNDCHAN_STATIC);
 		}
@@ -192,8 +192,8 @@ methodmap FRCrate < FREntity
 		this.m_claimedBy = -1;
 		this.ClearText();
 		
-		CrateConfig data;
-		if (this.GetConfig(data) && data.open_sound[0])
+		CrateData data;
+		if (this.GetData(data) && data.open_sound[0])
 		{
 			StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
 		}
@@ -206,19 +206,19 @@ methodmap FRCrate < FREntity
 	
 	public void DropItem(int client)
 	{
-		CrateConfig data;
-		if (this.GetConfig(data))
+		CrateData data;
+		if (this.GetData(data))
 		{
 			data.Open(this.index, client);
 		}
 	}
 	
-	public bool GetConfig(CrateConfig config)
+	public bool GetData(CrateData data)
 	{
 		char name[64];
 		if (!this.GetPropString(Prop_Data, "m_iName", name, sizeof(name)))
 			return false;
 		
-		return Config_GetCrateByName(name, config);
+		return Config_GetCrateByName(name, data);
 	}
 }

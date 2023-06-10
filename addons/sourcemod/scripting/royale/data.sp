@@ -128,8 +128,8 @@ methodmap FRPlayer < CBaseCombatCharacter
 		if (!FRCrate(crate).CanBeOpenedBy(this.index))
 			return false;
 		
-		CrateConfig data;
-		if (!FRCrate(crate).GetConfig(data))
+		CrateData data;
+		if (!FRCrate(crate).GetData(data))
 			return false;
 		
 		// If this is our first time interacting, begin open sequence

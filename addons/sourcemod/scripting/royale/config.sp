@@ -18,17 +18,17 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define CONFIG_MAX_LENGTH	256
+#define CONFIG_FIELD_MAX_LENGTH	256
 
-static ArrayList g_hItemConfigs;
-static ArrayList g_hCrateConfigs;
+static ArrayList g_hItemData;
+static ArrayList g_hCrateData;
 static ArrayList g_hWeaponData;
 
-enum struct ItemConfig
+enum struct ItemData
 {
-	char name[CONFIG_MAX_LENGTH];
-	char type[CONFIG_MAX_LENGTH];
-	char subtype[CONFIG_MAX_LENGTH];
+	char name[CONFIG_FIELD_MAX_LENGTH];
+	char type[CONFIG_FIELD_MAX_LENGTH];
+	char subtype[CONFIG_FIELD_MAX_LENGTH];
 	StringMap callback_functions;
 	KeyValues callback_data;
 	
@@ -48,7 +48,7 @@ enum struct ItemConfig
 					{
 						do
 						{
-							char key[CONFIG_MAX_LENGTH], value[CONFIG_MAX_LENGTH];
+							char key[CONFIG_FIELD_MAX_LENGTH], value[CONFIG_FIELD_MAX_LENGTH];
 							kv.GetSectionName(key, sizeof(key));
 							kv.GetString(NULL_STRING, value, sizeof(value));
 							this.callback_functions.SetString(key, value);
@@ -73,7 +73,7 @@ enum struct ItemConfig
 	
 	Function GetCallbackFunction(const char[] key, Handle plugin = null)
 	{
-		char name[CONFIG_MAX_LENGTH];
+		char name[CONFIG_FIELD_MAX_LENGTH];
 		if (this.callback_functions.GetString(key, name, sizeof(name)))
 		{
 			Function callback = GetFunctionByName(plugin, name);
@@ -96,9 +96,9 @@ enum struct ItemConfig
 	}
 }
 
-enum struct CrateConfig
+enum struct CrateData
 {
-	char name[CONFIG_MAX_LENGTH];
+	char name[CONFIG_FIELD_MAX_LENGTH];
 	char model[PLATFORM_MAX_PATH];
 	ArrayList contents;
 	ArrayList extra_contents;
@@ -116,12 +116,12 @@ enum struct CrateConfig
 			
 			if (kv.JumpToKey("contents", false))
 			{
-				this.contents = new ArrayList(sizeof(CrateContentConfig));
+				this.contents = new ArrayList(sizeof(CrateContentData));
 				if (kv.GotoFirstSubKey(false))
 				{
 					do
 					{
-						CrateContentConfig content;
+						CrateContentData content;
 						content.Parse(kv);
 						this.contents.PushArray(content);
 					}
@@ -133,12 +133,12 @@ enum struct CrateConfig
 			
 			if (kv.JumpToKey("extra_contents", false))
 			{
-				this.extra_contents = new ArrayList(sizeof(CrateContentConfig));
+				this.extra_contents = new ArrayList(sizeof(CrateContentData));
 				if (kv.GotoFirstSubKey(false))
 				{
 					do
 					{
-						CrateContentConfig extra_content;
+						CrateContentData extra_content;
 						extra_content.Parse(kv);
 						this.extra_contents.PushArray(extra_content);
 					}
@@ -185,7 +185,7 @@ enum struct CrateConfig
 				// Go through each category and try to drop an item
 				for (int i = contents.Length - 1; i >= 0; i--)
 				{
-					CrateContentConfig content;
+					CrateContentData content;
 					if (contents.GetArray(i, content))
 					{
 						ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
@@ -198,7 +198,7 @@ enum struct CrateConfig
 						}
 						
 						// Now that we filtered everything, grab a random item
-						ItemConfig item;
+						ItemData item;
 						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
 						{
 							if (Config_CreateItem(client, crate, item))
@@ -230,7 +230,7 @@ enum struct CrateConfig
 			
 			for (int i = this.max_extra_drops - 1; i >= 0; i--)
 			{
-				CrateContentConfig content;
+				CrateContentData content;
 				int index = GetRandomInt(0, extra_contents.Length - 1);
 				if (extra_contents.GetArray(index, content))
 				{
@@ -246,7 +246,7 @@ enum struct CrateConfig
 					// Now that we filtered everything, grab a random item
 					if (GetRandomFloat() <= content.chance)
 					{
-						ItemConfig item;
+						ItemData item;
 						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
 						{
 							Config_CreateItem(client, crate, item);
@@ -262,10 +262,10 @@ enum struct CrateConfig
 	}
 }
 
-enum struct CrateContentConfig
+enum struct CrateContentData
 {
-	char type[CONFIG_MAX_LENGTH];
-	char subtype[CONFIG_MAX_LENGTH];
+	char type[CONFIG_FIELD_MAX_LENGTH];
+	char subtype[CONFIG_FIELD_MAX_LENGTH];
 	float chance;
 	
 	void Parse(KeyValues kv)
@@ -284,7 +284,7 @@ enum struct WeaponData
 	
 	void Parse(KeyValues kv)
 	{
-		char section[CONFIG_MAX_LENGTH];
+		char section[CONFIG_FIELD_MAX_LENGTH];
 		if (kv.GetSectionName(section, sizeof(section)) && StringToIntEx(section, this.defindex))
 		{
 			kv.GetString("world_model", this.world_model, sizeof(this.world_model));
@@ -327,15 +327,15 @@ void Config_Parse()
 	KeyValues kv = new KeyValues("items");
 	if (kv.ImportFromFile(file))
 	{
-		g_hItemConfigs = new ArrayList(sizeof(ItemConfig));
+		g_hItemData = new ArrayList(sizeof(ItemData));
 		
 		if (kv.GotoFirstSubKey(false))
 		{
 			do
 			{
-				ItemConfig item;
+				ItemData item;
 				item.Parse(kv);
-				g_hItemConfigs.PushArray(item);
+				g_hItemData.PushArray(item);
 			}
 			while (kv.GotoNextKey(false));
 			kv.GoBack();
@@ -385,32 +385,32 @@ void Config_Parse()
 
 void Config_ParseCrates(KeyValues kv)
 {
-	if (!g_hCrateConfigs)
+	if (!g_hCrateData)
 	{
-		g_hCrateConfigs = new ArrayList(sizeof(CrateConfig));
+		g_hCrateData = new ArrayList(sizeof(CrateData));
 	}
 	
 	if (kv.GotoFirstSubKey(false))
 	{
 		do
 		{
-			CrateConfig crate;
+			CrateData crate;
 			crate.Parse(kv);
 			
-			int index = g_hCrateConfigs.FindString(crate.name);
+			int index = g_hCrateData.FindString(crate.name);
 			if (index == -1)
 			{
 				// Insert new crate
-				g_hCrateConfigs.PushArray(crate);
+				g_hCrateData.PushArray(crate);
 			}
 			else
 			{
 				// Override existing crate
-				CrateConfig oldCrate;
-				if (g_hCrateConfigs.GetArray(index, oldCrate))
+				CrateData oldCrate;
+				if (g_hCrateData.GetArray(index, oldCrate))
 				{
 					oldCrate.Delete();
-					g_hCrateConfigs.SetArray(index, crate);
+					g_hCrateData.SetArray(index, crate);
 				}
 			}
 		}
@@ -502,25 +502,25 @@ bool Config_GetMapConfigFilepath(char[] filePath, int length)
 
 void Config_Delete()
 {
-	for (int i = 0; i < g_hItemConfigs.Length; i++)
+	for (int i = 0; i < g_hItemData.Length; i++)
 	{
-		ItemConfig item;
-		if (g_hItemConfigs.GetArray(i, item))
+		ItemData item;
+		if (g_hItemData.GetArray(i, item))
 		{
 			item.Delete();
 		}
 	}
-	delete g_hItemConfigs;
+	delete g_hItemData;
 	
-	for (int i = 0; i < g_hCrateConfigs.Length; i++)
+	for (int i = 0; i < g_hCrateData.Length; i++)
 	{
-		CrateConfig crate;
-		if (g_hCrateConfigs.GetArray(i, crate))
+		CrateData crate;
+		if (g_hCrateData.GetArray(i, crate))
 		{
 			crate.Delete();
 		}
 	}
-	delete g_hCrateConfigs;
+	delete g_hCrateData;
 	
 	for (int i = 0; i < g_hWeaponData.Length; i++)
 	{
@@ -533,11 +533,11 @@ void Config_Delete()
 	delete g_hWeaponData;
 }
 
-bool Config_GetCrateByName(const char[] name, CrateConfig crate)
+bool Config_GetCrateByName(const char[] name, CrateData crate)
 {
-	for (int i = 0; i < g_hCrateConfigs.Length; i++)
+	for (int i = 0; i < g_hCrateData.Length; i++)
 	{
-		if (g_hCrateConfigs.GetArray(i, crate))
+		if (g_hCrateData.GetArray(i, crate))
 		{
 			if (StrEqual(crate.name, name))
 			{
@@ -551,12 +551,12 @@ bool Config_GetCrateByName(const char[] name, CrateConfig crate)
 
 ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
 {
-	ArrayList list = new ArrayList(sizeof(ItemConfig));
+	ArrayList list = new ArrayList(sizeof(ItemData));
 	
-	for (int i = 0; i < g_hItemConfigs.Length; i++)
+	for (int i = 0; i < g_hItemData.Length; i++)
 	{
-		ItemConfig item;
-		if (g_hItemConfigs.GetArray(i, item))
+		ItemData item;
+		if (g_hItemData.GetArray(i, item))
 		{
 			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
 			{
@@ -575,7 +575,7 @@ ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype,
 	for (int i = items.Length - 1; i >= 0; i--)
 	{
 		// Go through each item until one matches our criteria
-		ItemConfig item;
+		ItemData item;
 		if (items.GetArray(i, item))
 		{
 			Function callback = item.GetCallbackFunction("should_drop");
@@ -614,7 +614,7 @@ bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
 	return false;
 }
 
-bool Config_CreateItem(int client, int crate, ItemConfig item)
+bool Config_CreateItem(int client, int crate, ItemData item)
 {
 	if (!IsValidClient(client))
 		return false;

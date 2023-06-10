@@ -159,8 +159,8 @@ int CreateViewModelWearable(int client, int weapon)
 	int wearable = CreateEntityByName("tf_wearable_vm");
 	
 	float vecOrigin[3], vecAngles[3];
-	GetEntPropVector(client, Prop_Send, "m_vecOrigin", vecOrigin);
-	GetEntPropVector(client, Prop_Send, "m_angRotation", vecAngles);
+	CBaseEntity(client).GetAbsOrigin(vecOrigin);
+	CBaseEntity(client).GetAbsAngles(vecAngles);
 	TeleportEntity(wearable, vecOrigin, vecAngles);
 	
 	SetEntProp(wearable, Prop_Send, "m_bValidatedAttachedEntity", true);
@@ -262,7 +262,7 @@ void InitDroppedWearable(int droppedWeapon, int client, int wearable, bool bSwap
 	ScaleVector(vecImpulse, flImpulseScale);
 	
 	float vecVelocity[3];
-	GetEntPropVector(droppedWeapon, Prop_Data, "m_vecAbsVelocity", vecVelocity);
+	CBaseEntity(droppedWeapon).GetAbsVelocity(vecVelocity);
 	AddVectors(vecImpulse, vecVelocity, vecImpulse);
 	
 	TeleportEntity(droppedWeapon, .velocity = vecImpulse);
@@ -382,14 +382,14 @@ int Compare(any val1, any val2)
 	return 0;
 }
 
-/*
+/**
  * NOTE: This function shuffles in reverse order.
  */
 int SortFuncADTArray_ShuffleCrateContentsWeighted(int index1, int index2, Handle array, Handle hndl)
 {
 	ArrayList list = view_as<ArrayList>(array);
 	
-	CrateContentConfig content1, content2;
+	CrateContentData content1, content2;
 	list.GetArray(index1, content1);
 	list.GetArray(index2, content2);
 	

@@ -66,8 +66,8 @@ enum struct BattleBusData
 
 static BattleBusData g_battleBusData;
 
-static int g_hActiveBusEnt = INVALID_ENT_REFERENCE;
-static float g_flBattleBusSpawnTime;
+static int g_hBusPropEnt = INVALID_ENT_REFERENCE;
+static float g_flBusSpawnTime;
 
 void BattleBus_Parse(KeyValues kv)
 {
@@ -119,7 +119,7 @@ void BattleBus_OnSetupFinished()
 
 void BattleBus_OnEntityDestroyed(int entity)
 {
-	if (entity == EntRefToEntIndex(g_hActiveBusEnt))
+	if (entity == EntRefToEntIndex(g_hBusPropEnt))
 	{
 		// Stop any lingering sounds when the bus gets destroyed
 		ArrayList sounds = g_battleBusData.sounds;
@@ -146,12 +146,12 @@ void BattleBus_OnEntityDestroyed(int entity)
 
 bool BattleBus_IsActive()
 {
-	return g_flBattleBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
+	return g_flBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
 }
 
 int BattleBus_GetEntity()
 {
-	return g_hActiveBusEnt;
+	return g_hBusPropEnt;
 }
 
 bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
@@ -251,11 +251,11 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	float vecOrigin[3], vecAngles[3], vecVelocity[3];
 	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
 	{
-		g_hActiveBusEnt = EntIndexToEntRef(bus);
-		g_flBattleBusSpawnTime = GetGameTime();
+		g_hBusPropEnt = EntIndexToEntRef(bus);
+		g_flBusSpawnTime = GetGameTime();
 		
 		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
-		CreateTimer(g_battleBusData.travel_time, func, g_hActiveBusEnt, TIMER_FLAG_NO_MAPCHANGE);
+		CreateTimer(g_battleBusData.travel_time, func, g_hBusPropEnt, TIMER_FLAG_NO_MAPCHANGE);
 		
 		// Play a sound for arriving
 		ArrayList sounds = g_battleBusData.sounds;
@@ -315,7 +315,7 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 		return;
 	
 	// Create a physics-based crate
-	CrateConfig crate;
+	CrateData crate;
 	if (Config_GetCrateByName(g_battleBusData.crate_name, crate))
 	{
 		int prop = CreateEntityByName("prop_physics_override");
@@ -357,7 +357,7 @@ static void Timer_DropLootCrate(Handle timer, int bus)
 
 bool BattleBus_EjectPlayer(int client)
 {
-	if (!IsValidEntity(g_hActiveBusEnt))
+	if (!IsValidEntity(g_hBusPropEnt))
 		return false;
 	
 	if (FRPlayer(client).m_nPlayerState != FRPlayerState_InBattleBus)
@@ -373,7 +373,7 @@ bool BattleBus_EjectPlayer(int client)
 	int viewcontrol = -1;
 	while ((viewcontrol = FindEntityByClassname(viewcontrol, "prop_dynamic")) != -1)
 	{
-		if (GetEntPropEnt(viewcontrol, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(g_hActiveBusEnt))
+		if (GetEntPropEnt(viewcontrol, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(g_hBusPropEnt))
 			continue;
 		
 		SetClientViewEntity(client, client);
@@ -381,14 +381,14 @@ bool BattleBus_EjectPlayer(int client)
 	}
 	
 	float vecOrigin[3], angRotation[3], vecVelocity[3];
-	CBaseEntity(g_hActiveBusEnt).GetAbsOrigin(vecOrigin);
-	CBaseEntity(g_hActiveBusEnt).GetAbsAngles(angRotation);
-	CBaseEntity(g_hActiveBusEnt).GetAbsVelocity(vecVelocity);
+	CBaseEntity(g_hBusPropEnt).GetAbsOrigin(vecOrigin);
+	CBaseEntity(g_hBusPropEnt).GetAbsAngles(angRotation);
+	CBaseEntity(g_hBusPropEnt).GetAbsVelocity(vecVelocity);
 	
 	// Eject the player
 	TeleportEntity(client, vecOrigin, angRotation, vecVelocity);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
-	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hActiveBusEnt);
+	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hBusPropEnt);
 	
 	return true;
 }
@@ -431,5 +431,5 @@ static int BattleBus_CreateCameraEntity()
 
 static bool BattleBus_IsValidBus(int entity)
 {
-	return IsValidEntity(entity) && EntIndexToEntRef(EntRefToEntIndex(entity)) == g_hActiveBusEnt;
+	return IsValidEntity(entity) && EntIndexToEntRef(EntRefToEntIndex(entity)) == g_hBusPropEnt;
 }
