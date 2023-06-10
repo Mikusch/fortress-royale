@@ -168,10 +168,7 @@ enum struct CrateConfig
 	
 	void Open(int crate, int client)
 	{
-		if (!IsValidEntity(crate))
-			return;
-		
-		if (!IsValidClient(client))
+		if (!IsValidEntity(crate) || !IsValidClient(client))
 			return;
 		
 		// Normal crate drops (guaranteed)
@@ -183,7 +180,7 @@ enum struct CrateConfig
 			while (nDropped < this.max_drops)
 			{
 				// Re-shuffle contents for every drop
-				contents.SortCustom(SortFuncADTArray_SortCrateContentsRandom);
+				contents.SortCustom(SortFuncADTArray_ShuffleCrateContentsWeighted);
 				
 				// Go through each category and try to drop an item
 				for (int i = contents.Length - 1; i >= 0; i--)

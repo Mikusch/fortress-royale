@@ -382,7 +382,10 @@ int Compare(any val1, any val2)
 	return 0;
 }
 
-int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle array, Handle hndl)
+/*
+ * NOTE: This function shuffles in reverse order.
+ */
+int SortFuncADTArray_ShuffleCrateContentsWeighted(int index1, int index2, Handle array, Handle hndl)
 {
 	ArrayList list = view_as<ArrayList>(array);
 	
@@ -393,8 +396,8 @@ int SortFuncADTArray_SortCrateContentsRandom(int index1, int index2, Handle arra
 	float flRand = GetRandomFloat();
 	
 	// Compare each element against a random number
-	int c1 = FloatCompare(flRand, content1.chance);
-	int c2 = FloatCompare(flRand, content2.chance);
+	int c1 = FloatCompare(flRand, content2.chance);
+	int c2 = FloatCompare(flRand, content1.chance);
 	
 	// If both are the same, pick a random one
 	return (c1 == c2) ? GetRandomInt(-1, 1) : Compare(c1, c2);
