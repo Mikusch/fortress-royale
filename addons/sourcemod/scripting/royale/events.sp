@@ -53,7 +53,8 @@ void Events_Init()
 	g_Events = new ArrayList(sizeof(EventData));
 	
 	Events_AddEvent("player_spawn", EventHook_PlayerSpawn);
-	Events_AddEvent("player_death", EventHook_PlayerDeath, EventHookMode_Pre);
+	Events_AddEvent("player_death", EventHook_PlayerDeath_Pre, EventHookMode_Pre);
+	Events_AddEvent("player_death", EventHook_PlayerDeath_Post, EventHookMode_Post);
 	Events_AddEvent("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
 	Events_AddEvent("teamplay_round_start", EventHook_TeamplayRoundStart);
 	Events_AddEvent("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
@@ -136,7 +137,7 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 	}
 }
 
-static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
+static Action EventHook_PlayerDeath_Pre(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
@@ -145,8 +146,65 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 	int victim = GetClientOfUserId(userid);
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));
-	int death_flags = event.GetInt("death_flags");
 	bool silent_kill = event.GetBool("silent_kill");
+	char weapon[64];
+	event.GetString("weapon", weapon, sizeof(weapon));
+	
+	// Fancier icon for medigun kills
+	if (StrEqual(weapon, "medigun"))
+	{
+		strcopy(weapon, sizeof(weapon), "merasmus_zap");
+		event.SetString("weapon", weapon);
+	}
+	
+	// If our assister was using a medigun, do not actually make them the assister
+	if (assister != 0)
+	{
+		int assisterWeapon = GetEntPropEnt(assister, Prop_Send, "m_hActiveWeapon");
+		if (IsValidEntity(assisterWeapon) && IsWeaponOfID(assisterWeapon, TF_WEAPON_MEDIGUN))
+		{
+			assister = -1;
+			event.SetInt("assister", assister);
+			event.SetString("assister_fallback", "");
+		}
+	}
+	
+	// Disable broadcasting to control who receives the event
+	event.BroadcastDisabled = true;
+	
+	// Only send the event to players involved in the kill, everyone else gets a generic "death" notification
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (!IsValidClient(attacker) || client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
+		{
+			event.FireToClient(client);
+		}
+		else if (!silent_kill)
+		{
+			Event hNewEvent = CreateEvent("player_death");
+			if (hNewEvent)
+			{
+				hNewEvent.SetInt("userid", userid);
+				hNewEvent.FireToClient(client);
+			}
+		}
+	}
+	
+	return Plugin_Changed;
+}
+
+static void EventHook_PlayerDeath_Post(Event event, const char[] name, bool dontBroadcast)
+{
+	if (IsInWaitingForPlayers())
+		return;
+	
+	int userid = event.GetInt("userid");
+	int victim = GetClientOfUserId(userid);
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	int death_flags = event.GetInt("death_flags");
 	
 	if (!(death_flags & TF_DEATHFLAG_DEADRINGER))
 	{
@@ -222,32 +280,6 @@ static Action EventHook_PlayerDeath(Event event, const char[] name, bool dontBro
 	{
 		EmitSoundToAll(g_aSoundPlayerKill[GetRandomInt(0, sizeof(g_aSoundPlayerKill) - 1)], BattleBus_GetEntity(), SNDCHAN_VOICE_BASE, 150);
 	}
-	
-	// Disable broadcasting to control who receives the event
-	event.BroadcastDisabled = true;
-	
-	// Only send the event to players involved in the kill, everyone else gets a generic "death" notification
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (!IsClientInGame(client))
-			continue;
-		
-		if (!IsValidClient(attacker) || client == victim || client == attacker || client == assister || !IsPlayerAlive(client))
-		{
-			event.FireToClient(client);
-		}
-		else if (!silent_kill)
-		{
-			Event hNewEvent = CreateEvent("player_death");
-			if (hNewEvent)
-			{
-				hNewEvent.SetInt("userid", userid);
-				hNewEvent.FireToClient(client);
-			}
-		}
-	}
-	
-	return Plugin_Changed;
 }
 
 static void Timer_MovePlayerToDeadTeam(Handle timer, int userid)

@@ -27,6 +27,7 @@
 #include <tf_econ_data>
 #include <tf2attributes>
 #include <cbasenpc>
+#include <vscript>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
@@ -41,6 +42,7 @@ ConVar sm_fr_crate_max_extra_drops;
 ConVar sm_fr_max_ammo_boost;
 ConVar sm_fr_parachute_auto_height;
 ConVar sm_fr_fists_damage_multiplier;
+ConVar sm_fr_medigun_damage;
 ConVar sm_fr_zone_startdisplay;
 ConVar sm_fr_zone_startdisplay_player;
 ConVar sm_fr_zone_display;
@@ -199,6 +201,7 @@ public void OnGameFrame()
 	
 	Zone_Think();
 	
+	// Switch between round states
 	switch (g_nRoundState)
 	{
 		case FRRoundState_WaitingForPlayers:
@@ -218,6 +221,31 @@ public void OnGameFrame()
 			if (ShouldTryToEndMatch())
 			{
 				TryToEndMatch();
+			}
+		}
+	}
+	
+	// Continuously damage medigun healing targets
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client) || !IsPlayerAlive(client))
+			continue;
+		
+		if (TF2_GetPlayerClass(client) != TFClass_Medic)
+			continue;
+		
+		if (FRPlayer(client).m_flLastMedigunDrainTime >= GetGameTime() - 0.1)
+			continue;
+		
+		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (IsValidEntity(weapon) && IsWeaponOfID(weapon, TF_WEAPON_MEDIGUN))
+		{
+			int target = GetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget");
+			if (IsValidClient(target) && IsPlayerAlive(target))
+			{
+				float flMult = SDKCall_CTFPlayer_IsCritBoosted(client) ? 3.0 : 1.0;
+				SDKHooks_TakeDamage(target, client, client, sm_fr_medigun_damage.FloatValue * flMult, DMG_ENERGYBEAM);
+				FRPlayer(client).m_flLastMedigunDrainTime = GetGameTime();
 			}
 		}
 	}

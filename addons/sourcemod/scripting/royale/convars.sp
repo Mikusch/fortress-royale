@@ -44,6 +44,7 @@ void ConVars_Init()
 	sm_fr_max_ammo_boost = CreateConVar("sm_fr_max_ammo_boost", "1.5", "Maximum ammo factor that players are allowed to carry.", _, true, 1.0);
 	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "3000", "Minimum height from the ground for parachute to auto-activate.");
 	sm_fr_fists_damage_multiplier = CreateConVar("sm_fr_fists_damage_multiplier", "0.7", "Damage multiplier to starting fists.");
+	sm_fr_medigun_damage = CreateConVar("sm_fr_medigun_damage", "2", "Amount of damage that Medi Guns should deal per tick.");
 	
 	sm_fr_zone_startdisplay = CreateConVar("sm_fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
 	sm_fr_zone_startdisplay_player = CreateConVar("sm_fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);

@@ -10,7 +10,8 @@ Fortress Royale is a free-for-all battle royale gamemode for Team Fortress 2. Pa
 * [nosoop/SM-TFEconData](https://github.com/nosoop/SM-TFEconData)
 * [FlaminSarge/tf2attributes](https://github.com/FlaminSarge/tf2attributes)
 * [TF2-DMB/CBaseNPC](https://github.com/TF2-DMB/CBaseNPC)
-* [Mikusch/friendly-fire](https://github.com/Mikusch/friendly-fire) (optional, highly recommended)
+* [FortyTwoFortyTwo/VScript](https://github.com/FortyTwoFortyTwo/VScript)
+* [Mikusch/friendlyfire](https://github.com/Mikusch/friendlyfire) (optional, highly recommended)
 
 ## History
 

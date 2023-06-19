@@ -19,6 +19,7 @@
 #pragma semicolon 1
 
 static bool m_bIsParachuting[MAXPLAYERS + 1];
+static float m_flLastMedigunDrainTime[MAXPLAYERS + 1];
 static int m_hWearableVM[MAXPLAYERS + 1];
 static float m_flCrateStartOpenTime[MAXPLAYERS + 1];
 static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
@@ -51,6 +52,18 @@ methodmap FRPlayer < CBaseCombatCharacter
 		public set(bool bIsParachuting)
 		{
 			m_bIsParachuting[this.index] = bIsParachuting;
+		}
+	}
+	
+	property float m_flLastMedigunDrainTime
+	{
+		public get()
+		{
+			return m_flLastMedigunDrainTime[this.index];
+		}
+		public set(float flMedigunLastDrainTime)
+		{
+			m_flLastMedigunDrainTime[this.index] = flMedigunLastDrainTime;
 		}
 	}
 	
@@ -239,6 +252,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 	public void Init()
 	{
 		this.m_bIsParachuting = false;
+		this.m_flLastMedigunDrainTime = -1.0;
 		this.m_flCrateStartOpenTime = -1.0;
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;
 		this.SetPlayerState(FRPlayerState_Waiting);

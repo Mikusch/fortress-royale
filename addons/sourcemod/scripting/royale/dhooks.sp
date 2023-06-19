@@ -49,7 +49,9 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxAmmo", _, DHookCallback_CTFPlayer_GetMaxAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GiveAmmo", DHookCallback_CTFPlayer_GiveAmmo_Pre, DHookCallback_CTFPlayer_GiveAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", _, DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::CanRecieveMedigunChargeEffect", DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::Heal", DHookCallback_CTFPlayerShared_Heal_Pre);
 }
 
 void DHooks_OnClientPutInServer(int client)
@@ -423,9 +425,6 @@ static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
 
 static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player, DHookReturn ret)
 {
-	if (IsInWaitingForPlayers())
-		return MRES_Ignored;
-	
 	TFClassType nClass = TF2_GetPlayerClass(player);
 	if (nClass == TFClass_Unknown)
 		return MRES_Ignored;
@@ -444,6 +443,39 @@ static MRESReturn DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre(int player, DH
 		ret.Value = false;
 		return MRES_Supercede;
 	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre(Address pShared, DHookReturn ret, DHookParam params)
+{
+	int client = TF2Util_GetPlayerFromSharedAddress(pShared);
+	
+	// Don't receive charge effects while being healed by a medigun
+	int medigun = -1;
+	while ((medigun = FindEntityByClassname(medigun, "tf_weapon_medigun")) != -1)
+	{
+		if (GetEntPropEnt(medigun, Prop_Send, "m_hOwner") == client)
+			continue;
+		
+		if (GetEntPropEnt(medigun, Prop_Send, "m_hHealingTarget") == client)
+		{
+			ret.Value = false;
+			return MRES_Supercede;
+		}
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayerShared_Heal_Pre(Address pShared, DHookParam params)
+{
+	int client = TF2Util_GetPlayerFromSharedAddress(pShared);
+	int healer = params.Get(1);
+	
+	// Only allow self-healing, so mediguns can damage players
+	if (client != healer && IsValidClient(healer))
+		return MRES_Supercede;
 	
 	return MRES_Ignored;
 }

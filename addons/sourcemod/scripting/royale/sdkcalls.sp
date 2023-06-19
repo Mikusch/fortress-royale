@@ -32,6 +32,7 @@ static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
 static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
 static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
 static Handle g_SDKCall_CTFPowerup_DropSingleInstance;
+static Handle g_SDKCall_CTFPlayer_IsCritBoosted;
 
 void SDKCalls_Init(GameData gamedata)
 {
@@ -49,6 +50,19 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
 	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
 	g_SDKCall_CTFPowerup_DropSingleInstance = PrepSDKCall_CTFPowerup_DropSingleInstance(gamedata);
+	g_SDKCall_CTFPlayer_IsCritBoosted = PrepSDKCall_FromScriptFunction("CTFPlayer", "IsCritBoosted");
+}
+
+static Handle PrepSDKCall_FromScriptFunction(const char[] className, const char[] functionName)
+{
+	VScriptFunction func = VScript_GetClassFunction(className, functionName);
+	if (!func)
+	{
+		LogError("Failed to find script function: %s::%s", className, functionName);
+		return null;
+	}
+	
+	return func.CreateSDKCall();
 }
 
 static Handle PrepSDKCall_CBaseEntity_SetMoveType(GameData gamedata)
@@ -385,4 +399,14 @@ void SDKCall_CTFPowerup_DropSingleInstance(int entity, const float vecLaunchVel[
 	{
 		SDKCall(g_SDKCall_CTFPowerup_DropSingleInstance, entity, vecLaunchVel, thrower, flThrowerTouchDelay, flResetTime);
 	}
+}
+
+bool SDKCall_CTFPlayer_IsCritBoosted(int player)
+{
+	if (g_SDKCall_CTFPlayer_IsCritBoosted)
+	{
+		return SDKCall(g_SDKCall_CTFPlayer_IsCritBoosted, player);
+	}
+	
+	return false;
 }
