@@ -107,16 +107,19 @@
 			}
 			"CTFPlayer::DoClassSpecialSkill"
 			{
+				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer19DoClassSpecialSkillEv"
 				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x75\x2A\x32\xC0\x5E\xC3\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
 			}
 			"CTFPlayerShared::CanRecieveMedigunChargeEffect"
 			{
+				"library"	"server"
 				"linux"		"@_ZNK15CTFPlayerShared29CanRecieveMedigunChargeEffectE20medigun_charge_types"
 				"windows"	"\x55\x8B\xEC\x53\x56\x57\x8B\xF9\xB3\x01"
 			}
 			"CTFPlayerShared::Heal"
 			{
+				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared4HealEP11CBaseEntityfffbP9CTFPlayer"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x56\x8B\x75\x08\x0F\x57\xC0"
 			}
