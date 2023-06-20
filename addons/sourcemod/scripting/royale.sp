@@ -226,26 +226,29 @@ public void OnGameFrame()
 	}
 	
 	// Continuously damage medigun healing targets
-	for (int client = 1; client <= MaxClients; client++)
+	if (!GameRules_GetProp("m_bTruceActive"))
 	{
-		if (!IsClientInGame(client) || !IsPlayerAlive(client))
-			continue;
-		
-		if (TF2_GetPlayerClass(client) != TFClass_Medic)
-			continue;
-		
-		if (FRPlayer(client).m_flLastMedigunDrainTime >= GetGameTime() - 0.1)
-			continue;
-		
-		int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		if (IsValidEntity(weapon) && IsWeaponOfID(weapon, TF_WEAPON_MEDIGUN))
+		for (int client = 1; client <= MaxClients; client++)
 		{
-			int target = GetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget");
-			if (IsValidClient(target) && IsPlayerAlive(target))
+			if (!IsClientInGame(client) || !IsPlayerAlive(client))
+				continue;
+			
+			if (TF2_GetPlayerClass(client) != TFClass_Medic)
+				continue;
+			
+			if (FRPlayer(client).m_flLastMedigunDrainTime >= GetGameTime() - 0.1)
+				continue;
+			
+			int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+			if (IsValidEntity(weapon) && IsWeaponOfID(weapon, TF_WEAPON_MEDIGUN))
 			{
-				float flMult = SDKCall_CTFPlayer_IsCritBoosted(client) ? 3.0 : 1.0;
-				SDKHooks_TakeDamage(target, client, client, sm_fr_medigun_damage.FloatValue * flMult, DMG_ENERGYBEAM);
-				FRPlayer(client).m_flLastMedigunDrainTime = GetGameTime();
+				int target = GetEntPropEnt(weapon, Prop_Send, "m_hHealingTarget");
+				if (IsValidClient(target) && IsPlayerAlive(target))
+				{
+					float flMult = SDKCall_CTFPlayer_IsCritBoosted(client) ? 3.0 : 1.0;
+					SDKHooks_TakeDamage(target, client, client, sm_fr_medigun_damage.FloatValue * flMult, DMG_ENERGYBEAM);
+					FRPlayer(client).m_flLastMedigunDrainTime = GetGameTime();
+				}
 			}
 		}
 	}
