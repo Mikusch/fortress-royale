@@ -99,7 +99,7 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("royale.phrases");
 	
-	g_bTF2Items = LibraryExists("TF2Items");
+	g_bTF2Items = LibraryExists(LIBRARY_TF2ITEMS);
 	
 	Console_Init();
 	ConVars_Init();
@@ -119,6 +119,14 @@ public void OnPluginStart()
 	}
 }
 
+public void OnPluginEnd()
+{
+	if (!g_bEnabled)
+		return;
+	
+	TogglePlugin(false);
+}
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	if (GetEngineVersion() != Engine_TF2)
@@ -132,7 +140,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnLibraryAdded(const char[] name)
 {
-	if (StrEqual(name, "TF2Items"))
+	if (StrEqual(name, LIBRARY_TF2ITEMS))
 	{
 		g_bTF2Items = true;
 		
@@ -148,7 +156,7 @@ public void OnLibraryAdded(const char[] name)
 
 public void OnLibraryRemoved(const char[] name)
 {
-	if (StrEqual(name, "TF2Items"))
+	if (StrEqual(name, LIBRARY_TF2ITEMS))
 	{
 		g_bTF2Items = false;
 		

@@ -81,7 +81,6 @@ void ConVars_Init()
 	ConVars_AddConVar("mp_scrambleteams_auto", "0");
 	ConVars_AddConVar("mp_forcecamera", "0");
 	ConVars_AddConVar("mp_friendlyfire", "1");
-	ConVars_AddConVar("sm_friendlyfire_medic_allow_healing", "1", "friendlyfire");
 }
 
 void ConVars_Toggle(bool enable)
@@ -107,36 +106,22 @@ void ConVars_Toggle(bool enable)
 
 void ConVars_OnLibraryAdded(const char[] name)
 {
-	if (StrEqual(name, "friendlyfire"))
+	if (StrEqual(name, LIBRARY_FRIENDLYFIRE))
 	{
 		ConVars_AddConVar("sm_friendlyfire_medic_allow_healing", "1");
-		
-		if (g_bEnabled)
-		{
-			ConVars_Enable("sm_friendlyfire_medic_allow_healing");
-		}
 	}
 }
 
 void ConVars_OnLibraryRemoved(const char[] name)
 {
-	if (StrEqual(name, "friendlyfire"))
+	if (StrEqual(name, LIBRARY_FRIENDLYFIRE))
 	{
-		if (g_bEnabled)
-		{
-			ConVars_Disable("sm_friendlyfire_medic_allow_healing");
-		}
-		
 		ConVars_RemoveConVar("sm_friendlyfire_medic_allow_healing");
 	}
 }
 
-static void ConVars_AddConVar(const char[] name, const char[] value, const char[] library = "")
+static void ConVars_AddConVar(const char[] name, const char[] value)
 {
-	// Require specific library
-	if (library[0] && !LibraryExists(library))
-		return;
-	
 	ConVar convar = FindConVar(name);
 	if (convar)
 	{
@@ -144,8 +129,12 @@ static void ConVars_AddConVar(const char[] name, const char[] value, const char[
 		ConVarData data;
 		strcopy(data.name, sizeof(data.name), name);
 		strcopy(data.value, sizeof(data.value), value);
-		
 		g_ConVars.SetArray(name, data, sizeof(data));
+		
+		if (g_bEnabled)
+		{
+			ConVars_Enable(name);
+		}
 	}
 	else
 	{
@@ -158,6 +147,11 @@ static void ConVars_RemoveConVar(const char[] name)
 	ConVar convar = FindConVar(name);
 	if (convar)
 	{
+		if (g_bEnabled)
+		{
+			ConVars_Disable(name);
+		}
+		
 		g_ConVars.Remove(name);
 	}
 	else
