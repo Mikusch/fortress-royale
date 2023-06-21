@@ -25,7 +25,6 @@ enum struct ConVarData
 	char name[COMMAND_MAX_LENGTH];
 	char value[COMMAND_MAX_LENGTH];
 	char initial_value[COMMAND_MAX_LENGTH];
-	bool enforce;
 }
 
 static StringMap g_ConVars;
@@ -42,7 +41,7 @@ void ConVars_Init()
 	sm_fr_crate_max_drops = CreateConVar("sm_fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
 	sm_fr_crate_max_extra_drops = CreateConVar("sm_fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
 	sm_fr_max_ammo_boost = CreateConVar("sm_fr_max_ammo_boost", "1.5", "Maximum ammo factor that players are allowed to carry.", _, true, 1.0);
-	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "3000", "Minimum height from the ground for parachute to auto-activate.");
+	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
 	sm_fr_fists_damage_multiplier = CreateConVar("sm_fr_fists_damage_multiplier", "0.7", "Damage multiplier to starting fists.");
 	sm_fr_medigun_damage = CreateConVar("sm_fr_medigun_damage", "2", "Amount of damage that Medi Guns should deal per tick.");
 	
@@ -82,6 +81,7 @@ void ConVars_Init()
 	ConVars_AddConVar("mp_scrambleteams_auto", "0");
 	ConVars_AddConVar("mp_forcecamera", "0");
 	ConVars_AddConVar("mp_friendlyfire", "1");
+	ConVars_AddConVar("sm_friendlyfire_medic_allow_healing", "1", "friendlyfire");
 }
 
 void ConVars_Toggle(bool enable)
@@ -105,8 +105,38 @@ void ConVars_Toggle(bool enable)
 	delete snapshot;
 }
 
-static void ConVars_AddConVar(const char[] name, const char[] value, bool enforce = true)
+void ConVars_OnLibraryAdded(const char[] name)
 {
+	if (StrEqual(name, "friendlyfire"))
+	{
+		ConVars_AddConVar("sm_friendlyfire_medic_allow_healing", "1");
+		
+		if (g_bEnabled)
+		{
+			ConVars_Enable("sm_friendlyfire_medic_allow_healing");
+		}
+	}
+}
+
+void ConVars_OnLibraryRemoved(const char[] name)
+{
+	if (StrEqual(name, "friendlyfire"))
+	{
+		if (g_bEnabled)
+		{
+			ConVars_Disable("sm_friendlyfire_medic_allow_healing");
+		}
+		
+		ConVars_RemoveConVar("sm_friendlyfire_medic_allow_healing");
+	}
+}
+
+static void ConVars_AddConVar(const char[] name, const char[] value, const char[] library = "")
+{
+	// Require specific library
+	if (library[0] && !LibraryExists(library))
+		return;
+	
 	ConVar convar = FindConVar(name);
 	if (convar)
 	{
@@ -114,9 +144,21 @@ static void ConVars_AddConVar(const char[] name, const char[] value, bool enforc
 		ConVarData data;
 		strcopy(data.name, sizeof(data.name), name);
 		strcopy(data.value, sizeof(data.value), value);
-		data.enforce = enforce;
 		
 		g_ConVars.SetArray(name, data, sizeof(data));
+	}
+	else
+	{
+		LogError("Failed to find convar with name %s", name);
+	}
+}
+
+static void ConVars_RemoveConVar(const char[] name)
+{
+	ConVar convar = FindConVar(name);
+	if (convar)
+	{
+		g_ConVars.Remove(name);
 	}
 	else
 	{
@@ -139,6 +181,10 @@ static void ConVars_Enable(const char[] name)
 		convar.SetString(data.value);
 		convar.AddChangeHook(ConVarChanged_OnTrackedConVarChanged);
 	}
+	else
+	{
+		LogError("Failed to enable convar with name %s", name);
+	}
 }
 
 static void ConVars_Disable(const char[] name)
@@ -153,6 +199,10 @@ static void ConVars_Disable(const char[] name)
 		// Restore the convar value
 		convar.RemoveChangeHook(ConVarChanged_OnTrackedConVarChanged);
 		convar.SetString(data.initial_value);
+	}
+	else
+	{
+		LogError("Failed to disable convar with name %s", name);
 	}
 }
 
@@ -169,11 +219,8 @@ static void ConVarChanged_OnTrackedConVarChanged(ConVar convar, const char[] old
 			strcopy(data.initial_value, sizeof(data.initial_value), newValue);
 			g_ConVars.SetArray(name, data, sizeof(data));
 			
-			// Restore our value if needed
-			if (data.enforce)
-			{
-				convar.SetString(data.value);
-			}
+			// Restore our value
+			convar.SetString(data.value);
 		}
 	}
 }

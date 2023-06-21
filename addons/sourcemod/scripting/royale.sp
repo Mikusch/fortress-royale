@@ -142,6 +142,8 @@ public void OnLibraryAdded(const char[] name)
 			SetFailState("TF2Items was loaded while Fortress Royale is active!");
 		}
 	}
+	
+	ConVars_OnLibraryAdded(name);
 }
 
 public void OnLibraryRemoved(const char[] name)
@@ -162,6 +164,8 @@ public void OnLibraryRemoved(const char[] name)
 			}
 		}
 	}
+	
+	ConVars_OnLibraryRemoved(name);
 }
 
 public void OnMapStart()
