@@ -34,6 +34,8 @@ static DynamicHook g_DHook_CBasePlayer_ForceRespawn;
 
 static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
 
+static TFClassType g_nPrevClass;
+
 void DHooks_Init(GameData gamedata)
 {
 	g_DynamicDetours = new ArrayList(sizeof(DetourData));
@@ -49,6 +51,7 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxAmmo", _, DHookCallback_CTFPlayer_GetMaxAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GiveAmmo", DHookCallback_CTFPlayer_GiveAmmo_Pre, DHookCallback_CTFPlayer_GiveAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
+	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::RegenThink", DHookCallback_CTFPlayer_RegenThink_Pre, DHookCallback_CTFPlayer_RegenThink_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::CanRecieveMedigunChargeEffect", DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::Heal", DHookCallback_CTFPlayerShared_Heal_Pre);
@@ -433,6 +436,29 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 	int iMaxHealth = ret.Value;
 	ret.Value = RoundToFloor(iMaxHealth * sm_fr_health_multiplier[nClass].FloatValue);
 	return MRES_Supercede;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_RegenThink_Pre(int player)
+{
+	// Disable passive health regen for Medic
+	if (TF2_GetPlayerClass(player) == TFClass_Medic)
+	{
+		g_nPrevClass = TF2_GetPlayerClass(player);
+		TF2_SetPlayerClass(player, TFClass_Unknown, false, false);
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFPlayer_RegenThink_Post(int player)
+{
+	if (g_nPrevClass == TFClass_Medic)
+	{
+		TF2_SetPlayerClass(player, g_nPrevClass, false, false);
+		g_nPrevClass = TFClass_Unknown;
+	}
+	
+	return MRES_Ignored;
 }
 
 static MRESReturn DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre(int player, DHookReturn ret)

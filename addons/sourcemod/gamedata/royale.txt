@@ -105,6 +105,12 @@
 				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\x40\x22\x00\x00"
 			}
+			"CTFPlayer::RegenThink"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer10RegenThinkEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x74\x57\x8B\xF9\x8B\x07"
+			}
 			"CTFPlayer::DoClassSpecialSkill"
 			{
 				"library"	"server"
@@ -303,6 +309,13 @@
 				"signature"	"CTFPlayer::GetMaxHealthForBuffing"
 				"callconv"	"thiscall"
 				"return"	"int"
+				"this"		"entity"
+			}
+			"CTFPlayer::RegenThink"
+			{
+				"signature"	"CTFPlayer::RegenThink"
+				"callconv"	"thiscall"
+				"return"	"void"
 				"this"		"entity"
 			}
 			"CTFPlayer::DoClassSpecialSkill"
