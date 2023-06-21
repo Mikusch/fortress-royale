@@ -33,6 +33,7 @@ static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
 static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
 static Handle g_SDKCall_CTFPowerup_DropSingleInstance;
 static Handle g_SDKCall_CTFPlayer_IsCritBoosted;
+static Handle g_SDKCall_CTFPlayer_RemoveDisguise;
 
 void SDKCalls_Init(GameData gamedata)
 {
@@ -51,6 +52,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
 	g_SDKCall_CTFPowerup_DropSingleInstance = PrepSDKCall_CTFPowerup_DropSingleInstance(gamedata);
 	g_SDKCall_CTFPlayer_IsCritBoosted = PrepSDKCall_FromScriptFunction("CTFPlayer", "IsCritBoosted");
+	g_SDKCall_CTFPlayer_RemoveDisguise = PrepSDKCall_FromScriptFunction("CTFPlayer", "RemoveDisguise");
 }
 
 static Handle PrepSDKCall_FromScriptFunction(const char[] className, const char[] functionName)
@@ -409,4 +411,12 @@ bool SDKCall_CTFPlayer_IsCritBoosted(int player)
 	}
 	
 	return false;
+}
+
+void SDKCall_CTFPlayer_RemoveDisguise(int player)
+{
+	if (g_SDKCall_CTFPlayer_RemoveDisguise)
+	{
+		SDKCall(g_SDKCall_CTFPlayer_RemoveDisguise, player);
+	}
 }

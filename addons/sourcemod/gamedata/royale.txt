@@ -174,6 +174,18 @@
 				"linux"		"328"
 				"windows"	"322"
 			}
+			"CBaseCombatWeapon::PrimaryAttack"
+			{
+				"library"	"server"
+				"linux"		"292"
+				"windows"	"286"
+			}
+			"CBaseCombatWeapon::SecondaryAttack"
+			{
+				"library"	"server"
+				"linux"		"293"
+				"windows"	"287"
+			}
 		}
 		"Functions"
 		{
@@ -398,6 +410,20 @@
 						"type"	"bool"
 					}
 				}
+			}
+			"CBaseCombatWeapon::PrimaryAttack"
+			{
+				"offset"	"CBaseCombatWeapon::PrimaryAttack"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
+			}
+			"CBaseCombatWeapon::SecondaryAttack"
+			{
+				"offset"	"CBaseCombatWeapon::SecondaryAttack"
+				"hooktype"	"entity"
+				"return"	"void"
+				"this"		"entity"
 			}
 		}
 	}

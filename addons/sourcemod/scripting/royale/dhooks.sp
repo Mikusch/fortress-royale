@@ -31,6 +31,8 @@ static ArrayList g_DynamicHookIds;
 static DynamicHook g_DHook_CTFPlayer_GiveNamedItem;
 static DynamicHook g_DHook_CBaseCombatCharacter_TakeHealth;
 static DynamicHook g_DHook_CBasePlayer_ForceRespawn;
+static DynamicHook g_DHook_CBaseCombatWeapon_PrimaryAttack;
+static DynamicHook g_DHook_CBaseCombatWeapon_SecondaryAttack;
 
 static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
 
@@ -44,6 +46,8 @@ void DHooks_Init(GameData gamedata)
 	g_DHook_CTFPlayer_GiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHook_CBaseCombatCharacter_TakeHealth = DHooks_AddDynamicHook(gamedata, "CBaseCombatCharacter::TakeHealth");
 	g_DHook_CBasePlayer_ForceRespawn = DHooks_AddDynamicHook(gamedata, "CBasePlayer::ForceRespawn");
+	g_DHook_CBaseCombatWeapon_PrimaryAttack = DHooks_AddDynamicHook(gamedata, "CBaseCombatWeapon::PrimaryAttack");
+	g_DHook_CBaseCombatWeapon_SecondaryAttack = DHooks_AddDynamicHook(gamedata, "CBaseCombatWeapon::SecondaryAttack");
 	
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
@@ -62,6 +66,15 @@ void DHooks_OnClientPutInServer(int client)
 	DHooks_HookGiveNamedItem(client);
 	DHooks_HookEntity(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, client, DHookCallback_CBaseCombatCharacter_TakeHealth_Pre);
 	DHooks_HookEntity(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, client, DHookCallback_CBasePlayer_ForceRespawn_Pre);
+}
+
+void DHooks_OnEntityCreated(int entity, const char[] classname)
+{
+	if (StrEqual(classname, "tf_weapon_fists"))
+	{
+		DHooks_HookEntity(g_DHook_CBaseCombatWeapon_PrimaryAttack, Hook_Post, entity, DHookCallback_CTFFists_PrimaryAttack_Post);
+		DHooks_HookEntity(g_DHook_CBaseCombatWeapon_SecondaryAttack, Hook_Post, entity, DHookCallback_CTFFists_SecondaryAttack_Post);
+	}
 }
 
 void DHooks_HookGiveNamedItem(int client)
@@ -424,6 +437,28 @@ static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
 		return MRES_Ignored;
 	
 	return MRES_Supercede;
+}
+
+static MRESReturn DHookCallback_CTFFists_PrimaryAttack_Post(int fists)
+{
+	int owner = GetEntPropEnt(fists, Prop_Send, "m_hOwner");
+	if (IsValidClient(owner))
+	{
+		SDKCall_CTFPlayer_RemoveDisguise(owner);
+	}
+	
+	return MRES_Ignored;
+}
+
+static MRESReturn DHookCallback_CTFFists_SecondaryAttack_Post(int fists)
+{
+	int owner = GetEntPropEnt(fists, Prop_Send, "m_hOwner");
+	if (IsValidClient(owner))
+	{
+		SDKCall_CTFPlayer_RemoveDisguise(owner);
+	}
+	
+	return MRES_Ignored;
 }
 
 static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player, DHookReturn ret)

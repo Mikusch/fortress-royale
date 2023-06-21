@@ -429,6 +429,9 @@ static bool OpenCrateInRange(int client, int buttons)
 	if (FRPlayer(client).IsInAVehicle())
 		return false;
 	
+	if (TF2_IsPlayerInCondition(client, TFCond_Stealthed))
+		return false;
+	
 	// Pressing and holding +attack2, +attack3 or +reload
 	if (!(buttons & IN_ATTACK2 || buttons & IN_ATTACK3 || buttons & IN_RELOAD))
 		return false;
@@ -481,6 +484,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 	if (!g_bEnabled)
 		return;
 	
+	DHooks_OnEntityCreated(entity, classname);
 	SDKHooks_OnEntityCreated(entity, classname);
 }
 
@@ -524,6 +528,16 @@ void OnPluginEnabled()
 			continue;
 		
 		OnClientPutInServer(client);
+	}
+	
+	int entity = -1;
+	while ((entity = FindEntityByClassname(entity, "*")) != -1)
+	{
+		char classname[64];
+		if (GetEntityClassname(entity, classname, sizeof(classname)))
+		{
+			OnEntityCreated(entity, classname);
+		}
 	}
 }
 
