@@ -6,7 +6,7 @@ Fortress Royale is a free-for-all battle royale gamemode for Team Fortress 2. Pa
 
 ## Requirements
 
-* SourceMod 1.11+
+* SourceMod 1.12+
 * [nosoop/SM-TFEconData](https://github.com/nosoop/SM-TFEconData)
 * [FlaminSarge/tf2attributes](https://github.com/FlaminSarge/tf2attributes)
 * [TF2-DMB/CBaseNPC](https://github.com/TF2-DMB/CBaseNPC)
