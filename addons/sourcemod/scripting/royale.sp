@@ -515,6 +515,8 @@ void TogglePlugin(bool bEnable)
 	{
 		OnPluginDisabled();
 	}
+	
+	ServerCommand("mp_restartgame_immediate 1");
 }
 
 void OnPluginEnabled()
