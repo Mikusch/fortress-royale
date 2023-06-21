@@ -107,7 +107,8 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	}
 	
 	// Set the skin up properly for the dropped weapon
-	SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
+	if (HasEntProp(weapon, Prop_Send, "m_hOwner"))
+		SetEntPropEnt(weapon, Prop_Send, "m_hOwner", client);
 	
 	char szWorldModel[PLATFORM_MAX_PATH];
 	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
