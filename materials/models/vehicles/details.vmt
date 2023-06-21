@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/vehicles/details"
+	"$surfaceprop"	"default"
+	"$basemapalphaphongmask" 1
+	//phong properties
+	"$phong"	"1"
+	"$phongboost"	"[.08]"
+	"$phongexponent"	"20"
+	"$phongfresnelranges"	"[1 2 2.5]"
+
+	"$ambientocclusion" "1"
+
+	//"$lightwarptexture" "models/vehicles/pickup_lightwarp"
+}

@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture"	"models/vehicles/body"
+	"$bumpmap"	"models/vehicles/body_normal"
+	"$envmap" "env_cubemap"
+	"$envmaptint" "[.5 .5 .5]"
+	
+	//"$basemapalphaphongmask" "1"
+	"$phong" "1"
+	"$phongexponenttexture" "models/vehicles/body_exp"
+	"$phongboost" ".5"	
+	//"$lightwarptexture" "models/vehicles/pickup_lightwarp"
+	"$phongfresnelranges"	"[1 1.5 1]"
+}

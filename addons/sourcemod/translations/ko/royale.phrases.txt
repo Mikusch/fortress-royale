@@ -1,0 +1,112 @@
+"Phrases"
+{
+	"BattleBus_HowToDrop"
+	{
+		"ko"		"%%+attack3%% 키(기본 마우스 휠 클릭)을 눌러 버스에서 내리고 착지하세요."
+	}
+	"BattleBus_SecToDeployParachute"
+	{
+		"#format"	"{1:d}"
+		"ko"		"{1} 초 후에 자동으로 낙하산이 펼쳐집니다."
+	}
+	"BattleBus_ParachuteDeployed"
+	{
+		"ko"		"낙하산이 펼쳐졌습니다."
+	}
+	"BattleBus_IncomingCrate"
+	{
+		"ko"		"보급상자가 투하 중 입니다!"
+	}
+	
+	"Command_VehicleUsage"
+	{
+		"ko"		"사용: sm_vehicle [config name]"
+	}
+	"Command_VehicleCantFindName"
+	{
+		"#format"	"{1:s}"
+		"ko"		"'{1}' 이라는 이름의 차량을 찾을 수 없습니다."
+	}
+	
+	"Editor_Title"
+	{
+		"ko"		"에디터 메뉴"
+	}
+	"Editor_NotLookingAtAny"
+	{
+		"ko"		"아이템이나 차량을 바라보고 사용해야합니다."
+	}
+	"Editor_Delete"
+	{
+		"ko"		"이 아이템 삭제"
+	}
+	"Editor_Move"
+	{
+		"ko"		"이 아이템 옮기기"
+	}
+	"Editor_CreateCrate"
+	{
+		"ko"		"새 아이템 생성"
+	}
+	"Editor_CreateVehicle"
+	{
+		"ko"		"새 차량 생성"
+	}
+	"Editor_Place"
+	{
+		"ko"		"아이템 놓기"
+	}
+	"Editor_Save"
+	{
+		"ko"		"KeyValues 파일에 저장"
+	}
+	"Editor_Prefab"
+	{
+		"#format"	"{1:s}"
+		"ko"		"Prefab: {1}"
+	}
+	"Editor_Prefab_Title"
+	{
+		"ko"		"Prefab 에디터"
+	}
+	
+	"Hint_VehicleKeys_Car"
+	{
+		"ko"		"%%+speed%% 키로 가속 하고  %%+jump%% 키로 브레이크 합니다."
+	}
+	
+	"Hint_VehicleKeys_Airboat"
+	{
+		"ko"		"%%+forward%% 키로 가속 하고 %%+back%% 키로 감속 합니다. %%+moveleft%% 키와 %%+moveright%% 키로 좌우 방향을 조절합니다."
+	}
+	
+	"Hint_BottlePickup_WrongClass"
+	{
+		"ko"		"이 아이템은 데모맨만 획득 할 수 있습니다!"
+	}
+	
+	"RoundState_NoWinner"
+	{
+		"ko"		"무승부! 모두가 패배!"
+	}
+	"RoundState_Winner"
+	{
+		"#format"	"{1:N},{2:d}"
+		"ko"		"라운드 승리: {1} | {2} 명의 플레이어를 죽이고 승리했습니다!"
+	}
+	"RoundState_MostKills_One"
+	{
+		"#format"	"{1:N},{2:d}"
+		"ko"		"최다 킬: {1} | {2} 명을 죽이고 이번 라운드의 최다 킬 수를 기록했습니다!"
+	}
+	"RoundState_MostKills_Many"
+	{
+		"#format"	"{1:s},{2:N},{3:d}"
+		"ko"		"최다 킬: {1} , {2} | {3} 명을 죽이고 이번 라운드의 최다 킬 수를 기록했습니다!"
+	}
+	
+	"Zone_ShrinkAlert"
+	{
+		"ko"		"자기장이 좁혀지기 시작했습니다. 자기장 범위 밖에 있으면 큰 피해를 입습니다."
+	}
+}
