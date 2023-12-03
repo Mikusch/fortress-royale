@@ -51,6 +51,8 @@
 #define FFADE_STAYOUT		0x0008		// ignores the duration, stays faded out until new ScreenFade message received
 #define FFADE_PURGE			0x0010		// Purges all other fades, replacing them with this one
 
+#define HIDEHUD_TARGET_ID	(1<<16)
+
 enum FRRoundState
 {
 	FRRoundState_Init,

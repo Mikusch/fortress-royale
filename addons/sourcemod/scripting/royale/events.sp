@@ -134,6 +134,8 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 			ItemGiveTo(client, parachute);
 			FRPlayer(client).m_bIsParachuting = true;
 		}
+		
+		SetEntProp(client, Prop_Send, "m_iHideHUD", GetEntProp(client, Prop_Send, "m_iHideHUD") | HIDEHUD_TARGET_ID);
 	}
 }
 
@@ -146,6 +148,7 @@ static Action EventHook_PlayerDeath_Pre(Event event, const char[] name, bool don
 	int victim = GetClientOfUserId(userid);
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int assister = GetClientOfUserId(event.GetInt("assister"));
+	int death_flags = GetClientOfUserId(event.GetInt("death_flags"));
 	bool silent_kill = event.GetBool("silent_kill");
 	char weapon[64];
 	event.GetString("weapon", weapon, sizeof(weapon));
@@ -191,6 +194,11 @@ static Action EventHook_PlayerDeath_Pre(Event event, const char[] name, bool don
 				hNewEvent.FireToClient(client);
 			}
 		}
+	}
+	
+	if (!(death_flags & TF_DEATHFLAG_DEADRINGER))
+	{
+		SetEntProp(victim, Prop_Send, "m_iHideHUD", GetEntProp(victim, Prop_Send, "m_iHideHUD") & ~HIDEHUD_TARGET_ID);
 	}
 	
 	return Plugin_Changed;
@@ -321,8 +329,8 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 		return;
 	
 	// Stop the round end sounds
-	EmitGameSoundToAll("MatchMaking.MatchEndWinMusicCasual", _, SND_STOPLOOPING);
-	EmitGameSoundToAll("MatchMaking.MatchEndLoseMusicCasual", _, SND_STOPLOOPING);
+	EmitGameSoundToAll("MatchMaking.MatchEndWinMusicCasual", _, SND_STOP | SND_STOPLOOPING);
+	EmitGameSoundToAll("MatchMaking.MatchEndLoseMusicCasual", _, SND_STOP | SND_STOPLOOPING);
 	
 	// Should the game start?
 	if (g_nRoundState == FRRoundState_Setup || g_nRoundState == FRRoundState_RoundEnd)
