@@ -263,8 +263,8 @@ static void EventHook_PlayerDeath_Post(Event event, const char[] name, bool dont
 		float vecSrc[3];
 		CBaseEntity(victim).WorldSpaceCenter(vecSrc);
 		
-		// Drop a small health kit on death
-		int medKit = CreateEntityByName("item_healthkit_small");
+		// Drop a medium health kit on death
+		int medKit = CreateEntityByName("item_healthkit_medium");
 		if (IsValidEntity(medKit))
 		{
 			DispatchKeyValueVector(medKit, "origin", vecSrc);
