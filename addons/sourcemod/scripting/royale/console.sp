@@ -217,7 +217,7 @@ static Action CommandListener_Build(int client, const char[] command, int argc)
 
 static Action CommandListener_Destroy(int client, const char[] command, int argc)
 {
-	int item = TF2Util_GetPlayerLoadoutEntity(client, LOADOUT_POSITION_PDA);
+	int item = TF2Util_GetPlayerLoadoutEntity(client, LOADOUT_POSITION_PDA2);
 	if (IsValidEntity(item) && TF2Util_IsEntityWeapon(item) && TF2Util_GetWeaponID(item) == TF_WEAPON_PDA_ENGINEER_DESTROY)
 	{
 		return Plugin_Continue;
