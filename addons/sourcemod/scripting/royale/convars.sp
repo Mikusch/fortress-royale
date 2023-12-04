@@ -76,6 +76,7 @@ void ConVars_Init()
 	ConVars_AddConVar("tf_parachute_maxspeed_xy", "600.0f");
 	ConVars_AddConVar("tf_parachute_maxspeed_z", "-200.0f");
 	ConVars_AddConVar("tf_spawn_glows_duration", "0");
+	ConVars_AddConVar("tf_spy_cloak_regen_rate", "0.0");
 	ConVars_AddConVar("mp_teams_unbalance_limit", "0");
 	ConVars_AddConVar("mp_autoteambalance", "0");
 	ConVars_AddConVar("mp_scrambleteams_auto", "0");

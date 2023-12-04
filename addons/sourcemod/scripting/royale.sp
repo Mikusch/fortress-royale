@@ -279,12 +279,12 @@ public void TF2_OnWaitingForPlayersEnd()
 	g_nRoundState = ShouldGoToSetup() ? FRRoundState_Setup : FRRoundState_WaitingForPlayers;
 }
 
-public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int index, Handle &item)
+public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
 {
 	if (!g_bEnabled)
 		return Plugin_Continue;
 	
-	return FR_OnGiveNamedItem(client, classname, index);
+	return FR_OnGiveNamedItem(client, classname, itemDefIndex);
 }
 
 public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iItemDefIndex)
