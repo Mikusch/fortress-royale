@@ -246,8 +246,6 @@ static void EventHook_PlayerDeath_Post(Event event, const char[] name, bool dont
 					}
 				}
 			}
-			
-			FRPlayer(victim).RemoveItem(entity);
 		}
 		
 		if (FRPlayer(victim).GetPlayerState() == FRPlayerState_Playing)
