@@ -31,6 +31,7 @@ enum struct ZoneConfig
 	int color_ghost[4];		/**< Color of the ghost zone. */
 	
 	int num_shrinks;		/**< Amount of times the zone should shrink. */
+	int min_shrink_level;	/**< The minimum level the zone should shrink to. */
 	float diameter_max;		/**< Starting diameter of the zone. */
 	float diameter_safe;	/**< Diameter the zone is allowed to move in. */
 	
@@ -56,6 +57,7 @@ enum struct ZoneConfig
 		}
 		
 		this.num_shrinks = kv.GetNum("num_shrinks", this.num_shrinks);
+		this.min_shrink_level = kv.GetNum("min_shrink_level", this.min_shrink_level);
 		
 		this.diameter_max = kv.GetFloat("diameter_max", this.diameter_max);
 		this.diameter_safe = kv.GetFloat("diameter_safe", this.diameter_safe);
@@ -123,7 +125,7 @@ void Zone_Think()
 	float vecZoneOrigin[3], flShrinkPercentage;
 	float flShrinkDuration = Zone_GetShrinkDuration();
 	
-	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
+	if (g_flShrinkStartTime > 0.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
 	{
 		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
 		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
@@ -132,7 +134,8 @@ void Zone_Think()
 		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
 		
 		// Total shrink percentage from 0 to 1 (starting zone to zero size)
-		flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
+		flShrinkPercentage = (g_iShrinkLevel <= g_zoneData.min_shrink_level ? float(g_iShrinkLevel) : float(g_iShrinkLevel) - flProgress) / float(g_zoneData.num_shrinks);
+		flShrinkPercentage = Clamp(flShrinkPercentage, 0.0, 1.0);
 		
 		// Let the zone prop wander
 		if (IsValidEntity(g_hZonePropEnt))
@@ -143,7 +146,7 @@ void Zone_Think()
 	}
 	else
 	{
-		// Not shrinking, enforce expected values
+		// Zone is not shrinking, use expected values
 		vecZoneOrigin = g_vecOldPosition;
 		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
 	}
@@ -231,7 +234,7 @@ static void Zone_Reset()
 	g_vecNewPosition = NULL_VECTOR;
 	g_hZoneTimer = null;
 	g_iShrinkLevel = g_zoneData.num_shrinks;
-	g_flShrinkStartTime = -1.0;
+	g_flShrinkStartTime = 0.0;
 	g_flNextDamageTime = GetGameTime();
 }
 
@@ -295,13 +298,13 @@ static void Timer_StartDisplay(Handle hTimer)
 	}
 	
 	// Don't display ghost zone if we are on the last shrink level
-	if (g_iShrinkLevel > 1)
+	if (g_zoneData.min_shrink_level > 0 || g_iShrinkLevel > 1)
 	{
 		// Teleport ghost zone to the new center, then update size and display
 		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
 			TeleportEntity(g_hZoneGhostPropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(Max(g_iShrinkLevel - 1, g_zoneData.min_shrink_level)) / float(g_zoneData.num_shrinks)));
 			AcceptEntityInput(g_hZoneGhostPropEnt, "Enable");
 		}
 	}
@@ -312,7 +315,7 @@ static void Timer_StartDisplay(Handle hTimer)
 			continue;
 		
 		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_ShrinkWarning", client, Zone_GetDisplayDuration());
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, Zone_GetDisplayDuration());
 		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
 	}
 	
@@ -326,8 +329,6 @@ static void Timer_StartShrink(Handle hTimer)
 	if (g_hZoneTimer != hTimer)
 		return;
 	
-	g_iShrinkLevel--;
-	
 	EmitGameSoundToAll("MVM.Warning");
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -336,7 +337,7 @@ static void Timer_StartShrink(Handle hTimer)
 			continue;
 		
 		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_Shrinking", client);
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_Moving", client);
 		SendHudNotificationCustom(client, szMessage, "ico_notify_ten_seconds");
 	}
 	
@@ -351,12 +352,27 @@ static void Timer_FinishShrink(Handle hTimer)
 	if (g_hZoneTimer != hTimer)
 		return;
 	
-	g_flShrinkStartTime = -1.0;
+	g_flShrinkStartTime = 0.0;
 	
 	BattleBus_SpawnLootBus();
 	
-	if (g_iShrinkLevel > 0)
+	if (g_iShrinkLevel <= 0)
 	{
+		// Final shrink finished - remove the zone props
+		if (IsValidEntity(g_hZonePropEnt))
+		{
+			RemoveEntity(g_hZonePropEnt);
+		}
+		
+		if (IsValidEntity(g_hZoneGhostPropEnt))
+		{
+			RemoveEntity(g_hZoneGhostPropEnt);
+		}
+	}
+	else
+	{
+		// Transition to next zone level
+		g_iShrinkLevel = Max(g_iShrinkLevel - 1, g_zoneData.min_shrink_level);
 		g_vecOldPosition = g_vecNewPosition;
 		
 		if (IsValidEntity(g_hZonePropEnt))
@@ -371,19 +387,6 @@ static void Timer_FinishShrink(Handle hTimer)
 		}
 		
 		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
-	}
-	else
-	{
-		// Final shrink finished - remove the zone props
-		if (IsValidEntity(g_hZonePropEnt))
-		{
-			RemoveEntity(g_hZonePropEnt);
-		}
-		
-		if (IsValidEntity(g_hZoneGhostPropEnt))
-		{
-			RemoveEntity(g_hZoneGhostPropEnt);
-		}
 	}
 }
 

@@ -33,6 +33,7 @@ void ConVars_Init()
 {
 	g_ConVars = new StringMap();
 	
+	CreateConVar("sm_fr_version", PLUGIN_VERSION, "Plugin version.", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
 	sm_fr_enable = CreateConVar("sm_fr_enable", "1", "Enable the plugin?");
 	sm_fr_setup_length = CreateConVar("sm_fr_setup_length", "15", "Time before the battle bus takes off.");
 	sm_fr_truce_duration = CreateConVar("sm_fr_truce_duration", "60", "Length of the truce period.");
