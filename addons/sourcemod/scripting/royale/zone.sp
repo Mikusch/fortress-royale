@@ -126,7 +126,7 @@ void Zone_Think()
 	
 	float vecZoneOrigin[3], flShrinkPercentage;
 	
-	if (g_flShrinkStartTime > 0.0 && g_flShrinkStartTime + g_zoneData.shrink_duration >= GetGameTime())
+	if (g_flShrinkStartTime > 0.0)
 	{
 		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
 		float flProgress = (GetGameTime() - g_flShrinkStartTime) / g_zoneData.shrink_duration;
@@ -149,7 +149,7 @@ void Zone_Think()
 	{
 		// Zone is not shrinking, use expected values
 		vecZoneOrigin = g_vecOldPosition;
-		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+		flShrinkPercentage = Zone_GetShrinkPercentage();
 	}
 	
 	float flRadius = Zone_GetDiameter(flShrinkPercentage) / 2.0;
@@ -363,8 +363,6 @@ static void Timer_FinishShrink(Handle hTimer)
 	
 	g_flShrinkStartTime = 0.0;
 	
-	BattleBus_SpawnLootBus();
-	
 	if (g_iShrinkLevel <= 0)
 	{
 		// Final shrink finished - remove the zone props
@@ -387,7 +385,7 @@ static void Timer_FinishShrink(Handle hTimer)
 		if (IsValidEntity(g_hZonePropEnt))
 		{
 			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(Zone_GetShrinkPercentage()));
 		}
 		
 		if (IsValidEntity(g_hZoneGhostPropEnt))
@@ -397,6 +395,8 @@ static void Timer_FinishShrink(Handle hTimer)
 		
 		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
 	}
+	
+	BattleBus_SpawnLootBus();
 }
 
 static bool Zone_GetValidHeight(float vecOrigin[3])

@@ -249,36 +249,37 @@ void BattleBus_SpawnLootBus()
 static bool BattleBus_InitBusEnt(int bus, Timer func)
 {
 	float vecOrigin[3], vecAngles[3], vecVelocity[3];
-	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
+	if (!BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
 	{
-		g_hBusPropEnt = EntIndexToEntRef(bus);
-		g_flBusSpawnTime = GetGameTime();
-		
-		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
-		CreateTimer(g_battleBusData.travel_time, func, g_hBusPropEnt, TIMER_FLAG_NO_MAPCHANGE);
-		
-		// Play a sound for arriving
-		ArrayList sounds = g_battleBusData.sounds;
-		if (sounds && sounds.Length)
-		{
-			char szSound[PLATFORM_MAX_PATH];
-			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)))
-			{
-				if (PrecacheScriptSound(szSound))
-				{
-					EmitGameSoundToAll(szSound, bus);
-				}
-				else if (PrecacheSound(szSound))
-				{
-					EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
-				}
-			}
-		}
-		
-		return true;
+		RemoveEntity(bus);
+		return false;
 	}
 	
-	return false;
+	g_hBusPropEnt = EntIndexToEntRef(bus);
+	g_flBusSpawnTime = GetGameTime();
+	
+	TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
+	CreateTimer(g_battleBusData.travel_time, func, g_hBusPropEnt, TIMER_FLAG_NO_MAPCHANGE);
+	
+	// Play a sound for arriving
+	ArrayList sounds = g_battleBusData.sounds;
+	if (sounds && sounds.Length)
+	{
+		char szSound[PLATFORM_MAX_PATH];
+		if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)))
+		{
+			if (PrecacheScriptSound(szSound))
+			{
+				EmitGameSoundToAll(szSound, bus);
+			}
+			else if (PrecacheSound(szSound))
+			{
+				EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
+			}
+		}
+	}
+	
+	return true;
 }
 
 static void Timer_EndPlayerBus(Handle timer, int bus)
