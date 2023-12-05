@@ -134,7 +134,7 @@ void Zone_Think()
 		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
 		
 		// Total shrink percentage from 0 to 1 (starting zone to zero size)
-		flShrinkPercentage = (g_iShrinkLevel <= g_zoneData.min_shrink_level ? float(g_iShrinkLevel) : float(g_iShrinkLevel) - flProgress) / float(g_zoneData.num_shrinks);
+		flShrinkPercentage = Zone_GetShrinkPercentage(Zone_IsFinalZone() ? 0.0 : flProgress);
 		flShrinkPercentage = Clamp(flShrinkPercentage, 0.0, 1.0);
 		
 		// Let the zone prop wander
@@ -151,7 +151,7 @@ void Zone_Think()
 		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
 	}
 	
-	float flRadius = Zone_GetRadius(flShrinkPercentage);
+	float flRadius = Zone_GetDiameter(flShrinkPercentage) / 2.0;
 	float flDamage = Zone_GetDamage();
 	
 	if (g_nRoundState != FRRoundState_RoundEnd)
@@ -276,7 +276,17 @@ static void Timer_StartDisplay(Handle hTimer)
 	{
 		// Get random angle and offset position from center
 		float flAngle = GetRandomFloat(0.0, 360.0);
-		float flDiameter = GetRandomFloat(0.0, flSearchDiameter);
+		
+		float flDiameter = 0.0;
+		if (Zone_IsFinalZone())
+		{
+			flDiameter = Zone_GetDiameter(Zone_GetShrinkPercentage()) * 2.0;
+			flDiameter = GetRandomFloat(flDiameter, flDiameter + flSearchDiameter);
+		}
+		else
+		{
+			flDiameter = GetRandomFloat(0.0, flSearchDiameter);
+		}
 		
 		float vecOrigin[3], vecNewOrigin[3];
 		vecNewOrigin[0] = (Cosine(DegToRad(flAngle)) * flDiameter / 2.0);
@@ -297,7 +307,7 @@ static void Timer_StartDisplay(Handle hTimer)
 		break;
 	}
 	
-	// Don't display ghost zone if we are on the last shrink level
+	// Don't display ghost zone if the zone fully closes in
 	if (g_zoneData.min_shrink_level > 0 || g_iShrinkLevel > 1)
 	{
 		// Teleport ghost zone to the new center, then update size and display
@@ -444,9 +454,9 @@ void Zone_GetNewPosition(float center[3])
 	center = g_vecNewPosition;
 }
 
-float Zone_GetShrinkPercentage()
+float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
 {
-	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+	return (float(g_iShrinkLevel) - flProgressInLevel) / float(g_zoneData.num_shrinks);
 }
 
 static float Zone_GetDamage()
@@ -454,9 +464,9 @@ static float Zone_GetDamage()
 	return sm_fr_zone_damage_max.FloatValue - ((sm_fr_zone_damage_max.FloatValue - sm_fr_zone_damage_min.FloatValue) / g_zoneData.num_shrinks * g_iShrinkLevel);
 }
 
-static float Zone_GetRadius(float flPercentage)
+static float Zone_GetDiameter(float flPercentage)
 {
-	return g_zoneData.diameter_max * flPercentage / 2.0;
+	return g_zoneData.diameter_max * flPercentage;
 }
 
 static float Zone_GetPropModelScale(float flPercentage = 1.0)
@@ -482,4 +492,9 @@ static float Zone_GetShrinkDuration()
 static float Zone_GetNextDisplayDuration()
 {
 	return sm_fr_zone_nextdisplay.FloatValue + (sm_fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
+}
+
+static bool Zone_IsFinalZone()
+{
+	return g_iShrinkLevel <= g_zoneData.min_shrink_level;
 }
