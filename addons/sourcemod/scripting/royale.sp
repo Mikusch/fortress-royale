@@ -78,7 +78,7 @@ int g_iOffset_CTFDroppedWeapon_m_nAmmo;
 #include "royale/config.sp"
 #include "royale/console.sp"
 #include "royale/convars.sp"
-#include "royale/data.sp"
+#include "royale/player.sp"
 #include "royale/dhooks.sp"
 #include "royale/entity.sp"
 #include "royale/events.sp"
