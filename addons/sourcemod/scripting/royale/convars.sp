@@ -50,8 +50,6 @@ void ConVars_Init()
 	sm_fr_zone_startdisplay_player = CreateConVar("sm_fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
 	sm_fr_zone_display = CreateConVar("sm_fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
 	sm_fr_zone_display_player = CreateConVar("sm_fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
-	sm_fr_zone_shrink = CreateConVar("sm_fr_zone_shrink", "20", "Seconds to shrink zone to next level", _, true, 0.0);
-	sm_fr_zone_shrink_player = CreateConVar("sm_fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
 	sm_fr_zone_nextdisplay = CreateConVar("sm_fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
 	sm_fr_zone_nextdisplay_player = CreateConVar("sm_fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	sm_fr_zone_damage_min = CreateConVar("sm_fr_zone_damage_min", "1", "Minimum damage of the zone, when it hasn't shrunk yet.", _, true, 0.0);

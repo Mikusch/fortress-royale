@@ -49,8 +49,6 @@ ConVar sm_fr_zone_startdisplay;
 ConVar sm_fr_zone_startdisplay_player;
 ConVar sm_fr_zone_display;
 ConVar sm_fr_zone_display_player;
-ConVar sm_fr_zone_shrink;
-ConVar sm_fr_zone_shrink_player;
 ConVar sm_fr_zone_nextdisplay;
 ConVar sm_fr_zone_nextdisplay_player;
 ConVar sm_fr_zone_damage_min;

@@ -32,6 +32,7 @@ enum struct ZoneConfig
 	
 	int num_shrinks;		/**< Amount of times the zone should shrink. */
 	int min_shrink_level;	/**< The minimum level the zone should shrink to. */
+	float shrink_duration;	/**< The amount of time it takes for the zone to transition from one level to another. */
 	float diameter_max;		/**< Starting diameter of the zone. */
 	float diameter_safe;	/**< Diameter the zone is allowed to move in. */
 	
@@ -58,6 +59,7 @@ enum struct ZoneConfig
 		
 		this.num_shrinks = kv.GetNum("num_shrinks", this.num_shrinks);
 		this.min_shrink_level = kv.GetNum("min_shrink_level", this.min_shrink_level);
+		this.shrink_duration = kv.GetFloat("shrink_duration", this.shrink_duration);
 		
 		this.diameter_max = kv.GetFloat("diameter_max", this.diameter_max);
 		this.diameter_safe = kv.GetFloat("diameter_safe", this.diameter_safe);
@@ -123,12 +125,11 @@ void Zone_Think()
 		return;
 	
 	float vecZoneOrigin[3], flShrinkPercentage;
-	float flShrinkDuration = Zone_GetShrinkDuration();
 	
-	if (g_flShrinkStartTime > 0.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
+	if (g_flShrinkStartTime > 0.0 && g_flShrinkStartTime + g_zoneData.shrink_duration >= GetGameTime())
 	{
 		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
-		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
+		float flProgress = (GetGameTime() - g_flShrinkStartTime) / g_zoneData.shrink_duration;
 		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
 		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
 		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
@@ -351,10 +352,8 @@ static void Timer_StartShrink(Handle hTimer)
 		SendHudNotificationCustom(client, szMessage, "ico_notify_ten_seconds");
 	}
 	
-	float flShrinkDuration = Zone_GetShrinkDuration();
-	
 	g_flShrinkStartTime = GetGameTime();
-	g_hZoneTimer = CreateTimer(flShrinkDuration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	g_hZoneTimer = CreateTimer(g_zoneData.shrink_duration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void Timer_FinishShrink(Handle hTimer)
@@ -482,11 +481,6 @@ static float Zone_GetStartDisplayDuration()
 static float Zone_GetDisplayDuration()
 {
 	return sm_fr_zone_display.FloatValue + (sm_fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
-}
-
-static float Zone_GetShrinkDuration()
-{
-	return sm_fr_zone_shrink.FloatValue + (sm_fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
 static float Zone_GetNextDisplayDuration()
