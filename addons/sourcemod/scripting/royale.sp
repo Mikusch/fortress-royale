@@ -43,6 +43,7 @@ ConVar sm_fr_max_ammo_boost;
 ConVar sm_fr_parachute_auto_height;
 ConVar sm_fr_fists_damage_multiplier;
 ConVar sm_fr_medigun_damage;
+ConVar sm_fr_dropped_weapon_ammo_percentage;
 ConVar sm_fr_zone_startdisplay;
 ConVar sm_fr_zone_startdisplay_player;
 ConVar sm_fr_zone_display;
@@ -67,6 +68,8 @@ bool g_bInHealthKitTouch;
 bool g_bInGiveAmmo;
 bool g_bFoundCrate;
 FRRoundState g_nRoundState;
+
+int g_iOffset_CTFDroppedWeapon_m_nAmmo;
 
 #include "royale/shareddefs.sp"
 
@@ -110,6 +113,8 @@ public void OnPluginStart()
 	{
 		DHooks_Init(gamedata);
 		SDKCalls_Init(gamedata);
+		
+		g_iOffset_CTFDroppedWeapon_m_nAmmo = gamedata.GetOffset("CTFDroppedWeapon::m_nAmmo");
 		
 		delete gamedata;
 	}
