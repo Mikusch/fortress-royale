@@ -67,6 +67,7 @@ enum struct BattleBusData
 static BattleBusData g_battleBusData;
 
 static int g_hBusPropEnt = INVALID_ENT_REFERENCE;
+static Handle g_hBusDropSoundTimer;
 static float g_flBusSpawnTime;
 
 void BattleBus_Parse(KeyValues kv)
@@ -388,9 +389,19 @@ bool BattleBus_EjectPlayer(int client)
 	// Eject the player
 	TeleportEntity(client, vecOrigin, angRotation, vecVelocity);
 	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
-	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hBusPropEnt);
+	
+	// To avoid destroying people's ears when everyone drops at once
+	g_hBusDropSoundTimer = CreateTimer(0.1, Timer_PlayDropSound);
 	
 	return true;
+}
+
+static void Timer_PlayDropSound(Handle timer)
+{
+	if (timer != g_hBusDropSoundTimer)
+		return;
+	
+	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hBusPropEnt);
 }
 
 static int BattleBus_CreateBusEntity()
