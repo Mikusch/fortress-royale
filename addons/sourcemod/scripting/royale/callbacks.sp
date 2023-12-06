@@ -119,6 +119,10 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 			if (TF2Util_IsEntityWeapon(weapon))
 			{
 				SDKCall_CTFDroppedWeapon_InitDroppedWeapon(newDroppedWeapon, client, weapon, false);
+				
+				// Override ammo count to make players scavenge for ammo
+				int iMaxAmmo = TF2Util_GetPlayerMaxAmmo(client, GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType"));
+				SetEntData(newDroppedWeapon, g_iOffset_CTFDroppedWeapon_m_nAmmo, RoundToCeil(iMaxAmmo * sm_fr_dropped_weapon_ammo_percentage.FloatValue));
 			}
 			else if (TF2Util_IsEntityWearable(weapon))
 			{

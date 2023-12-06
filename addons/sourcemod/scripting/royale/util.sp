@@ -38,18 +38,6 @@ any Clamp(any val, any min, any max)
 	return Min(Max(val, min), max);
 }
 
-void ItemGiveTo(int client, int item)
-{
-	if (TF2Util_IsEntityWearable(item))
-	{
-		TF2Util_EquipPlayerWearable(client, item);
-	}
-	else
-	{
-		EquipPlayerWeapon(client, item);
-	}
-}
-
 bool ModelIndexToString(int stringidx, char[] str, int maxlength)
 {
 	int tableidx = FindStringTable("modelprecache");
@@ -177,7 +165,7 @@ int CreateViewModelWearable(int client, int weapon)
 	}
 	
 	DispatchSpawn(wearable);
-	ItemGiveTo(client, wearable);
+	FRPlayer(client).EquipItem(wearable);
 	
 	SetVariantString("!activator");
 	AcceptEntityInput(wearable, "SetParent", GetEntPropEnt(client, Prop_Send, "m_hViewModel"));

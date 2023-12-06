@@ -115,8 +115,6 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public void SetPlayerState(FRPlayerState nState)
 	{
-		LogMessage("Changing state to %d for %N", nState, this.index);
-		
 		this.m_nPlayerState = nState;
 	}
 	
@@ -134,6 +132,18 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 		
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;
+	}
+	
+	public void EquipItem(int item)
+	{
+		if (TF2Util_IsEntityWearable(item))
+		{
+			TF2Util_EquipPlayerWearable(this.index, item);
+		}
+		else
+		{
+			EquipPlayerWeapon(this.index, item);
+		}
 	}
 	
 	public bool TryToOpenCrate(int crate)

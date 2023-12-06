@@ -186,6 +186,11 @@
 				"linux"		"293"
 				"windows"	"287"
 			}
+			"CTFDroppedWeapon::m_nAmmo"
+			{
+				"linux"		"0x568"
+				"windows"	"0x554"
+			}
 		}
 		"Functions"
 		{

@@ -273,7 +273,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 			
 			int lastWeapon = GetEntPropEnt(player, Prop_Send, "m_hLastWeapon");
 			SetEntProp(newItem, Prop_Send, "m_bValidatedAttachedEntity", true);
-			ItemGiveTo(player, newItem);
+			FRPlayer(player).EquipItem(newItem);
 			SetEntPropEnt(player, Prop_Send, "m_hLastWeapon", lastWeapon);
 			
 			if (TF2Util_IsEntityWeapon(newItem))
