@@ -163,7 +163,7 @@ static Action CommandListener_DropItem(int client, const char[] command, int arg
 			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
 			if (IsValidEntity(weapon))
 			{
-				ItemGiveTo(client, weapon);
+				FRPlayer(client).EquipItem(weapon);
 				TF2Util_SetPlayerActiveWeapon(client, weapon);
 			}
 		}

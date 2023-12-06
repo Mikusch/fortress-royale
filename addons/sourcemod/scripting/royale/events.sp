@@ -123,7 +123,7 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 		int fists = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
 		if (IsValidEntity(fists))
 		{
-			ItemGiveTo(client, fists);
+			FRPlayer(client).EquipItem(fists);
 			TF2Util_SetPlayerActiveWeapon(client, fists);
 		}
 		
@@ -131,7 +131,7 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 		int parachute = GenerateDefaultItem(client, TF_DEFINDEX_PARACHUTE);
 		if (IsValidEntity(parachute))
 		{
-			ItemGiveTo(client, parachute);
+			FRPlayer(client).EquipItem(parachute);
 			FRPlayer(client).m_bIsParachuting = true;
 		}
 		
