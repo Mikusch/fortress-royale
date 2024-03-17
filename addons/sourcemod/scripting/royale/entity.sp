@@ -26,7 +26,7 @@ static ArrayList g_entityProperties;
 enum struct EntityProperties
 {
 	int ref;
-	int m_claimedBy;
+	int claimed_by;
 }
 
 methodmap FREntity < CBaseEntity
@@ -38,40 +38,25 @@ methodmap FREntity < CBaseEntity
 			return view_as<FREntity>(INVALID_ENT_REFERENCE);
 		}
 		
-		if (!g_entityProperties)
-		{
-			g_entityProperties = new ArrayList(sizeof(EntityProperties));
-		}
+		int ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
 		
-		// Ensure we store it as an entity reference
-		entity = EntIndexToEntRef(EntRefToEntIndex(entity));
-		
-		if (g_entityProperties.FindValue(entity, EntityProperties::ref) == -1)
+		if (!FREntity.IsReferenceTracked(ref))
 		{
-			// Fill basic properties
 			EntityProperties properties;
-			properties.ref = entity;
-			properties.m_claimedBy = -1;
+			properties.ref = ref;
+			properties.claimed_by = -1;
 			
 			g_entityProperties.PushArray(properties);
 		}
 		
-		return view_as<FREntity>(CBaseEntity(entity));
+		return view_as<FREntity>(ref);
 	}
 	
-	property int ref
+	property int Ref
 	{
 		public get()
 		{
 			return view_as<int>(this);
-		}
-	}
-	
-	property int entindex
-	{
-		public get()
-		{
-			return EntRefToEntIndex(this.ref);
 		}
 	}
 	
@@ -101,6 +86,22 @@ methodmap FREntity < CBaseEntity
 		// Remove the entry from local storage
 		g_entityProperties.Erase(this.m_listIndex);
 	}
+	
+	public static bool IsEntityTracked(int entity)
+	{
+		int ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
+		return FREntity.IsReferenceTracked(ref);
+	}
+	
+	public static bool IsReferenceTracked(int ref)
+	{
+		return g_entityProperties.FindValue(ref, EntityProperties::ref) != -1;
+	}
+	
+	public static void Init()
+	{
+		g_entityProperties = new ArrayList(sizeof(EntityProperties));
+	}
 }
 
 methodmap FRCrate < FREntity
@@ -110,21 +111,21 @@ methodmap FRCrate < FREntity
 		return view_as<FRCrate>(FREntity(entity));
 	}
 	
-	property int m_claimedBy
+	property int ClaimedBy
 	{
 		public get()
 		{
-			return g_entityProperties.Get(this.m_listIndex, EntityProperties::m_claimedBy);
+			return g_entityProperties.Get(this.m_listIndex, EntityProperties::claimed_by);
 		}
 		public set(int claimedBy)
 		{
-			g_entityProperties.Set(this.m_listIndex, claimedBy, EntityProperties::m_claimedBy);
+			g_entityProperties.Set(this.m_listIndex, claimedBy, EntityProperties::claimed_by);
 		}
 	}
 	
 	public bool IsClaimedBy(int client)
 	{
-		return this.m_claimedBy == client;
+		return this.ClaimedBy == client;
 	}
 	
 	public void SetText(const char[] szMessage)
@@ -133,7 +134,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != this.entindex)
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.index))
 				continue;
 			
 			SetVariantString(szMessage);
@@ -168,7 +169,7 @@ methodmap FRCrate < FREntity
 		int worldtext = -1;
 		while ((worldtext = FindEntityByClassname(worldtext, "point_worldtext")) != -1)
 		{
-			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.ref))
+			if (GetEntPropEnt(worldtext, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(this.Ref))
 				continue;
 			
 			RemoveEntity(worldtext);
@@ -178,7 +179,7 @@ methodmap FRCrate < FREntity
 	
 	public void StartOpen(int client)
 	{
-		this.m_claimedBy = client;
+		this.ClaimedBy = client;
 		
 		CrateData data;
 		if (this.GetData(data) && data.open_sound[0])
@@ -189,7 +190,7 @@ methodmap FRCrate < FREntity
 	
 	public void CancelOpen()
 	{
-		this.m_claimedBy = -1;
+		this.ClaimedBy = -1;
 		this.ClearText();
 		
 		CrateData data;
@@ -201,7 +202,7 @@ methodmap FRCrate < FREntity
 	
 	public bool CanBeOpenedBy(int client)
 	{
-		return this.m_claimedBy == -1 || this.IsClaimedBy(client);
+		return this.ClaimedBy == -1 || this.IsClaimedBy(client);
 	}
 	
 	public void DropItem(int client)

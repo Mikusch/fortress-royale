@@ -18,9 +18,14 @@
 #pragma newdecls required
 #pragma semicolon 1
 
+bool IsEntityClient(int client)
+{
+	return (0 < client <= MaxClients);
+}
+
 bool IsValidClient(int client)
 {
-	return (0 < client <= MaxClients) && IsValidEntity(client) && IsClientInGame(client);
+	return IsEntityClient(client) && IsValidEntity(client) && IsClientInGame(client);
 }
 
 any Min(any a, any b)

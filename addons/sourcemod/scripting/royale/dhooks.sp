@@ -20,13 +20,14 @@
 
 enum struct DetourData
 {
+	char name[64];
 	DynamicDetour detour;
 	DHookCallback callback_pre;
 	DHookCallback callback_post;
 }
 
-static ArrayList g_DynamicDetours;
-static ArrayList g_DynamicHookIds;
+static ArrayList g_dynamicDetours;
+static ArrayList g_dynamicHookIds;
 
 static DynamicHook g_DHook_CTFPlayer_GiveNamedItem;
 static DynamicHook g_DHook_CBaseCombatCharacter_TakeHealth;
@@ -40,8 +41,8 @@ static TFClassType g_nPrevClass;
 
 void DHooks_Init(GameData gamedata)
 {
-	g_DynamicDetours = new ArrayList(sizeof(DetourData));
-	g_DynamicHookIds = new ArrayList();
+	g_dynamicDetours = new ArrayList(sizeof(DetourData));
+	g_dynamicHookIds = new ArrayList();
 	
 	g_DHook_CTFPlayer_GiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
 	g_DHook_CBaseCombatCharacter_TakeHealth = DHooks_AddDynamicHook(gamedata, "CBaseCombatCharacter::TakeHealth");
@@ -61,28 +62,52 @@ void DHooks_Init(GameData gamedata)
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::Heal", DHookCallback_CTFPlayerShared_Heal_Pre);
 }
 
-void DHooks_OnClientPutInServer(int client)
+void DHooks_Toggle(bool enable)
 {
-	DHooks_HookGiveNamedItem(client);
-	DHooks_HookEntity(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, client, DHookCallback_CBaseCombatCharacter_TakeHealth_Pre);
-	DHooks_HookEntity(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, client, DHookCallback_CBasePlayer_ForceRespawn_Pre);
+	for (int i = 0; i < g_dynamicDetours.Length; i++)
+	{
+		DetourData data;
+		if (g_dynamicDetours.GetArray(i, data))
+		{
+			DHooks_ToggleDetour(data, enable);
+		}
+	}
+	
+	if (!enable)
+	{
+		// Remove virtual hooks
+		for (int i = g_dynamicHookIds.Length - 1; i >= 0; i--)
+		{
+			int hookid = g_dynamicHookIds.Get(i);
+			DynamicHook.RemoveHook(hookid);
+		}
+		
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			DHooks_UnhookGiveNamedItem(client);
+		}
+	}
 }
 
-void DHooks_OnEntityCreated(int entity, const char[] classname)
+void DHooks_HookEntity(int entity, const char[] classname)
 {
-	if (StrEqual(classname, "tf_weapon_fists"))
+	if (IsEntityClient(entity))
 	{
-		DHooks_HookEntity(g_DHook_CBaseCombatWeapon_PrimaryAttack, Hook_Post, entity, DHookCallback_CTFFists_PrimaryAttack_Post);
-		DHooks_HookEntity(g_DHook_CBaseCombatWeapon_SecondaryAttack, Hook_Post, entity, DHookCallback_CTFFists_SecondaryAttack_Post);
+		DHooks_HookGiveNamedItem(entity);
+		DHooks_HookEntityInternal(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, entity, DHookCallback_CBaseCombatCharacter_TakeHealth_Pre);
+		DHooks_HookEntityInternal(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, entity, DHookCallback_CBasePlayer_ForceRespawn_Pre);
+	}
+	else if (StrEqual(classname, "tf_weapon_fists"))
+	{
+		DHooks_HookEntityInternal(g_DHook_CBaseCombatWeapon_PrimaryAttack, Hook_Post, entity, DHookCallback_CTFFists_PrimaryAttack_Post);
+		DHooks_HookEntityInternal(g_DHook_CBaseCombatWeapon_SecondaryAttack, Hook_Post, entity, DHookCallback_CTFFists_SecondaryAttack_Post);
 	}
 }
 
 void DHooks_HookGiveNamedItem(int client)
 {
-	if (g_DHook_CTFPlayer_GiveNamedItem && !g_bTF2Items)
-	{
+	if (!g_bTF2Items)
 		g_iHookIdGiveNamedItem[client] = g_DHook_CTFPlayer_GiveNamedItem.HookEntity(Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre, DHookRemovalCB_OnHookRemoved);
-	}
 }
 
 void DHooks_UnhookGiveNamedItem(int client)
@@ -96,74 +121,22 @@ void DHooks_UnhookGiveNamedItem(int client)
 	}
 }
 
-bool DHooks_IsGiveNamedItemHookActive()
-{
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (g_iHookIdGiveNamedItem[client])
-		{
-			return true;
-		}
-	}
-	
-	return false;
-}
-
-void DHooks_Toggle(bool enable)
-{
-	for (int i = 0; i < g_DynamicDetours.Length; i++)
-	{
-		DetourData data;
-		if (g_DynamicDetours.GetArray(i, data))
-		{
-			if (data.callback_pre != INVALID_FUNCTION)
-			{
-				if (enable)
-					data.detour.Enable(Hook_Pre, data.callback_pre);
-				else
-					data.detour.Disable(Hook_Pre, data.callback_pre);
-			}
-			
-			if (data.callback_post != INVALID_FUNCTION)
-			{
-				if (enable)
-					data.detour.Enable(Hook_Post, data.callback_post);
-				else
-					data.detour.Disable(Hook_Post, data.callback_post);
-			}
-		}
-	}
-	
-	if (!enable)
-	{
-		for (int i = g_DynamicHookIds.Length - 1; i >= 0; i--)
-		{
-			int hookid = g_DynamicHookIds.Get(i);
-			DynamicHook.RemoveHook(hookid);
-		}
-		
-		for (int client = 1; client <= MaxClients; client++)
-		{
-			DHooks_UnhookGiveNamedItem(client);
-		}
-	}
-}
-
-static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callback_pre = INVALID_FUNCTION, DHookCallback callback_post = INVALID_FUNCTION)
+static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
 {
 	DynamicDetour detour = DynamicDetour.FromConf(gamedata, name);
 	if (detour)
 	{
 		DetourData data;
+		strcopy(data.name, sizeof(data.name), name);
 		data.detour = detour;
-		data.callback_pre = callback_pre;
-		data.callback_post = callback_post;
+		data.callback_pre = callbackPre;
+		data.callback_post = callbackPost;
 		
-		g_DynamicDetours.PushArray(data);
+		g_dynamicDetours.PushArray(data);
 	}
 	else
 	{
-		LogError("Failed to create detour setup handle for %s", name);
+		LogError("Failed to create detour setup handle: %s", name);
 	}
 }
 
@@ -176,21 +149,40 @@ static DynamicHook DHooks_AddDynamicHook(GameData gamedata, const char[] name)
 	return hook;
 }
 
-static void DHooks_HookEntity(DynamicHook hook, HookMode mode, int entity, DHookCallback callback)
+static void DHooks_HookEntityInternal(DynamicHook hook, HookMode mode, int entity, DHookCallback callback)
 {
 	if (!hook)
 		return;
 	
 	int hookid = hook.HookEntity(mode, entity, callback, DHookRemovalCB_OnHookRemoved);
 	if (hookid != INVALID_HOOK_ID)
-		g_DynamicHookIds.Push(hookid);
+		g_dynamicHookIds.Push(hookid);
+}
+
+static void DHooks_ToggleDetour(DetourData data, bool enable)
+{
+	if (data.callback_pre != INVALID_FUNCTION)
+	{
+		if (enable)
+			data.detour.Enable(Hook_Pre, data.callback_pre);
+		else
+			data.detour.Disable(Hook_Pre, data.callback_pre);
+	}
+	
+	if (data.callback_post != INVALID_FUNCTION)
+	{
+		if (enable)
+			data.detour.Enable(Hook_Post, data.callback_post);
+		else
+			data.detour.Disable(Hook_Post, data.callback_post);
+	}
 }
 
 static void DHookRemovalCB_OnHookRemoved(int hookid)
 {
-	int index = g_DynamicHookIds.FindValue(hookid);
+	int index = g_dynamicHookIds.FindValue(hookid);
 	if (index != -1)
-		g_DynamicHookIds.Erase(index);
+		g_dynamicHookIds.Erase(index);
 }
 
 static MRESReturn DHookCallback_CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHookParam params)

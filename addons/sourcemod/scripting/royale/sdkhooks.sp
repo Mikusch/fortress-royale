@@ -18,33 +18,65 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-void SDKHooks_OnClientPutInServer(int client)
+enum struct SDKHookData
 {
-	SDKHook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
-	SDKHook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
-	SDKHook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
-	SDKHook(client, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
+	int ref;
+	SDKHookType type;
+	SDKHookCB callback;
 }
 
-void SDKHooks_UnhookClient(int client)
+static ArrayList g_hookData;
+
+void SDKHooks_Init()
 {
-	SDKUnhook(client, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
-	SDKUnhook(client, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
-	SDKUnhook(client, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
-	SDKUnhook(client, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
+	g_hookData = new ArrayList(sizeof(SDKHookData));
 }
 
-void SDKHooks_OnEntityCreated(int entity, const char[] classname)
+void SDKHooks_HookEntity(int entity, const char[] classname)
 {
-	if (!strncmp(classname, "prop_", 5))
+	if (IsEntityClient(entity))
 	{
-		SDKHook(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
+		SDKHooks_HookEntityInternal(entity, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
+		SDKHooks_HookEntityInternal(entity, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
+		SDKHooks_HookEntityInternal(entity, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
+		SDKHooks_HookEntityInternal(entity, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
+	}
+	else if (!strncmp(classname, "prop_", 5))
+	{
+		SDKHooks_HookEntityInternal(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
 	}
 	else if (!strncmp(classname, "item_healthkit_", 15))
 	{
-		SDKHook(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
-		SDKHook(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
+		SDKHooks_HookEntityInternal(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
+		SDKHooks_HookEntityInternal(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
 	}
+}
+
+void SDKHooks_UnhookEntity(int entity)
+{
+	int ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
+	
+	for (int i = g_hookData.Length - 1; i >= 0; i--)
+	{
+		SDKHookData data;
+		if (g_hookData.GetArray(i, data) && ref == data.ref)
+		{
+			SDKUnhook(data.ref, data.type, data.callback);
+			g_hookData.Erase(i);
+		}
+	}
+}
+
+static void SDKHooks_HookEntityInternal(int entity, SDKHookType type, SDKHookCB callback)
+{
+	SDKHookData data;
+	data.ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
+	data.type = type;
+	data.callback = callback;
+	
+	g_hookData.PushArray(data);
+	
+	SDKHook(entity, type, callback);
 }
 
 static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
