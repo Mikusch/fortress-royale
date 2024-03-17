@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2020  Mikusch & 42
+/**
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,225 +15,230 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-enum struct ConsoleInfo
+#pragma newdecls required
+#pragma semicolon 1
+
+enum struct CommandListenerData
 {
 	CommandListener callback;
 	char command[64];
 }
 
-static ArrayList g_ConsoleInfo;
+static ArrayList g_commandListenerData;
 
 void Console_Init()
 {
-	g_ConsoleInfo = new ArrayList(sizeof(ConsoleInfo));
+	g_commandListenerData = new ArrayList(sizeof(CommandListenerData));
 	
-	Console_Add(Console_JoinTeam, "jointeam");
-	Console_Add(Console_JoinTeam, "autoteam");
-	Console_Add(Console_JoinTeam, "spectate");
-	Console_Add(Console_Build, "build");
-	Console_Add(Console_Destroy, "destroy");
-	Console_Add(Console_VoiceMenu, "voicemenu");
-	Console_Add(Console_DropItem, "dropitem");
-	Console_Add(Console_EurekaTeleport, "eureka_teleport");
+	Console_AddCommandListener(CommandListener_DropItem, "dropitem");
+	Console_AddCommandListener(CommandListener_JoinTeam, "jointeam");
+	Console_AddCommandListener(CommandListener_JoinTeam, "autoteam");
+	Console_AddCommandListener(CommandListener_JoinTeam, "spectate");
+	Console_AddCommandListener(CommandListener_Build, "build");
+	Console_AddCommandListener(CommandListener_Destroy, "destroy");
+	Console_AddCommandListener(CommandListener_EurekaTeleport, "eureka_teleport");
 }
 
-void Console_Add(CommandListener callback, const char[] command)
+void Console_Toggle(bool enable)
 {
-	ConsoleInfo info;
-	info.callback = callback;
-	strcopy(info.command, sizeof(info.command), command);
-	g_ConsoleInfo.PushArray(info);
-}
-
-void Console_Enable()
-{
-	int length = g_ConsoleInfo.Length;
-	for (int i = 0; i < length; i++)
+	for (int i = 0; i < g_commandListenerData.Length; i++)
 	{
-		ConsoleInfo info;
-		g_ConsoleInfo.GetArray(i, info);
-		AddCommandListener(info.callback, info.command);
-	}
-}
-
-void Console_Disable()
-{
-	int length = g_ConsoleInfo.Length;
-	for (int i = 0; i < length; i++)
-	{
-		ConsoleInfo info;
-		g_ConsoleInfo.GetArray(i, info);
-		RemoveCommandListener(info.callback, info.command);
-	}
-}
-
-public Action Console_JoinTeam(int client, const char[] command, int args)
-{
-	//Client's view entity is set to the bus, prevent switching teams
-	if (FRPlayer(client).PlayerState == PlayerState_BattleBus)
-		return Plugin_Handled;
-	
-	//Allow join spectator
-	if (StrContains(command, "spectate") == 0)
-	{
-		FRPlayer(client).PlayerState = PlayerState_Waiting;
-		return Plugin_Continue;
-	}
-	
-	if (args > 0 && StrContains(command, "jointeam") == 0)
-	{
-		char team[16];
-		GetCmdArg(1, team, sizeof(team));
-		if (StrContains(team, "spectate") == 0)
+		CommandListenerData data;
+		if (g_commandListenerData.GetArray(i, data))
 		{
-			FRPlayer(client).PlayerState = PlayerState_Waiting;
-			return Plugin_Continue;
+			if (enable)
+			{
+				AddCommandListener(data.callback, data.command);
+			}
+			else
+			{
+				RemoveCommandListener(data.callback, data.command);
+			}
 		}
 	}
-	
-	if (!GameRules_GetProp("m_bInWaitingForPlayers") && IsPlayerAlive(client))
-		return Plugin_Handled;
-	
-	//Force set client to dead team
-	TF2_ChangeClientTeam(client, TFTeam_Dead);
-	ShowVGUIPanel(client, TF2_GetClientTeam(client) == TFTeam_Blue ? "class_blue" : "class_red");
-	return Plugin_Handled;
 }
 
-public Action Console_Build(int client, const char[] command, int args)
+static void Console_AddCommandListener(CommandListener callback, const char[] command = "")
 {
-	// Check if player owns Construction PDA
-	if (TF2_GetItemByClassname(client, "tf_weapon_pda_engineer_build") != INVALID_ENT_REFERENCE)
-		return Plugin_Continue;
-	
-	// Block build by default
-	return Plugin_Handled;
+	CommandListenerData data;
+	data.callback = callback;
+	strcopy(data.command, sizeof(data.command), command);
+	g_commandListenerData.PushArray(data);
 }
 
-public Action Console_Destroy(int client, const char[] command, int args)
+static Action CommandListener_DropItem(int client, const char[] command, int argc)
 {
-	// Check if player owns Destruction PDA
-	if (TF2_GetItemByClassname(client, "tf_weapon_pda_engineer_destroy") != INVALID_ENT_REFERENCE)
-		return Plugin_Continue;
-	
-	// Block destroy by default
-	return Plugin_Handled;
-}
-
-public Action Console_VoiceMenu(int client, const char[] command, int args)
-{
-	if (!IsClientInGame(client) || !IsPlayerAlive(client) || args < 2)
-		return Plugin_Continue;
-	
-	char arg1[2];
-	char arg2[2];
-	GetCmdArg(1, arg1, sizeof(arg1));
-	GetCmdArg(2, arg2, sizeof(arg2));
-	
-	if (arg1[0] == '0' && arg2[0] == '0')	//MEDIC!
+	// If the player has an item, drop it first
+	if (GetEntPropEnt(client, Prop_Send, "m_hItem") != -1)
 	{
-		if (TF2_TryToPickupDroppedWeapon(client))
-			return Plugin_Handled;
-		
-		FRPlayer(client).InUse = true;
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
 	
-	return Plugin_Continue;
-}
-
-public Action Console_DropItem(int client, const char[] command, int args)
-{
-	if (GameRules_GetProp("m_bInWaitingForPlayers"))
+	if (TF2_IsPlayerInCondition(client, TFCond_Taunting) || TF2_IsPlayerInCondition(client, TFCond_Cloaked))
+	{
 		return Plugin_Continue;
+	}
 	
-	if (!IsPlayerAlive(client))
+	if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
+	{
 		return Plugin_Continue;
+	}
 	
-	//Drop weapon, if player doesn't have a rune to drop instead
-	for (int i = 0; i < sizeof(g_RuneConds); i++)
-		if (TF2_IsPlayerInCondition(client, g_RuneConds[i]))
-			return Plugin_Continue;
-	
-	//Drop item if the player has one
-	if (GetEntPropEnt(client, Prop_Send, "m_hItem") != -1)
-		return Plugin_Continue;
-	
-	//The following will be dropped (in that order):
-	//- current active weapon
-	//- wearables (can't be used as active weapon)
-	//- weapons that can't be switched to (as determined by TF2)
+	// The following will be dropped (in that order):
+	// - current active weapon
+	// - wearables (can't be used as active weapon)
+	// - weapons that can't be switched to (as determined by TF2)
 	
 	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	bool found = weapon != -1 && TF2_ShouldDropWeapon(client, weapon);
+	bool bFound = (weapon != -1) && ShouldDropItem(client, weapon);
 	
-	if (!found)
+	if (!bFound)
 	{
-		for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
+		for (int iLoadoutSlot = 0; iLoadoutSlot <= LOADOUT_POSITION_PDA2; iLoadoutSlot++)
 		{
-			weapon = SDKCall_GetEquippedWearableForLoadoutSlot(client, slot);
-			if (weapon != -1 && TF2_ShouldDropWeapon(client, weapon))
+			weapon = TF2Util_GetPlayerLoadoutEntity(client, iLoadoutSlot);
+			if (weapon == -1)
+				continue;
+			
+			if (TF2Util_IsEntityWearable(weapon))
 			{
-				found = true;
+				// Always drop wearables
+				bFound = true;
 				break;
+			}
+			else
+			{
+				if (ShouldDropItem(client, weapon) && !SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+				{
+					bFound = true;
+					break;
+				}
 			}
 		}
 	}
 	
-	if (!found)
+	if (!bFound)
 	{
-		for (int slot = WeaponSlot_Primary; slot < WeaponSlot_BuilderEngie; slot++)
+		if (IsWeaponFists(GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon")))
 		{
-			weapon = GetPlayerWeaponSlot(client, slot);
-			if (weapon != -1 && TF2_ShouldDropWeapon(client, weapon) && !SDKCall_WeaponCanSwitchTo(client, weapon))
-			{
-				found = true;
-				break;
-			}
+			EmitGameSoundToClient(client, "Player.UseDeny");
+			PrintCenterText(client, "%t", "Weapon_CannotDropFists");
 		}
+		
+		return Plugin_Continue;
 	}
 	
-	if (!found)	//No valid weapons to drop
+	float vecOrigin[3], vecAngles[3];
+	if (!SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(client, weapon, vecOrigin, vecAngles))
 		return Plugin_Continue;
 	
-	float origin[3], angles[3];
-	if (SDKCall_CalculateAmmoPackPositionAndAngles(client, weapon, origin, angles))
+	char szWorldModel[PLATFORM_MAX_PATH];
+	if (GetItemWorldModel(weapon, szWorldModel, sizeof(szWorldModel)))
 	{
-		TF2_CreateDroppedWeapon(client, weapon, true, origin, angles);
-		TF2_RemoveItem(client, weapon);
-		
-		int melee = TF2_GetItemInSlot(client, WeaponSlot_Melee);
-		if (melee == -1)	//Dropped melee weapon, give fists back
+		int droppedWeapon = CreateDroppedWeapon(vecOrigin, vecAngles, szWorldModel, GetEntityAddress(weapon) + FindItemOffset(weapon));
+		if (IsValidEntity(droppedWeapon))
 		{
-			melee = TF2_CreateWeapon(INDEX_FISTS, g_FistsClassnames[TF2_GetPlayerClass(client)]);
-			if (melee != -1)
-				TF2_EquipWeapon(client, melee);
+			if (TF2Util_IsEntityWeapon(weapon))
+			{
+				SDKCall_CTFDroppedWeapon_InitDroppedWeapon(droppedWeapon, client, weapon, true);
+				
+				// If the weapon we just dropped could not be switched to, stay on our current weapon
+				if (SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(client, weapon))
+				{
+					SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(client, weapon);
+				}
+			}
+			else if (TF2Util_IsEntityWearable(weapon))
+			{
+				InitDroppedWearable(droppedWeapon, client, weapon, true);
+			}
 		}
 		
-		//Set new active weapon to melee
-		if (GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon") == -1)
-			TF2_SwitchActiveWeapon(client, melee);
+		bool bDroppedMelee = TF2Util_IsEntityWeapon(weapon) && TF2Util_GetWeaponSlot(weapon) == TFWeaponSlot_Melee;
+		FRPlayer(client).RemoveItem(weapon);
 		
-		FRPlayer(client).LastWeaponPickupTime = GetGameTime();
+		// If we dropped our melee weapon, get our fists back
+		if (bDroppedMelee)
+		{
+			weapon = GenerateDefaultItem(client, TF_DEFINDEX_FISTS);
+			if (IsValidEntity(weapon))
+			{
+				FRPlayer(client).EquipItem(weapon);
+				TF2Util_SetPlayerActiveWeapon(client, weapon);
+			}
+		}
 		
-		CreateTimer(0.1, Timer_UpdateClientHud, GetClientSerial(client));
+		SDKCall_CTFPlayer_PostInventoryApplication(client);
 	}
 	
 	return Plugin_Continue;
 }
 
-public Action Console_EurekaTeleport(int client, const char[] command, int args)
+static Action CommandListener_JoinTeam(int client, const char[] command, int argc)
 {
-	//Prevent home teleport
+	if (IsInWaitingForPlayers())
+		return Plugin_Continue;
 	
-	//No arg teleports home by default
-	if (args != 1)
+	// Don't allow switching teams while in the bus or in dying state
+	if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus)
 		return Plugin_Handled;
 	
-	char arg[8];
-	GetCmdArg(1, arg, sizeof(arg));
-	if (StringToInt(arg) == view_as<int>(EUREKA_TELEPORT_HOME))
+	// Allow players to join spectator team
+	if (StrEqual(command, "spectate", false))
+	{
+		return Plugin_Continue;
+	}
+	
+	if (argc > 0 && StrEqual(command, "jointeam", false))
+	{
+		char szTeamName[16];
+		GetCmdArg(1, szTeamName, sizeof(szTeamName));
+		
+		if (StrEqual(szTeamName, "spectate", false) || StrEqual(szTeamName, "blue", false))
+		{
+			return Plugin_Continue;
+		}
+	}
+	
+	FakeClientCommand(client, "jointeam blue");
+	return Plugin_Handled;
+}
+
+static Action CommandListener_Build(int client, const char[] command, int argc)
+{
+	int item = TF2Util_GetPlayerLoadoutEntity(client, LOADOUT_POSITION_PDA);
+	if (IsValidEntity(item) && TF2Util_IsEntityWeapon(item) && TF2Util_GetWeaponID(item) == TF_WEAPON_PDA_ENGINEER_BUILD)
+	{
+		return Plugin_Continue;
+	}
+	
+	return Plugin_Handled;
+}
+
+static Action CommandListener_Destroy(int client, const char[] command, int argc)
+{
+	int item = TF2Util_GetPlayerLoadoutEntity(client, LOADOUT_POSITION_PDA2);
+	if (IsValidEntity(item) && TF2Util_IsEntityWeapon(item) && TF2Util_GetWeaponID(item) == TF_WEAPON_PDA_ENGINEER_DESTROY)
+	{
+		return Plugin_Continue;
+	}
+	
+	return Plugin_Handled;
+}
+
+static Action CommandListener_EurekaTeleport(int client, const char[] command, int argc)
+{
+	if (argc < 1)
+	{
+		// No argument teleports home by default
 		return Plugin_Handled;
+	}
+	
+	if (view_as<eEurekaTeleportTargets>(GetCmdArgInt(1)) == EUREKA_TELEPORT_HOME)
+	{
+		// Prevent home teleport from Eureka Effect
+		return Plugin_Handled;
+	}
 	
 	return Plugin_Continue;
 }

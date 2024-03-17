@@ -1,26 +1,31 @@
+/**
+ * Copyright (C) 2023  Mikusch
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 "Games"
 {
 	"tf"
 	{
 		"Signatures"
 		{
-			"CBaseEntity::GetNextThink"
+			"CBaseEntity::SetMoveType"
 			{
 				"library"	"server"
-				"linux" 	"@_ZN11CBaseEntity12GetNextThinkEPKc"
-				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x56\x8B\xF1\x85\xC0\x75\x2A\x8B\x86\xD0\x00\x00\x00\x89\x45\x08"
-			}
-			"CBaseEntity::PhysicsDispatchThink"
-			{
-				"library"	"server"
-				"linux" 	"@_ZN11CBaseEntity20PhysicsDispatchThinkEMS_FvvE"
-				"windows"	"\x55\x8B\xEC\xA1\x2A\x2A\x2A\x2A\x83\xEC\x08\x83\x78\x30\x00\x53"
-			}
-			"CBaseEntity::InSameTeam"
-			{
-				"library"	"server"
-				"linux"		"@_ZNK11CBaseEntity10InSameTeamEPKS_"
-				"windows"	"\x55\x8B\xEC\x8B\x45\x08\x57\x8B\xF9\x85\xC0\x75\x2A"
+				"linux"		"@_ZN11CBaseEntity11SetMoveTypeE10MoveType_t13MoveCollide_t"
+				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x0F\xB6\x86\x76\x01\x00\x00"
 			}
 			"CTFDroppedWeapon::Create"
 			{
@@ -40,245 +45,155 @@
 				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53\x56\x57"
 			}
-			"CTFPlayer::GetLoadoutItem"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer14GetLoadoutItemEiib"
-				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x57\x89\x75\xFC"
-			}
-			"CTFPlayer::GetEquippedWearableForLoadoutSlot"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer33GetEquippedWearableForLoadoutSlotEi"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x2A\x8B\xC1\x53\x56\x33\xF6\x89\x45\xF8\x8B\x88\x2A\x2A\x2A\x2A\x57\x89\x4D\xFC"
-			}
-			"CTFPlayer::GetMaxAmmo"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
-				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF\x75\x2A\xFF\xB7\x2A\x2A\x2A\x2A\xEB\x01\x50\xE8"
-			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer34CalculateAmmoPackPositionAndAnglesEP13CTFWeaponBaseR6VectorR6QAngle"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x68\x2A\x2A\x2A\x2A"
 			}
-			"CWeaponMedigun::FindAndHealTargets"
+			"CTFPlayer::PickupWeaponFromOther"
 			{
 				"library"	"server"
-				"linux"		"@_ZN14CWeaponMedigun18FindAndHealTargetsEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x57\x8B\xF9"
+				"linux"		"@_ZN9CTFPlayer21PickupWeaponFromOtherEP16CTFDroppedWeapon"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x8B\x75\x08\x57\x8B\xF9\x81\xC6\xB0\x04\x00\x00"
 			}
-			"CEyeballBoss::FindClosestVisibleVictim"
+			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"library"	"server"
-				"linux"		"@_ZN12CEyeballBoss24FindClosestVisibleVictimEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x2C\xF3\x0F\x10\x05\x2A\x2A\x2A\x2A\x53"
+				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
+				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\x04\x05\x00\x00\x00"
 			}
-			"CLagCompensationManager::StartLagCompensation"
+			"CTFPlayer::TryToPickupDroppedWeapon"
 			{
 				"library"	"server"
-				"linux"		"@_ZN23CLagCompensationManager20StartLagCompensationEP11CBasePlayerP8CUserCmd"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x57\x8B\xF9\x89\x7D\xE8"
+				"linux"		"@_ZN9CTFPlayer24TryToPickupDroppedWeaponEv"
+				"windows"	"\x56\x6A\x00\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A\x32\xC0"
 			}
-			"CTFPlayerMove::SetupMove"
+			"CTFPlayer::PostInventoryApplication"
 			{
 				"library"	"server"
-				"linux"		"@_ZN13CTFPlayerMove9SetupMoveEP11CBasePlayerP8CUserCmdP11IMoveHelperP9CMoveData"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x10\x56\x8B\x75\x08\x89\x4D\xFC"
+				"linux"		"@_ZN9CTFPlayer24PostInventoryApplicationEv"
+				"windows"	"\x55\x8B\xEC\x51\x53\x8B\xD9\x56\x57\x8D\x8B\xE0\x1A\x00\x00"
 			}
-			"GetGlobalTeam"
+			"CTFPlayer::GetLoadoutItem"
 			{
 				"library"	"server"
-				"linux"		"@_Z13GetGlobalTeami"
-				"windows"	"\x55\x8B\xEC\x8B\x4D\x08\x85\xC9\x78\x2A\x3B\x0D\x2A\x2A\x2A\x2A\x7D\x2A\xA1\x2A\x2A\x2A\x2A\x8B\x04\x88\x5D\xC3"
+				"linux"		"@_ZN9CTFPlayer14GetLoadoutItemEiib"
+				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x57\x89\x75\xFC"
 			}
-			"GetPlayerClassData"
+			"CTFPlayer::GetMaxAmmo"
 			{
 				"library"	"server"
-				"linux"		"@_Z18GetPlayerClassDataj"
-				"windows"	"\x55\x8B\xEC\x69\x4D\x08\xF0\x08\x00\x00"
+				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
+				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF"
+			}
+			"CTFPlayer::GiveAmmo"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer8GiveAmmoEiib11EAmmoSource"
+				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x08\x8B\xD9\x89\x75\xFC"
+			}
+			"CBaseCombatCharacter::SwitchToNextBestWeapon"
+			{
+				"library"	"server"
+				"linux"		"@_ZN20CBaseCombatCharacter22SwitchToNextBestWeaponEP17CBaseCombatWeapon"
+				"windows"	"\x55\x8B\xEC\x56\xFF\x75\x08\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x56"
+			}
+			"CTFPlayer::GetMaxHealthForBuffing"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\xC8\x22\x00\x00"
+			}
+			"CTFPlayer::RegenThink"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer10RegenThinkEv"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x74\x57\x8B\xF9\x8B\x07"
+			}
+			"CTFPlayer::DoClassSpecialSkill"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer19DoClassSpecialSkillEv"
+				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x75\x2A\x32\xC0\x5E\xC3\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
+			}
+			"CTFPlayerShared::CanRecieveMedigunChargeEffect"
+			{
+				"library"	"server"
+				"linux"		"@_ZNK15CTFPlayerShared29CanRecieveMedigunChargeEffectE20medigun_charge_types"
+				"windows"	"\x55\x8B\xEC\x53\x56\x57\x8B\xF9\xB3\x01"
+			}
+			"CTFPlayerShared::Heal"
+			{
+				"library"	"server"
+				"linux"		"@_ZN15CTFPlayerShared4HealEP11CBaseEntityfffbP9CTFPlayer"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x56\x8B\x75\x08\x0F\x57\xC0"
+			}
+			"CTFPowerup::DropSingleInstance"
+			{
+				"library"	"server"
+				"linux"		"@_ZN10CTFPowerup18DropSingleInstanceER6VectorP20CBaseCombatCharacterff"
+				"windows"	"\x55\x8B\xEC\x53\x56\x57\x6A\x01"
 			}
 		}
 		"Offsets"
 		{
-			"CBaseServerVehicle::SetupMove"
+			"CBaseCombatCharacter::TakeHealth"
 			{
-				"linux"		"4"
-				"windows"	"4"
-			}
-			"CBaseServerVehicle::SetPassenger"
-			{
-				"linux"		"9"
-				"windows"	"9"
-			}
-			"CBaseServerVehicle::IsPassengerVisible"
-			{
-				"linux"		"10"
-				"windows"	"10"
-			}
-			"CBaseServerVehicle::HandleEntryExitFinish"
-			{
-				"linux"		"22"
-				"windows"	"22"
-			}
-			"CBaseServerVehicle::GetDriver"
-			{
-				"linux"		"60"
-				"windows"	"60"
-			}
-			"CWeaponMedigun::GetHealRate"
-			{
-				"linux"		"496"
-				"windows"	"489"
-			}
-			"CBaseEntity::ShouldCollide"
-			{
-				"linux"		"17"
-				"windows"	"16"
-			}
-			"CBaseEntity::ChangeTeam"
-			{
-				"linux"		"95"
-				"windows"	"94"
-			}
-			"CBaseEntity::GetMaxHealth"
-			{
-				"linux"		"121"
-				"windows"	"120"
-			}
-			"CBaseEntity::GetDefaultItemChargeMeterValue"
-			{
-				"linux"		"194"
-				"windows"	"193"
+				"library"	"server"
+				"linux"		"67"
+				"windows"	"66"
 			}
 			"CBaseCombatCharacter::Weapon_CanSwitchTo"
 			{
-				"linux"		"274"
-				"windows"	"273"
+				"library"	"server"
+				"linux"		"277"
+				"windows"	"276"
 			}
 			"CBasePlayer::ForceRespawn"
 			{
-				"linux"		"334"
-				"windows"	"333"
+				"library"	"server"
+				"linux"		"337"
+				"windows"	"336"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
-				"linux"		"488"
-				"windows"	"481"
+				"library"	"server"
+				"linux"		"493"
+				"windows"	"486"
 			}
-			"CBaseCombatWeapon::GetSlot"
+			"CBaseCombatWeapon::SetSubType"
 			{
-				"linux"		"336"
-				"windows"	"330"
-			}
-			"CBaseGrenade::Explode"
-			{
-				"linux"		"233"
+				"library"	"server"
+				"linux"		"238"
 				"windows"	"232"
 			}
-			"CTFProjectile_SpellFireball::Explode"
+			"CBaseCombatWeapon::GetWorldModel"
 			{
-				"linux"		"247"
-				"windows"	"244"
+				"library"	"server"
+				"linux"		"328"
+				"windows"	"322"
 			}
-			"CTFGrenadePipebombProjectile::GetLiveTime"
+			"CBaseCombatWeapon::PrimaryAttack"
 			{
-				"linux"		"254"
-				"windows"	"253"
+				"library"	"server"
+				"linux"		"292"
+				"windows"	"286"
 			}
-			"CBaseObject::StartBuilding"
+			"CBaseCombatWeapon::SecondaryAttack"
 			{
-				"linux"		"340"
-				"windows"	"338"
+				"library"	"server"
+				"linux"		"293"
+				"windows"	"287"
 			}
-			"CBaseObject::GetBaseHealth"
+			"CTFDroppedWeapon::m_nAmmo"
 			{
-				"linux"		"384"
-				"windows"	"383"
-			}
-			"CBasePlayer::EquipWearable"
-			{
-				"linux"		"435"
-				"windows"	"434"
-			}
-			"CBaseAnimating::StudioFrameAdvance"
-			{
-				"linux"		"198"
-				"windows"	"197"
-			}
-			"CTeam::AddPlayer"
-			{
-				"linux"		"206"
-				"windows"	"205"
-			}
-			"CTeam::RemovePlayer"
-			{
-				"linux"		"207"
-				"windows"	"206"
-			}
-			"CEconItemView::m_iItemDefinitionIndex"
-			{
-				"linux"		"4"
-				"windows"	"4"
-			}
-			"CTFRune::m_nRuneType"
-			{
-				"linux"		"1288"
-				"windows"	"1268"
-			}
-			"CTFRune::m_nTeam"
-			{
-				"linux"		"1304"
-				"windows"	"1284"
-			}
-			"CTFRune::m_bShouldReposition"
-			{
-				"linux"		"1308"
-				"windows"	"1288"
-			}
-			"TFPlayerClassData_t::m_nMaxHealth"
-			{
-				"linux"		"644"
-				"windows"	"644"
-			}
-			"CTFSpellBook::m_iNextSpell"
-			{
-				"linux"		"2028"
-				"windows"	"2028"
+				"linux"		"0x568"
+				"windows"	"0x554"
 			}
 		}
 		"Functions"
 		{
-			"CBaseEntity::PhysicsDispatchThink"
-			{
-				"signature"	"CBaseEntity::PhysicsDispatchThink"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
-				"arguments"
-				{
-					"thinkFunc"
-					{
-						"type"	"int"
-					}
-				}
-			}
-			"CBaseEntity::InSameTeam"
-			{
-				"signature"	"CBaseEntity::InSameTeam"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pEntity"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
 			"CTFDroppedWeapon::Create"
 			{
 				"signature"	"CTFDroppedWeapon::Create"
@@ -294,12 +209,10 @@
 					"vecOrigin"
 					{
 						"type"	"vectorptr"
-						"flags"	"byref"
 					}
 					"vecAngles"
 					{
 						"type"	"vectorptr"
-						"flags"	"byref"
 					}
 					"pszModelName"
 					{
@@ -311,113 +224,95 @@
 					}
 				}
 			}
-			"CEyeballBoss::FindClosestVisibleVictim"
+			"CTFPlayer::PickupWeaponFromOther"
 			{
-				"signature"	"CEyeballBoss::FindClosestVisibleVictim"
+				"signature"	"CTFPlayer::PickupWeaponFromOther"
 				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"entity"
-			}
-			"CLagCompensationManager::StartLagCompensation"
-			{
-				"signature"	"CLagCompensationManager::StartLagCompensation"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"player"
-					{
-						"type"	"cbaseentity"
-					}
-					"cmd"
-					{
-						"type"	"objectptr"
-					}
-				}
-			}
-			"CTFPlayerMove::SetupMove"
-			{
-				"signature"	"CTFPlayerMove::SetupMove"
-				"callconv"	"thiscall"
-				"return"	"void"
-				"this"		"ignore"
-				"arguments"
-				{
-					"player"
-					{
-						"type"	"cbaseentity"
-					}
-					"ucmd"
-					{
-						"type"	"int"
-					}
-					"pHelper"
-					{
-						"type"	"int"
-					}
-					"move"
-					{
-						"type"	"int"
-					}
-				}
-			}
-			"CBaseServerVehicle::SetPassenger"
-			{
-				"offset"	"CBaseServerVehicle::SetPassenger"
-				"hooktype"	"raw"
-				"return"	"void"
-				"this"		"address"
-				"arguments"
-				{
-					"nRole"
-					{
-						"type"	"int"
-					}
-					"pPassenger"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CBaseServerVehicle::IsPassengerVisible"
-			{
-				"offset"	"CBaseServerVehicle::IsPassengerVisible"
-				"hooktype"	"raw"
-				"return"	"bool"
-				"this"		"address"
-				"arguments"
-				{
-					"nRole"
-					{
-						"type"	"int"
-					}
-				}
-			}
-			"CBaseEntity::ShouldCollide"
-			{
-				"offset"	"CBaseEntity::ShouldCollide"
-				"hooktype"	"entity"
 				"return"	"bool"
 				"this"		"entity"
 				"arguments"
 				{
-					"collisionGroup"
+					"pDroppedWeapon"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::CanPickupDroppedWeapon"
+			{
+				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
+				"callconv"	"thiscall"
+				"return"	"bool"
+				"this"		"entity"
+				"arguments"
+				{
+					"pWeapon"
+					{
+						"type"	"cbaseentity"
+					}
+				}
+			}
+			"CTFPlayer::GetMaxAmmo"
+			{
+				"signature"	"CTFPlayer::GetMaxAmmo"
+				"callconv"	"thiscall"
+				"return"	"int"
+				"this"		"entity"
+				"arguments"
+				{
+					"iAmmoIndex"
 					{
 						"type"	"int"
 					}
-					"contentsMask"
+					"iClassIndex"
 					{
 						"type"	"int"
 					}
 				}
 			}
-			"CBaseEntity::GetMaxHealth"
+			"CTFPlayer::GiveAmmo"
 			{
-				"offset"	"CBaseEntity::GetMaxHealth"
+				"signature"	"CTFPlayer::GiveAmmo"
+				"callconv"	"thiscall"
+				"return"	"int"
+				"this"		"entity"
+				"arguments"
+				{
+					"iCount"
+					{
+						"type"	"int"
+					}
+					"iAmmoIndex"
+					{
+						"type"	"int"
+					}
+					"bSuppressSound"
+					{
+						"type"	"bool"
+					}
+					"eAmmoSource"
+					{
+						"type"	"int"
+					}
+				}
+			}
+			"CBaseCombatCharacter::TakeHealth"
+			{
+				"offset"	"CBaseCombatCharacter::TakeHealth"
 				"hooktype"	"entity"
 				"return"	"int"
 				"this"		"entity"
+				"arguments"
+				{
+					"flHealth"
+					{
+						"type"	"float"
+					}
+					"bitsDamageType"
+					{
+						"type"	"int"
+					}
+				}
 			}
 			"CBasePlayer::ForceRespawn"
 			{
@@ -425,6 +320,75 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+			"CTFPlayer::GetMaxHealthForBuffing"
+			{
+				"signature"	"CTFPlayer::GetMaxHealthForBuffing"
+				"callconv"	"thiscall"
+				"return"	"int"
+				"this"		"entity"
+			}
+			"CTFPlayer::RegenThink"
+			{
+				"signature"	"CTFPlayer::RegenThink"
+				"callconv"	"thiscall"
+				"return"	"void"
+				"this"		"entity"
+			}
+			"CTFPlayer::DoClassSpecialSkill"
+			{
+				"signature"		"CTFPlayer::DoClassSpecialSkill"
+				"callconv"		"thiscall"
+				"return"		"bool"
+				"this"			"entity"
+			}
+			"CTFPlayerShared::CanRecieveMedigunChargeEffect"
+			{
+				"signature"		"CTFPlayerShared::CanRecieveMedigunChargeEffect"
+				"callconv"		"thiscall"
+				"return"		"bool"
+				"this"			"address"
+				"arguments"
+				{
+					"eType"
+					{
+						"type"	"int"
+					}
+				}
+			}
+			"CTFPlayerShared::Heal"
+			{
+				"signature"		"CTFPlayerShared::Heal"
+				"callconv"		"thiscall"
+				"return"		"void"
+				"this"			"address"
+				"arguments"
+				{
+					"pHealer"
+					{
+						"type"	"cbaseentity"
+					}
+					"flAmount"
+					{
+						"type"	"float"
+					}
+					"flOverhealBonus"
+					{
+						"type"	"float"
+					}
+					"flOverhealDecayMult"
+					{
+						"type"	"float"
+					}
+					"bDispenserHeal"
+					{
+						"type"	"bool"
+					}
+					"pHealScorer"
+					{
+						"type"	"cbaseentity"
+					}
+				}
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
@@ -452,64 +416,18 @@
 					}
 				}
 			}
-			"CBaseGrenade::Explode"
+			"CBaseCombatWeapon::PrimaryAttack"
 			{
-				"offset"	"CBaseGrenade::Explode"
+				"offset"	"CBaseCombatWeapon::PrimaryAttack"
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
-				"arguments"
-				{
-					"pTrace"
-					{
-						"type"	"objectptr"
-					}
-					"bitsDamageType"
-					{
-						"type"	"int"
-					}
-				}
 			}
-			"CTFProjectile_SpellFireball::Explode"
+			"CBaseCombatWeapon::SecondaryAttack"
 			{
-				"offset"	"CTFProjectile_SpellFireball::Explode"
+				"offset"	"CBaseCombatWeapon::SecondaryAttack"
 				"hooktype"	"entity"
 				"return"	"void"
-				"this"		"entity"
-				"arguments"
-				{
-					"pTrace"
-					{
-						"type"	"objectptr"
-					}
-				}
-			}
-			"CTFGrenadePipebombProjectile::GetLiveTime"
-			{
-				"offset"	"CTFGrenadePipebombProjectile::GetLiveTime"
-				"hooktype"	"entity"
-				"return"	"float"
-				"this"		"entity"
-			}
-			"CBaseObject::StartBuilding"
-			{
-				"offset"	"CBaseObject::StartBuilding"
-				"hooktype"	"entity"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pBuilder"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CBaseObject::GetBaseHealth"
-			{
-				"offset"	"CBaseObject::GetBaseHealth"
-				"hooktype"	"entity"
-				"return"	"int"
 				"this"		"entity"
 			}
 		}

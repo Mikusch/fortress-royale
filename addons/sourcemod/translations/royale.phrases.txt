@@ -1,112 +1,50 @@
+/**
+ * Copyright (C) 2023  Mikusch
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 "Phrases"
 {
-	"BattleBus_HowToDrop"
+	"Crate_Opening"
 	{
-		"en"		"%%+attack3%% DROP INTO BATTLE"
+		"en"		"Opening"
 	}
-	"BattleBus_SecToDeployParachute"
+	"Weapon_CannotDropFists"
 	{
-		"#format"	"{1:d}"
-		"en"		"{1} seconds until auto-deploying parachute"
+		"en"		"You cannot drop your fists!"
 	}
-	"BattleBus_ParachuteDeployed"
+	"Zone_ShrinkWarning"
 	{
-		"en"		"Parachute deployed"
+		"#format"	"{1:0.0f}"
+		"en"		"The zone will shrink in {1} seconds."
 	}
-	"BattleBus_IncomingCrate"
+	"Zone_Shrinking"
 	{
-		"en"		"Incoming Mannpower supply crate!"
+		"en"		"The zone is shrinking, get moving!"
 	}
-	
-	"Command_VehicleUsage"
+	"BattleBus_Incoming"
 	{
-		"en"		"Usage: sm_vehicle [config name]"
+		"en"		"Incoming special supply drop from the sky!"
 	}
-	"Command_VehicleCantFindName"
-	{
-		"#format"	"{1:s}"
-		"en"		"Unable to find vehicle name '{1}'"
-	}
-	
-	"Editor_Title"
-	{
-		"en"		"Editor Menu"
-	}
-	"Editor_NotLookingAtAny"
-	{
-		"en"		"You are currently not looking at any crates or vehicles"
-	}
-	"Editor_Delete"
-	{
-		"en"		"Delete this item"
-	}
-	"Editor_Move"
-	{
-		"en"		"Move this item"
-	}
-	"Editor_CreateCrate"
-	{
-		"en"		"Create new crate"
-	}
-	"Editor_CreateVehicle"
-	{
-		"en"		"Create new vehicle"
-	}
-	"Editor_Place"
-	{
-		"en"		"Place this item"
-	}
-	"Editor_Save"
-	{
-		"en"		"Save to KeyValues file"
-	}
-	"Editor_Prefab"
-	{
-		"#format"	"{1:s}"
-		"en"		"Prefab: {1}"
-	}
-	"Editor_Prefab_Title"
-	{
-		"en"		"Editor Prefabs"
-	}
-	
-	"Hint_VehicleKeys_Car"
-	{
-		"en"		"%%+speed%% TURBO %%+jump%% HANDBRAKE"
-	}
-	
-	"Hint_VehicleKeys_Airboat"
-	{
-		"en"		"%%+forward%% SPEED UP %%+back%% SLOW DOWN %%+moveleft%% TURN LEFT %%+moveright%% TURN RIGHT"
-	}
-	
-	"Hint_BottlePickup_WrongClass"
-	{
-		"en"		"You need to be a Demoman to pick this up!"
-	}
-	
-	"RoundState_NoWinner"
+	"MatchEnd_Stalemate"
 	{
 		"en"		"Stalemate! You are all losers!"
 	}
-	"RoundState_Winner"
+	"MatchEnd_PlayerWin"
 	{
-		"#format"	"{1:N},{2:d}"
-		"en"		"{1} won this round with {2} elimination(s)!"
-	}
-	"RoundState_MostKills_One"
-	{
-		"#format"	"{1:N},{2:d}"
-		"en"		"{1} is the top killer with {2} elimination(s) this round!"
-	}
-	"RoundState_MostKills_Many"
-	{
-		"#format"	"{1:s},{2:N},{3:d}"
-		"en"		"{1} and {2} are the top killers with {3} elimination(s) this round!"
-	}
-	
-	"Zone_ShrinkAlert"
-	{
-		"en"		"The death zone is shrinking, get moving!"
+		"#format"	"{1:N}"
+		"en"		"The winner of the game is {1}!"
 	}
 }

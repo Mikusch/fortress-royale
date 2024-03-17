@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2020  Mikusch & 42
+/**
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,104 +15,457 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-void Config_Refresh()
+#pragma newdecls required
+#pragma semicolon 1
+
+#define CONFIG_FIELD_MAX_LENGTH	256
+
+static ArrayList g_hItemData;
+static ArrayList g_hCrateData;
+static ArrayList g_hWeaponData;
+
+enum struct ItemData
 {
-	g_PrecacheWeapon.Clear();
-	LootConfig_Clear();
-	VehiclesConfig_Clear();
+	char name[CONFIG_FIELD_MAX_LENGTH];
+	char type[CONFIG_FIELD_MAX_LENGTH];
+	char subtype[CONFIG_FIELD_MAX_LENGTH];
+	StringMap callback_functions;
+	KeyValues callback_data;
 	
-	//Load 'global.cfg' for all maps
-	char filePath[PLATFORM_MAX_PATH];
-	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/global.cfg");
-	Config_ReadMapConfig(filePath);
+	void Parse(KeyValues kv)
+	{
+		if (kv.GetSectionName(this.name, sizeof(this.name)))
+		{
+			kv.GetString("type", this.type, sizeof(this.type));
+			kv.GetString("subtype", this.subtype, sizeof(this.subtype));
+			
+			if (kv.JumpToKey("callbacks", false))
+			{
+				if (kv.JumpToKey("functions", false))
+				{
+					this.callback_functions = new StringMap();
+					if (kv.GotoFirstSubKey(false))
+					{
+						do
+						{
+							char key[CONFIG_FIELD_MAX_LENGTH], value[CONFIG_FIELD_MAX_LENGTH];
+							kv.GetSectionName(key, sizeof(key));
+							kv.GetString(NULL_STRING, value, sizeof(value));
+							this.callback_functions.SetString(key, value);
+						}
+						while (kv.GotoNextKey(false));
+						kv.GoBack();
+					}
+					kv.GoBack();
+				}
+				
+				if (kv.JumpToKey("data", false))
+				{
+					this.callback_data = new KeyValues("data");
+					this.callback_data.Import(kv);
+					kv.GoBack();
+				}
+				
+				kv.GoBack();
+			}
+		}
+	}
 	
-	//Load map specific config
-	filePath[0] = '\0';
-	if (Config_GetMapFilepath(filePath, sizeof(filePath)))
-		Config_ReadMapConfig(filePath);
+	Function GetCallbackFunction(const char[] key, Handle plugin = null)
+	{
+		char name[CONFIG_FIELD_MAX_LENGTH];
+		if (this.callback_functions.GetString(key, name, sizeof(name)))
+		{
+			Function callback = GetFunctionByName(plugin, name);
+			if (callback == INVALID_FUNCTION)
+			{
+				LogError("Unable to find callback function '%s' for '%s'", name, key);
+			}
+			
+			return callback;
+		}
+		
+		// No callbacks specified on item
+		return INVALID_FUNCTION;
+	}
 	
-	//Build filepath for list of loot tables
-	BuildPath(Path_SM, filePath, sizeof(filePath), "configs/royale/loot.cfg");
-	
-	//Read the config
-	KeyValues kv = new KeyValues("LootTable");
-	if (kv.ImportFromFile(filePath))
-		LootTable_ReadConfig(kv);
-	
-	delete kv;
+	void Delete()
+	{
+		delete this.callback_functions;
+		delete this.callback_data;
+	}
 }
 
-void Config_ReadMapConfig(const char[] filePath)
+enum struct CrateData
 {
-	KeyValues kv = new KeyValues("MapConfig");
-	if (kv.ImportFromFile(filePath))
+	char name[CONFIG_FIELD_MAX_LENGTH];
+	char model[PLATFORM_MAX_PATH];
+	ArrayList contents;
+	ArrayList extra_contents;
+	float time_to_open;
+	int max_drops;
+	int max_extra_drops;
+	char open_sound[PLATFORM_MAX_PATH];
+	char opened_sound[PLATFORM_MAX_PATH];
+	
+	void Parse(KeyValues kv)
 	{
-		if (kv.JumpToKey("BattleBus", false))
+		if (kv.GetSectionName(this.name, sizeof(this.name)))
 		{
-			BattleBus_ReadConfig(kv);
+			kv.GetString("model", this.model, sizeof(this.model));
+			
+			if (kv.JumpToKey("contents", false))
+			{
+				this.contents = new ArrayList(sizeof(CrateContentData));
+				if (kv.GotoFirstSubKey(false))
+				{
+					do
+					{
+						CrateContentData content;
+						content.Parse(kv);
+						this.contents.PushArray(content);
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
+				}
+				kv.GoBack();
+			}
+			
+			if (kv.JumpToKey("extra_contents", false))
+			{
+				this.extra_contents = new ArrayList(sizeof(CrateContentData));
+				if (kv.GotoFirstSubKey(false))
+				{
+					do
+					{
+						CrateContentData extra_content;
+						extra_content.Parse(kv);
+						this.extra_contents.PushArray(extra_content);
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
+				}
+				kv.GoBack();
+			}
+			
+			this.time_to_open = kv.GetFloat("time_to_open", sm_fr_crate_open_time.FloatValue);
+			this.max_drops = kv.GetNum("max_drops", sm_fr_crate_max_drops.IntValue);
+			this.max_extra_drops = kv.GetNum("max_extra_drops", sm_fr_crate_max_extra_drops.IntValue);
+			
+			kv.GetString("open_sound", this.open_sound, sizeof(this.open_sound), ")ui/item_open_crate.wav");
+			PrecacheSound(this.open_sound);
+			
+			kv.GetString("opened_sound", this.opened_sound, sizeof(this.opened_sound), ")ui/itemcrate_smash_rare.wav");
+			PrecacheSound(this.opened_sound);
+		}
+	}
+	
+	void Delete()
+	{
+		delete this.contents;
+		delete this.extra_contents;
+	}
+	
+	void Open(int crate, int client)
+	{
+		if (!IsValidEntity(crate) || !IsValidClient(client))
+			return;
+		
+		// Normal crate drops (guaranteed)
+		if (this.contents)
+		{
+			ArrayList contents = this.contents.Clone();
+			
+			int nDropped = 0;
+			while (nDropped < this.max_drops)
+			{
+				// Re-shuffle contents for every drop
+				contents.SortCustom(SortFuncADTArray_ShuffleCrateContentsWeighted);
+				
+				// Go through each category and try to drop an item
+				for (int i = contents.Length - 1; i >= 0; i--)
+				{
+					CrateContentData content;
+					if (contents.GetArray(i, content))
+					{
+						ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
+						
+						if (!items.Length)
+						{
+							// Remove categories with no items
+							contents.Erase(i);
+							continue;
+						}
+						
+						// Now that we filtered everything, grab a random item
+						ItemData item;
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
+						{
+							if (Config_CreateItem(client, crate, item))
+							{
+								++nDropped;
+								break;
+							}
+						}
+						
+						delete items;
+					}
+				}
+				
+				// If we failed to drop a single item after our first iteration, something is very wrong
+				if (!nDropped)
+				{
+					LogError("Could not find any items to drop from '%s' for %L.", this.name, client);
+					break;
+				}
+			}
+			
+			delete contents;
+		}
+		
+		// Extra crate drops (random, not guaranteed)
+		if (this.extra_contents)
+		{
+			ArrayList extra_contents = this.extra_contents.Clone();
+			
+			for (int i = this.max_extra_drops - 1; i >= 0; i--)
+			{
+				CrateContentData content;
+				int index = GetRandomInt(0, extra_contents.Length - 1);
+				if (extra_contents.GetArray(index, content))
+				{
+					ArrayList items = Config_GetItemsByTypeFiltered(content.type, content.subtype, client);
+					
+					if (!items.Length)
+					{
+						// Remove categories with no items
+						extra_contents.Erase(index);
+						continue;
+					}
+					
+					// Now that we filtered everything, grab a random item
+					if (GetRandomFloat() <= content.chance)
+					{
+						ItemData item;
+						if (items.GetArray(GetRandomInt(0, items.Length - 1), item))
+						{
+							Config_CreateItem(client, crate, item);
+						}
+					}
+					
+					delete items;
+				}
+			}
+			
+			delete extra_contents;
+		}
+	}
+}
+
+enum struct CrateContentData
+{
+	char type[CONFIG_FIELD_MAX_LENGTH];
+	char subtype[CONFIG_FIELD_MAX_LENGTH];
+	float chance;
+	
+	void Parse(KeyValues kv)
+	{
+		kv.GetString("type", this.type, sizeof(this.type));
+		kv.GetString("subtype", this.subtype, sizeof(this.subtype));
+		this.chance = kv.GetFloat("chance");
+	}
+}
+
+enum struct WeaponData
+{
+	int defindex;
+	char world_model[PLATFORM_MAX_PATH];
+	ArrayList reskins;
+	
+	void Parse(KeyValues kv)
+	{
+		char section[CONFIG_FIELD_MAX_LENGTH];
+		if (kv.GetSectionName(section, sizeof(section)) && StringToIntEx(section, this.defindex))
+		{
+			kv.GetString("world_model", this.world_model, sizeof(this.world_model));
+			
+			if (kv.JumpToKey("reskins", false))
+			{
+				this.reskins = new ArrayList();
+				if (kv.GotoFirstSubKey(false))
+				{
+					do
+					{
+						if (kv.GetSectionName(section, sizeof(section)))
+						{
+							int reskin = StringToInt(section);
+							if (kv.GetNum(NULL_STRING))
+							{
+								this.reskins.Push(reskin);
+							}
+						}
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
+				}
+				kv.GoBack();
+			}
+		}
+	}
+	
+	void Delete()
+	{
+		delete this.reskins;
+	}
+}
+
+void Config_Parse()
+{
+	char file[PLATFORM_MAX_PATH];
+	
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/items.cfg");
+	KeyValues kv = new KeyValues("items");
+	if (kv.ImportFromFile(file))
+	{
+		g_hItemData = new ArrayList(sizeof(ItemData));
+		
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				ItemData item;
+				item.Parse(kv);
+				g_hItemData.PushArray(item);
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+	}
+	else
+	{
+		LogError("Failed to import config '%s'", file);
+	}
+	delete kv;
+	
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/weapons.cfg");
+	kv = new KeyValues("weapons");
+	if (kv.ImportFromFile(file))
+	{
+		g_hWeaponData = new ArrayList(sizeof(WeaponData));
+		
+		if (kv.GotoFirstSubKey(false))
+		{
+			do
+			{
+				WeaponData data;
+				data.Parse(kv);
+				g_hWeaponData.PushArray(data);
+			}
+			while (kv.GotoNextKey(false));
+			kv.GoBack();
+		}
+	}
+	else
+	{
+		LogError("Failed to import config '%s'", file);
+	}
+	delete kv;
+	
+	// Parse global config (for all maps)
+	BuildPath(Path_SM, file, sizeof(file), "configs/royale/global.cfg");
+	Config_ParseMapConfig(file);
+	
+	// Parse map specific config to override global settings
+	file[0] = '\0';
+	if (Config_GetMapConfigFilepath(file, sizeof(file)))
+	{
+		Config_ParseMapConfig(file);
+	}
+}
+
+void Config_ParseCrates(KeyValues kv)
+{
+	if (!g_hCrateData)
+	{
+		g_hCrateData = new ArrayList(sizeof(CrateData));
+	}
+	
+	if (kv.GotoFirstSubKey(false))
+	{
+		do
+		{
+			CrateData crate;
+			crate.Parse(kv);
+			
+			int index = g_hCrateData.FindString(crate.name);
+			if (index == -1)
+			{
+				// Insert new crate
+				g_hCrateData.PushArray(crate);
+			}
+			else
+			{
+				// Override existing crate
+				CrateData oldCrate;
+				if (g_hCrateData.GetArray(index, oldCrate))
+				{
+					oldCrate.Delete();
+					g_hCrateData.SetArray(index, crate);
+				}
+			}
+		}
+		while (kv.GotoNextKey(false));
+		kv.GoBack();
+	}
+}
+
+void Config_ParseMapConfig(const char[] file)
+{
+	KeyValues kv = new KeyValues("global");
+	if (kv.ImportFromFile(file))
+	{
+		if (kv.JumpToKey("zone", false))
+		{
+			Zone_Parse(kv);
 			kv.GoBack();
 		}
 		
-		if (kv.JumpToKey("Zone", false))
+		if (kv.JumpToKey("battlebus", false))
 		{
-			Zone_ReadConfig(kv);
+			BattleBus_Parse(kv);
 			kv.GoBack();
 		}
 		
-		if (kv.JumpToKey("DownloadsTable", false))
+		if (kv.JumpToKey("crates", false))
+		{
+			Config_ParseCrates(kv);
+			kv.GoBack();
+		}
+		
+		if (kv.JumpToKey("downloadables", false))
 		{
 			if (kv.GotoFirstSubKey(false))
 			{
 				do
 				{
-					char download[PLATFORM_MAX_PATH];
-					kv.GetString(NULL_STRING, download, sizeof(download));
-					AddFileToDownloadsTable(download);
+					char filename[PLATFORM_MAX_PATH];
+					kv.GetString(NULL_STRING, filename, sizeof(filename));
+					AddFileToDownloadsTable(filename);
 				}
 				while (kv.GotoNextKey(false));
 				kv.GoBack();
 			}
 			kv.GoBack();
 		}
-		
-		LootConfig_ReadConfig(kv);
-		VehiclesConfig_ReadConfig(kv);
 	}
 	else
 	{
-		LogError("Failed to read configuration file at '%s'", filePath);
+		LogError("Failed to import config '%s'", file);
 	}
-	
 	delete kv;
 }
 
-void Config_Save()
-{
-	char filePath[PLATFORM_MAX_PATH];
-	Config_GetMapFilepath(filePath, sizeof(filePath));
-	
-	KeyValues kv = new KeyValues("MapConfig");
-	kv.ImportFromFile(filePath);
-	
-	//Delete all Loot and Vehicle in config and create new one
-	kv.JumpToKey("LootCrates", true);
-	while (kv.DeleteKey("LootCrate")) {}
-	LootConfig_SetConfig(kv);
-	kv.GoBack();
-	
-	kv.JumpToKey("Vehicles", true);
-	if (kv.GotoFirstSubKey(false))
-		while (kv.DeleteThis() == 1) {}
-	
-	VehiclesConfig_SetConfig(kv);
-	kv.GoBack();
-	
-	kv.ExportToFile(filePath);
-	
-	delete kv;
-}
-
-bool Config_GetMapFilepath(char[] filePath, int length)
+bool Config_GetMapConfigFilepath(char[] filePath, int length)
 {
 	char mapName[PLATFORM_MAX_PATH];
 	GetCurrentMap(mapName, sizeof(mapName));
@@ -120,45 +473,174 @@ bool Config_GetMapFilepath(char[] filePath, int length)
 	
 	int partsCount = CountCharInString(mapName, '_') + 1;
 	
-	//Split map prefix and first part of its name (e.g. pl_hightower)
+	// Split map prefix and first part of its name (e.g. pl_hightower)
 	char[][] nameParts = new char[partsCount][PLATFORM_MAX_PATH];
 	ExplodeString(mapName, "_", nameParts, partsCount, PLATFORM_MAX_PATH);
 	
-	//Start to stitch name parts together
+	// Start to stitch name parts together
 	char tidyMapName[PLATFORM_MAX_PATH];
 	char filePathBuffer[PLATFORM_MAX_PATH];
 	strcopy(tidyMapName, sizeof(tidyMapName), nameParts[0]);
-	//Build file path
+	
+	// Build file path
 	BuildPath(Path_SM, tidyMapName, sizeof(tidyMapName), "configs/royale/maps/%s", tidyMapName);
 	
 	for (int i = 1; i < partsCount; i++)
 	{
 		Format(tidyMapName, sizeof(tidyMapName), "%s_%s", tidyMapName, nameParts[i]);
-		
 		Format(filePathBuffer, sizeof(filePathBuffer), "%s.cfg", tidyMapName);
-		//We are trying to find the most specific config
+		
+		// Find the most specific config
 		if (FileExists(filePathBuffer))
+		{
 			strcopy(filePath, length, filePathBuffer);
+		}
 	}
 	
-	if (!FileExists(filePath))
-	{
-		LogError("Configuration file for map could not be found at '%s.cfg'", tidyMapName);
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	return FileExists(filePath);
 }
 
-bool Config_HasMapFilepath()
+void Config_Delete()
 {
-	char filePath[PLATFORM_MAX_PATH];
-	Config_GetMapFilepath(filePath, sizeof(filePath));
+	for (int i = 0; i < g_hItemData.Length; i++)
+	{
+		ItemData item;
+		if (g_hItemData.GetArray(i, item))
+		{
+			item.Delete();
+		}
+	}
+	delete g_hItemData;
 	
-	KeyValues kv = new KeyValues("MapConfig");
-	bool result = kv.ImportFromFile(filePath);
-	delete kv;
-	return result;
+	for (int i = 0; i < g_hCrateData.Length; i++)
+	{
+		CrateData crate;
+		if (g_hCrateData.GetArray(i, crate))
+		{
+			crate.Delete();
+		}
+	}
+	delete g_hCrateData;
+	
+	for (int i = 0; i < g_hWeaponData.Length; i++)
+	{
+		WeaponData data;
+		if (g_hWeaponData.GetArray(i, data))
+		{
+			data.Delete();
+		}
+	}
+	delete g_hWeaponData;
+}
+
+bool Config_GetCrateByName(const char[] name, CrateData crate)
+{
+	for (int i = 0; i < g_hCrateData.Length; i++)
+	{
+		if (g_hCrateData.GetArray(i, crate))
+		{
+			if (StrEqual(crate.name, name))
+			{
+				return true;
+			}
+		}
+	}
+	
+	return false;
+}
+
+ArrayList Config_GetItemsByType(const char[] type, const char[] subtype)
+{
+	ArrayList list = new ArrayList(sizeof(ItemData));
+	
+	for (int i = 0; i < g_hItemData.Length; i++)
+	{
+		ItemData item;
+		if (g_hItemData.GetArray(i, item))
+		{
+			if (StrEqual(item.type, type) && StrEqual(item.subtype, subtype))
+			{
+				list.PushArray(item);
+			}
+		}
+	}
+	
+	return list;
+}
+
+ArrayList Config_GetItemsByTypeFiltered(const char[] type, const char[] subtype, int client)
+{
+	ArrayList items = Config_GetItemsByType(type, subtype);
+	
+	for (int i = items.Length - 1; i >= 0; i--)
+	{
+		// Go through each item until one matches our criteria
+		ItemData item;
+		if (items.GetArray(i, item))
+		{
+			Function callback = item.GetCallbackFunction("should_drop");
+			if (callback == INVALID_FUNCTION)
+				continue;
+			
+			Call_StartFunction(null, callback);
+			Call_PushCell(client);
+			Call_PushCell(item.callback_data);
+			
+			// If we can not use item, remove it from the list
+			bool result;
+			if (Call_Finish(result) != SP_ERROR_NONE)
+			{
+				LogError("Failed to call callback 'should_drop' for item '%s'", item.name);
+				items.Erase(i);
+			}
+			else if (!result)
+			{
+				items.Erase(i);
+			}
+		}
+	}
+	
+	return items;
+}
+
+bool Config_GetWeaponDataByDefIndex(int defindex, WeaponData data)
+{
+	int index = g_hWeaponData.FindValue(defindex);
+	if (index != -1)
+	{
+		return g_hWeaponData.GetArray(index, data) != 0;
+	}
+	
+	return false;
+}
+
+bool Config_CreateItem(int client, int crate, ItemData item)
+{
+	if (!IsValidClient(client))
+		return false;
+	
+	if (!IsValidEntity(crate))
+		return false;
+	
+	Function callback = item.GetCallbackFunction("create");
+	if (callback == INVALID_FUNCTION)
+		return false;
+	
+	float center[3], angles[3];
+	CBaseEntity(crate).WorldSpaceCenter(center);
+	CBaseEntity(crate).GetAbsAngles(angles);
+	
+	Call_StartFunction(null, callback);
+	Call_PushCell(client);
+	Call_PushCell(item.callback_data);
+	Call_PushArray(center, sizeof(center));
+	Call_PushArray(angles, sizeof(angles));
+	
+	if (Call_Finish() != SP_ERROR_NONE)
+	{
+		LogError("Failed to call callback 'create' for item '%s'", item.name);
+		return false;
+	}
+	
+	return true;
 }

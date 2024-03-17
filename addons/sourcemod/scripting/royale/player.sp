@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2020  Mikusch & 42
+/**
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,306 +15,256 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-static PlayerState g_ClientPlayerState[TF_MAXPLAYERS + 1];
-static int g_ClientSecToDeployParachute[TF_MAXPLAYERS + 1];
-static int g_ClientVisibleCond[TF_MAXPLAYERS + 1];
-static float g_ClientLastWeaponPickupTime[TF_MAXPLAYERS + 1];
-static int g_ClientKillstreak[TF_MAXPLAYERS + 1];
-static bool g_ClientOutsideZone[TF_MAXPLAYERS + 1];
-static EditorState g_ClientEditorState[TF_MAXPLAYERS + 1];
-static EditorItem g_ClientEditorItem[TF_MAXPLAYERS + 1];
-static int g_ClientEditorItemRef[TF_MAXPLAYERS + 1];
-static int g_ClientZoneDamageTicks[TF_MAXPLAYERS + 1];
-static int g_ClientActiveWeapon[TF_MAXPLAYERS + 1];
-static bool g_ClientInUse[TF_MAXPLAYERS + 1];
+#pragma newdecls required
+#pragma semicolon 1
 
-static TFTeam g_ClientTeam[TF_MAXPLAYERS + 1];
-static int g_ClientSpectator[TF_MAXPLAYERS + 1];
-static int g_ClientSwap[TF_MAXPLAYERS + 1];
-static TFClassType g_ClientClass[TF_MAXPLAYERS + 1];
-static int g_ClientClassUnknown[TF_MAXPLAYERS + 1];
+static bool m_bIsParachuting[MAXPLAYERS + 1];
+static float m_flLastMedigunDrainTime[MAXPLAYERS + 1];
+static int m_hWearableVM[MAXPLAYERS + 1];
+static float m_flCrateStartOpenTime[MAXPLAYERS + 1];
+static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
 
-methodmap FRPlayer
+methodmap FRPlayer < CBaseCombatCharacter
 {
 	public FRPlayer(int client)
 	{
 		return view_as<FRPlayer>(client);
 	}
 	
-	property int Client
+	property float m_flSendPickupWeaponMessageTime
 	{
 		public get()
 		{
-			return view_as<int>(this);
+			return GetEntDataFloat(this.index, FindSendPropInfo("CTFPlayer", "m_hGrapplingHookTarget") - 4);
+		}
+		public set(float flSendPickupWeaponMessageTime)
+		{
+			SetEntDataFloat(this.index, FindSendPropInfo("CTFPlayer", "m_hGrapplingHookTarget") - 4, flSendPickupWeaponMessageTime);
 		}
 	}
 	
-	property PlayerState PlayerState
+	property bool m_bIsParachuting
 	{
 		public get()
 		{
-			return g_ClientPlayerState[this];
+			return m_bIsParachuting[this.index];
 		}
-		
-		public set(PlayerState val)
+		public set(bool bIsParachuting)
 		{
-			g_ClientPlayerState[this] = val;
+			m_bIsParachuting[this.index] = bIsParachuting;
 		}
 	}
 	
-	property int SecToDeployParachute
+	property float m_flLastMedigunDrainTime
 	{
 		public get()
 		{
-			return g_ClientSecToDeployParachute[this];
+			return m_flLastMedigunDrainTime[this.index];
 		}
-		
-		public set(int val)
+		public set(float flMedigunLastDrainTime)
 		{
-			g_ClientSecToDeployParachute[this] = val;
+			m_flLastMedigunDrainTime[this.index] = flMedigunLastDrainTime;
 		}
 	}
 	
-	property int VisibleCond
+	property int m_hWearableVM
 	{
 		public get()
 		{
-			return g_ClientVisibleCond[this];
+			return m_hWearableVM[this.index];
 		}
-		
-		public set(int val)
+		public set(int clientWearableVM)
 		{
-			g_ClientVisibleCond[this] = val;
+			m_hWearableVM[this.index] = clientWearableVM;
 		}
 	}
 	
-	property float LastWeaponPickupTime
+	property float m_flCrateStartOpenTime
 	{
 		public get()
 		{
-			return g_ClientLastWeaponPickupTime[this];
+			return m_flCrateStartOpenTime[this.index];
 		}
-		
-		public set(float val)
+		public set(float flCrateOpenTime)
 		{
-			g_ClientLastWeaponPickupTime[this] = val;
+			m_flCrateStartOpenTime[this.index] = flCrateOpenTime;
 		}
 	}
 	
-	property int Killstreak
+	property FRPlayerState m_nPlayerState
 	{
 		public get()
 		{
-			return g_ClientKillstreak[this];
+			return m_nPlayerState[this.index];
 		}
-		
-		public set(int val)
+		public set(FRPlayerState nPlayerState)
 		{
-			g_ClientKillstreak[this] = val;
-		}
-	}
-	
-	property bool OutsideZone
-	{
-		public get()
-		{
-			return g_ClientOutsideZone[this];
-		}
-		
-		public set(bool val)
-		{
-			g_ClientOutsideZone[this] = val;
-		}
-	}
-	
-	property EditorState EditorState
-	{
-		public get()
-		{
-			return g_ClientEditorState[this];
-		}
-		
-		public set(EditorState val)
-		{
-			g_ClientEditorState[this] = val;
-		}
-	}
-	
-	property EditorItem EditorItem
-	{
-		public get()
-		{
-			return g_ClientEditorItem[this];
-		}
-		
-		public set(EditorItem val)
-		{
-			g_ClientEditorItem[this] = val;
-		}
-	}
-	
-	property int EditorItemRef
-	{
-		public get()
-		{
-			return g_ClientEditorItemRef[this];
-		}
-		
-		public set(int val)
-		{
-			g_ClientEditorItemRef[this] = val;
-		}
-	}
-	
-	property int ZoneDamageTicks
-	{
-		public get()
-		{
-			return g_ClientZoneDamageTicks[this];
-		}
-		
-		public set(int val)
-		{
-			g_ClientZoneDamageTicks[this] = val;
-		}
-	}
-	
-	property int ActiveWeapon
-	{
-		public get()
-		{
-			return g_ClientActiveWeapon[this];
-		}
-		
-		public set(int val)
-		{
-			g_ClientActiveWeapon[this] = val;
-		}
-	}
-	
-	property bool InUse
-	{
-		public get()
-		{
-			return g_ClientInUse[this];
-		}
-		
-		public set(bool val)
-		{
-			g_ClientInUse[this] = val;
-		}
-	}
-	
-	property TFTeam Team
-	{
-		public get()
-		{
-			return g_ClientTeam[this];
-		}
-		
-		public set(TFTeam val)
-		{
-			g_ClientTeam[this] = val;
-		}
-	}
-	
-	property TFClassType Class
-	{
-		public get()
-		{
-			return g_ClientClass[this];
+			m_nPlayerState[this.index] = nPlayerState;
 		}
 	}
 	
 	public bool IsAlive()
 	{
-		return g_ClientPlayerState[this] == PlayerState_BattleBus || g_ClientPlayerState[this] == PlayerState_Parachute || g_ClientPlayerState[this] == PlayerState_Alive || g_ClientPlayerState[this] == PlayerState_Winning;
+		return IsPlayerAlive(this.index) || this.GetPlayerState() == FRPlayerState_InBattleBus;
 	}
 	
-	public void ChangeToSpectator()
+	public FRPlayerState GetPlayerState()
 	{
-		if (++g_ClientSpectator[this] == 1)
+		return this.m_nPlayerState;
+	}
+	
+	public void SetPlayerState(FRPlayerState nState)
+	{
+		this.m_nPlayerState = nState;
+	}
+	
+	public void SetWearableVM(int wearable)
+	{
+		this.m_hWearableVM = wearable;
+	}
+	
+	public void RemoveWearableVM()
+	{
+		int wearable = EntRefToEntIndex(this.m_hWearableVM);
+		if (wearable != -1)
 		{
-			if (g_ClientSwap[this] <= 0)
-				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			TF2_RemoveWearable(this.index, wearable);
+		}
+		
+		this.m_hWearableVM = INVALID_ENT_REFERENCE;
+	}
+	
+	public void EquipItem(int item)
+	{
+		if (TF2Util_IsEntityWearable(item))
+		{
+			TF2Util_EquipPlayerWearable(this.index, item);
+		}
+		else
+		{
+			EquipPlayerWeapon(this.index, item);
+		}
+	}
+	
+	public bool TryToOpenCrate(int crate)
+	{
+		if (!FRCrate(crate).CanBeOpenedBy(this.index))
+			return false;
+		
+		CrateData data;
+		if (!FRCrate(crate).GetData(data))
+			return false;
+		
+		// If this is our first time interacting, begin open sequence
+		if (this.m_flCrateStartOpenTime == -1.0)
+		{
+			this.m_flCrateStartOpenTime = GetGameTime();
+			FRCrate(crate).StartOpen(this.index);
+		}
+		
+		if (this.m_flCrateStartOpenTime + data.time_to_open > GetGameTime())
+		{
+			char szMessage[64];
+			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index);
 			
-			TF2_ChangeTeam(this.Client, TFTeam_Spectator);
-		}
-	}
-	
-	public void SwapToTeam(TFTeam team)
-	{
-		if (++g_ClientSwap[this] == 1)
-		{
-			if (g_ClientSpectator[this] <= 0)
-				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			int iSeconds = RoundToCeil(GetGameTime() - this.m_flCrateStartOpenTime);
+			for (int i = 0; i < iSeconds; i++)
+			{
+				Format(szMessage, sizeof(szMessage), "%s%s", szMessage, ".");
+			}
 			
-			TF2_ChangeTeam(this.Client, team);
+			FRCrate(crate).SetText(szMessage);
 		}
-	}
-	
-	public void SwapToEnemyTeam()
-	{
-		if (++g_ClientSwap[this] == 1)
+		else
 		{
-			if (g_ClientSpectator[this] <= 0)
-				g_ClientTeam[this] = TF2_GetTeam(this.Client);
+			this.StopOpeningCrate(crate);
+			FRCrate(crate).DropItem(this.index);
 			
-			TF2_ChangeTeam(this.Client, TF2_GetEnemyTeam(g_ClientTeam[this]));
+			EmitSoundToAll(data.opened_sound, crate, SNDCHAN_STATIC);
+			
+			float origin[3];
+			CBaseEntity(crate).WorldSpaceCenter(origin);
+			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin, .iAttachType = PATTACH_WORLDORIGIN);
+			TE_TFParticleEffect("mvm_loot_explosion", origin, .iAttachType = PATTACH_WORLDORIGIN);
+			
+			AcceptEntityInput(crate, "Break");
 		}
+		
+		return true;
 	}
 	
-	public void ChangeBuildingsToSpectator()
+	public void StopOpeningCrate(int crate = -1)
 	{
-		int building = MaxClients + 1;
-		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		// Not opening a crate right now
+		if (this.m_flCrateStartOpenTime == -1.0)
+			return;
+		
+		this.m_flCrateStartOpenTime = -1.0;
+		
+		if (crate == -1)
 		{
-			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == this.Client)
-				TF2_ChangeTeam(building, TFTeam_Spectator);
+			// Find any crates in the world still claimed by us
+			while ((crate = FindEntityByClassname(crate, "prop_*")) != -1)
+			{
+				if (FREntity(crate).IsValidCrate() && FRCrate(crate).IsClaimedBy(this.index))
+				{
+					FRCrate(crate).CancelOpen();
+				}
+			}
 		}
-	}
-	
-	public void ChangeToTeam()
-	{
-		if (--g_ClientSpectator[this] == 0)
+		else
 		{
-			if (g_ClientSwap[this] > 0)
-				TF2_ChangeTeam(this.Client, TF2_GetEnemyTeam(g_ClientTeam[this]));
-			else
-				TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
+			FRCrate(crate).CancelOpen();
 		}
 	}
 	
-	public void SwapToOriginalTeam()
+	public void RemoveItem(int item)
 	{
-		if (--g_ClientSwap[this] == 0 && g_ClientSpectator[this] <= 0)
-			TF2_ChangeTeam(this.Client, g_ClientTeam[this]);
-	}
-	
-	public void ChangeBuildingsToTeam()
-	{
-		int building = MaxClients + 1;
-		while ((building = FindEntityByClassname(building, "obj_*")) > MaxClients)
+		if (TF2Util_IsEntityWeapon(item))
 		{
-			if (GetEntPropEnt(building, Prop_Send, "m_hBuilder") == this.Client)
-				TF2_ChangeTeam(building, g_ClientTeam[this]);
+			RemovePlayerItem(this.index, item);
+			RemoveExtraWearables(item);
+		}
+		else if (TF2Util_IsEntityWearable(item))
+		{
+			TF2_RemoveWearable(this.index, item);
+		}
+		
+		RemoveEntity(item);
+	}
+	
+	public void RemoveAllItems()
+	{
+		for (int i = 0; i < this.GetPropArraySize(Prop_Send, "m_hMyWeapons"); ++i)
+		{
+			int weapon = this.GetPropEnt(Prop_Send, "m_hMyWeapons", i);
+			if (weapon == -1)
+				continue;
+			
+			this.RemoveItem(weapon);
+		}
+		
+		for (int wbl = TF2Util_GetPlayerWearableCount(this.index) - 1; wbl >= 0; wbl--)
+		{
+			int wearable = TF2Util_GetPlayerWearable(this.index, wbl);
+			if (wearable == -1)
+				continue;
+			
+			this.RemoveItem(wearable);
 		}
 	}
 	
-	public void ChangeToUnknown()
+	public bool IsInAVehicle()
 	{
-		if (++g_ClientClassUnknown[this] == 1)
-		{
-			g_ClientClass[this] = TF2_GetPlayerClass(this.Client);
-			TF2_SetPlayerClass(this.Client, TFClass_Unknown);
-		}
+		return this.GetPropEnt(Prop_Data, "m_hVehicle") != -1;
 	}
 	
-	public void ChangeToClass()
+	public void Init()
 	{
-		if (--g_ClientClassUnknown[this] == 0)
-		{
-			TF2_SetPlayerClass(this.Client, g_ClientClass[this]);
-		}
+		this.m_bIsParachuting = false;
+		this.m_flLastMedigunDrainTime = -1.0;
+		this.m_flCrateStartOpenTime = -1.0;
+		this.m_hWearableVM = INVALID_ENT_REFERENCE;
+		this.SetPlayerState(FRPlayerState_Waiting);
 	}
 }

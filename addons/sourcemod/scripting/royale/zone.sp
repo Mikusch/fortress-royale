@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2020  Mikusch & 42
+/**
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,458 +15,468 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define ZONE_MODEL			"models/kirillian/brsphere_huge_v3.mdl"
-#define ZONE_SHRINK_SOUND	"MVM.Warning"
-#define ZONE_DIAMETER		20000.0
+#pragma newdecls required
+#pragma semicolon 1
 
 #define ZONE_FADE_START_RATIO	0.95
 #define ZONE_FADE_ALPHA_MAX		64
+#define ZONE_DAMAGE_INTERVAL	0.5
+
+#define ZONE_MODEL				"models/kirillian/brsphere_huge_v3.mdl"
+#define ZONE_MODEL_DIAMETER		20000.0
 
 enum struct ZoneConfig
 {
-	int color[4];			/**< The color of the zone */
-	int color_ghost[4];		/**< The color of the ghost zone */
+	int color[4];			/**< Color of the zone. */
+	int color_ghost[4];		/**< Color of the ghost zone. */
 	
-	int numShrinks;		/**< How many shrinks should be done */
-	float diameterMax;	/**< Starting zone size */
-	float diameterSafe; /**< center of the zone must always be inside this diameter of center of map */
+	int num_shrinks;		/**< Amount of times the zone should shrink. */
+	float diameter_max;		/**< Starting diameter of the zone. */
+	float diameter_safe;	/**< Diameter the zone is allowed to move in. */
 	
-	float center_x;
-	float center_y;
-	float center_z_max;
-	float center_z_min;
+	float center[3];		/**< Starting center of the zone. */
+	float center_z_min;		/**< Minimum allowed value on the z-axis the zone is allowed to move to. */
+	float center_z_max;		/**< Maximum allowed value on the z-axis the zone is allowed to move to. */
 	
-	void ReadConfig(KeyValues kv)
+	void Parse(KeyValues kv)
 	{
+		// KeyValues.GetColor4 has no default value param so we check if the key is set
 		char buffer[2];
 		
 		kv.GetString("color", buffer, sizeof(buffer));
 		if (buffer[0])
+		{
 			kv.GetColor4("color", this.color);
+		}
 		
 		kv.GetString("color_ghost", buffer, sizeof(buffer));
 		if (buffer[0])
+		{
 			kv.GetColor4("color_ghost", this.color_ghost);
+		}
 		
-		this.numShrinks = kv.GetNum("numshrinks", this.numShrinks);
-		this.diameterMax = kv.GetFloat("diametermax", this.diameterMax);
-		this.diameterSafe = kv.GetFloat("diametersafe", this.diameterSafe);
+		this.num_shrinks = kv.GetNum("num_shrinks", this.num_shrinks);
 		
-		this.center_x = kv.GetFloat("center_x", this.center_x);
-		this.center_y = kv.GetFloat("center_y", this.center_y);
-		this.center_z_max = kv.GetFloat("center_z_max", this.center_z_max);
+		this.diameter_max = kv.GetFloat("diameter_max", this.diameter_max);
+		this.diameter_safe = kv.GetFloat("diameter_safe", this.diameter_safe);
+		
+		kv.GetVector("center", this.center, this.center);
 		this.center_z_min = kv.GetFloat("center_z_min", this.center_z_min);
+		this.center_z_max = kv.GetFloat("center_z_max", this.center_z_max);
 	}
 }
 
-static ZoneConfig g_ZoneConfig;
+static ZoneConfig g_zoneData;
 
-static Handle g_ZoneTimer;
-static Handle g_ZoneTimerBleed;
-
-static int g_ZonePropRef = INVALID_ENT_REFERENCE;	//Zone prop model
-static int g_ZoneGhostRef = INVALID_ENT_REFERENCE;	//Ghost zone prop model
-static int g_TriggerHurtRef = INVALID_ENT_REFERENCE;	//trigger_hurt to allow zone to bypass invulnerability
-static float g_ZonePropcenterOld[3];	//Where the zone will start moving
-static float g_ZonePropcenterNew[3];	//Where the zone will finish moving
-static float g_ZoneShrinkStart;			//GameTime where prop start shrinking
-static int g_ZoneShrinkLevel;		//Current shrink level, starting from ZoneConfig.numShrinks to 0
-
-void Zone_ReadConfig(KeyValues kv)
-{
-	g_ZoneConfig.ReadConfig(kv);
-}
+static bool g_bInitialized;
+static int g_hZonePropEnt = INVALID_ENT_REFERENCE;
+static int g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
+static float g_vecOldPosition[3];	// Position where the zone starts moving
+static float g_vecNewPosition[3];	// Position where the zone finishes moving
+static Handle g_hZoneTimer;
+static int g_iShrinkLevel;
+static float g_flShrinkStartTime;
+static float g_flNextDamageTime;
 
 void Zone_Precache()
 {
-	PrecacheScriptSound(ZONE_SHRINK_SOUND);
+	SuperPrecacheModel(ZONE_MODEL);
 	
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx80.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.dx90.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.mdl");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.sw.vtx");
-	AddFileToDownloadsTable("models/kirillian/brsphere_huge_v3.vvd");
-
 	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vmt");
 	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vtf");
 }
 
-bool Zone_GetHeight(float origin[3])
+void Zone_Parse(KeyValues kv)
 {
-	//Height is calculated by creating 25 traces in a 5 x 5 grid from max height down to ground to figure out average height
+	g_zoneData.Parse(kv);
+}
+
+void Zone_OnRoundStart()
+{
+	Zone_Reset();
+	
+	float vecCenter[3];
+	vecCenter = g_zoneData.center;
+	
+	if (!Zone_GetValidHeight(vecCenter))
+	{
+		LogError("Failed to find valid height for zone center (position %3.2f %3.2f %3.2f)", vecCenter[0], vecCenter[1], vecCenter[2]);
+		return;
+	}
+	
+	g_vecOldPosition = vecCenter;
+	g_vecNewPosition = vecCenter;
+	
+	// Create our zone props
+	g_hZonePropEnt = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color));
+	g_hZoneGhostPropEnt = EntIndexToEntRef(Zone_CreateProp(vecCenter, g_zoneData.color_ghost));
+	AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
+	
+	g_bInitialized = true;
+}
+
+void Zone_Think()
+{
+	if (!g_bInitialized)
+		return;
+	
+	float vecZoneOrigin[3], flShrinkPercentage;
+	float flShrinkDuration = Zone_GetShrinkDuration();
+	
+	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
+	{
+		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
+		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
+		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
+		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
+		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
+		
+		// Total shrink percentage from 0 to 1 (starting zone to zero size)
+		flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
+		
+		// Let the zone prop wander
+		if (IsValidEntity(g_hZonePropEnt))
+		{
+			TeleportEntity(g_hZonePropEnt, vecZoneOrigin);
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(flShrinkPercentage));
+		}
+	}
+	else
+	{
+		// Not shrinking, enforce expected values
+		vecZoneOrigin = g_vecOldPosition;
+		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+	}
+	
+	float flRadius = Zone_GetRadius(flShrinkPercentage);
+	float flDamage = Zone_GetDamage();
+	
+	if (g_nRoundState != FRRoundState_RoundEnd)
+	{
+		bool bIsDamageTick = false;
+		
+		if (GetGameTime() >= g_flNextDamageTime)
+		{
+			bIsDamageTick = true;
+			g_flNextDamageTime = GetGameTime() + ZONE_DAMAGE_INTERVAL;
+		}
+		
+		// Players take bleed damage
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			if (!IsClientInGame(client))
+				continue;
+			
+			if (!IsPlayerAlive(client))
+				continue;
+			
+			float vecOrigin[3];
+			GetClientAbsOrigin(client, vecOrigin);
+			
+			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
+			bool bIsOutsideZone = ratio > 1.0;
+			
+			if (ratio >= ZONE_FADE_START_RATIO)
+			{
+				int alpha = RoundToNearest(Max((ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX, ZONE_FADE_ALPHA_MAX));
+				ScreenFade(client, g_zoneData.color[0], g_zoneData.color[1], g_zoneData.color[3], alpha, 1000, 0, FFADE_IN);
+			}
+			
+			if (bIsOutsideZone && bIsDamageTick)
+			{
+				TF2Util_MakePlayerBleed(client, client, ZONE_DAMAGE_INTERVAL, _, RoundToNearest(flDamage));
+			}
+		}
+		
+		// Buildings take damage and get disabled
+		int obj = -1;
+		while ((obj = FindEntityByClassname(obj, "obj_*")) != -1)
+		{
+			float vecOrigin[3];
+			CBaseEntity(obj).GetAbsOrigin(vecOrigin);
+			
+			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
+			bool bIsOutsideZone = ratio > 1.0;
+			
+			if (bIsDamageTick)
+			{
+				if (bIsOutsideZone)
+				{
+					SDKHooks_TakeDamage(obj, 0, 0, flDamage);
+					AcceptEntityInput(obj, "Disable");
+				}
+				else
+				{
+					AcceptEntityInput(obj, "Enable");
+				}
+			}
+		}
+	}
+}
+
+void Zone_OnSetupFinished()
+{
+	if (!g_bInitialized)
+		return;
+	
+	g_hZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+}
+
+static void Zone_Reset()
+{
+	g_bInitialized = false;
+	g_hZonePropEnt = INVALID_ENT_REFERENCE;
+	g_hZoneGhostPropEnt = INVALID_ENT_REFERENCE;
+	g_vecOldPosition = NULL_VECTOR;
+	g_vecNewPosition = NULL_VECTOR;
+	g_hZoneTimer = null;
+	g_iShrinkLevel = g_zoneData.num_shrinks;
+	g_flShrinkStartTime = -1.0;
+	g_flNextDamageTime = GetGameTime();
+}
+
+static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
+{
+	int zone = CreateEntityByName("prop_dynamic");
+	if (IsValidEntity(zone))
+	{
+		DispatchKeyValue(zone, "targetname", "fr_zone");
+		DispatchKeyValue(zone, "model", ZONE_MODEL);
+		DispatchKeyValueVector(zone, "origin", vecOrigin);
+		DispatchKeyValue(zone, "disableshadows", "1");
+		DispatchKeyValue(zone, "disablereceiveshadows", "1");
+		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropModelScale());
+		DispatchKeyValue(zone, "solid", "0");
+		
+		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
+		SetEntityRenderColor(zone, aColor[0], aColor[1], aColor[2], aColor[3]);
+		
+		// Forces the entity to always transmit
+		CBaseEntity(zone).AddEFlags(EFL_IN_SKYBOX);
+		
+		DispatchSpawn(zone);
+		return zone;
+	}
+	
+	return -1;
+}
+
+static void Timer_StartDisplay(Handle hTimer)
+{
+	if (g_hZoneTimer != hTimer)
+		return;
+	
+	// Maximum diameter to walk away from previous center
+	float flSearchDiameter = 1.0 / float(g_zoneData.num_shrinks) * g_zoneData.diameter_max;
+	
+	for (;;)
+	{
+		// Get random angle and offset position from center
+		float flAngle = GetRandomFloat(0.0, 360.0);
+		float flDiameter = GetRandomFloat(0.0, flSearchDiameter);
+		
+		float vecOrigin[3], vecNewOrigin[3];
+		vecNewOrigin[0] = (Cosine(DegToRad(flAngle)) * flDiameter / 2.0);
+		vecNewOrigin[1] = (Sine(DegToRad(flAngle)) * flDiameter / 2.0);
+		AddVectors(vecNewOrigin, g_vecOldPosition, vecNewOrigin);
+		
+		// Find the height of our new area
+		if (!Zone_GetValidHeight(vecNewOrigin))
+			continue;
+		
+		// Check if the new center is not outside of the 'safe' diameter (not counting height) 
+		vecOrigin = g_zoneData.center;
+		vecOrigin[2] = vecNewOrigin[2];
+		if (GetVectorDistance(vecOrigin, vecNewOrigin) * 2.0 > g_zoneData.diameter_safe)
+			continue;
+		
+		g_vecNewPosition = vecNewOrigin;
+		break;
+	}
+	
+	// Don't display ghost zone if we are on the last shrink level
+	if (g_iShrinkLevel > 1)
+	{
+		// Teleport ghost zone to the new center, then update size and display
+		if (IsValidEntity(g_hZoneGhostPropEnt))
+		{
+			TeleportEntity(g_hZoneGhostPropEnt, g_vecNewPosition);
+			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			AcceptEntityInput(g_hZoneGhostPropEnt, "Enable");
+		}
+	}
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char szMessage[64];
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_ShrinkWarning", client, Zone_GetDisplayDuration());
+		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
+	}
+	
+	g_hZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	
+	return;
+}
+
+static void Timer_StartShrink(Handle hTimer)
+{
+	if (g_hZoneTimer != hTimer)
+		return;
+	
+	g_iShrinkLevel--;
+	
+	EmitGameSoundToAll("MVM.Warning");
+	
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char szMessage[64];
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_Shrinking", client);
+		SendHudNotificationCustom(client, szMessage, "ico_notify_ten_seconds");
+	}
+	
+	float flShrinkDuration = Zone_GetShrinkDuration();
+	
+	g_flShrinkStartTime = GetGameTime();
+	g_hZoneTimer = CreateTimer(flShrinkDuration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+}
+
+static void Timer_FinishShrink(Handle hTimer)
+{
+	if (g_hZoneTimer != hTimer)
+		return;
+	
+	g_flShrinkStartTime = -1.0;
+	
+	BattleBus_SpawnLootBus();
+	
+	if (g_iShrinkLevel > 0)
+	{
+		g_vecOldPosition = g_vecNewPosition;
+		
+		if (IsValidEntity(g_hZonePropEnt))
+		{
+			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
+		}
+		
+		if (IsValidEntity(g_hZoneGhostPropEnt))
+		{
+			AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
+		}
+		
+		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+	}
+	else
+	{
+		// Final shrink finished - remove the zone props
+		if (IsValidEntity(g_hZonePropEnt))
+		{
+			RemoveEntity(g_hZonePropEnt);
+		}
+		
+		if (IsValidEntity(g_hZoneGhostPropEnt))
+		{
+			RemoveEntity(g_hZoneGhostPropEnt);
+		}
+	}
+}
+
+static bool Zone_GetValidHeight(float vecOrigin[3])
+{
+	// Height is calculated by creating 25 traces in a 5 x 5 grid from max height down to ground to figure out average height
 	ArrayList heights = new ArrayList();
 	
 	for (int x = -2; x <= 2; x++)
 	{
 		for (int y = -2; y <= 2; y++)
 		{
-			float originStart[3], originEnd[3];
-			originStart[0] = origin[0] + (x * 64.0);
-			originStart[1] = origin[1] + (y * 64.0);
-			originStart[2] = g_ZoneConfig.center_z_max;
+			float vecStart[3];
+			vecStart[0] = vecOrigin[0] + (x * 64.0);
+			vecStart[1] = vecOrigin[1] + (y * 64.0);
+			vecStart[2] = g_zoneData.center_z_max;
 			
-			if (TR_GetPointContents(originStart) & MASK_SOLID)
+			if (TR_GetPointContents(vecStart) & MASK_SOLID)
 				continue;
 			
-			TR_TraceRayFilter(originStart, view_as<float>({ 90.0, 0.0, 0.0 }), MASK_SOLID, RayType_Infinite, Trace_OnlyHitWorld);
-			if (!TR_DidHit())
+			TR_TraceRayFilter(vecStart, { 90.0, 0.0, 0.0 }, MASK_SOLID, RayType_Infinite, TraceEntityFilter_HitWorld);
+			if (!TR_DidHit() || TR_GetEntityIndex() != 0)
 				continue;
 			
-			TR_GetEndPosition(originEnd);
-			if (originEnd[2] < g_ZoneConfig.center_z_min)
+			float vecEnd[3];
+			TR_GetEndPosition(vecEnd);
+			
+			if (vecEnd[2] < g_zoneData.center_z_min)
 				continue;
 			
-			heights.Push(originEnd[2]);
+			heights.Push(vecEnd[2]);
 		}
 	}
 	
-	int length = heights.Length;
-	if (length <= 10)
+	if (heights.Length <= 10)
 	{
-		//Only collected 10 out of 25, origin is probably in a bad area to fight, refuse to give height
+		// Only collected 10 out of 25, origin is probably in a bad area to fight, refuse to give height
 		delete heights;
 		return false;
 	}
 	
-	origin[2] = 0.0;
-	for (int i = 0; i < length; i++)
-		origin[2] += view_as<float>(heights.Get(i));	//bullshit adds as int instead of float
+	vecOrigin[2] = 0.0;
+	for (int i = 0; i < heights.Length; i++)
+	{
+		vecOrigin[2] += view_as<float>(heights.Get(i));
+	}
 	
-	origin[2] /= length;
+	vecOrigin[2] /= heights.Length;
 	delete heights;
 	return true;
 }
 
-void Zone_RoundStart()
+void Zone_GetNewPosition(float center[3])
 {
-	g_ZoneTimer = null;
-	g_ZoneShrinkLevel = g_ZoneConfig.numShrinks;
-	g_ZoneShrinkStart = 0.0;
-	
-	float origin[3];
-	origin[0] = g_ZoneConfig.center_x;
-	origin[1] = g_ZoneConfig.center_y;
-	if (!Zone_GetHeight(origin))
-	{
-		//bruh cant find valid spot in center of the map
-		LogError("Unable to find valid height to set zone at center of the map");
-		return;
-	}
-	
-	g_ZonePropcenterOld = origin;
-	g_ZonePropcenterNew = origin;
-	
-	//Create actual zone
-	g_ZonePropRef = EntIndexToEntRef(CreateEntityByName("prop_dynamic"));
-	
-	DispatchKeyValueVector(g_ZonePropRef, "origin", origin);
-	DispatchKeyValue(g_ZonePropRef, "model", ZONE_MODEL);
-	DispatchKeyValue(g_ZonePropRef, "disableshadows", "1");
-	
-	SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale());
-	SetEntProp(g_ZonePropRef, Prop_Send, "m_nSolidType", SOLID_NONE);
-	
-	DispatchSpawn(g_ZonePropRef);
-	
-	SetEntityRenderMode(g_ZonePropRef, RENDER_TRANSCOLOR);
-	SetEntityRenderColor(g_ZonePropRef, g_ZoneConfig.color[0], g_ZoneConfig.color[1], g_ZoneConfig.color[2], g_ZoneConfig.color[3]);
-	
-	//Create ghost zone
-	g_ZoneGhostRef = EntIndexToEntRef(CreateEntityByName("prop_dynamic"));
-	
-	DispatchKeyValueVector(g_ZoneGhostRef, "origin", origin);
-	DispatchKeyValue(g_ZoneGhostRef, "model", ZONE_MODEL);
-	DispatchKeyValue(g_ZoneGhostRef, "disableshadows", "1");
-	
-	SetEntProp(g_ZoneGhostRef, Prop_Send, "m_nSolidType", SOLID_NONE);
-	
-	DispatchSpawn(g_ZoneGhostRef);
-	
-	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
-	SetEntityRenderColor(g_ZoneGhostRef, g_ZoneConfig.color_ghost[0], g_ZoneConfig.color_ghost[1], g_ZoneConfig.color_ghost[2], g_ZoneConfig.color_ghost[3]);
-	
-	//Create trigger_hurt, no need to spawn it
-	g_TriggerHurtRef = EntIndexToEntRef(CreateEntityByName("trigger_hurt"));
-	SetEntProp(g_TriggerHurtRef, Prop_Data, "m_usSolidFlags", FSOLID_TRIGGER);
-	
-	RequestFrame(Frame_UpdateZone, g_ZonePropRef);
+	center = g_vecNewPosition;
 }
 
-void Zone_SetupFinished()
+float Zone_GetShrinkPercentage()
 {
-	g_ZoneTimer = CreateTimer(Zone_GetStartDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
-	g_ZoneTimerBleed = CreateTimer(0.5, Timer_Bleed, _, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
+	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
 }
 
-public Action Timer_StartDisplay(Handle timer)
+static float Zone_GetDamage()
 {
-	if (g_ZoneTimer != timer)
-		return;
-	
-	//Max diameter to walk away from previous center
-	float diameterSearch = 1.0 / float(g_ZoneConfig.numShrinks) * g_ZoneConfig.diameterMax;
-	
-	bool found = false;
-	do
-	{
-		//Roll for random angle and offset position from center
-		float angleRandom = GetRandomFloat(0.0, 360.0);
-		float diameterRandom = GetRandomFloat(0.0, diameterSearch);
-		
-		float origin[3], originNew[3];
-		originNew[0] = (Cosine(DegToRad(angleRandom)) * diameterRandom / 2.0);
-		originNew[1] = (Sine(DegToRad(angleRandom)) * diameterRandom / 2.0);
-		AddVectors(originNew, g_ZonePropcenterOld, originNew);
-		
-		//Get height to put zone center ontop of it
-		if (!Zone_GetHeight(originNew))
-			continue;
-		
-		//Check if new center is not outside of 'safe' spot
-		origin[0] = g_ZoneConfig.center_x;
-		origin[1] = g_ZoneConfig.center_y;
-		origin[2] = originNew[2];
-		if (GetVectorDistance(origin, originNew) > g_ZoneConfig.diameterSafe / 2.0)
-			continue;
-		
-		g_ZonePropcenterNew = originNew;
-		found = true;
-	}
-	while (!found);
-	
-	if (g_ZoneShrinkLevel > 1)	//Dont bother display ghost if were doing last shrink
-	{
-		//Teleport ghost to new center, update size and display
-		TeleportEntity(g_ZoneGhostRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
-		SetEntPropFloat(g_ZoneGhostRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_ZoneShrinkLevel - 1) / float(g_ZoneConfig.numShrinks)));
-		SetEntityRenderMode(g_ZoneGhostRef, RENDER_TRANSCOLOR);
-	}
-	
-	g_ZoneTimer = CreateTimer(Zone_GetDisplayDuration(), Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	return sm_fr_zone_damage_max.FloatValue - ((sm_fr_zone_damage_max.FloatValue - sm_fr_zone_damage_min.FloatValue) / g_zoneData.num_shrinks * g_iShrinkLevel);
 }
 
-public Action Timer_StartShrink(Handle timer)
+static float Zone_GetRadius(float flPercentage)
 {
-	if (g_ZoneTimer != timer)
-		return;
-	
-	g_ZoneShrinkLevel--;
-	
-	EmitGameSoundToAll(ZONE_SHRINK_SOUND);
-	char message[256];
-	Format(message, sizeof(message), "%T", "Zone_ShrinkAlert", LANG_SERVER);
-	TF2_ShowGameMessage(message, "ico_notify_ten_seconds");
-	
-	g_ZoneShrinkStart = GetGameTime();
-	g_ZoneTimer = CreateTimer(Zone_GetShrinkDuration(), Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	return g_zoneData.diameter_max * flPercentage / 2.0;
 }
 
-public Action Timer_FinishShrink(Handle timer)
+static float Zone_GetPropModelScale(float flPercentage = 1.0)
 {
-	if (g_ZoneTimer != timer)
-		return;
-	
-	g_ZonePropcenterOld = g_ZonePropcenterNew;
-	TeleportEntity(g_ZonePropRef, g_ZonePropcenterNew, NULL_VECTOR, NULL_VECTOR);
-	SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks)));
-	
-	//Hide ghost prop
-	SetEntityRenderMode(g_ZoneGhostRef, RENDER_NONE);
-	
-	BattleBus_SpawnLootBus();
-	
-	if (g_ZoneShrinkLevel > 0)
-		g_ZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+	return SquareRoot(g_zoneData.diameter_max / ZONE_MODEL_DIAMETER * flPercentage);
 }
 
-public void Frame_UpdateZone(int ref)
+static float Zone_GetStartDisplayDuration()
 {
-	//ref param is just to help prevent this function called twice in one frame every round
-	if (!IsValidEntity(ref))
-		return;
-	
-	float originZone[3];
-	float percentage;
-	
-	float gametime = GetGameTime();
-	float duration = Zone_GetShrinkDuration();
-	if (g_ZoneShrinkStart > gametime - duration)
-	{
-		//We in shrinking state, update zone position and model size
-		
-		//Progress from level X+1 to level X
-		percentage = (gametime - g_ZoneShrinkStart) / duration;
-		
-		SubtractVectors(g_ZonePropcenterNew, g_ZonePropcenterOld, originZone);	//Distance from start to end
-		ScaleVector(originZone, percentage);									//Scale by percentage
-		AddVectors(originZone, g_ZonePropcenterOld, originZone);				//Add distance to old center
-		TeleportEntity(g_ZonePropRef, originZone, NULL_VECTOR, NULL_VECTOR);
-		
-		//Progress from 1.0 to 0.0 (starting zone to zero size)
-		percentage = (float(g_ZoneShrinkLevel + 1) - percentage) / float(g_ZoneConfig.numShrinks);
-		SetEntPropFloat(g_ZonePropRef, Prop_Send, "m_flModelScale", Zone_GetPropScale(percentage));
-	}
-	else
-	{
-		//Zone is not shrinking
-		originZone = g_ZonePropcenterOld;
-		percentage = float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks);
-	}
-	
-	// Mark players outside zone
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (IsClientInGame(client) && IsPlayerAlive(client))
-		{
-			float originClient[3];
-			GetClientAbsOrigin(client, originClient);
-			
-			float radius = g_ZoneConfig.diameterMax * percentage / 2.0;
-			float ratio = GetVectorDistance(originClient, originZone) / radius;
-			bool outsideZone = ratio > 1.0;
-			
-			//Create screen fade when approaching the zone border
-			if (ratio > ZONE_FADE_START_RATIO)
-			{
-				float alpha;
-				if (ratio > 1.0)
-					alpha = float(ZONE_FADE_ALPHA_MAX);
-				else
-					alpha = (ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX;
-				
-				CreateFade(client, _, g_ZoneConfig.color[0], g_ZoneConfig.color[1], g_ZoneConfig.color[2], RoundToNearest(alpha));
-			}
-			
-			//Apply or remove bleed effect
-			if (outsideZone && !TF2_IsPlayerInCondition(client, TFCond_Bleeding))
-			{
-				TF2_MakeBleed(client, client, 9999.0);	//Does no damage
-			}
-			else if (!outsideZone && FRPlayer(client).OutsideZone)
-			{
-				TF2_RemoveCondition(client, TFCond_Bleeding);
-				FRPlayer(client).ZoneDamageTicks = 0;
-			}
-			
-			FRPlayer(client).OutsideZone = outsideZone;
-		}
-		else if (FRPlayer(client).OutsideZone)
-		{
-			FRPlayer(client).OutsideZone = false;
-		}
-	}
-	
-	// Mark Engineer buildings outside zone
-	int obj = MaxClients + 1;
-	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
-	{
-		FREntity entityObj = FREntity(obj);
-		
-		if (!GetEntProp(obj, Prop_Send, "m_bCarried"))
-		{
-			float originObj[3];
-			GetEntPropVector(obj, Prop_Data, "m_vecAbsOrigin", originObj);
-			originObj[2] = originZone[2];
-			
-			bool outsideZone = GetVectorDistance(originObj, originZone) > g_ZoneConfig.diameterMax * percentage / 2.0;
-			
-			if (!outsideZone && entityObj.OutsideZone)
-				entityObj.ZoneDamageTicks++;
-			
-			entityObj.OutsideZone = outsideZone;
-		}
-		else if (entityObj.OutsideZone)
-		{
-			entityObj.OutsideZone = false;
-		}
-	}
-	
-	RequestFrame(Frame_UpdateZone, ref);
+	return sm_fr_zone_startdisplay.FloatValue + (sm_fr_zone_startdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-public Action Timer_Bleed(Handle timer)
+static float Zone_GetDisplayDuration()
 {
-	if (g_ZoneTimerBleed != timer)
-		return Plugin_Stop;
-	
-	//Players
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		FRPlayer player = FRPlayer(client);
-		
-		if (IsClientInGame(client) && IsPlayerAlive(client) && player.OutsideZone && player.PlayerState != PlayerState_Winning)
-		{
-			player.ZoneDamageTicks++;
-			
-			//No bottles from zone deaths (SDKHooks_TakeDamage skips hooks)
-			SetBottlePoints(0);
-			
-			//CTFPlayer::OnTakeDamage has a local bool that allows damage to bypass invulnerability
-			//It is only set to true for telefrags and if the attacker is a trigger_hurt entity with FSOLID_TRIGGER, so we pass our own trigger
-			SDKHooks_TakeDamage(client, 0, g_TriggerHurtRef, Zone_GetCurrentDamage() * player.ZoneDamageTicks * fr_zone_damagemultiplier.FloatValue, DMG_PREVENT_PHYSICS_FORCE);
-			
-			SetBottlePoints(fr_bottle_points.IntValue);
-		}
-	}
-	
-	//Engineer buildings
-	int obj = MaxClients + 1;
-	while ((obj = FindEntityByClassname(obj, "obj_*")) > MaxClients)
-	{
-		int builder = GetEntPropEnt(obj, Prop_Send, "m_hBuilder");
-		if (0 < builder <= MaxClients && FRPlayer(builder).PlayerState != PlayerState_Winning)
-		{
-			FREntity entityObj = FREntity(obj);
-			
-			if (!GetEntProp(obj, Prop_Send, "m_bCarried") && entityObj.OutsideZone)
-			{
-				entityObj.ZoneDamageTicks++;
-				SetVariantInt(RoundFloat(Zone_GetCurrentDamage() * float(entityObj.ZoneDamageTicks) * fr_zone_damagemultiplier.FloatValue));
-				AcceptEntityInput(obj, "RemoveHealth");
-			}
-		}
-	}
-	
-	return Plugin_Continue;
+	return sm_fr_zone_display.FloatValue + (sm_fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-float Zone_GetCurrentDamage()
+static float Zone_GetShrinkDuration()
 {
-    return (float(g_ZoneConfig.numShrinks) - float(g_ZoneShrinkLevel)) / float(g_ZoneConfig.numShrinks) * 16.0;
+	return sm_fr_zone_shrink.FloatValue + (sm_fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-void Zone_GetNewCenter(float center[3])
+static float Zone_GetNextDisplayDuration()
 {
-	center = g_ZonePropcenterNew;
-}
-
-float Zone_GetPropScale(float precentage = 1.0)
-{
-	return SquareRoot(g_ZoneConfig.diameterMax / ZONE_DIAMETER * precentage);
-}
-
-float Zone_GetNewDiameter()
-{
-	//Return diameter wherever new center zone would be at
-	return g_ZoneConfig.diameterMax * (float(g_ZoneShrinkLevel) / float(g_ZoneConfig.numShrinks));
-}
-
-float Zone_GetStartDisplayDuration()
-{
-	return fr_zone_startdisplay.FloatValue + (fr_zone_startdisplay_player.FloatValue * float(g_PlayerCount));
-}
-
-float Zone_GetDisplayDuration()
-{
-	return fr_zone_display.FloatValue + (fr_zone_display_player.FloatValue * float(g_PlayerCount));
-}
-
-float Zone_GetShrinkDuration()
-{
-	return fr_zone_shrink.FloatValue + (fr_zone_shrink_player.FloatValue * float(g_PlayerCount));
-}
-
-float Zone_GetNextDisplayDuration()
-{
-	return fr_zone_nextdisplay.FloatValue + (fr_zone_nextdisplay_player.FloatValue * float(g_PlayerCount));
+	return sm_fr_zone_nextdisplay.FloatValue + (sm_fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
 }

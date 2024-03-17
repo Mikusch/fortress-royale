@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2020  Mikusch & 42
+/**
+ * Copyright (C) 2023  Mikusch
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,399 +15,432 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#define GAMESOUND_BUS_DROP	"MVM.Robot_Teleporter_Deliver"
+#pragma newdecls required
+#pragma semicolon 1
 
-enum struct BattleBusConfig
+enum struct BattleBusData
 {
 	char model[PLATFORM_MAX_PATH];
-	float size_min[3];
-	float size_max[3];
-	int skin;
-	float height;
-	float diameter;
-	float time;
-	float cameraOffset[3];
-	float cameraAngles[3];
+	float model_angles[3];
+	float model_scale;
+	char default_anim[PLATFORM_MAX_PATH];
+	char crate_name[64];
+	float travel_height;
+	float travel_diameter;
+	float travel_time;
+	float camera_offset[3];
+	float camera_angles[3];
+	ArrayList sounds;
 	
-	void ReadConfig(KeyValues kv)
+	void Parse(KeyValues kv)
 	{
-		kv.GetString("model", this.model, PLATFORM_MAX_PATH, this.model);
-		PrecacheModel(this.model);
+		kv.GetString("model", this.model, sizeof(this.model), this.model);
+		kv.GetVector("model_angles", this.model_angles, this.model_angles);
+		this.model_scale = kv.GetFloat("model_scale", this.model_scale);
+		kv.GetString("default_anim", this.default_anim, sizeof(this.default_anim), this.default_anim);
+		kv.GetString("crate_name", this.crate_name, sizeof(this.crate_name), this.crate_name);
+		this.travel_height = kv.GetFloat("travel_height", this.travel_height);
+		this.travel_diameter = kv.GetFloat("travel_diameter", this.travel_diameter);
+		this.travel_time = kv.GetFloat("travel_time", this.travel_time);
+		kv.GetVector("camera_offset", this.camera_offset, this.camera_offset);
+		kv.GetVector("camera_angles", this.camera_angles, this.camera_angles);
 		
-		kv.GetVector("size_min", this.size_min, this.size_min);
-		kv.GetVector("size_max", this.size_max, this.size_max);
-		this.skin = kv.GetNum("skin", this.skin);
-		this.height = kv.GetFloat("height", this.height);
-		this.diameter = kv.GetFloat("diameter", this.diameter);
-		this.time = kv.GetFloat("time", this.time);
-		kv.GetVector("camera_offset", this.cameraOffset, this.cameraOffset);
-		kv.GetVector("camera_angles", this.cameraAngles, this.cameraAngles);
-	}
-}
-
-static int g_BattleBusPropRef = INVALID_ENT_REFERENCE;
-static int g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
-static float g_BattleBusSpawnTime;
-static BattleBusConfig g_CurrentBattleBusConfig;
-
-static char g_BattleBusHornSounds[][] =  {
-	")ambient_mp3/mvm_warehouse/car_horn_01.mp3", 
-	")ambient_mp3/mvm_warehouse/car_horn_02.mp3", 
-	")ambient_mp3/mvm_warehouse/car_horn_03.mp3", 
-	")ambient_mp3/mvm_warehouse/car_horn_04.mp3", 
-	")ambient_mp3/mvm_warehouse/car_horn_05.mp3"
-};
-
-//Eject offsets to pick one at random
-static float g_BattleBusEjectOffset[][3] =  {
-	{ -128.0, -128.0, 0.0 }, 
-	{ -128.0, 0.0, 0.0 }, 
-	{ -128.0, 128.0, 0.0 }, 
-	{ 0.0, -128.0, 0.0 }, 
-	{ 0.0, 0.0, 0.0 }, 
-	{ 0.0, 128.0, 0.0 }, 
-	{ 128.0, -128.0, 0.0 }, 
-	{ 128.0, 0.0, 0.0 }, 
-	{ 128.0, 128.0, 0.0 }
-};
-
-static float g_BattleBusOrigin[3];		//Bus starting origin
-static float g_BattleBusAngles[3];		//Bus starting angles
-static float g_BattleBusVelocity[3];	//Bus starting velocity
-
-void BattleBus_Precache()
-{
-	for (int i = 0; i < sizeof(g_BattleBusHornSounds); i++)
-		PrecacheSound(g_BattleBusHornSounds[i]);
-}
-
-void BattleBus_ReadConfig(KeyValues kv)
-{
-	g_CurrentBattleBusConfig.ReadConfig(kv);
-}
-
-void BattleBus_NewPos(float diameter = 0.0)
-{
-	g_BattleBusPropRef = INVALID_ENT_REFERENCE;
-	g_BattleBusCameraRef = INVALID_ENT_REFERENCE;
-	
-	//Get origin by zone's current origin
-	float origin[3];
-	Zone_GetNewCenter(origin);
-	
-	//Default diameter
-	if (diameter <= 0.0)
-		diameter = g_CurrentBattleBusConfig.diameter;
-	
-	//Possible directions to select
-	float possibleDirection[360];
-	for (int i = 0; i < sizeof(possibleDirection); i++)
-		possibleDirection[i] = float(i) + GetRandomFloat(0.0, 1.0);
-	
-	SortFloats(possibleDirection, sizeof(possibleDirection), Sort_Random);
-	
-	for (int i = 0; i < sizeof(possibleDirection); i++)
-	{
-		float angleDirection = possibleDirection[i];
-		
-		if (angleDirection >= 180.0)
-			g_BattleBusAngles[1] = angleDirection - 180.0;
-		else
-			g_BattleBusAngles[1] = angleDirection + 180.0;
-		
-		g_BattleBusOrigin[0] = (Cosine(DegToRad(angleDirection)) * diameter / 2.0) + origin[0];
-		g_BattleBusOrigin[1] = (Sine(DegToRad(angleDirection)) * diameter / 2.0) + origin[1];
-		g_BattleBusOrigin[2] = g_CurrentBattleBusConfig.height;
-		
-		g_BattleBusVelocity[0] = -Cosine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
-		g_BattleBusVelocity[1] = -Sine(DegToRad(angleDirection)) * diameter / g_CurrentBattleBusConfig.time;
-		
-		//Check if it safe to go this path with nothing in the way
-		float endPos[3];
-		endPos = g_BattleBusVelocity;
-		ScaleVector(endPos, g_CurrentBattleBusConfig.time);
-		AddVectors(endPos, g_BattleBusOrigin, endPos);
-		
-		TR_TraceHull(g_BattleBusOrigin, endPos, g_CurrentBattleBusConfig.size_min, g_CurrentBattleBusConfig.size_max, MASK_PLAYERSOLID);
-		if (!TR_DidHit())
-			return;	//Its a good path, end searches
-	}
-	
-	//Not all 360 directions work, we in bad spot
-	int entity = TR_GetEntityIndex();
-	char classname[256];
-	if (entity >= 0)
-		GetEntityClassname(entity, classname, sizeof(classname));
-	
-	LogError("Unable to find valid bus path for origin '%.2f %.2f %.2f' and diameter '%.2f', possibility colliding entity %d (%s)", origin[0], origin[1], g_CurrentBattleBusConfig.height, diameter, entity, classname);
-}
-
-int BattleBus_CreateBus()
-{
-	int bus = CreateEntityByName("tf_projectile_rocket");
-	if (!IsValidEntity(bus))
-	{
-		LogError("Unable to create bus entity");
-		return INVALID_ENT_REFERENCE;
-	}
-	
-	g_BattleBusPropRef = EntIndexToEntRef(bus);
-	SDKHook(bus, SDKHook_StartTouch, BattleBus_StartTouch);
-	
-	if (!DispatchSpawn(bus))
-	{
-		LogError("Unable to spawn bus entity (index %d, ref %d)", bus, g_BattleBusPropRef);
-		return INVALID_ENT_REFERENCE;
-	}
-	
-	SetEntityModel(bus, g_CurrentBattleBusConfig.model);
-	SetEntProp(bus, Prop_Send, "m_nSolidType", SOLID_NONE);
-	
-	return g_BattleBusPropRef;
-}
-
-int BattleBus_CreateBusCamera()
-{
-	int camera = CreateEntityByName("prop_dynamic");
-	if (IsValidEntity(camera))
-	{
-		SetEntityModel(camera, MODEL_EMPTY);
-		
-		if (DispatchSpawn(camera))
-			return g_BattleBusCameraRef = EntIndexToEntRef(camera);
-	}
-	
-	return INVALID_ENT_REFERENCE;
-}
-
-void BattleBus_SpawnPlayerBus()
-{
-	int bus = BattleBus_CreateBus();
-	if (bus != INVALID_ENT_REFERENCE)
-	{
-		g_BattleBusSpawnTime = GetGameTime();
-		
-		int camera = BattleBus_CreateBusCamera();
-		if (camera != INVALID_ENT_REFERENCE)
+		if (kv.JumpToKey("sounds", false))
 		{
-			SetVariantString("!activator");
-			AcceptEntityInput(camera, "SetParent", bus, bus);
-			
-			//Teleport bus after camera, so camera can follow where bus is teleporting
-			TeleportEntity(camera, g_CurrentBattleBusConfig.cameraOffset, g_CurrentBattleBusConfig.cameraAngles, NULL_VECTOR);
-			TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
-			
-			CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndPlayerBus, bus, TIMER_FLAG_NO_MAPCHANGE);
+			this.sounds = new ArrayList(ByteCountToCells(PLATFORM_MAX_PATH));
+			if (kv.GotoFirstSubKey(false))
+			{
+				do
+				{
+					char szSound[PLATFORM_MAX_PATH];
+					kv.GetString(NULL_STRING, szSound, sizeof(szSound));
+					this.sounds.PushString(szSound);
+				}
+				while (kv.GotoNextKey(false));
+				kv.GoBack();
+			}
+			kv.GoBack();
 		}
 	}
 }
 
-public Action BattleBus_EndPlayerBus(Handle timer, int bus)
+static BattleBusData g_battleBusData;
+
+static int g_hBusPropEnt = INVALID_ENT_REFERENCE;
+static Handle g_hBusDropSoundTimer;
+static float g_flBusSpawnTime;
+
+void BattleBus_Parse(KeyValues kv)
 {
+	g_battleBusData.Parse(kv);
+}
+
+void BattleBus_OnSetupFinished()
+{
+	int bus = BattleBus_CreateBusEntity();
 	if (!IsValidEntity(bus))
-		return;
-	
-	if (bus != g_BattleBusPropRef)
 	{
-		LogError("Unexpected bus ref %d to end, expected %d", bus, g_BattleBusPropRef);
+		LogError("Failed to create bus entity!");
 		return;
 	}
 	
+	int camera = BattleBus_CreateCameraEntity();
+	if (!IsValidEntity(camera))
+	{
+		LogError("Failed to create camera entity!");
+		return;
+	}
 	
-	//Battle bus has reached its destination, eject all players still here
+	// Attach camera first, so it'll follow the bus when it is teleported
+	SetVariantString("!activator");
+	AcceptEntityInput(camera, "SetParent", bus);
+	
+	float angles[3];
+	AddVectors(g_battleBusData.camera_angles, g_battleBusData.model_angles, angles);
+	
+	TeleportEntity(camera, g_battleBusData.camera_offset, angles);
+	
+	if (!BattleBus_InitBusEnt(bus, Timer_EndPlayerBus))
+		return;
+	
+	// Set all players into the bus
 	for (int client = 1; client <= MaxClients; client++)
 	{
-		if (IsClientInGame(client) && FRPlayer(client).PlayerState == PlayerState_BattleBus)
-			BattleBus_EjectClient(client);
-	}
-	
-	//Destroy prop
-	g_BattleBusPropRef = INVALID_ENT_REFERENCE;
-	RemoveEntity(bus);
-}
-
-void BattleBus_SpectateBus(int client)
-{
-	if (g_BattleBusCameraRef != INVALID_ENT_REFERENCE)
-	{
-		FRPlayer(client).PlayerState = PlayerState_BattleBus;
-		SetClientViewEntity(client, g_BattleBusCameraRef);
-		ShowKeyHintText(client, "%t", "BattleBus_HowToDrop");
-	}
-}
-
-void BattleBus_EjectClient(int client)
-{
-	int bus = EntRefToEntIndex(g_BattleBusPropRef);
-	if (bus == INVALID_ENT_REFERENCE)
-		return;
-	
-	//Respawn into alive team
-	FRPlayer(client).PlayerState = PlayerState_Parachute;
-	TF2_ChangeClientTeamSilent(client, TFTeam_Alive);
-	TF2_RespawnPlayer(client);
-	
-	SetClientViewEntity(client, client);
-	
-	float ejectOrigin[3], busOrigin[3], busAngles[3], clientMins[3], clientMaxs[3];
-	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", busOrigin);
-	GetEntPropVector(bus, Prop_Data, "m_angAbsRotation", busAngles);
-	GetClientMins(client, clientMins);
-	GetClientMaxs(client, clientMaxs);
-	
-	bool found;
-	ejectOrigin = busOrigin;
-	
-	//Randomize list
-	SortCustom2D(g_BattleBusEjectOffset, sizeof(g_BattleBusEjectOffset), SortCustom_Random);
-	
-	do
-	{
-		for (int i = 0; i < sizeof(g_BattleBusEjectOffset); i++)
-		{
-			float searchOrigin[3];
-			AddVectors(ejectOrigin, g_BattleBusEjectOffset[i], searchOrigin);
-			
-			TR_TraceHull(searchOrigin, searchOrigin, clientMins, clientMaxs, MASK_PLAYERSOLID);
-			if (!TR_DidHit(null))
-			{
-				//Nothing was hit, safe to launch here
-				ejectOrigin = searchOrigin;
-				found = true;
-				break;
-			}
-		}
+		if (!IsClientInGame(client))
+			continue;
 		
-		//If still could not be found, try again but higher up
-		if (!found)
-		{
-			float searchOrigin[3];
-			searchOrigin = ejectOrigin;
-			searchOrigin[2] += 128.0;
-			
-			if (TR_PointOutsideWorld(searchOrigin))
-				found = true;	//fuck it
-			else
-				ejectOrigin = searchOrigin;
-		}
+		if (TF2_GetClientTeam(client) <= TFTeam_Spectator)
+			continue;
+		
+		FRPlayer(client).SetPlayerState(FRPlayerState_InBattleBus);
+		
+		SetClientViewEntity(client, camera);
 	}
-	while (!found);
-	
-	TeleportEntity(client, ejectOrigin, busAngles, NULL_VECTOR);
-	TF2_AddCondition(client, TFCond_TeleportedGlow, 8.0);
-	EmitGameSoundToAll(GAMESOUND_BUS_DROP, bus);
-	
-	FRPlayer(client).SecToDeployParachute = fr_sectodeployparachute.IntValue;
-	PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
-	CreateTimer(1.0, Timer_SecToDeployParachute, GetClientSerial(client));
-}
-
-public Action BattleBus_StartTouch(int bus, int toucher)
-{
-	float busOrigin[3], toucherOrigin[3];
-	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", busOrigin);
-	GetEntPropVector(toucher, Prop_Data, "m_vecAbsOrigin", toucherOrigin);
-	
-	char classname[256];
-	GetEntityClassname(toucher, classname, sizeof(classname));
-	LogError("bus %d at origin '%.2f %.2f %.2f' unexpectedly touched entity (%d/%s) at origin '%.2f %.2f %.2f'", bus, busOrigin[0], busOrigin[1], busOrigin[2], toucher, classname, toucherOrigin[0], toucherOrigin[1], toucherOrigin[2]);
 }
 
 void BattleBus_OnEntityDestroyed(int entity)
 {
-	if (EntIndexToEntRef(entity) == g_BattleBusPropRef)
+	if (entity == EntRefToEntIndex(g_hBusPropEnt))
 	{
-		float origin[3];
-		GetEntPropVector(entity, Prop_Data, "m_vecAbsOrigin", origin);
-		LogError("Bus (index %d, ref %d) unexpectedly destroyed at origin '%.2f %.2f %.2f'", entity, g_BattleBusPropRef, origin[0], origin[1], origin[2]);
-	}
-}
-
-public Action Timer_SecToDeployParachute(Handle timer, int serial)
-{
-	int client = GetClientFromSerial(serial);
-	if (0 < client <= MaxClients && IsClientInGame(client))
-	{
-		if (FRPlayer(client).PlayerState == PlayerState_Parachute && !TF2_IsPlayerInCondition(client, TFCond_Parachute))
+		// Stop any lingering sounds when the bus gets destroyed
+		ArrayList sounds = g_battleBusData.sounds;
+		if (sounds)
 		{
-			FRPlayer(client).SecToDeployParachute--;
-			if (FRPlayer(client).SecToDeployParachute > 0)
+			for (int i = 0; i < sounds.Length; i++)
 			{
-				PrintHintText(client, "%t", "BattleBus_SecToDeployParachute", FRPlayer(client).SecToDeployParachute);
-				CreateTimer(1.0, Timer_SecToDeployParachute, serial);
-			}
-			else
-			{
-				TF2_AddCondition(client, TFCond_Parachute);
-				CreateTimer(0.1, Timer_SecToDeployParachute, serial);
+				char szSound[PLATFORM_MAX_PATH];
+				if (sounds.GetString(i, szSound, sizeof(szSound)))
+				{
+					if (PrecacheScriptSound(szSound))
+					{
+						EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
+					}
+					else if (PrecacheSound(szSound))
+					{
+						StopSound(entity, SNDCHAN_STATIC, szSound);
+					}
+				}
 			}
 		}
-		else
-		{
-			FRPlayer(client).SecToDeployParachute = 0;
-		}
 	}
-}
-
-public int SortCustom_Random(int[] elem1, int[] elem2, const int[][] array, Handle hndl)
-{
-	return GetRandomInt(0, 1) ? -1 : 1;
-}
-
-void BattleBus_SpawnLootBus()
-{
-	float diameter = Zone_GetNewDiameter();
-	if (diameter <= 0.0)
-		return;
-	
-	int bus = BattleBus_CreateBus();
-	if (bus != INVALID_ENT_REFERENCE)
-	{
-		BattleBus_NewPos(diameter);
-		
-		TeleportEntity(bus, g_BattleBusOrigin, g_BattleBusAngles, g_BattleBusVelocity);
-		
-		char message[256];
-		Format(message, sizeof(message), "%T", "BattleBus_IncomingCrate", LANG_SERVER);
-		TF2_ShowGameMessage(message, "ico_build");
-		EmitSoundToAll(g_BattleBusHornSounds[GetRandomInt(0, sizeof(g_BattleBusHornSounds) - 1)], bus, SNDCHAN_STATIC, 150);
-		
-		CreateTimer(GetRandomFloat(0.0, g_CurrentBattleBusConfig.time), BattleBus_SpawnLootCrate, bus, TIMER_FLAG_NO_MAPCHANGE);
-		CreateTimer(g_CurrentBattleBusConfig.time, BattleBus_EndLootBus, bus, TIMER_FLAG_NO_MAPCHANGE);
-	}
-}
-
-bool BattleBus_AllowedToDrop()
-{
-	return GetGameTime() > g_BattleBusSpawnTime + 0.7;
 }
 
 bool BattleBus_IsActive()
 {
-	return GetGameTime() <= g_BattleBusSpawnTime + g_CurrentBattleBusConfig.time;
+	return g_flBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
 }
 
-public Action BattleBus_SpawnLootCrate(Handle timer, int bus)
+int BattleBus_GetEntity()
 {
-	if (!IsValidEntity(bus))
+	return g_hBusPropEnt;
+}
+
+bool BattleBus_CalculateBusPath(int bus, float vecOrigin[3], float vecAngles[3], float vecVelocity[3])
+{
+	// The bus travels along the center of the zone
+	float vecCenter[3];
+	Zone_GetNewPosition(vecCenter);
+	
+	// Collect possible yaw angles and shuffle them
+	float aDegs[360];
+	for (int i = 0; i < sizeof(aDegs); i++)
+	{
+		aDegs[i] = float(i);
+	}
+	
+	SortFloats(aDegs, sizeof(aDegs), Sort_Random);
+	
+	for (int i = 0; i < sizeof(aDegs); i++)
+	{
+		float flDeg = aDegs[i];
+		
+		vecOrigin[0] = (Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / 2.0) + vecCenter[0];
+		vecOrigin[1] = (Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / 2.0) + vecCenter[1];
+		vecOrigin[2] = g_battleBusData.travel_height;
+		
+		vecAngles[1] = (flDeg >= 180.0) ? (flDeg - 180.0) : (flDeg + 180.0);
+		AddVectors(vecAngles, g_battleBusData.model_angles, vecAngles);
+		
+		vecVelocity[0] = -Cosine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
+		vecVelocity[1] = -Sine(DegToRad(flDeg)) * g_battleBusData.travel_diameter / g_battleBusData.travel_time;
+		
+		// Check if the bus can go along this path without being obstructed
+		float vecEndPosition[3];
+		vecEndPosition = vecVelocity;
+		ScaleVector(vecEndPosition, g_battleBusData.travel_time);
+		AddVectors(vecEndPosition, vecOrigin, vecEndPosition);
+		
+		float vecMins[3], vecMaxs[3];
+		GetEntPropVector(bus, Prop_Data, "m_vecMins", vecMins);
+		GetEntPropVector(bus, Prop_Data, "m_vecMaxs", vecMaxs);
+		
+		TR_TraceHull(vecOrigin, vecEndPosition, vecMins, vecMaxs, MASK_SOLID);
+		if (!TR_DidHit())
+		{
+			return true;
+		}
+	}
+	
+	int entity = TR_GetEntityIndex();
+	if (IsValidEntity(entity))
+	{
+		char szClassname[64];
+		if (GetEntityClassname(entity, szClassname, sizeof(szClassname)))
+		{
+			LogError("Unable to find valid bus path, would collide with entity %d (%s)", entity, szClassname);
+		}
+	}
+	
+	return false;
+}
+
+void BattleBus_SpawnLootBus()
+{
+	// No crate name set, do not spawn a loot bus
+	if (!g_battleBusData.crate_name[0])
 		return;
 	
-	LootCrate loot;
-	LootCrate_GetBus(loot);
+	int bus = BattleBus_CreateBusEntity();
+	if (!IsValidEntity(bus))
+	{
+		LogError("Failed to create bus entity!");
+		return;
+	}
 	
-	//Get vectors and convert to string, as that is how the config does it
-	float origin[3], angles[3];
-	GetEntPropVector(bus, Prop_Data, "m_vecAbsOrigin", origin);
-	GetEntPropVector(bus, Prop_Data, "m_angAbsRotation", angles);
-	VectorToString(origin, loot.origin, sizeof(loot.origin));
-	VectorToString(angles, loot.angles, sizeof(loot.angles));
+	if (!BattleBus_InitBusEnt(bus, Timer_EndLootBus))
+		return;
 	
-	Loot_SpawnCrateInWorld(loot, EntityOutput_OnBreakCrateBus, true);
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		char szMessage[64];
+		Format(szMessage, sizeof(szMessage), "%T", "BattleBus_Incoming", client);
+		SendHudNotificationCustom(client, szMessage, "ico_build");
+	}
+	
+	// Calculate when the bus should drop its crate
+	float flTravelTime = g_battleBusData.travel_time;
+	float flTime = (flTravelTime - (flTravelTime * Zone_GetShrinkPercentage())) / 2.0;
+	
+	CreateTimer(GetRandomFloat(flTime, flTravelTime - flTime), Timer_DropLootCrate, EntIndexToEntRef(bus));
 }
 
-public Action BattleBus_EndLootBus(Handle timer, int bus)
+static bool BattleBus_InitBusEnt(int bus, Timer func)
 {
-	//Destroy prop
+	float vecOrigin[3], vecAngles[3], vecVelocity[3];
+	if (BattleBus_CalculateBusPath(bus, vecOrigin, vecAngles, vecVelocity))
+	{
+		g_hBusPropEnt = EntIndexToEntRef(bus);
+		g_flBusSpawnTime = GetGameTime();
+		
+		TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
+		CreateTimer(g_battleBusData.travel_time, func, g_hBusPropEnt, TIMER_FLAG_NO_MAPCHANGE);
+		
+		// Play a sound for arriving
+		ArrayList sounds = g_battleBusData.sounds;
+		if (sounds && sounds.Length)
+		{
+			char szSound[PLATFORM_MAX_PATH];
+			if (sounds.GetString(GetRandomInt(0, sounds.Length - 1), szSound, sizeof(szSound)))
+			{
+				if (PrecacheScriptSound(szSound))
+				{
+					EmitGameSoundToAll(szSound, bus);
+				}
+				else if (PrecacheSound(szSound))
+				{
+					EmitSoundToAll(szSound, bus, SNDCHAN_STATIC, 150);
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	return false;
+}
+
+static void Timer_EndPlayerBus(Handle timer, int bus)
+{
+	if (!BattleBus_IsValidBus(bus))
+		return;
+	
+	// We reached our destination, eject all players still in here
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		if (FRPlayer(client).m_nPlayerState != FRPlayerState_InBattleBus)
+			continue;
+		
+		BattleBus_EjectPlayer(client);
+	}
+	
+	DissolveEntity(bus);
+}
+
+static void Timer_EndLootBus(Handle timer, int bus)
+{
+	if (!BattleBus_IsValidBus(bus))
+		return;
+	
+	DissolveEntity(bus);
+}
+
+static void Timer_DropLootCrate(Handle timer, int bus)
+{
+	if (!BattleBus_IsValidBus(bus))
+		return;
+	
+	// Create a physics-based crate
+	CrateData crate;
+	if (Config_GetCrateByName(g_battleBusData.crate_name, crate))
+	{
+		int prop = CreateEntityByName("prop_physics_override");
+		if (IsValidEntity(prop))
+		{
+			DispatchKeyValue(prop, "targetname", crate.name);
+			DispatchKeyValue(prop, "model", crate.model);
+			DispatchKeyValueFloat(prop, "massScale", 1000.0);
+			
+			if (DispatchSpawn(prop))
+			{
+				float vecOrigin[3], vecAngles[3], vecVelocity[3];
+				CBaseEntity(bus).GetAbsOrigin(vecOrigin);
+				CBaseEntity(bus).GetAbsAngles(vecAngles);
+				CBaseEntity(bus).GetAbsVelocity(vecVelocity);
+				
+				TeleportEntity(prop, vecOrigin, vecAngles, vecVelocity);
+				
+				int glow = CreateEntityByName("tf_glow");
+				if (IsValidEntity(glow))
+				{
+					// We can just set this directly if we never spawn the entity
+					SetEntPropEnt(glow, Prop_Send, "m_hTarget", prop);
+					
+					SetVariantString("!activator");
+					AcceptEntityInput(glow, "SetParent", prop);
+					
+					SetVariantColor( { 255, 255, 0, 255 } );
+					AcceptEntityInput(glow, "SetGlowColor");
+				}
+			}
+		}
+	}
+	else
+	{
+		LogError("Failed to find crate with name '%s'", g_battleBusData.crate_name);
+	}
+}
+
+bool BattleBus_EjectPlayer(int client)
+{
+	if (!IsValidEntity(g_hBusPropEnt))
+		return false;
+	
+	if (FRPlayer(client).m_nPlayerState != FRPlayerState_InBattleBus)
+		return false;
+	
+	TF2_ChangeClientTeam(client, TFTeam_Red);
+	
+	g_bAllowForceRespawn = true;
+	TF2_RespawnPlayer(client);
+	g_bAllowForceRespawn = false;
+	
+	// Disable the attached camera for this player
+	int viewcontrol = -1;
+	while ((viewcontrol = FindEntityByClassname(viewcontrol, "prop_dynamic")) != -1)
+	{
+		if (GetEntPropEnt(viewcontrol, Prop_Data, "m_hMoveParent") != EntRefToEntIndex(g_hBusPropEnt))
+			continue;
+		
+		SetClientViewEntity(client, client);
+		break;
+	}
+	
+	float vecOrigin[3], angRotation[3], vecVelocity[3];
+	CBaseEntity(g_hBusPropEnt).GetAbsOrigin(vecOrigin);
+	CBaseEntity(g_hBusPropEnt).GetAbsAngles(angRotation);
+	CBaseEntity(g_hBusPropEnt).GetAbsVelocity(vecVelocity);
+	
+	// Eject the player
+	TeleportEntity(client, vecOrigin, angRotation, vecVelocity);
+	TF2_AddCondition(client, TFCond_TeleportedGlow, 12.0);
+	
+	// To avoid destroying people's ears when everyone drops at once
+	g_hBusDropSoundTimer = CreateTimer(0.1, Timer_PlayDropSound);
+	
+	return true;
+}
+
+static void Timer_PlayDropSound(Handle timer)
+{
+	if (timer != g_hBusDropSoundTimer)
+		return;
+	
+	EmitGameSoundToAll("MVM.Robot_Teleporter_Deliver", g_hBusPropEnt);
+}
+
+static int BattleBus_CreateBusEntity()
+{
+	int bus = CreateEntityByName("prop_dynamic");
 	if (IsValidEntity(bus))
-		RemoveEntity(bus);
+	{
+		DispatchKeyValue(bus, "model", g_battleBusData.model);
+		DispatchKeyValueFloat(bus, "modelscale", g_battleBusData.model_scale);
+		DispatchKeyValue(bus, "defaultanim", g_battleBusData.default_anim);
+		
+		if (DispatchSpawn(bus))
+		{
+			// Needs to be set after CBaseProp::Spawn! 
+			SDKCall_CBaseEntity_SetMoveType(bus, MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
+			CBaseEntity(bus).SetNextThink(GetGameTime());
+			
+			return bus;
+		}
+	}
+	
+	return -1;
+}
+
+static int BattleBus_CreateCameraEntity()
+{
+	int viewcontrol = CreateEntityByName("prop_dynamic");
+	if (IsValidEntity(viewcontrol))
+	{
+		SetEntityModel(viewcontrol, "models/empty.mdl");
+		
+		if (DispatchSpawn(viewcontrol))
+			return viewcontrol;
+	}
+	
+	return -1;
+}
+
+static bool BattleBus_IsValidBus(int entity)
+{
+	return IsValidEntity(entity) && EntIndexToEntRef(EntRefToEntIndex(entity)) == g_hBusPropEnt;
 }
