@@ -230,7 +230,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		{
 			if (nClass == TFClass_Spy && IsWeaponOfID(newItem, TF_WEAPON_BUILDER))
 			{
-				SDKCall_CBaseCombatWeapon_SetSubType(newItem, TFObject_Sapper);
+				RunScriptCode(newItem, -1, -1, "self.SetSubType(%d)", TFObject_Sapper);
 			}
 			
 			// make sure we removed our current weapon
@@ -302,9 +302,10 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 	return MRES_Supercede;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player, DHookReturn ret, DHookParam params)
+static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(DHookReturn ret, DHookParam params)
 {
-	int weapon = params.Get(1);
+	int player = params.Get(1);
+	int weapon = params.Get(2);
 	
 	if (!GetEntProp(weapon, Prop_Send, "m_bInitialized"))
 	{

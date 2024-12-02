@@ -21,12 +21,6 @@
 	{
 		"Signatures"
 		{
-			"CBaseEntity::SetMoveType"
-			{
-				"library"	"server"
-				"linux"		"@_ZN11CBaseEntity11SetMoveTypeE10MoveType_t13MoveCollide_t"
-				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x0F\xB6\x86\x76\x01\x00\x00"
-			}
 			"CTFDroppedWeapon::Create"
 			{
 				"library"	"server"
@@ -37,13 +31,13 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon17InitDroppedWeaponEP9CTFPlayerP13CTFWeaponBasebb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x57\x8B\xF9\x8B\x4D\x08"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x30\x56\x57\x8B\xF9\x8B\x4D\x08"
 			}
 			"CTFDroppedWeapon::InitPickedUpWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53\x56\x57"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x14\xD9\xEE\x53"
 			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
@@ -55,19 +49,19 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer21PickupWeaponFromOtherEP16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x8B\x75\x08\x57\x8B\xF9\x81\xC6\xB0\x04\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\x7D\x08\x8B\xF1\x81\xC7\xB0\x04\x00\x00"
 			}
 			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\x04\x05\x00\x00\x00"
+				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon.part.0"
+				"windows"	"\x55\x8B\xEC\x51\x8B\x45\x08\x53\x56\x57\x80\xB8\x04\x05\x00\x00\x00"
 			}
 			"CTFPlayer::TryToPickupDroppedWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer24TryToPickupDroppedWeaponEv"
-				"windows"	"\x56\x6A\x00\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A\x32\xC0"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x6C\x56\x8B\xF1\xC6\x45\xFF\x01"
 			}
 			"CTFPlayer::PostInventoryApplication"
 			{
@@ -162,12 +156,6 @@
 				"linux"		"493"
 				"windows"	"486"
 			}
-			"CBaseCombatWeapon::SetSubType"
-			{
-				"library"	"server"
-				"linux"		"238"
-				"windows"	"232"
-			}
 			"CBaseCombatWeapon::GetWorldModel"
 			{
 				"library"	"server"
@@ -241,14 +229,26 @@
 			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
-				"callconv"	"thiscall"
+				"callconv"	"cdecl"
 				"return"	"bool"
-				"this"		"entity"
+				"this"		"ignore"
 				"arguments"
 				{
+					"pPlayer"
+					{
+						"type"	"cbaseentity"
+						"linux"
+						{
+							"register"	"eax"
+						}
+					}
 					"pWeapon"
 					{
 						"type"	"cbaseentity"
+						"linux"
+						{
+							"register"	"edx"
+						}
 					}
 				}
 			}

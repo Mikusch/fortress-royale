@@ -356,6 +356,8 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	// Allow picking up weapons with +attack2, +attack3 and +reload
 	if (bInAttack2 || bInAttack3 || bInReload)
 	{
+		// TODO This is inlined now
+		// Instead map the keys to +use_action_slot_item, TryToPickupDroppedWeapon gets called there already
 		if (SDKCall_CTFPlayer_TryToPickupDroppedWeapon(client))
 			return Plugin_Continue;
 	}

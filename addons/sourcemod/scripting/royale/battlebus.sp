@@ -415,8 +415,8 @@ static int BattleBus_CreateBusEntity()
 		
 		if (DispatchSpawn(bus))
 		{
-			// Needs to be set after CBaseProp::Spawn! 
-			SDKCall_CBaseEntity_SetMoveType(bus, MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
+			// Needs to be set after CBaseProp::Spawn!
+			RunScriptCode(bus, -1, -1, "self.SetMoveType(Constants.EMoveType.MOVETYPE_FLY, Constants.EMoveCollide.MOVECOLLIDE_FLY_CUSTOM)");
 			CBaseEntity(bus).SetNextThink(GetGameTime());
 			
 			return bus;

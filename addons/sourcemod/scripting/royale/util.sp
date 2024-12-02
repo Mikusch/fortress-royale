@@ -303,7 +303,7 @@ int GenerateDefaultItem(int client, int iItemDefIndex)
 	
 	if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 	{
-		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
+		RunScriptCode(weapon, -1, -1, "self.SetSubType(%d)", TFObject_Sapper);
 	}
 	
 	DispatchSpawn(weapon);
@@ -576,4 +576,16 @@ bool IsWeaponOfID(int weapon, int weaponID)
 bool TraceEntityFilter_HitWorld(int entity, int mask)
 {
 	return entity == 0;
+}
+
+void RunScriptCode(int entity, int activator, int caller, const char[] format, any...)
+{
+	if (!IsValidEntity(entity))
+		return;
+	
+	static char buffer[1024];
+	VFormat(buffer, sizeof(buffer), format, 5);
+	
+	SetVariantString(buffer);
+	AcceptEntityInput(entity, "RunScriptCode", activator, caller);
 }
