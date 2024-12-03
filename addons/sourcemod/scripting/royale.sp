@@ -104,9 +104,12 @@ public void OnPluginStart()
 	
 	g_bTF2Items = LibraryExists(LIBRARY_TF2ITEMS);
 	
+	FREntity.Init();
+	
 	Console_Init();
 	ConVars_Init();
 	Events_Init();
+	SDKHooks_Init();
 	
 	GameData gamedata = new GameData("royale");
 	if (gamedata)
@@ -147,13 +150,11 @@ public void OnLibraryAdded(const char[] name)
 {
 	if (StrEqual(name, LIBRARY_TF2ITEMS))
 	{
-		g_bTF2Items = true;
-		
-		// Loading TF2Items while our own GiveNamedItem hook is active leads to crashes. Abort now!
-		if (g_bEnabled && DHooks_IsGiveNamedItemHookActive())
-		{
+		// Loading TF2Items while our own GiveNamedItem hook is active leads to crashes... abort immediately!
+		if (g_bEnabled && !g_bTF2Items)
 			SetFailState("TF2Items was loaded while Fortress Royale is active!");
-		}
+		
+		g_bTF2Items = true;
 	}
 	
 	ConVars_OnLibraryAdded(name);
@@ -204,10 +205,6 @@ public void OnConfigsExecuted()
 	if (g_bEnabled != sm_fr_enable.BoolValue)
 	{
 		TogglePlugin(sm_fr_enable.BoolValue);
-	}
-	else if (g_bEnabled)
-	{
-		OnPluginEnabled();
 	}
 }
 
@@ -479,9 +476,6 @@ public void OnClientPutInServer(int client)
 		return;
 	
 	FRPlayer(client).Init();
-	
-	DHooks_OnClientPutInServer(client);
-	SDKHooks_OnClientPutInServer(client);
 }
 
 public void OnEntityCreated(int entity, const char[] classname)
@@ -489,18 +483,20 @@ public void OnEntityCreated(int entity, const char[] classname)
 	if (!g_bEnabled)
 		return;
 	
-	DHooks_OnEntityCreated(entity, classname);
-	SDKHooks_OnEntityCreated(entity, classname);
+	DHooks_HookEntity(entity, classname);
+	SDKHooks_HookEntity(entity, classname);
 }
 
 public void OnEntityDestroyed(int entity)
 {
-	FREntity(entity).Destroy();
-	
 	if (!g_bEnabled)
 		return;
 	
+	SDKHooks_UnhookEntity(entity);
 	BattleBus_OnEntityDestroyed(entity);
+	
+	if (FREntity.IsEntityTracked(entity))
+		FREntity(entity).Destroy();
 }
 
 void TogglePlugin(bool bEnable)
@@ -512,54 +508,30 @@ void TogglePlugin(bool bEnable)
 	DHooks_Toggle(bEnable);
 	Events_Toggle(bEnable);
 	
-	if (bEnable)
-	{
-		OnPluginEnabled();
-	}
-	else
-	{
-		OnPluginDisabled();
-	}
-	
-	ServerCommand("mp_restartgame_immediate 1");
-}
-
-void OnPluginEnabled()
-{
-	SetVariantString("ForceEnableUpgrades(2)");
+	SetVariantString(bEnable ? "ForceEnableUpgrades(2)" : "ForceEnableUpgrades(0)");
 	AcceptEntityInput(0, "RunScriptCode");
-	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (!IsClientInGame(client))
-			continue;
-		
-		OnClientPutInServer(client);
-	}
 	
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "*")) != -1)
 	{
-		char classname[64];
-		if (GetEntityClassname(entity, classname, sizeof(classname)))
+		if (bEnable)
 		{
+			char classname[64];
+			if (!GetEntityClassname(entity, classname, sizeof(classname)))
+				continue;
+			
 			OnEntityCreated(entity, classname);
 		}
+		else
+		{
+			SDKHooks_UnhookEntity(entity);
+			
+			if (FREntity.IsEntityTracked(entity))
+				FREntity(entity).Destroy();
+		}
 	}
-}
-
-void OnPluginDisabled()
-{
-	SetVariantString("ForceEnableUpgrades(0)");
-	AcceptEntityInput(0, "RunScriptCode");
 	
-	for (int client = 1; client <= MaxClients; client++)
-	{
-		if (!IsClientInGame(client))
-			continue;
-		
-		SDKHooks_UnhookClient(client);
-	}
+	ServerCommand("mp_restartgame_immediate 1");
 }
 
 void OnRoundStart()
