@@ -33,6 +33,7 @@ void ConVars_Init()
 {
 	g_ConVars = new StringMap();
 	
+	CreateConVar("sm_fr_version", PLUGIN_VERSION, "Plugin version.", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
 	sm_fr_enable = CreateConVar("sm_fr_enable", "1", "Enable the plugin?");
 	sm_fr_setup_length = CreateConVar("sm_fr_setup_length", "15", "Time before the battle bus takes off.");
 	sm_fr_truce_duration = CreateConVar("sm_fr_truce_duration", "60", "Length of the truce period.");
@@ -50,8 +51,6 @@ void ConVars_Init()
 	sm_fr_zone_startdisplay_player = CreateConVar("sm_fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
 	sm_fr_zone_display = CreateConVar("sm_fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
 	sm_fr_zone_display_player = CreateConVar("sm_fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
-	sm_fr_zone_shrink = CreateConVar("sm_fr_zone_shrink", "20", "Seconds to shrink zone to next level", _, true, 0.0);
-	sm_fr_zone_shrink_player = CreateConVar("sm_fr_zone_shrink_player", "0.67", "Extra seconds on every player to shrink zone to next level", _, true, 0.0);
 	sm_fr_zone_nextdisplay = CreateConVar("sm_fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
 	sm_fr_zone_nextdisplay_player = CreateConVar("sm_fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
 	sm_fr_zone_damage_min = CreateConVar("sm_fr_zone_damage_min", "1", "Minimum damage of the zone, when it hasn't shrunk yet.", _, true, 0.0);

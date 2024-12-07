@@ -31,6 +31,8 @@ enum struct ZoneConfig
 	int color_ghost[4];		/**< Color of the ghost zone. */
 	
 	int num_shrinks;		/**< Amount of times the zone should shrink. */
+	int min_shrink_level;	/**< The minimum level the zone should shrink to. */
+	float shrink_duration;	/**< The amount of time it takes for the zone to transition from one level to another. */
 	float diameter_max;		/**< Starting diameter of the zone. */
 	float diameter_safe;	/**< Diameter the zone is allowed to move in. */
 	
@@ -56,6 +58,8 @@ enum struct ZoneConfig
 		}
 		
 		this.num_shrinks = kv.GetNum("num_shrinks", this.num_shrinks);
+		this.min_shrink_level = kv.GetNum("min_shrink_level", this.min_shrink_level);
+		this.shrink_duration = kv.GetFloat("shrink_duration", this.shrink_duration);
 		
 		this.diameter_max = kv.GetFloat("diameter_max", this.diameter_max);
 		this.diameter_safe = kv.GetFloat("diameter_safe", this.diameter_safe);
@@ -121,18 +125,18 @@ void Zone_Think()
 		return;
 	
 	float vecZoneOrigin[3], flShrinkPercentage;
-	float flShrinkDuration = Zone_GetShrinkDuration();
 	
-	if (g_flShrinkStartTime != -1.0 && g_flShrinkStartTime + flShrinkDuration >= GetGameTime())
+	if (g_flShrinkStartTime > 0.0)
 	{
 		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
-		float flProgress = (GetGameTime() - g_flShrinkStartTime) / flShrinkDuration;
+		float flProgress = (GetGameTime() - g_flShrinkStartTime) / g_zoneData.shrink_duration;
 		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
 		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
 		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
 		
 		// Total shrink percentage from 0 to 1 (starting zone to zero size)
-		flShrinkPercentage = Clamp((float(g_iShrinkLevel + 1) - flProgress) / float(g_zoneData.num_shrinks), 0.0, 1.0);
+		flShrinkPercentage = Zone_GetShrinkPercentage(Zone_IsFinalZone() ? 0.0 : flProgress);
+		flShrinkPercentage = Clamp(flShrinkPercentage, 0.0, 1.0);
 		
 		// Let the zone prop wander
 		if (IsValidEntity(g_hZonePropEnt))
@@ -143,12 +147,12 @@ void Zone_Think()
 	}
 	else
 	{
-		// Not shrinking, enforce expected values
+		// Zone is not shrinking, use expected values
 		vecZoneOrigin = g_vecOldPosition;
-		flShrinkPercentage = float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+		flShrinkPercentage = Zone_GetShrinkPercentage();
 	}
 	
-	float flRadius = Zone_GetRadius(flShrinkPercentage);
+	float flRadius = Zone_GetDiameter(flShrinkPercentage) / 2.0;
 	float flDamage = Zone_GetDamage();
 	
 	if (g_nRoundState != FRRoundState_RoundEnd)
@@ -231,7 +235,7 @@ static void Zone_Reset()
 	g_vecNewPosition = NULL_VECTOR;
 	g_hZoneTimer = null;
 	g_iShrinkLevel = g_zoneData.num_shrinks;
-	g_flShrinkStartTime = -1.0;
+	g_flShrinkStartTime = 0.0;
 	g_flNextDamageTime = GetGameTime();
 }
 
@@ -273,7 +277,17 @@ static void Timer_StartDisplay(Handle hTimer)
 	{
 		// Get random angle and offset position from center
 		float flAngle = GetRandomFloat(0.0, 360.0);
-		float flDiameter = GetRandomFloat(0.0, flSearchDiameter);
+		
+		float flDiameter = 0.0;
+		if (Zone_IsFinalZone())
+		{
+			flDiameter = Zone_GetDiameter(Zone_GetShrinkPercentage()) * 2.0;
+			flDiameter = GetRandomFloat(flDiameter, flDiameter + flSearchDiameter);
+		}
+		else
+		{
+			flDiameter = GetRandomFloat(0.0, flSearchDiameter);
+		}
 		
 		float vecOrigin[3], vecNewOrigin[3];
 		vecNewOrigin[0] = (Cosine(DegToRad(flAngle)) * flDiameter / 2.0);
@@ -294,14 +308,14 @@ static void Timer_StartDisplay(Handle hTimer)
 		break;
 	}
 	
-	// Don't display ghost zone if we are on the last shrink level
-	if (g_iShrinkLevel > 1)
+	// Don't display ghost zone if the zone fully closes in
+	if (g_zoneData.min_shrink_level > 0 || g_iShrinkLevel > 1)
 	{
 		// Teleport ghost zone to the new center, then update size and display
 		if (IsValidEntity(g_hZoneGhostPropEnt))
 		{
 			TeleportEntity(g_hZoneGhostPropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel - 1) / float(g_zoneData.num_shrinks)));
+			SetEntPropFloat(g_hZoneGhostPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(Max(g_iShrinkLevel - 1, g_zoneData.min_shrink_level)) / float(g_zoneData.num_shrinks)));
 			AcceptEntityInput(g_hZoneGhostPropEnt, "Enable");
 		}
 	}
@@ -312,7 +326,7 @@ static void Timer_StartDisplay(Handle hTimer)
 			continue;
 		
 		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_ShrinkWarning", client, Zone_GetDisplayDuration());
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, Zone_GetDisplayDuration());
 		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
 	}
 	
@@ -326,8 +340,6 @@ static void Timer_StartShrink(Handle hTimer)
 	if (g_hZoneTimer != hTimer)
 		return;
 	
-	g_iShrinkLevel--;
-	
 	EmitGameSoundToAll("MVM.Warning");
 	
 	for (int client = 1; client <= MaxClients; client++)
@@ -336,14 +348,12 @@ static void Timer_StartShrink(Handle hTimer)
 			continue;
 		
 		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_Shrinking", client);
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_Moving", client);
 		SendHudNotificationCustom(client, szMessage, "ico_notify_ten_seconds");
 	}
 	
-	float flShrinkDuration = Zone_GetShrinkDuration();
-	
 	g_flShrinkStartTime = GetGameTime();
-	g_hZoneTimer = CreateTimer(flShrinkDuration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
+	g_hZoneTimer = CreateTimer(g_zoneData.shrink_duration, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void Timer_FinishShrink(Handle hTimer)
@@ -351,28 +361,9 @@ static void Timer_FinishShrink(Handle hTimer)
 	if (g_hZoneTimer != hTimer)
 		return;
 	
-	g_flShrinkStartTime = -1.0;
+	g_flShrinkStartTime = 0.0;
 	
-	BattleBus_SpawnLootBus();
-	
-	if (g_iShrinkLevel > 0)
-	{
-		g_vecOldPosition = g_vecNewPosition;
-		
-		if (IsValidEntity(g_hZonePropEnt))
-		{
-			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
-			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(float(g_iShrinkLevel) / float(g_zoneData.num_shrinks)));
-		}
-		
-		if (IsValidEntity(g_hZoneGhostPropEnt))
-		{
-			AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
-		}
-		
-		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
-	}
-	else
+	if (g_iShrinkLevel <= 0)
 	{
 		// Final shrink finished - remove the zone props
 		if (IsValidEntity(g_hZonePropEnt))
@@ -385,6 +376,27 @@ static void Timer_FinishShrink(Handle hTimer)
 			RemoveEntity(g_hZoneGhostPropEnt);
 		}
 	}
+	else
+	{
+		// Transition to next zone level
+		g_iShrinkLevel = Max(g_iShrinkLevel - 1, g_zoneData.min_shrink_level);
+		g_vecOldPosition = g_vecNewPosition;
+		
+		if (IsValidEntity(g_hZonePropEnt))
+		{
+			TeleportEntity(g_hZonePropEnt, g_vecNewPosition);
+			SetEntPropFloat(g_hZonePropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(Zone_GetShrinkPercentage()));
+		}
+		
+		if (IsValidEntity(g_hZoneGhostPropEnt))
+		{
+			AcceptEntityInput(g_hZoneGhostPropEnt, "Disable");
+		}
+		
+		g_hZoneTimer = CreateTimer(Zone_GetNextDisplayDuration(), Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
+	}
+	
+	BattleBus_SpawnLootBus();
 }
 
 static bool Zone_GetValidHeight(float vecOrigin[3])
@@ -441,9 +453,9 @@ void Zone_GetNewPosition(float center[3])
 	center = g_vecNewPosition;
 }
 
-float Zone_GetShrinkPercentage()
+float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
 {
-	return float(g_iShrinkLevel) / float(g_zoneData.num_shrinks);
+	return (float(g_iShrinkLevel) - flProgressInLevel) / float(g_zoneData.num_shrinks);
 }
 
 static float Zone_GetDamage()
@@ -451,9 +463,9 @@ static float Zone_GetDamage()
 	return sm_fr_zone_damage_max.FloatValue - ((sm_fr_zone_damage_max.FloatValue - sm_fr_zone_damage_min.FloatValue) / g_zoneData.num_shrinks * g_iShrinkLevel);
 }
 
-static float Zone_GetRadius(float flPercentage)
+static float Zone_GetDiameter(float flPercentage)
 {
-	return g_zoneData.diameter_max * flPercentage / 2.0;
+	return g_zoneData.diameter_max * flPercentage;
 }
 
 static float Zone_GetPropModelScale(float flPercentage = 1.0)
@@ -471,12 +483,12 @@ static float Zone_GetDisplayDuration()
 	return sm_fr_zone_display.FloatValue + (sm_fr_zone_display_player.FloatValue * float(GetAlivePlayerCount()));
 }
 
-static float Zone_GetShrinkDuration()
-{
-	return sm_fr_zone_shrink.FloatValue + (sm_fr_zone_shrink_player.FloatValue * float(GetAlivePlayerCount()));
-}
-
 static float Zone_GetNextDisplayDuration()
 {
 	return sm_fr_zone_nextdisplay.FloatValue + (sm_fr_zone_nextdisplay_player.FloatValue * float(GetAlivePlayerCount()));
+}
+
+static bool Zone_IsFinalZone()
+{
+	return g_iShrinkLevel <= g_zoneData.min_shrink_level;
 }

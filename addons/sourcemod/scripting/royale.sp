@@ -32,6 +32,8 @@
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
 
+#define PLUGIN_VERSION	"2.0.0"
+
 ConVar sm_fr_enable;
 ConVar sm_fr_setup_length;
 ConVar sm_fr_truce_duration;
@@ -48,8 +50,6 @@ ConVar sm_fr_zone_startdisplay;
 ConVar sm_fr_zone_startdisplay_player;
 ConVar sm_fr_zone_display;
 ConVar sm_fr_zone_display_player;
-ConVar sm_fr_zone_shrink;
-ConVar sm_fr_zone_shrink_player;
 ConVar sm_fr_zone_nextdisplay;
 ConVar sm_fr_zone_nextdisplay_player;
 ConVar sm_fr_zone_damage_min;
@@ -93,7 +93,7 @@ public Plugin myinfo =
 	name = "Fortress Royale",
 	author = "Mikusch",
 	description = "FFA Battle Royale gamemode for Team Fortress 2.",
-	version = "2.0.0",
+	version = PLUGIN_VERSION,
 	url = "https://github.com/Mikusch/fortress-royale"
 }
 

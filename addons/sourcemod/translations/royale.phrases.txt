@@ -25,14 +25,14 @@
 	{
 		"en"		"You cannot drop your fists!"
 	}
-	"Zone_ShrinkWarning"
+	"Zone_MoveWarning"
 	{
 		"#format"	"{1:0.0f}"
-		"en"		"The zone will shrink in {1} seconds."
+		"en"		"The zone will start to move in {1} seconds."
 	}
-	"Zone_Shrinking"
+	"Zone_Moving"
 	{
-		"en"		"The zone is shrinking, get moving!"
+		"en"		"The zone is moving, get going!"
 	}
 	"BattleBus_Incoming"
 	{
