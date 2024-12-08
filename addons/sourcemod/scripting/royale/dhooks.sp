@@ -52,7 +52,6 @@ void DHooks_Init(GameData gamedata)
 	
 	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::CanPickupDroppedWeapon", DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxAmmo", _, DHookCallback_CTFPlayer_GetMaxAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GiveAmmo", DHookCallback_CTFPlayer_GiveAmmo_Pre, DHookCallback_CTFPlayer_GiveAmmo_Post);
 	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
@@ -230,7 +229,7 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 		{
 			if (nClass == TFClass_Spy && IsWeaponOfID(newItem, TF_WEAPON_BUILDER))
 			{
-				SDKCall_CBaseCombatWeapon_SetSubType(newItem, TFObject_Sapper);
+				RunScriptCode(newItem, -1, -1, "self.SetSubType(%d)", TFObject_Sapper);
 			}
 			
 			// make sure we removed our current weapon
@@ -299,45 +298,6 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 	}
 	
 	ret.Value = false;
-	return MRES_Supercede;
-}
-
-static MRESReturn DHookCallback_CTFPlayer_CanPickupDroppedWeapon_Pre(int player, DHookReturn ret, DHookParam params)
-{
-	int weapon = params.Get(1);
-	
-	if (!GetEntProp(weapon, Prop_Send, "m_bInitialized"))
-	{
-		ret.Value = false;
-		return MRES_Supercede;
-	}
-	
-	TFClassType nClass = TF2_GetPlayerClass(player);
-	if (nClass == TFClass_Spy && (TF2_IsPlayerInCondition(player, TFCond_Disguised) || GetPercentInvisible(player) > 0.0))
-	{
-		ret.Value = false;
-		return MRES_Supercede;
-	}
-	
-	if (TF2_IsPlayerInCondition(player, TFCond_Taunting))
-	{
-		ret.Value = false;
-		return MRES_Supercede;
-	}
-	
-	if (!IsPlayerAlive(player))
-	{
-		ret.Value = false;
-		return MRES_Supercede;
-	}
-	
-	if (GetEntPropEnt(player, Prop_Send, "m_hActiveWeapon") == -1)
-	{
-		ret.Value = false;
-		return MRES_Supercede;
-	}
-	
-	ret.Value = CanWeaponBeUsedByClass(weapon, nClass);
 	return MRES_Supercede;
 }
 

@@ -83,7 +83,7 @@ public bool ItemCallback_CreateDroppedWeapon(int client, KeyValues data, const f
 	
 	if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 	{
-		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
+		RunScriptCode(weapon, -1, -1, "self.SetSubType(%d)", TFObject_Sapper);
 	}
 	
 	// Apply attributes

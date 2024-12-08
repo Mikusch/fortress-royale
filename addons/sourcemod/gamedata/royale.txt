@@ -21,12 +21,6 @@
 	{
 		"Signatures"
 		{
-			"CBaseEntity::SetMoveType"
-			{
-				"library"	"server"
-				"linux"		"@_ZN11CBaseEntity11SetMoveTypeE10MoveType_t13MoveCollide_t"
-				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x0F\xB6\x86\x76\x01\x00\x00"
-			}
 			"CTFDroppedWeapon::Create"
 			{
 				"library"	"server"
@@ -37,13 +31,13 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon17InitDroppedWeaponEP9CTFPlayerP13CTFWeaponBasebb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x57\x8B\xF9\x8B\x4D\x08"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x30\x56\x57\x8B\xF9\x8B\x4D\x08"
 			}
 			"CTFDroppedWeapon::InitPickedUpWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53\x56\x57"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x14\xD9\xEE\x53"
 			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
@@ -55,43 +49,43 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer21PickupWeaponFromOtherEP16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x8B\x75\x08\x57\x8B\xF9\x81\xC6\xB0\x04\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\x7D\x08\x8B\xF1\x81\xC7\xB0\x04\x00\x00"
 			}
 			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x8B\xF1\x80\xBB\x04\x05\x00\x00\x00"
+				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon.part.0"
+				"windows"	"\x55\x8B\xEC\x51\x8B\x45\x08\x53\x56\x57\x80\xB8\x04\x05\x00\x00\x00"
 			}
 			"CTFPlayer::TryToPickupDroppedWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer24TryToPickupDroppedWeaponEv"
-				"windows"	"\x56\x6A\x00\x8B\xF1\xE8\x2A\x2A\x2A\x2A\x84\xC0\x75\x2A\x32\xC0"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x6C\x56\x8B\xF1\xC6\x45\xFF\x01"
 			}
 			"CTFPlayer::PostInventoryApplication"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer24PostInventoryApplicationEv"
-				"windows"	"\x55\x8B\xEC\x51\x53\x8B\xD9\x56\x57\x8D\x8B\xE0\x1A\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x40\x53\x8B\xD9\x56\x57\x89\x5D\xF4"
 			}
 			"CTFPlayer::GetLoadoutItem"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer14GetLoadoutItemEiib"
-				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A\x57\x89\x75\xFC"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x10\x53\x56\x8B\xF1\x8B\x0D\x2A\x2A\x2A\x2A"
 			}
 			"CTFPlayer::GetMaxAmmo"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer10GetMaxAmmoEii"
-				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x56\x57\x8B\xF9\x83\xF8\xFF"
+				"windows"	"\x55\x8B\xEC\x8B\x45\x0C\x53\x8B\xD9"
 			}
 			"CTFPlayer::GiveAmmo"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer8GiveAmmoEiib11EAmmoSource"
-				"windows"	"\x55\x8B\xEC\x51\x53\x56\x8B\x75\x08\x8B\xD9\x89\x75\xFC"
+				"windows"	"\x55\x8B\xEC\x53\x56\x8B\x75\x08\x8B\xD9\x57\x8B\x7D\x0C\x89\x75\x0C"
 			}
 			"CBaseCombatCharacter::SwitchToNextBestWeapon"
 			{
@@ -109,13 +103,13 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer10RegenThinkEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x74\x57\x8B\xF9\x8B\x07"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x7C\x56\x8B\xF1"
 			}
 			"CTFPlayer::DoClassSpecialSkill"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer19DoClassSpecialSkillEv"
-				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x75\x2A\x32\xC0\x5E\xC3\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
+				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x0F\x84\x2A\x2A\x2A\x2A\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
 			}
 			"CTFPlayerShared::CanRecieveMedigunChargeEffect"
 			{
@@ -127,7 +121,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared4HealEP11CBaseEntityfffbP9CTFPlayer"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x28\x53\x56\x8B\x75\x08\x0F\x57\xC0"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x53\x56\x8B\x75\x08\x8B\xD9\x57\x0F\x57\xC0"
 			}
 			"CTFPowerup::DropSingleInstance"
 			{
@@ -161,12 +155,6 @@
 				"library"	"server"
 				"linux"		"493"
 				"windows"	"486"
-			}
-			"CBaseCombatWeapon::SetSubType"
-			{
-				"library"	"server"
-				"linux"		"238"
-				"windows"	"232"
 			}
 			"CBaseCombatWeapon::GetWorldModel"
 			{
@@ -233,20 +221,6 @@
 				"arguments"
 				{
 					"pDroppedWeapon"
-					{
-						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CTFPlayer::CanPickupDroppedWeapon"
-			{
-				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
-				"callconv"	"thiscall"
-				"return"	"bool"
-				"this"		"entity"
-				"arguments"
-				{
-					"pWeapon"
 					{
 						"type"	"cbaseentity"
 					}
@@ -429,6 +403,26 @@
 				"hooktype"	"entity"
 				"return"	"void"
 				"this"		"entity"
+			}
+		}
+		"MemPatches"
+		{
+			// Changes maximum weapon pickup slot from LOADOUT_POSITION_MELEE to LOADOUT_POSITION_MISC2
+			"CTFPlayer::CanPickupDroppedWeapon::OverrideIsValidPickupWeaponSlot"
+			{
+				"signature"	"CTFPlayer::CanPickupDroppedWeapon"
+				"linux"
+				{
+					"offset"	"101h"
+					"verify"	"\x83\x7D\xE4\x02" // <= 2
+					"patch"		"\x83\x7D\xE4\x0A" // <= 10
+				}
+				"windows"
+				{
+					"offset"	"13Bh"
+					"verify"	"\x83\xFB\x02" // <= 2
+					"patch"		"\x83\xFB\x0A" // <= 10
+				}
 			}
 		}
 	}

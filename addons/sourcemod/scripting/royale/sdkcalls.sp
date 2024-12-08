@@ -18,7 +18,6 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-static Handle g_SDKCall_CBaseEntity_SetMoveType;
 static Handle g_SDKCall_CTFDroppedWeapon_Create;
 static Handle g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon;
 static Handle g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon;
@@ -29,7 +28,6 @@ static Handle g_SDKCall_CTFPlayer_TryToPickupDroppedWeapon;
 static Handle g_SDKCall_CTFPlayer_PostInventoryApplication;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
-static Handle g_SDKCall_CBaseCombatWeapon_SetSubType;
 static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
 static Handle g_SDKCall_CTFPowerup_DropSingleInstance;
 static Handle g_SDKCall_CTFPlayer_IsCritBoosted;
@@ -37,7 +35,6 @@ static Handle g_SDKCall_CTFPlayer_RemoveDisguise;
 
 void SDKCalls_Init(GameData gamedata)
 {
-	g_SDKCall_CBaseEntity_SetMoveType = PrepSDKCall_CBaseEntity_SetMoveType(gamedata);
 	g_SDKCall_CTFDroppedWeapon_Create = PrepSDKCall_CTFDroppedWeapon_Create(gamedata);
 	g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon = PrepSDKCall_CTFDroppedWeapon_InitDroppedWeapon(gamedata);
 	g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon = PrepSDKCall_CTFDroppedWeapon_InitPickedUpWeapon(gamedata);
@@ -48,7 +45,6 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFPlayer_PostInventoryApplication = PrepSDKCall_CTFPlayer_PostInventoryApplication(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
-	g_SDKCall_CBaseCombatWeapon_SetSubType = PrepSDKCall_CBaseCombatWeapon_SetSubType(gamedata);
 	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
 	g_SDKCall_CTFPowerup_DropSingleInstance = PrepSDKCall_CTFPowerup_DropSingleInstance(gamedata);
 	g_SDKCall_CTFPlayer_IsCritBoosted = PrepSDKCall_FromScriptFunction("CTFPlayer", "IsCritBoosted");
@@ -65,20 +61,6 @@ static Handle PrepSDKCall_FromScriptFunction(const char[] className, const char[
 	}
 	
 	return func.CreateSDKCall();
-}
-
-static Handle PrepSDKCall_CBaseEntity_SetMoveType(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CBaseEntity::SetMoveType");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CBaseEntity::SetMoveType");
-	
-	return call;
 }
 
 static Handle PrepSDKCall_CTFDroppedWeapon_Create(GameData gamedata)
@@ -231,19 +213,6 @@ static Handle PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(GameData g
 	return call;
 }
 
-static Handle PrepSDKCall_CBaseCombatWeapon_SetSubType(GameData gamedata)
-{
-	StartPrepSDKCall(SDKCall_Entity);
-	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CBaseCombatWeapon::SetSubType");
-	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
-	
-	Handle call = EndPrepSDKCall();
-	if (!call)
-		LogError("Failed to create SDKCall: CBaseCombatWeapon::SetSubType");
-	
-	return call;
-}
-
 static Handle PrepSDKCall_CBaseCombatWeapon_GetWorldModel(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -271,14 +240,6 @@ static Handle PrepSDKCall_CTFPowerup_DropSingleInstance(GameData gamedata)
 		LogError("Failed to create SDKCall: CTFPowerup::DropSingleInstance");
 	
 	return call;
-}
-
-void SDKCall_CBaseEntity_SetMoveType(int entity, MoveType val, MoveCollide moveCollide)
-{
-	if (g_SDKCall_CBaseEntity_SetMoveType)
-	{
-		SDKCall(g_SDKCall_CBaseEntity_SetMoveType, entity, val, moveCollide);
-	}
 }
 
 int SDKCall_CTFDroppedWeapon_Create(int lastOwner, const float vecOrigin[3], const float vecAngles[3], char[] szModelName, Address pItem)
@@ -377,14 +338,6 @@ bool SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(int player, int current
 	}
 	
 	return false;
-}
-
-void SDKCall_CBaseCombatWeapon_SetSubType(int weapon, TFObjectType iSubType)
-{
-	if (g_SDKCall_CBaseCombatWeapon_SetSubType)
-	{
-		SDKCall(g_SDKCall_CBaseCombatWeapon_SetSubType, weapon, iSubType);
-	}
 }
 
 void SDKCall_CBaseCombatWeapon_GetWorldModel(int weapon, char[] szWorldModel, int iMaxLength)

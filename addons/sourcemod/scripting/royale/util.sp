@@ -99,15 +99,6 @@ bool GetItemWorldModel(int item, char[] szWorldModel, int iMaxLength)
 	return false;
 }
 
-float GetPercentInvisible(int client)
-{
-	static int iOffset = -1;
-	if (iOffset == -1)
-		iOffset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
-	
-	return GetEntDataFloat(client, iOffset);
-}
-
 void SendHudNotificationCustom(int client, const char[] szText, const char[] szIcon, TFTeam nTeam = TFTeam_Unassigned)
 {
 	BfWrite bf = UserMessageToBfWrite(StartMessageOne("HudNotifyCustom", client));
@@ -303,7 +294,7 @@ int GenerateDefaultItem(int client, int iItemDefIndex)
 	
 	if (nClass == TFClass_Spy && IsWeaponOfID(weapon, TF_WEAPON_BUILDER))
 	{
-		SDKCall_CBaseCombatWeapon_SetSubType(weapon, TFObject_Sapper);
+		RunScriptCode(weapon, -1, -1, "self.SetSubType(%d)", TFObject_Sapper);
 	}
 	
 	DispatchSpawn(weapon);
@@ -319,12 +310,6 @@ void SetItemID(int weapon, int iIdx)
 		SetEntProp(weapon, Prop_Send, "m_iItemIDHigh", iIdx >> 32);
 		SetEntProp(weapon, Prop_Send, "m_iItemIDLow", iIdx & 0xFFFFFFFF);
 	}
-}
-
-bool CanWeaponBeUsedByClass(int weapon, TFClassType class)
-{
-	int iItemDefIndex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-	return TF2Econ_GetItemLoadoutSlot(iItemDefIndex, class) != -1;
 }
 
 void TE_TFParticleEffect(const char[] szName, const float vecOrigin[3] = NULL_VECTOR,
@@ -576,4 +561,16 @@ bool IsWeaponOfID(int weapon, int weaponID)
 bool TraceEntityFilter_HitWorld(int entity, int mask)
 {
 	return entity == 0;
+}
+
+void RunScriptCode(int entity, int activator, int caller, const char[] format, any...)
+{
+	if (!IsValidEntity(entity))
+		return;
+	
+	static char buffer[1024];
+	VFormat(buffer, sizeof(buffer), format, 5);
+	
+	SetVariantString(buffer);
+	AcceptEntityInput(entity, "RunScriptCode", activator, caller);
 }
