@@ -31,13 +31,13 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon17InitDroppedWeaponEP9CTFPlayerP13CTFWeaponBasebb"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x30\x56\x57\x8B\xF9\x8B\x4D\x08"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x56\x57\x8B\xF9\x8B\x4D\x08"
 			}
 			"CTFDroppedWeapon::InitPickedUpWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x14\xD9\xEE\x53"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53"
 			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
@@ -49,25 +49,19 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer21PickupWeaponFromOtherEP16CTFDroppedWeapon"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\x7D\x08\x8B\xF1\x81\xC7\xB0\x04\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x53\x56\x57\x8B\x7D\x08\x8B\xF1"
 			}
 			"CTFPlayer::CanPickupDroppedWeapon"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer22CanPickupDroppedWeaponEPK16CTFDroppedWeapon.part.0"
-				"windows"	"\x55\x8B\xEC\x51\x8B\x45\x08\x53\x56\x57\x80\xB8\x04\x05\x00\x00\x00"
-			}
-			"CTFPlayer::TryToPickupDroppedWeapon"
-			{
-				"library"	"server"
-				"linux"		"@_ZN9CTFPlayer24TryToPickupDroppedWeaponEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x6C\x56\x8B\xF1\xC6\x45\xFF\x01"
+				"windows"	"\x55\x8B\xEC\x56\x68\x64\x0E\x00\x00"
 			}
 			"CTFPlayer::PostInventoryApplication"
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer24PostInventoryApplicationEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x40\x53\x8B\xD9\x56\x57\x89\x5D\xF4"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x3C\x53\x8B\xD9\x56\x57"
 			}
 			"CTFPlayer::GetLoadoutItem"
 			{
@@ -97,7 +91,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x24\x53\x56\x57\x8B\xF9\xFF\xB7\xC8\x22\x00\x00"
+				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x0F\x84\x2A\x2A\x2A\x2A\xF7\x86\xBC\x1B\x00\x00\x00\x00\x04\x00"
 			}
 			"CTFPlayer::RegenThink"
 			{
@@ -109,7 +103,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer19DoClassSpecialSkillEv"
-				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x0F\x84\x2A\x2A\x2A\x2A\xF7\x86\xB4\x1B\x00\x00\x00\x00\x04\x00"
+				"windows"	"\x56\x8B\xF1\x8B\x06\x8B\x80\x0C\x01\x00\x00\xFF\xD0\x84\xC0\x0F\x84\x2A\x2A\x2A\x2A\xF7\x86\xBC\x1B\x00\x00\x00\x00\x04\x00"
 			}
 			"CTFPlayerShared::CanRecieveMedigunChargeEffect"
 			{
@@ -121,7 +115,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN15CTFPlayerShared4HealEP11CBaseEntityfffbP9CTFPlayer"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x0C\x53\x56\x8B\x75\x08\x8B\xD9\x57\x0F\x57\xC0"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x08\x53\x56\x8B\x75\x08\x8B\xD9\x57\x0F\x57\xC0"
 			}
 			"CTFPowerup::DropSingleInstance"
 			{
@@ -141,38 +135,38 @@
 			"CBaseCombatCharacter::Weapon_CanSwitchTo"
 			{
 				"library"	"server"
-				"linux"		"277"
-				"windows"	"276"
+				"linux"		"278"
+				"windows"	"277"
 			}
 			"CBasePlayer::ForceRespawn"
 			{
 				"library"	"server"
-				"linux"		"337"
-				"windows"	"336"
+				"linux"		"338"
+				"windows"	"337"
 			}
 			"CTFPlayer::GiveNamedItem"
 			{
 				"library"	"server"
-				"linux"		"493"
-				"windows"	"486"
+				"linux"		"494"
+				"windows"	"487"
 			}
 			"CBaseCombatWeapon::GetWorldModel"
 			{
 				"library"	"server"
-				"linux"		"328"
-				"windows"	"322"
+				"linux"		"329"
+				"windows"	"323"
 			}
 			"CBaseCombatWeapon::PrimaryAttack"
 			{
 				"library"	"server"
-				"linux"		"292"
-				"windows"	"286"
+				"linux"		"293"
+				"windows"	"287"
 			}
 			"CBaseCombatWeapon::SecondaryAttack"
 			{
 				"library"	"server"
-				"linux"		"293"
-				"windows"	"287"
+				"linux"		"294"
+				"windows"	"288"
 			}
 			"CTFDroppedWeapon::m_nAmmo"
 			{

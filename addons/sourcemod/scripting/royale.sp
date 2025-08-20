@@ -28,6 +28,7 @@
 #include <tf2attributes>
 #include <cbasenpc>
 #include <vscript>
+#include <sourcescramble>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
@@ -356,8 +357,9 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	// Allow picking up weapons with +attack2, +attack3 and +reload
 	if (bInAttack2 || bInAttack3 || bInReload)
 	{
-		if (SDKCall_CTFPlayer_TryToPickupDroppedWeapon(client))
-			return Plugin_Continue;
+		KeyValues kv = new KeyValues("use_action_slot_item_server");
+		FakeClientCommandKeyValues(client, kv);
+		delete kv;
 	}
 	
 	Action action = Plugin_Continue;

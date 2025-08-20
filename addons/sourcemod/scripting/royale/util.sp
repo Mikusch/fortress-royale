@@ -283,7 +283,7 @@ int GenerateDefaultItem(int client, int iItemDefIndex)
 		return -1;
 	
 	SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", iItemDefIndex);
-	SetEntProp(weapon, Prop_Send, "m_bInitialized", 1);
+	SetEntProp(weapon, Prop_Send, "m_bInitialized", true);
 	
 	// Fake global id
 	static int s_nFakeID = 1;
