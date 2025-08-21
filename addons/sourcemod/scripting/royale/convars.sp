@@ -47,15 +47,6 @@ void ConVars_Init()
 	sm_fr_medigun_damage = CreateConVar("sm_fr_medigun_damage", "2", "Amount of damage that Medi Guns should deal per tick.");
 	sm_fr_dropped_weapon_ammo_percentage = CreateConVar("sm_fr_dropped_weapon_ammo_percentage", "0.25", "How much of its maximum ammo a dropped weapon should start with.");
 	
-	sm_fr_zone_startdisplay = CreateConVar("sm_fr_zone_startdisplay", "30", "Seconds from round start to start zone display", _, true, 0.0);
-	sm_fr_zone_startdisplay_player = CreateConVar("sm_fr_zone_startdisplay_player", "1", "Extra seconds on every player from round start to start zone display", _, true, 0.0);
-	sm_fr_zone_display = CreateConVar("sm_fr_zone_display", "15", "Seconds to display next zone before shrink", _, true, 0.0);
-	sm_fr_zone_display_player = CreateConVar("sm_fr_zone_display_player", "0.5", "Extra seconds on every player to display next zone before shrink", _, true, 0.0);
-	sm_fr_zone_nextdisplay = CreateConVar("sm_fr_zone_nextdisplay", "20", "Seconds after shrink to display next zone", _, true, 0.0);
-	sm_fr_zone_nextdisplay_player = CreateConVar("sm_fr_zone_nextdisplay_player", "0", "Extra seconds on every player after shrink to display next zone", _, true, 0.0);
-	sm_fr_zone_damage_min = CreateConVar("sm_fr_zone_damage_min", "1", "Minimum damage of the zone, when it hasn't shrunk yet.", _, true, 0.0);
-	sm_fr_zone_damage_max = CreateConVar("sm_fr_zone_damage_max", "10", "Maximum damage of the zone, when it's fully shrunk.", _, true, 0.0);
-	
 	sm_fr_health_multiplier[TFClass_Scout] = CreateConVar("sm_fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
 	sm_fr_health_multiplier[TFClass_Sniper] = CreateConVar("sm_fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
 	sm_fr_health_multiplier[TFClass_Soldier] = CreateConVar("sm_fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");

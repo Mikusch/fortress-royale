@@ -47,14 +47,6 @@ ConVar sm_fr_parachute_auto_height;
 ConVar sm_fr_fists_damage_multiplier;
 ConVar sm_fr_medigun_damage;
 ConVar sm_fr_dropped_weapon_ammo_percentage;
-ConVar sm_fr_zone_startdisplay;
-ConVar sm_fr_zone_startdisplay_player;
-ConVar sm_fr_zone_display;
-ConVar sm_fr_zone_display_player;
-ConVar sm_fr_zone_nextdisplay;
-ConVar sm_fr_zone_nextdisplay_player;
-ConVar sm_fr_zone_damage_min;
-ConVar sm_fr_zone_damage_max;
 ConVar sm_fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
 
 ConVar mp_disable_respawn_times;
