@@ -57,7 +57,6 @@ void Events_Init()
 	Events_AddEvent("player_death", EventHook_PlayerDeath_Post, EventHookMode_Post);
 	Events_AddEvent("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
 	Events_AddEvent("teamplay_round_start", EventHook_TeamplayRoundStart);
-	Events_AddEvent("teamplay_setup_finished", EventHook_TeamplaySetupFinished);
 	Events_AddEvent("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
 }
 
@@ -340,31 +339,6 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 		else
 		{
 			g_nRoundState = FRRoundState_WaitingForPlayers;
-		}
-	}
-}
-
-static void EventHook_TeamplaySetupFinished(Event event, const char[] name, bool dontBroadcast)
-{
-	if (IsInWaitingForPlayers())
-		return;
-	
-	g_nRoundState = FRRoundState_RoundRunning;
-	
-	BattleBus_OnSetupFinished();
-	Truce_OnSetupFinished();
-	Zone_OnSetupFinished();
-	
-	int nCount = GetActivePlayerCount();
-	float flPercentage = Max(0.5, float(nCount) / float(MaxClients));
-	
-	int crate = -1;
-	while ((crate = FindEntityByClassname(crate, "prop_*")) != -1)
-	{
-		// Remove crates on low player counts
-		if (FREntity(crate).IsValidCrate() && GetRandomFloat() > flPercentage)
-		{
-			RemoveEntity(crate);
 		}
 	}
 }

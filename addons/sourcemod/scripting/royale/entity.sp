@@ -167,7 +167,7 @@ methodmap FRCrate < FREntity
 		
 		// Don't set a message yet, allow it to teleport first
 		worldtext = CreateEntityByName("point_worldtext");
-		DispatchKeyValue(worldtext, "orientation", "1");
+		DispatchKeyValueInt(worldtext, "orientation", 1);
 		DispatchKeyValueVector(worldtext, "origin", vecOrigin);
 		DispatchKeyValueVector(worldtext, "angles", vecAngles);
 		

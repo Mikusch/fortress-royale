@@ -71,8 +71,8 @@ void Truce_OnSetupFinished()
 	if (IsValidEntity(timer))
 	{
 		DispatchKeyValueFloat(timer, "timer_length", sm_fr_truce_duration.FloatValue);
-		DispatchKeyValue(timer, "show_in_hud", "1");
-		DispatchKeyValue(timer, "auto_countdown", "0");
+		DispatchKeyValueInt(timer, "show_in_hud", 1);
+		DispatchKeyValueInt(timer, "auto_countdown", 0);
 		
 		if (DispatchSpawn(timer))
 		{

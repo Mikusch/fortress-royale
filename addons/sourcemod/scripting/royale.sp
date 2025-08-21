@@ -559,8 +559,8 @@ void OnRoundStart()
 	if (IsValidEntity(timer))
 	{
 		DispatchKeyValueFloat(timer, "setup_length", sm_fr_setup_length.FloatValue);
-		DispatchKeyValue(timer, "show_in_hud", "1");
-		DispatchKeyValue(timer, "start_paused", "0");
+		DispatchKeyValueInt(timer, "show_in_hud", 1);
+		DispatchKeyValueInt(timer, "start_paused", 0);
 		
 		if (DispatchSpawn(timer))
 		{
@@ -614,5 +614,27 @@ void TryToEndMatch()
 
 static void EntityOutput_OnSetupFinished(const char[] output, int caller, int activator, float delay)
 {
+	if (IsInWaitingForPlayers())
+		return;
+	
+	g_nRoundState = FRRoundState_RoundRunning;
+	
+	BattleBus_OnSetupFinished();
+	Truce_OnSetupFinished();
+	Zone_OnSetupFinished();
+	
+	int nCount = GetActivePlayerCount();
+	float flPercentage = Max(0.5, float(nCount) / float(MaxClients));
+	
+	int crate = -1;
+	while ((crate = FindEntityByClassname(crate, "prop_*")) != -1)
+	{
+		// Remove crates on low player counts
+		if (FREntity(crate).IsValidCrate() && GetRandomFloat() > flPercentage)
+		{
+			RemoveEntity(crate);
+		}
+	}
+
 	RemoveEntity(caller);
 }

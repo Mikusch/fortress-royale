@@ -519,7 +519,7 @@ void SetWinningTeam(TFTeam team = TFTeam_Unassigned)
 	int round_win = CreateEntityByName("game_round_win");
 	if (round_win != -1)
 	{
-		DispatchKeyValue(round_win, "force_map_reset", "1");
+		DispatchKeyValueInt(round_win, "force_map_reset", 1);
 		SetEntProp(round_win, Prop_Data, "m_iTeamNum", team);
 		
 		AcceptEntityInput(round_win, "RoundWin");

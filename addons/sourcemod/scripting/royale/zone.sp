@@ -133,7 +133,6 @@ static Handle g_hZoneTimer;
 static int g_iCurrentPhase;
 static float g_flPhaseStartTime;
 static float g_flNextDamageTime;
-static bool g_bIsWaiting;
 static bool g_bIsShrinking;
 
 void Zone_Precache()
@@ -271,7 +270,7 @@ void Zone_Think()
 			
 			if (bIsOutsideZone && bIsDamageTick && flDamage > 0.0)
 			{
-				SDKHooks_TakeDamage(client, 0, 0, flDamage, DMG_PREVENT_PHYSICS_FORCE | DMG_NEVERGIB);
+				SDKHooks_TakeDamage(client, 0, 0, flDamage, DMG_PREVENT_PHYSICS_FORCE | DMG_NEVERGIB | DMG_PLASMA);
 			}
 		}
 		
@@ -323,7 +322,6 @@ static void Zone_Reset()
 	g_iCurrentPhase = 0;
 	g_flPhaseStartTime = 0.0;
 	g_flNextDamageTime = GetGameTime();
-	g_bIsWaiting = false;
 	g_bIsShrinking = false;
 }
 
@@ -335,10 +333,10 @@ static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
 		DispatchKeyValue(zone, "targetname", "fr_zone");
 		DispatchKeyValue(zone, "model", ZONE_MODEL);
 		DispatchKeyValueVector(zone, "origin", vecOrigin);
-		DispatchKeyValue(zone, "disableshadows", "1");
-		DispatchKeyValue(zone, "disablereceiveshadows", "1");
+		DispatchKeyValueInt(zone, "disableshadows", 1);
+		DispatchKeyValueInt(zone, "disablereceiveshadows", 1);
 		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropModelScale(g_zoneData.diameter_max));
-		DispatchKeyValue(zone, "solid", "0");
+		DispatchKeyValueInt(zone, "solid", FSOLID_NOT_SOLID);
 		
 		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
 		SetEntityRenderColor(zone, aColor[0], aColor[1], aColor[2], aColor[3]);
@@ -358,55 +356,28 @@ static void Zone_StartWaitPhase()
 	if (!g_zoneData.phases || g_iCurrentPhase >= g_zoneData.phases.Length)
 		return;
 	
-	g_bIsWaiting = true;
 	g_bIsShrinking = false;
 	
 	ZonePhase phase;
 	if (!Zone_GetCurrentPhase(phase))
 		return;
 	
-	if (phase.wait_time > 0.0)
-	{
-		float flWaitTime = Zone_GetScaledTime(phase.wait_time);
-		g_hZoneTimer = CreateTimer(flWaitTime, Timer_StartDisplay, _, TIMER_FLAG_NO_MAPCHANGE);
-	}
-	else
-	{
-		Timer_StartDisplay(null);
-	}
-}
-
-static void Timer_StartDisplay(Handle hTimer)
-{
-	if (hTimer != null && g_hZoneTimer != hTimer)
-		return;
-	
-	g_bIsWaiting = false;
-	
-	if (!g_zoneData.phases || g_iCurrentPhase >= g_zoneData.phases.Length)
-		return;
-	
-	ZonePhase phase;
-	if (!Zone_GetCurrentPhase(phase))
-		return;
-	
-	bool bIsLastPhase = (g_iCurrentPhase == g_zoneData.phases.Length - 1);
-	
+	// Calculate new position and show preview immediately
 	Zone_CalculateNewPosition();
 	
-	// Don't display ghost zone if the zone fully closes in
-	if (!bIsLastPhase)
+	float flNextDiameter = Zone_GetPhaseDiameter(g_iCurrentPhase);
+	if (flNextDiameter > 0.0)
 	{
-		// Teleport ghost zone to the new center, then update size and display
+		// Display ghost zone for the next phase
 		if (IsValidEntity(g_hZonePreviewPropEnt))
 		{
 			DispatchKeyValueVector(g_hZonePreviewPropEnt, "origin", g_vecNewPosition);
-			float flNextDiameter = Zone_GetPhaseDiameter(g_iCurrentPhase);
 			SetEntPropFloat(g_hZonePreviewPropEnt, Prop_Send, "m_flModelScale", Zone_GetPropModelScale(flNextDiameter));
 			AcceptEntityInput(g_hZonePreviewPropEnt, "Enable");
 		}
 	}
 	
+	// Notify players about upcoming zone movement
 	for (int client = 1; client <= MaxClients; client++)
 	{
 		if (!IsClientInGame(client))
@@ -417,7 +388,10 @@ static void Timer_StartDisplay(Handle hTimer)
 		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
 	}
 	
-	Timer_StartShrink(null);
+	// Set timer to start shrinking
+	float flWaitTime = Zone_GetScaledTime(phase.wait_time);
+	Zone_CreateTimer(flWaitTime, true);
+	g_hZoneTimer = CreateTimer(flWaitTime, Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void Timer_StartShrink(Handle hTimer)
@@ -445,14 +419,8 @@ static void Timer_StartShrink(Handle hTimer)
 		return;
 	
 	float flShrinkTime = Zone_GetScaledTime(phase.shrink_time);
-	if (flShrinkTime > 0.0)
-	{
-		g_hZoneTimer = CreateTimer(flShrinkTime, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
-	}
-	else
-	{
-		Timer_FinishShrink(null);
-	}
+	Zone_CreateTimer(flShrinkTime, false);
+	g_hZoneTimer = CreateTimer(flShrinkTime, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
 static void Timer_FinishShrink(Handle hTimer)
@@ -514,8 +482,6 @@ static void Zone_CalculateNewPosition()
 	
 	float flCurrentDiameter = Zone_GetCurrentDiameter();
 	float flNextDiameter = Zone_GetPhaseDiameter(g_iCurrentPhase);
-	
-	bool bIsLastPhase = (g_iCurrentPhase == g_zoneData.phases.Length - 1);
 	
 	// If zone is meant to move, allow going anywhere within the safe diameter
 	// If zone is stationary, only allow moving within the zone diameter
@@ -865,4 +831,33 @@ float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
 void Zone_Cleanup()
 {
 	g_zoneData.Delete();
+}
+
+void Zone_CreateTimer(float flLength, bool bSetup)
+{
+	int timer = CreateEntityByName("team_round_timer");
+	if (IsValidEntity(timer))
+	{
+		DispatchKeyValueFloat(timer, bSetup ? "setup_length" : "timer_length", flLength);
+		DispatchKeyValueInt(timer, "show_in_hud", 1);
+		DispatchKeyValueInt(timer, "start_paused", 0);
+		DispatchKeyValueInt(timer, "auto_countdown", 0);
+		
+		if (DispatchSpawn(timer))
+		{
+			AcceptEntityInput(timer, "Enable");
+			HookSingleEntityOutput(timer, "OnSetupFinished", EntityOutput_OnZoneTimerFinished, true);
+			
+			Event event = CreateEvent("teamplay_update_timer");
+			if (event)
+			{
+				event.Fire();
+			}
+		}
+	}
+}
+
+static void EntityOutput_OnZoneTimerFinished(const char[] output, int caller, int activator, float delay)
+{
+	RemoveEntity(caller);
 }
