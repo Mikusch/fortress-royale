@@ -245,6 +245,9 @@ methodmap FRCrate < FREntity
 		{
 			this.DropItem(client);
 			
+			if (data.open_sound[0])
+				StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
+			
 			EmitSoundToAll(data.opened_sound, this.index, SNDCHAN_STATIC);
 			
 			float origin[3];
