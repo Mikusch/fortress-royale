@@ -252,6 +252,90 @@ methodmap FRPlayer < CBaseCombatCharacter
 		return this.GetPropEnt(Prop_Data, "m_hVehicle") != -1;
 	}
 	
+	public bool TryToPickupDroppedWeapon()
+	{
+		// TODO
+		//if (!SDKCall_CTFPlayer_CanAttack(this.index))
+			//return false;
+		
+		int activeWeapon = this.GetPropEnt(Prop_Send, "m_hActiveWeapon");
+		if (activeWeapon != -1 && GetEntPropFloat(activeWeapon, Prop_Send, "m_flNextPrimaryAttack") > GetGameTime())
+			return false;
+		
+		int droppedWeapon = this.GetDroppedWeaponInRange();
+		if (droppedWeapon != -1 && !CBaseEntity(droppedWeapon).IsEFlagSet(EFL_KILLME))
+		{
+			if (SDKCall_CTFPlayer_PickupWeaponFromOther(this.index, droppedWeapon))
+			{
+				RemoveEntity(droppedWeapon);
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public int GetDroppedWeaponInRange()
+	{
+		float vecEyePosition[3], vecEyeAngles[3], vecForward[3];
+		GetClientEyePosition(this.index, vecEyePosition);
+		GetClientEyeAngles(this.index, vecEyeAngles);
+		GetAngleVectors(vecEyeAngles, vecForward, NULL_VECTOR, NULL_VECTOR);
+		
+		float vecEnd[3];
+		ScaleVector(vecForward, TF_WEAPON_PICKUP_RANGE);
+		AddVectors(vecEyePosition, vecForward, vecEnd);
+		
+		TR_TraceRayFilter(vecEyePosition, vecEnd, MASK_SOLID | CONTENTS_DEBRIS, RayType_EndPoint, TraceEntityFilter_IgnorePlayer, this.index);
+		
+		int droppedWeapon = TR_GetEntityIndex();
+		if (droppedWeapon == -1 || !FClassnameIs(droppedWeapon, "tf_dropped_weapon"))
+			return -1;
+		
+		if (!this.CanPickupDroppedWeapon(droppedWeapon))
+			return -1;
+		
+		float vecWeaponOrigin[3];
+		GetEntPropVector(droppedWeapon, Prop_Data, "m_vecOrigin", vecWeaponOrigin);
+		
+		// too far?
+		if (GetVectorDistance(vecEyePosition, vecWeaponOrigin) > TF_WEAPON_PICKUP_RANGE)
+			return -1;
+		
+		return droppedWeapon;
+	}
+
+	// TODO complete this impl
+	public bool CanPickupDroppedWeapon(int weapon)
+	{
+		int iItemDefinitionIndex = GetEntProp(weapon, Prop_Send, "m_Item");
+		if (iItemDefinitionIndex == INVALID_ITEM_DEF_INDEX)
+			return false;
+		
+		TFClassType playerClass = TF2_GetPlayerClass(this.index);
+		if (playerClass == TFClass_Spy && (TF2_IsPlayerInCondition(this.index, TFCond_Stealthed) || this.GetPercentInvisible() > 0.0))
+			return false;
+		
+		if (TF2_IsPlayerInCondition(this.index, TFCond_Taunting))
+			return false;
+		
+		if (!IsPlayerAlive(this.index))
+			return false;
+
+		// TODO CanPickupOtherWeapon
+		
+		int iItemSlot = TF2Econ_GetItemLoadoutSlot(iItemDefinitionIndex, playerClass);
+
+		// Only allow to pick up our own class weapons
+		return iItemSlot != -1;
+	}
+
+	public float GetPercentInvisible()
+	{
+		int offset = FindSendPropInfo("CTFPlayer", "m_flInvisChangeCompleteTime") - 8;
+		return GetEntDataFloat(this.index, offset);
+	}
+
 	public void Init()
 	{
 		this.m_bIsParachuting = false;
@@ -260,4 +344,9 @@ methodmap FRPlayer < CBaseCombatCharacter
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;
 		this.SetPlayerState(FRPlayerState_Waiting);
 	}
+}
+
+static bool TraceEntityFilter_IgnorePlayer(int entity, int contentsMask, any data)
+{
+	return entity != data;
 }

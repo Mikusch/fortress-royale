@@ -28,7 +28,6 @@
 #include <tf2attributes>
 #include <cbasenpc>
 #include <vscript>
-#include <sourcescramble>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <tf2items>
 #define REQUIRE_EXTENSIONS
@@ -320,6 +319,21 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	return Plugin_Handled;
 }
 
+public Action OnClientCommandKeyValues(int client, KeyValues kv)
+{
+	char section[32];
+	if (kv.GetSectionName(section, sizeof(section)))
+	{
+		if (StrEqual(section, "+use_action_slot_item_server"))
+		{
+			if (FRPlayer(client).TryToPickupDroppedWeapon())
+				return Plugin_Handled;
+		}
+	}
+	
+	return Plugin_Continue;
+}
+
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
 	if (!g_bEnabled)
@@ -349,7 +363,11 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	// Allow picking up weapons with +attack2, +attack3 and +reload
 	if (bInAttack2 || bInAttack3 || bInReload)
 	{
-		KeyValues kv = new KeyValues("use_action_slot_item_server");
+		KeyValues kv = new KeyValues("+use_action_slot_item_server");
+		FakeClientCommandKeyValues(client, kv);
+		delete kv;
+
+		kv = new KeyValues("-use_action_slot_item_server");
 		FakeClientCommandKeyValues(client, kv);
 		delete kv;
 	}

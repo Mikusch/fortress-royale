@@ -574,3 +574,9 @@ void RunScriptCode(int entity, int activator, int caller, const char[] format, a
 	SetVariantString(buffer);
 	AcceptEntityInput(entity, "RunScriptCode", activator, caller);
 }
+
+bool FClassnameIs(int entity, const char[] szClassname)
+{
+	char m_iClassname[64];
+	return GetEntityClassname(entity, m_iClassname, sizeof(m_iClassname)) && StrEqual(szClassname, m_iClassname);
+}

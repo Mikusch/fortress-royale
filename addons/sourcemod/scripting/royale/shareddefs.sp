@@ -23,6 +23,8 @@
 
 #define MAX_WEAPONS				48	// Max number of weapons available
 
+#define TF_WEAPON_PICKUP_RANGE	100.0
+
 #define TF_DEATH_ANIMATION_TIME			2.0
 
 #define TF_DEFINDEX_FISTS				5
