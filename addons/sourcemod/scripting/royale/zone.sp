@@ -392,10 +392,7 @@ static void Timer_StartDisplay(Handle hTimer)
 	
 	bool bIsLastPhase = (g_iCurrentPhase == g_zoneData.phases.Length - 1);
 	
-	if (phase.moves_zone || bIsLastPhase)
-	{
-		Zone_CalculateNewPosition();
-	}
+	Zone_CalculateNewPosition();
 	
 	// Don't display ghost zone if the zone fully closes in
 	if (!bIsLastPhase)
@@ -520,17 +517,9 @@ static void Zone_CalculateNewPosition()
 	
 	bool bIsLastPhase = (g_iCurrentPhase == g_zoneData.phases.Length - 1);
 	
-	if (bIsLastPhase)
-	{
-		g_vecNewPosition = g_vecOldPosition;
-		return;
-	}
-	
-	float flMaxOffset = 0.0;
-	if (phase.moves_zone)
-	{
-		flMaxOffset = (flCurrentDiameter - flNextDiameter) / 2.0;
-	}
+	// If zone is meant to move, allow going anywhere within the safe diameter
+	// If zone is stationary, only allow moving within the zone diameter
+	float flMaxOffset = phase.moves_zone ? g_zoneData.diameter_safe / 2.0 : (flCurrentDiameter - flNextDiameter) / 2.0;
 	
 	// Try multiple candidate positions and pick the best one
 	ArrayList candidates = new ArrayList(sizeof(ZoneAreaScore));
@@ -567,10 +556,10 @@ static void Zone_CalculateNewPosition()
 		
 		// Evaluate this position
 		ZoneAreaScore candidate;
-		if (Zone_EvaluatePosition(vecNewOrigin, candidate))
-		{
-			candidates.PushArray(candidate);
-		}
+		if (!Zone_EvaluatePosition(vecNewOrigin, candidate))
+			continue;
+		
+		candidates.PushArray(candidate);
 	}
 	
 	if (candidates.Length == 0)
@@ -601,7 +590,6 @@ static void Zone_CalculateNewPosition()
 	candidates.GetArray(bestIndex, winner);
 	g_vecNewPosition = winner.position;
 	
-	// Log the choice for debugging
 	LogMessage("Zone moving to position %.1f %.1f %.1f (score: %.1f, height range: %.1f, connectivity: %d)",
 		winner.position[0], winner.position[1], winner.position[2],
 		winner.score, winner.heightRange, winner.connectivity);
@@ -780,9 +768,7 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 {
 	ZoneAreaScore area;
 	if (!Zone_EvaluatePosition(vecOrigin, area))
-	{
 		return false;
-	}
 	
 	// For initial placement, accept any area with a positive score
 	if (area.score > 0.0)
