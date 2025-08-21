@@ -18,8 +18,8 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define ZONE_FADE_START_RATIO	0.95
-#define ZONE_FADE_ALPHA_MAX		64
+#define ZONE_FADE_START_DISTANCE	500.0
+#define ZONE_FADE_ALPHA_MAX		32
 #define ZONE_DAMAGE_INTERVAL	0.5
 
 #define ZONE_MODEL				"models/kirillian/brsphere_huge_v3.mdl"
@@ -178,18 +178,21 @@ void Zone_Think()
 			float vecOrigin[3];
 			GetClientAbsOrigin(client, vecOrigin);
 			
-			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
-			bool bIsOutsideZone = ratio > 1.0;
+			float flDistanceFromCenter = GetVectorDistance(vecOrigin, vecZoneOrigin);
+			float flDistanceFromEdge = flRadius - flDistanceFromCenter;
+			bool bIsOutsideZone = flDistanceFromEdge < 0.0;
 			
-			if (ratio >= ZONE_FADE_START_RATIO)
+			if (flDistanceFromEdge <= ZONE_FADE_START_DISTANCE)
 			{
-				int alpha = RoundToNearest(Max((ratio - ZONE_FADE_START_RATIO) * (1.0 / (1.0 - ZONE_FADE_START_RATIO)) * ZONE_FADE_ALPHA_MAX, ZONE_FADE_ALPHA_MAX));
-				ScreenFade(client, g_zoneData.color[0], g_zoneData.color[1], g_zoneData.color[3], alpha, 1000, 0, FFADE_IN);
+				// Screen fade for players near or outside the zone
+				float fadeRatio = Clamp((ZONE_FADE_START_DISTANCE - flDistanceFromEdge) / ZONE_FADE_START_DISTANCE, 0.0, 1.0);
+				int alpha = RoundToNearest(fadeRatio * (bIsOutsideZone ? ZONE_FADE_ALPHA_MAX : ZONE_FADE_ALPHA_MAX / 2));
+				ScreenFade(client, g_zoneData.color[0], g_zoneData.color[1], g_zoneData.color[2], alpha, 1000, 0, FFADE_IN);
 			}
 			
 			if (bIsOutsideZone && bIsDamageTick)
 			{
-				TF2Util_MakePlayerBleed(client, client, ZONE_DAMAGE_INTERVAL, _, RoundToNearest(flDamage));
+				SDKHooks_TakeDamage(client, 0, 0, flDamage, DMG_PREVENT_PHYSICS_FORCE | DMG_NEVERGIB);
 			}
 		}
 		
