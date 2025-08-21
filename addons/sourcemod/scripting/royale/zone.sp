@@ -133,6 +133,7 @@ static Handle g_hZoneTimer;
 static int g_iCurrentPhase;
 static float g_flPhaseStartTime;
 static float g_flNextDamageTime;
+static bool g_bIsWaiting;
 static bool g_bIsShrinking;
 
 void Zone_Precache()
@@ -322,6 +323,7 @@ static void Zone_Reset()
 	g_iCurrentPhase = 0;
 	g_flPhaseStartTime = 0.0;
 	g_flNextDamageTime = GetGameTime();
+	g_bIsWaiting = false;
 	g_bIsShrinking = false;
 }
 
@@ -356,6 +358,7 @@ static void Zone_StartWaitPhase()
 	if (!g_zoneData.phases || g_iCurrentPhase >= g_zoneData.phases.Length)
 		return;
 	
+	g_bIsWaiting = true;
 	g_bIsShrinking = false;
 	
 	ZonePhase phase;
@@ -399,6 +402,7 @@ static void Timer_StartShrink(Handle hTimer)
 	if (hTimer != null && g_hZoneTimer != hTimer)
 		return;
 	
+	g_bIsWaiting = false;
 	g_bIsShrinking = true;
 	g_flPhaseStartTime = GetGameTime();
 	
@@ -775,15 +779,15 @@ static float Zone_GetPhaseDiameter(int phaseIndex)
 
 static float Zone_GetCurrentDiameter()
 {
-	if (g_iCurrentPhase == 0 && !g_bIsShrinking)
-	{
+	if (g_iCurrentPhase == 0 && !g_bIsShrinking && !g_bIsWaiting)
 		return g_zoneData.diameter_max;
-	}
 	
-	int prevPhase = g_bIsShrinking ? g_iCurrentPhase - 1 : g_iCurrentPhase;
-	if (prevPhase < 0) prevPhase = 0;
+	int phase = g_bIsShrinking || g_bIsWaiting ?  g_iCurrentPhase - 1 : g_iCurrentPhase;
 	
-	return Zone_GetPhaseDiameter(prevPhase);
+	if (phase < 0)
+		return g_zoneData.diameter_max;
+	
+	return Zone_GetPhaseDiameter(phase);
 }
 
 static float Zone_GetScaledTime(float baseTime)
