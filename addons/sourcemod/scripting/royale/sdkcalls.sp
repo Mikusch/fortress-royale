@@ -21,6 +21,7 @@
 static Handle g_SDKCall_CTFDroppedWeapon_Create;
 static Handle g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon;
 static Handle g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon;
+static Handle g_SDKCall_CTFPlayer_CanAttack;
 static Handle g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles;
 static Handle g_SDKCall_CTFPlayer_GiveNamedItem;
 static Handle g_SDKCall_CTFPlayer_GetLoadoutItem;
@@ -28,6 +29,7 @@ static Handle g_SDKCall_CTFPlayer_PostInventoryApplication;
 static Handle g_SDKCall_CTFPlayer_PickupWeaponFromOther;
 static Handle g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo;
 static Handle g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon;
+static Handle g_SDKCall_CTFWeaponBase_CanPickupOtherWeapon;
 static Handle g_SDKCall_CBaseCombatWeapon_GetWorldModel;
 static Handle g_SDKCall_CTFPowerup_DropSingleInstance;
 static Handle g_SDKCall_CTFPlayer_IsCritBoosted;
@@ -38,6 +40,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFDroppedWeapon_Create = PrepSDKCall_CTFDroppedWeapon_Create(gamedata);
 	g_SDKCall_CTFDroppedWeapon_InitDroppedWeapon = PrepSDKCall_CTFDroppedWeapon_InitDroppedWeapon(gamedata);
 	g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon = PrepSDKCall_CTFDroppedWeapon_InitPickedUpWeapon(gamedata);
+	g_SDKCall_CTFPlayer_CanAttack = PrepSDKCall_CTFPlayer_CanAttack(gamedata);
 	g_SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles = PrepSDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(gamedata);
 	g_SDKCall_CTFPlayer_GiveNamedItem = PrepSDKCall_CTFPlayer_GiveNamedItem(gamedata);
 	g_SDKCall_CTFPlayer_GetLoadoutItem = PrepSDKCall_CTFPlayer_GetLoadoutItem(gamedata);
@@ -45,6 +48,7 @@ void SDKCalls_Init(GameData gamedata)
 	g_SDKCall_CTFPlayer_PickupWeaponFromOther = PrepSDKCall_CTFPlayer_PickupWeaponFromOther(gamedata);
 	g_SDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo = PrepSDKCall_CBaseCombatCharacter_Weapon_CanSwitchTo(gamedata);
 	g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon = PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(gamedata);
+	g_SDKCall_CTFWeaponBase_CanPickupOtherWeapon = PrepSDKCall_CTFWeaponBase_CanPickupOtherWeapon(gamedata);
 	g_SDKCall_CBaseCombatWeapon_GetWorldModel = PrepSDKCall_CBaseCombatWeapon_GetWorldModel(gamedata);
 	g_SDKCall_CTFPowerup_DropSingleInstance = PrepSDKCall_CTFPowerup_DropSingleInstance(gamedata);
 	g_SDKCall_CTFPlayer_IsCritBoosted = PrepSDKCall_FromScriptFunction("CTFPlayer", "IsCritBoosted");
@@ -107,6 +111,20 @@ static Handle PrepSDKCall_CTFDroppedWeapon_InitPickedUpWeapon(GameData gamedata)
 	Handle call = EndPrepSDKCall();
 	if (!call)
 		LogError("Failed to create SDKCall: CTFDroppedWeapon::InitPickedUpWeapon");
+	
+	return call;
+}
+
+static Handle PrepSDKCall_CTFPlayer_CanAttack(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Player);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Signature, "CTFPlayer::CanAttack");
+	PrepSDKCall_AddParameter(SDKType_PlainOldData, SDKPass_Plain);
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFPlayer::CanAttack");
 	
 	return call;
 }
@@ -214,6 +232,19 @@ static Handle PrepSDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(GameData g
 	return call;
 }
 
+static Handle PrepSDKCall_CTFWeaponBase_CanPickupOtherWeapon(GameData gamedata)
+{
+	StartPrepSDKCall(SDKCall_Entity);
+	PrepSDKCall_SetFromConf(gamedata, SDKConf_Virtual, "CTFWeaponBase::CanPickupOtherWeapon");
+	PrepSDKCall_SetReturnInfo(SDKType_Bool, SDKPass_ByValue);
+	
+	Handle call = EndPrepSDKCall();
+	if (!call)
+		LogError("Failed to create SDKCall: CTFWeaponBase::CanPickupOtherWeapon");
+	
+	return call;
+}
+
 static Handle PrepSDKCall_CBaseCombatWeapon_GetWorldModel(GameData gamedata)
 {
 	StartPrepSDKCall(SDKCall_Entity);
@@ -267,6 +298,16 @@ void SDKCall_CTFDroppedWeapon_InitPickedUpWeapon(int droppedWeapon, int player, 
 	{
 		SDKCall(g_SDKCall_CTFDroppedWeapon_InitPickedUpWeapon, droppedWeapon, player, weapon);
 	}
+}
+
+bool SDKCall_CTFPlayer_CanAttack(int player, int iCanAttackFlags = 0)
+{
+	if (g_SDKCall_CTFPlayer_CanAttack)
+	{
+		return SDKCall(g_SDKCall_CTFPlayer_CanAttack, player, iCanAttackFlags);
+	}
+
+	return false;
 }
 
 bool SDKCall_CTFPlayer_CalculateAmmoPackPositionAndAngles(int player, int weapon, float vecOrigin[3], float vecAngles[3])
@@ -338,6 +379,16 @@ bool SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon(int player, int current
 		return SDKCall(g_SDKCall_CBaseCombatCharacter_SwitchToNextBestWeapon, player, current);
 	}
 	
+	return false;
+}
+
+bool SDKCall_CTFWeaponBase_CanPickupOtherWeapon(int weapon)
+{
+	if (g_SDKCall_CTFWeaponBase_CanPickupOtherWeapon)
+	{
+		return SDKCall(g_SDKCall_CTFWeaponBase_CanPickupOtherWeapon, weapon);
+	}
+
 	return false;
 }
 

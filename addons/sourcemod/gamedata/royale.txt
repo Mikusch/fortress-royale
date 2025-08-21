@@ -22,6 +22,12 @@
 				"linux"		"@_ZN16CTFDroppedWeapon18InitPickedUpWeaponEP9CTFPlayerP13CTFWeaponBase"
 				"windows"	"\x55\x8B\xEC\x83\xEC\x08\xD9\xEE\x53"
 			}
+			"CTFPlayer::CanAttack"
+			{
+				"library"	"server"
+				"linux"		"@_ZN9CTFPlayer9CanAttackEi"
+				"windows"	"\x55\x8B\xEC\x53\x56\x8B\x35\x2A\x2A\x2A\x2A\x57\x8B\xF9\x80\xBF\xC0\x25\x00\x00\x00"
+			}
 			"CTFPlayer::CalculateAmmoPackPositionAndAngles"
 			{
 				"library"	"server"
@@ -126,6 +132,12 @@
 				"library"	"server"
 				"linux"		"494"
 				"windows"	"487"
+			}
+			"CTFWeaponBase::CanPickupOtherWeapon"
+			{
+				"library"	"server"
+				"linux"		"470"
+				"windows"	"463"
 			}
 			"CBaseCombatWeapon::GetWorldModel"
 			{

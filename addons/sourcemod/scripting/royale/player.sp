@@ -254,9 +254,8 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public bool TryToPickupDroppedWeapon()
 	{
-		// TODO
-		//if (!SDKCall_CTFPlayer_CanAttack(this.index))
-			//return false;
+		if (!SDKCall_CTFPlayer_CanAttack(this.index))
+			return false;
 		
 		int activeWeapon = this.GetPropEnt(Prop_Send, "m_hActiveWeapon");
 		if (activeWeapon != -1 && GetEntPropFloat(activeWeapon, Prop_Send, "m_flNextPrimaryAttack") > GetGameTime())
@@ -321,8 +320,10 @@ methodmap FRPlayer < CBaseCombatCharacter
 		
 		if (!IsPlayerAlive(this.index))
 			return false;
-
-		// TODO CanPickupOtherWeapon
+		
+		int activeWeapon = GetEntPropEnt(this.index, Prop_Send, "m_hActiveWeapon");
+		if (activeWeapon == -1 || !SDKCall_CTFWeaponBase_CanPickupOtherWeapon(activeWeapon))
+			return false;
 		
 		int iItemSlot = TF2Econ_GetItemLoadoutSlot(iItemDefinitionIndex, playerClass);
 
