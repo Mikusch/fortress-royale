@@ -130,6 +130,7 @@ void Zone_Think()
 	{
 		// Relative progress in this shrink cycle from 0 to 1 (current size to goal size)
 		float flProgress = (GetGameTime() - g_flShrinkStartTime) / g_zoneData.shrink_duration;
+		flProgress = Clamp(flProgress, 0.0, 1.0);
 		SubtractVectors(g_vecNewPosition, g_vecOldPosition, vecZoneOrigin); // Distance from start to end
 		ScaleVector(vecZoneOrigin, flProgress); // Scale by progress
 		AddVectors(vecZoneOrigin, g_vecOldPosition, vecZoneOrigin); // Add distance to old center
