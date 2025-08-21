@@ -112,6 +112,16 @@ enum struct ZoneConfig
 	}
 }
 
+enum struct ZoneAreaScore
+{
+	float position[3];
+	float score;
+	float heightRange;
+	float stdDev;
+	int connectivity;
+	int validPoints;
+}
+
 static ZoneConfig g_zoneData;
 
 static bool g_bInitialized;
@@ -522,8 +532,16 @@ static void Zone_CalculateNewPosition()
 		flMaxOffset = (flCurrentDiameter - flNextDiameter) / 2.0;
 	}
 	
-	for (int attempts = 0; attempts < 100; attempts++)
+	// Try multiple candidate positions and pick the best one
+	ArrayList candidates = new ArrayList(sizeof(ZoneAreaScore));
+	int maxCandidates = 20;
+	int attempts = 0;
+	int maxAttempts = 100;
+	
+	while (candidates.Length < maxCandidates && attempts < maxAttempts)
 	{
+		attempts++;
+		
 		float vecNewOrigin[3];
 		
 		if (flMaxOffset > 0.0)
@@ -540,34 +558,73 @@ static void Zone_CalculateNewPosition()
 			vecNewOrigin = g_vecOldPosition;
 		}
 		
-		if (!Zone_GetValidHeight(vecNewOrigin))
-			continue;
-		
+		// Check if within safe bounds
 		float vecOrigin[3];
 		vecOrigin = g_zoneData.center;
 		vecOrigin[2] = vecNewOrigin[2];
 		if (GetVectorDistance(vecOrigin, vecNewOrigin) * 2.0 > g_zoneData.diameter_safe)
 			continue;
 		
-		g_vecNewPosition = vecNewOrigin;
+		// Evaluate this position
+		ZoneAreaScore candidate;
+		if (Zone_EvaluatePosition(vecNewOrigin, candidate))
+		{
+			candidates.PushArray(candidate);
+		}
+	}
+	
+	if (candidates.Length == 0)
+	{
+		// No valid positions found, stay in place
+		g_vecNewPosition = g_vecOldPosition;
+		delete candidates;
 		return;
 	}
 	
-	g_vecNewPosition = g_vecOldPosition;
+	// Find the best scoring position
+	int bestIndex = 0;
+	float bestScore = -999999.0;
+	
+	for (int i = 0; i < candidates.Length; i++)
+	{
+		ZoneAreaScore candidate;
+		candidates.GetArray(i, candidate);
+		
+		if (candidate.score > bestScore)
+		{
+			bestScore = candidate.score;
+			bestIndex = i;
+		}
+	}
+	
+	ZoneAreaScore winner;
+	candidates.GetArray(bestIndex, winner);
+	g_vecNewPosition = winner.position;
+	
+	// Log the choice for debugging
+	LogMessage("Zone moving to position %.1f %.1f %.1f (score: %.1f, height range: %.1f, connectivity: %d)",
+		winner.position[0], winner.position[1], winner.position[2],
+		winner.score, winner.heightRange, winner.connectivity);
+	
+	delete candidates;
 }
 
-static bool Zone_GetValidHeight(float vecOrigin[3])
+static bool Zone_EvaluatePosition(float vecOrigin[3], ZoneAreaScore candidate)
 {
-	// Height is calculated by creating 25 traces in a 5 x 5 grid from max height down to ground to figure out average height in the area
 	ArrayList heights = new ArrayList();
+	ArrayList positions = new ArrayList(3);
 	
-	for (int x = -2; x <= 2; x++)
+	int gridSize = 5;
+	float spacing = 64.0;
+	int halfGrid = gridSize / 2;
+	
+	for (int x = -halfGrid; x <= halfGrid; x++)
 	{
-		for (int y = -2; y <= 2; y++)
+		for (int y = -halfGrid; y <= halfGrid; y++)
 		{
 			float vecStart[3];
-			vecStart[0] = vecOrigin[0] + (x * 64.0);
-			vecStart[1] = vecOrigin[1] + (y * 64.0);
+			vecStart[0] = vecOrigin[0] + (x * spacing);
+			vecStart[1] = vecOrigin[1] + (y * spacing);
 			vecStart[2] = g_zoneData.center_z_max;
 			
 			if (TR_GetPointContents(vecStart) & MASK_SOLID)
@@ -584,25 +641,165 @@ static bool Zone_GetValidHeight(float vecOrigin[3])
 				continue;
 			
 			heights.Push(vecEnd[2]);
+			positions.PushArray(vecEnd);
 		}
 	}
 	
-	if (heights.Length <= 10)
+	candidate.validPoints = heights.Length;
+	
+	// Minimum 30% valid points to even consider the area
+	int totalSamples = gridSize * gridSize;
+	int minRequired = RoundToFloor(totalSamples * 0.3);
+	
+	if (heights.Length < minRequired)
 	{
-		// Only managed to collect 10 out of 25 valid positions, origin is probably in a bad area to fight
 		delete heights;
+		delete positions;
 		return false;
 	}
 	
-	vecOrigin[2] = 0.0;
+	// Calculate statistics
+	float flMinHeight = 999999.0;
+	float flMaxHeight = -999999.0;
+	float flTotalHeight = 0.0;
+	
 	for (int i = 0; i < heights.Length; i++)
 	{
-		vecOrigin[2] += view_as<float>(heights.Get(i));
+		float h = heights.Get(i);
+		flTotalHeight += h;
+		if (h < flMinHeight) flMinHeight = h;
+		if (h > flMaxHeight) flMaxHeight = h;
 	}
 	
-	vecOrigin[2] /= heights.Length;
+	float flAvgHeight = flTotalHeight / heights.Length;
+	candidate.heightRange = flMaxHeight - flMinHeight;
+	
+	// Calculate standard deviation
+	float flVariance = 0.0;
+	for (int i = 0; i < heights.Length; i++)
+	{
+		float h = heights.Get(i);
+		float diff = h - flAvgHeight;
+		flVariance += diff * diff;
+	}
+	flVariance /= heights.Length;
+	candidate.stdDev = SquareRoot(flVariance);
+	
+	// Check connectivity
+	candidate.connectivity = 0;
+	for (int i = 0; i < positions.Length - 1; i++)
+	{
+		float pos1[3];
+		positions.GetArray(i, pos1);
+		
+		for (int j = i + 1; j < positions.Length; j++)
+		{
+			float pos2[3];
+			positions.GetArray(j, pos2);
+			
+			float dist = GetVectorDistance(pos1, pos2, true);
+			if (dist > (spacing * spacing * 2.1))
+				continue;
+			
+			float heightDiff = FloatAbs(pos1[2] - pos2[2]);
+			if (heightDiff < 64.0)
+			{
+				candidate.connectivity++;
+			}
+		}
+	}
+	
+	// Use median height for position
+	heights.Sort(Sort_Ascending, Sort_Float);
+	int medianIndex = heights.Length / 2;
+	vecOrigin[2] = heights.Get(medianIndex);
+	
+	candidate.position = vecOrigin;
+	
+	// Calculate score
+	candidate.score = Zone_CalculateAreaScore(candidate);
+	
 	delete heights;
+	delete positions;
 	return true;
+}
+
+static float Zone_CalculateAreaScore(ZoneAreaScore candidate)
+{
+	float score = 100.0;
+	
+	// Valid points bonus (more valid area = better)
+	score += candidate.validPoints * 2.0;
+	
+	// Height range penalty (flatter = better, but some variation is OK)
+	if (candidate.heightRange < 100.0)
+	{
+		score += 20.0; // Bonus for very flat areas
+	}
+	else if (candidate.heightRange < 300.0)
+	{
+		score += 10.0 - (candidate.heightRange / 30.0); // Small penalty
+	}
+	else if (candidate.heightRange < 500.0)
+	{
+		score -= (candidate.heightRange - 300.0) / 10.0; // Moderate penalty
+	}
+	else
+	{
+		score -= 30.0 + (candidate.heightRange - 500.0) / 20.0; // Heavy penalty
+	}
+	
+	// Standard deviation penalty (more uniform = better)
+	if (candidate.stdDev < 50.0)
+	{
+		score += 15.0; // Bonus for very uniform
+	}
+	else if (candidate.stdDev < 150.0)
+	{
+		score -= (candidate.stdDev - 50.0) / 10.0; // Gradual penalty
+	}
+	else
+	{
+		score -= 20.0 + (candidate.stdDev - 150.0) / 5.0; // Steep penalty
+	}
+	
+	// Connectivity bonus (more walkable paths = better)
+	score += candidate.connectivity * 0.5;
+	
+	// Penalize areas with too few connections relative to valid points
+	float expectedConnections = float(candidate.validPoints) * 1.5;
+	if (candidate.connectivity < expectedConnections)
+	{
+		score -= (expectedConnections - candidate.connectivity) * 0.3;
+	}
+	
+	return score;
+}
+
+static bool Zone_GetValidHeight(float vecOrigin[3])
+{
+	ZoneAreaScore area;
+	if (!Zone_EvaluatePosition(vecOrigin, area))
+	{
+		return false;
+	}
+	
+	// For initial placement, accept any area with a positive score
+	if (area.score > 0.0)
+	{
+		vecOrigin[2] = area.position[2];
+		return true;
+	}
+	
+	// If score is negative but not terrible, accept with warning
+	if (area.score > -50.0)
+	{
+		LogMessage("Zone placed in suboptimal area (score: %.1f)", area.score);
+		vecOrigin[2] = area.position[2];
+		return true;
+	}
+	
+	return false;
 }
 
 static bool Zone_GetCurrentPhase(ZonePhase phase)
