@@ -21,7 +21,7 @@
 static bool m_bIsParachuting[MAXPLAYERS + 1];
 static float m_flLastMedigunDrainTime[MAXPLAYERS + 1];
 static int m_hWearableVM[MAXPLAYERS + 1];
-static float m_flCrateStartOpenTime[MAXPLAYERS + 1];
+static int m_iOpeningCrate[MAXPLAYERS + 1];
 static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
 
 methodmap FRPlayer < CBaseCombatCharacter
@@ -79,15 +79,15 @@ methodmap FRPlayer < CBaseCombatCharacter
 		}
 	}
 	
-	property float m_flCrateStartOpenTime
+	property int m_iOpeningCrate
 	{
 		public get()
 		{
-			return m_flCrateStartOpenTime[this.index];
+			return m_iOpeningCrate[this.index];
 		}
-		public set(float flCrateOpenTime)
+		public set(int crateRef)
 		{
-			m_flCrateStartOpenTime[this.index] = flCrateOpenTime;
+			m_iOpeningCrate[this.index] = crateRef;
 		}
 	}
 	
@@ -155,39 +155,30 @@ methodmap FRPlayer < CBaseCombatCharacter
 		if (!FRCrate(crate).GetData(data))
 			return false;
 		
-		// If this is our first time interacting, begin open sequence
-		if (this.m_flCrateStartOpenTime == -1.0)
+		int currentCrate = EntRefToEntIndex(this.m_iOpeningCrate);
+		
+		// If we're switching to a different crate, cancel the previous one
+		if (currentCrate != -1 && currentCrate != crate)
 		{
-			this.m_flCrateStartOpenTime = GetGameTime();
+			if (FREntity(currentCrate).IsValidCrate())
+			{
+				FRCrate(currentCrate).CancelOpen();
+			}
+			this.m_iOpeningCrate = INVALID_ENT_REFERENCE;
+		}
+		
+		// Start opening if not already opening this crate
+		if (currentCrate != crate)
+		{
+			this.m_iOpeningCrate = EntIndexToEntRef(crate);
 			FRCrate(crate).StartOpen(this.index);
 		}
 		
-		if (this.m_flCrateStartOpenTime + data.time_to_open > GetGameTime())
+		// Let the crate handle the update logic
+		if (FRCrate(crate).Update(this.index))
 		{
-			char szMessage[64];
-			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", this.index);
-			
-			int iSeconds = RoundToCeil(GetGameTime() - this.m_flCrateStartOpenTime);
-			for (int i = 0; i < iSeconds; i++)
-			{
-				Format(szMessage, sizeof(szMessage), "%s%s", szMessage, ".");
-			}
-			
-			FRCrate(crate).SetText(szMessage);
-		}
-		else
-		{
-			this.StopOpeningCrate(crate);
-			FRCrate(crate).DropItem(this.index);
-			
-			EmitSoundToAll(data.opened_sound, crate, SNDCHAN_STATIC);
-			
-			float origin[3];
-			CBaseEntity(crate).WorldSpaceCenter(origin);
-			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin, .iAttachType = PATTACH_WORLDORIGIN);
-			TE_TFParticleEffect("mvm_loot_explosion", origin, .iAttachType = PATTACH_WORLDORIGIN);
-			
-			AcceptEntityInput(crate, "Break");
+			// Crate was opened successfully
+			this.m_iOpeningCrate = INVALID_ENT_REFERENCE;
 		}
 		
 		return true;
@@ -195,11 +186,13 @@ methodmap FRPlayer < CBaseCombatCharacter
 	
 	public void StopOpeningCrate(int crate = -1)
 	{
-		// Not opening a crate right now
-		if (this.m_flCrateStartOpenTime == -1.0)
+		int currentCrate = EntRefToEntIndex(this.m_iOpeningCrate);
+		
+		// Not opening any crate
+		if (currentCrate == -1)
 			return;
 		
-		this.m_flCrateStartOpenTime = -1.0;
+		this.m_iOpeningCrate = INVALID_ENT_REFERENCE;
 		
 		if (crate == -1)
 		{
@@ -212,7 +205,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 				}
 			}
 		}
-		else
+		else if (FREntity(crate).IsValidCrate())
 		{
 			FRCrate(crate).CancelOpen();
 		}
@@ -263,7 +256,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 	{
 		this.m_bIsParachuting = false;
 		this.m_flLastMedigunDrainTime = -1.0;
-		this.m_flCrateStartOpenTime = -1.0;
+		this.m_iOpeningCrate = INVALID_ENT_REFERENCE;
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;
 		this.SetPlayerState(FRPlayerState_Waiting);
 	}

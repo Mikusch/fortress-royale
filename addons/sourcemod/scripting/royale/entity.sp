@@ -27,6 +27,7 @@ enum struct EntityProperties
 {
 	int ref;
 	int claimed_by;
+	float open_start_time;
 }
 
 methodmap FREntity < CBaseEntity
@@ -45,6 +46,7 @@ methodmap FREntity < CBaseEntity
 			EntityProperties properties;
 			properties.ref = ref;
 			properties.claimed_by = -1;
+			properties.open_start_time = -1.0;
 			
 			g_entityProperties.PushArray(properties);
 		}
@@ -123,6 +125,18 @@ methodmap FRCrate < FREntity
 		}
 	}
 	
+	property float OpenStartTime
+	{
+		public get()
+		{
+			return g_entityProperties.Get(this.m_listIndex, EntityProperties::open_start_time);
+		}
+		public set(float openStartTime)
+		{
+			g_entityProperties.Set(this.m_listIndex, openStartTime, EntityProperties::open_start_time);
+		}
+	}
+	
 	public bool IsClaimedBy(int client)
 	{
 		return this.ClaimedBy == client;
@@ -180,6 +194,7 @@ methodmap FRCrate < FREntity
 	public void StartOpen(int client)
 	{
 		this.ClaimedBy = client;
+		this.OpenStartTime = GetGameTime();
 		
 		CrateData data;
 		if (this.GetData(data) && data.open_sound[0])
@@ -191,12 +206,54 @@ methodmap FRCrate < FREntity
 	public void CancelOpen()
 	{
 		this.ClaimedBy = -1;
+		this.OpenStartTime = -1.0;
 		this.ClearText();
 		
 		CrateData data;
 		if (this.GetData(data) && data.open_sound[0])
 		{
 			StopSound(this.index, SNDCHAN_STATIC, data.open_sound);
+		}
+	}
+	
+	public bool Update(int client)
+	{
+		if (this.ClaimedBy != client || this.OpenStartTime == -1.0)
+			return false;
+		
+		CrateData data;
+		if (!this.GetData(data))
+			return false;
+		
+		float timeElapsed = GetGameTime() - this.OpenStartTime;
+		
+		if (timeElapsed < data.time_to_open)
+		{
+			char szMessage[64];
+			Format(szMessage, sizeof(szMessage), "%T", "Crate_Opening", client);
+			
+			int iSeconds = RoundToCeil(timeElapsed);
+			for (int i = 0; i < iSeconds; i++)
+			{
+				Format(szMessage, sizeof(szMessage), "%s%s", szMessage, ".");
+			}
+			
+			this.SetText(szMessage);
+			return false;
+		}
+		else
+		{
+			this.DropItem(client);
+			
+			EmitSoundToAll(data.opened_sound, this.index, SNDCHAN_STATIC);
+			
+			float origin[3];
+			this.WorldSpaceCenter(origin);
+			TE_TFParticleEffect(g_szCrateParticles[GetRandomInt(0, sizeof(g_szCrateParticles) - 1)], origin, .iAttachType = PATTACH_WORLDORIGIN);
+			TE_TFParticleEffect("mvm_loot_explosion", origin, .iAttachType = PATTACH_WORLDORIGIN);
+			
+			AcceptEntityInput(this.index, "Break");
+			return true;
 		}
 	}
 	
