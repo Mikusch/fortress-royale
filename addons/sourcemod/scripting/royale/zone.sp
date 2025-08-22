@@ -805,9 +805,9 @@ static float Zone_GetPropModelScale(float diameter)
 	return SquareRoot(diameter / ZONE_MODEL_DIAMETER);
 }
 
-void Zone_GetNewPosition(float center[3])
+void Zone_GetPosition(float pos[3])
 {
-	center = g_vecNewPosition;
+	pos = g_vecOldPosition;
 }
 
 float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
