@@ -489,9 +489,18 @@ static void Zone_CalculateNewPosition()
 	float flCurrentDiameter = Zone_GetCurrentDiameter();
 	float flNextDiameter = Zone_GetPhaseDiameter(g_iCurrentPhase);
 	
-	// If zone is meant to move, allow going anywhere within the safe diameter
-	// If zone is stationary, only allow moving within the zone diameter
-	float flMaxOffset = phase.moves_zone ? g_zoneData.diameter_safe / 2.0 : (flCurrentDiameter - flNextDiameter) / 2.0;
+	float flMaxOffset, flMinOffset;
+	if (phase.moves_zone)
+	{
+		// Don't allow moving zones to travel across the whole map
+		flMinOffset = flCurrentDiameter / 3.0;
+		flMaxOffset = flCurrentDiameter * 3.0;
+	}
+	else
+	{
+		flMinOffset = 0.0;
+		flMaxOffset = (flCurrentDiameter - flNextDiameter) / 2.0;
+	}
 	
 	// Try multiple candidate positions and pick the best one
 	ArrayList candidates = new ArrayList(sizeof(ZoneAreaScore));
@@ -508,7 +517,7 @@ static void Zone_CalculateNewPosition()
 		if (flMaxOffset > 0.0)
 		{
 			float flAngle = GetRandomFloat(0.0, 360.0);
-			float flDistance = GetRandomFloat(0.0, flMaxOffset);
+			float flDistance = GetRandomFloat(flMinOffset, flMaxOffset);
 			
 			vecNewOrigin[0] = g_vecOldPosition[0] + (Cosine(DegToRad(flAngle)) * flDistance);
 			vecNewOrigin[1] = g_vecOldPosition[1] + (Sine(DegToRad(flAngle)) * flDistance);
@@ -519,11 +528,15 @@ static void Zone_CalculateNewPosition()
 			vecNewOrigin = g_vecOldPosition;
 		}
 		
-		// Check if within safe bounds
-		float vecOrigin[3];
-		vecOrigin = g_zoneData.center;
-		vecOrigin[2] = vecNewOrigin[2];
-		if (GetVectorDistance(vecOrigin, vecNewOrigin) * 2.0 > g_zoneData.diameter_safe)
+		// Check if the new zone would fit within safe bounds
+		float vecCenter[3];
+		vecCenter = g_zoneData.center;
+		vecCenter[2] = vecNewOrigin[2];
+		float flDistanceFromCenter = GetVectorDistance(vecCenter, vecNewOrigin);
+		float flNewZoneRadius = flNextDiameter / 2.0;
+		
+		// The edge of the new zone must be within the safe diameter
+		if (flDistanceFromCenter + flNewZoneRadius > g_zoneData.diameter_safe / 2.0)
 			continue;
 		
 		// Evaluate this position
@@ -673,6 +686,7 @@ static bool Zone_EvaluatePosition(float vecOrigin[3], ZoneAreaScore candidate)
 	heights.Sort(Sort_Ascending, Sort_Float);
 	int medianIndex = heights.Length / 2;
 	vecOrigin[2] = heights.Get(medianIndex);
+	vecOrigin[2] = Clamp(vecOrigin[2], g_zoneData.center_z_min, g_zoneData.center_z_max);
 	
 	candidate.position = vecOrigin;
 	
@@ -784,10 +798,17 @@ static float Zone_GetCurrentDiameter()
 	if (g_iCurrentPhase == 0 && !g_bIsShrinking && !g_bIsWaiting)
 		return g_zoneData.diameter_max;
 	
-	int phase = g_bIsShrinking || g_bIsWaiting ?  g_iCurrentPhase - 1 : g_iCurrentPhase;
+	int phase = g_iCurrentPhase;
 	
-	if (phase < 0)
-		return g_zoneData.diameter_max;
+	if (g_bIsShrinking || g_bIsWaiting)
+	{
+		// If we're in phase 0 waiting/shrinking, we're at diameter_max
+		if (g_iCurrentPhase == 0)
+			return g_zoneData.diameter_max;
+		
+		// Otherwise we're at the size of the previous completed phase
+		phase = g_iCurrentPhase - 1;
+	}
 	
 	return Zone_GetPhaseDiameter(phase);
 }
