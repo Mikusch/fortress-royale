@@ -387,7 +387,7 @@ static void Zone_StartWaitPhase()
 			continue;
 		
 		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, RoundToFloor(phase.shrink_time));
+		Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, RoundToFloor(phase.wait_time));
 		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
 	}
 	
@@ -774,7 +774,7 @@ static float Zone_GetPhaseDiameter(int phaseIndex)
 	
 	ZonePhase phase;
 	g_zoneData.phases.GetArray(phaseIndex, phase);
-	return g_zoneData.diameter_max * phase.diameter_percent;
+	return g_zoneData.diameter_safe * phase.diameter_percent;
 }
 
 static float Zone_GetCurrentDiameter()
@@ -815,19 +815,11 @@ float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
 	if (!g_zoneData.phases || g_iCurrentPhase >= g_zoneData.phases.Length)
 		return 0.0;
 	
-	float flCurrentPercent = 1.0;
-	float flNextPercent = 0.0;
+	float flCurrentDiameter = Zone_GetCurrentDiameter();
+	float flNextDiameter = Zone_GetPhaseDiameter(g_iCurrentPhase);
 	
-	if (g_iCurrentPhase > 0)
-	{
-		ZonePhase prevPhase;
-		g_zoneData.phases.GetArray(g_iCurrentPhase - 1, prevPhase);
-		flCurrentPercent = prevPhase.diameter_percent;
-	}
-	
-	ZonePhase phase;
-	g_zoneData.phases.GetArray(g_iCurrentPhase, phase);
-	flNextPercent = phase.diameter_percent;
+	float flCurrentPercent = flCurrentDiameter / g_zoneData.diameter_safe;
+	float flNextPercent = flNextDiameter / g_zoneData.diameter_safe;
 	
 	return flCurrentPercent - (flCurrentPercent - flNextPercent) * flProgressInLevel;
 }
