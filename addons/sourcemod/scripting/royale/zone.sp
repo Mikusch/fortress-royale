@@ -35,6 +35,7 @@ enum struct ZonePhase
 	float damage_per_second;	/**< Damage dealt per second to players outside the zone. */
 	float diameter_percent;	/**< Target diameter as percentage of maximum diameter (0.0 to 1.0). */
 	bool moves_zone;			/**< Whether the zone moves to a new position during this phase. */
+	bool scale_with_players;	/**< Whether phase times scale with player count. */
 	
 	void Parse(KeyValues kv)
 	{
@@ -43,6 +44,7 @@ enum struct ZonePhase
 		this.damage_per_second = kv.GetFloat("damage_per_second");
 		this.diameter_percent = kv.GetFloat("diameter_percent");
 		this.moves_zone = kv.GetNum("moves_zone") != 0;
+		this.scale_with_players = kv.GetNum("scale_with_players", 1) != 0;
 	}
 }
 
@@ -197,7 +199,7 @@ void Zone_Think()
 		float flProgress = 0.0;
 		if (phase.shrink_time > 0.0)
 		{
-			flProgress = (GetGameTime() - g_flPhaseStartTime) / Zone_GetScaledTime(phase.shrink_time);
+			flProgress = (GetGameTime() - g_flPhaseStartTime) / Zone_GetScaledTime(phase.shrink_time, phase.scale_with_players);
 			flProgress = Clamp(flProgress, 0.0, 1.0);
 		}
 		else
@@ -392,7 +394,7 @@ static void Zone_StartWaitPhase()
 	}
 	
 	// Set timer to start shrinking
-	float flWaitTime = Zone_GetScaledTime(phase.wait_time);
+	float flWaitTime = Zone_GetScaledTime(phase.wait_time, phase.scale_with_players);
 	Zone_CreateTimer(flWaitTime, true);
 	g_hZoneTimer = CreateTimer(flWaitTime, Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
@@ -422,7 +424,7 @@ static void Timer_StartShrink(Handle hTimer)
 	if (!Zone_GetCurrentPhase(phase))
 		return;
 	
-	float flShrinkTime = Zone_GetScaledTime(phase.shrink_time);
+	float flShrinkTime = Zone_GetScaledTime(phase.shrink_time, phase.scale_with_players);
 	Zone_CreateTimer(flShrinkTime, false);
 	g_hZoneTimer = CreateTimer(flShrinkTime, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
@@ -790,24 +792,24 @@ static float Zone_GetCurrentDiameter()
 	return Zone_GetPhaseDiameter(phase);
 }
 
-static float Zone_GetScaledTime(float baseTime)
+static float Zone_GetScaledTime(float flTime, bool bScaleWithPlayers = true)
 {
-	int playerCount = GetAlivePlayerCount();
-	if (playerCount <= 0) playerCount = 1;
-	if (playerCount > ZONE_MAX_SCALE_PLAYERS) playerCount = ZONE_MAX_SCALE_PLAYERS;
+	if (!bScaleWithPlayers)
+		return flTime;
 	
+	int playerCount = Clamp(GetAlivePlayerCount(), 1, ZONE_MAX_SCALE_PLAYERS);
 	float scale = MIN_PLAYER_SCALE + (1.0 - MIN_PLAYER_SCALE) * (float(playerCount) / float(ZONE_MAX_SCALE_PLAYERS));
-	return baseTime * scale;
+	return flTime * scale;
 }
 
-static float Zone_GetPropModelScale(float diameter)
+static float Zone_GetPropModelScale(float flDiameter)
 {
-	return SquareRoot(diameter / ZONE_MODEL_DIAMETER);
+	return SquareRoot(flDiameter / ZONE_MODEL_DIAMETER);
 }
 
-void Zone_GetPosition(float pos[3])
+void Zone_GetPosition(float vecPos[3])
 {
-	pos = g_vecOldPosition;
+	vecPos = g_vecOldPosition;
 }
 
 float Zone_GetShrinkPercentage(float flProgressInLevel = 0.0)
