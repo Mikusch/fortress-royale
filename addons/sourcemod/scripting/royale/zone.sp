@@ -22,7 +22,7 @@
 #define ZONE_FADE_ALPHA_MAX		32
 #define ZONE_DAMAGE_INTERVAL	1.0
 
-#define ZONE_MODEL				"models/kirillian/brsphere_huge_v3.mdl"
+#define ZONE_MODEL				"models/kirillian/brcyl.mdl"
 #define ZONE_MODEL_DIAMETER		20000.0
 
 #define MIN_PLAYER_SCALE			0.5
@@ -142,8 +142,8 @@ void Zone_Precache()
 {
 	SuperPrecacheModel(ZONE_MODEL);
 	
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vmt");
-	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog_v3.vtf");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vmt");
+	AddFileToDownloadsTable("materials/models/kirillian/brsphere/br_fog.vtf");
 }
 
 void Zone_Parse(KeyValues kv)
@@ -259,6 +259,8 @@ void Zone_Think()
 			float vecOrigin[3];
 			GetClientAbsOrigin(client, vecOrigin);
 			
+			vecOrigin[2] = vecZoneOrigin[2];
+			
 			float flDistanceFromCenter = GetVectorDistance(vecOrigin, vecZoneOrigin);
 			float flDistanceFromEdge = flRadius - flDistanceFromCenter;
 			bool bIsOutsideZone = flDistanceFromEdge < 0.0;
@@ -283,6 +285,8 @@ void Zone_Think()
 		{
 			float vecOrigin[3];
 			CBaseEntity(obj).GetAbsOrigin(vecOrigin);
+			
+			vecOrigin[2] = vecZoneOrigin[2];
 			
 			float ratio = GetVectorDistance(vecOrigin, vecZoneOrigin) / flRadius;
 			bool bIsOutsideZone = ratio > 1.0;
@@ -382,20 +386,24 @@ static void Zone_StartWaitPhase()
 		}
 	}
 	
+	float flWaitTime = Zone_GetScaledTime(phase.wait_time, phase.scale_with_players);
+
 	// Notify players about upcoming zone movement
-	for (int client = 1; client <= MaxClients; client++)
+	if (flWaitTime > 0.0)
 	{
-		if (!IsClientInGame(client))
-			continue;
-		
-		char szMessage[64];
-		Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, RoundToFloor(phase.wait_time));
-		SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
+		for (int client = 1; client <= MaxClients; client++)
+		{
+			if (!IsClientInGame(client))
+				continue;
+			
+			char szMessage[64];
+			Format(szMessage, sizeof(szMessage), "%T", "Zone_MoveWarning", client, flWaitTime);
+			SendHudNotificationCustom(client, szMessage, "ico_notify_thirty_seconds");
+		}
 	}
 	
 	// Set timer to start shrinking
-	float flWaitTime = Zone_GetScaledTime(phase.wait_time, phase.scale_with_players);
-	Zone_CreateTimer(flWaitTime, true);
+	Zone_CreateTimer(flWaitTime);
 	g_hZoneTimer = CreateTimer(flWaitTime, Timer_StartShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
@@ -425,7 +433,7 @@ static void Timer_StartShrink(Handle hTimer)
 		return;
 	
 	float flShrinkTime = Zone_GetScaledTime(phase.shrink_time, phase.scale_with_players);
-	Zone_CreateTimer(flShrinkTime, false);
+	Zone_CreateTimer(flShrinkTime);
 	g_hZoneTimer = CreateTimer(flShrinkTime, Timer_FinishShrink, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
@@ -852,12 +860,12 @@ void Zone_Cleanup()
 	g_zoneData.Delete();
 }
 
-void Zone_CreateTimer(float flLength, bool bSetup)
+void Zone_CreateTimer(float flLength)
 {
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
 	{
-		DispatchKeyValueFloat(timer, bSetup ? "setup_length" : "timer_length", flLength);
+		DispatchKeyValueFloat(timer, "timer_length", flLength);
 		DispatchKeyValueInt(timer, "show_in_hud", 1);
 		DispatchKeyValueInt(timer, "start_paused", 0);
 		DispatchKeyValueInt(timer, "auto_countdown", 0);
