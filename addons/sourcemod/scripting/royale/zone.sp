@@ -344,7 +344,7 @@ static int Zone_CreateProp(const float vecOrigin[3], const int aColor[4])
 		DispatchKeyValueInt(zone, "disableshadows", 1);
 		DispatchKeyValueInt(zone, "disablereceiveshadows", 1);
 		DispatchKeyValueFloat(zone, "modelscale", Zone_GetPropModelScale(g_zoneData.diameter_max));
-		DispatchKeyValueInt(zone, "solid", FSOLID_NOT_SOLID);
+		DispatchKeyValueInt(zone, "solid", SOLID_NONE);
 		
 		SetEntityRenderMode(zone, RENDER_TRANSCOLOR);
 		SetEntityRenderColor(zone, aColor[0], aColor[1], aColor[2], aColor[3]);
