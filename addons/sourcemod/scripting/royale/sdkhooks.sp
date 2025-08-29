@@ -41,6 +41,10 @@ void SDKHooks_HookEntity(int entity, const char[] classname)
 		SDKHooks_HookEntityInternal(entity, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
 		SDKHooks_HookEntityInternal(entity, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
 	}
+	else if (StrEqual(classname, "tf_player_manager"))
+	{
+		SDKHooks_HookEntityInternal(entity, SDKHook_ThinkPost, SDKHookCB_CTFPlayerResource_ThinkPost);
+	}
 	else if (!strncmp(classname, "prop_", 5))
 	{
 		SDKHooks_HookEntityInternal(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
@@ -133,6 +137,17 @@ static Action SDKHookCB_Client_OnTakeDamage(int victim, int &attacker, int &infl
 	}
 	
 	return Plugin_Continue;
+}
+
+static void SDKHookCB_CTFPlayerResource_ThinkPost(int entity)
+{
+	for (int client = 1; client <= MaxClients; client++)
+	{
+		if (!IsClientInGame(client))
+			continue;
+		
+		SetEntProp(entity, Prop_Send, "m_iPlayerClass", TFClass_Unknown, _, client);
+	}
 }
 
 static void SDKHookCB_PropDynamic_SpawnPost(int entity)

@@ -448,7 +448,7 @@ static bool OpenCrateInRange(int client, int buttons)
 		return false;
 	
 	// Pressing and holding +attack2, +attack3 or +reload
-	if (!(buttons & IN_ATTACK2 || buttons & IN_ATTACK3 || buttons & IN_RELOAD))
+	if (!(buttons & IN_ATTACK2 || buttons & IN_ATTACK3 || buttons & IN_RELOAD || buttons & IN_USE))
 		return false;
 	
 	float vecEyeAngles[3], vecForward[3];
