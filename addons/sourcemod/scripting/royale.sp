@@ -346,6 +346,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonChanged & IN_ATTACK2);
 	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonChanged & IN_ATTACK3);
 	bool bInReload = (buttons & IN_RELOAD && afButtonChanged & IN_RELOAD);
+	bool bInUse = (buttons & IN_USE && afButtonChanged & IN_USE);
 	
 	// Find a crate in range and open it
 	if (OpenCrateInRange(client, buttons))
@@ -354,14 +355,14 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		FRPlayer(client).StopOpeningCrate();
 	
 	// Ejecting from the bus (only allows +attack3 and +reload)
-	if (bInAttack3 || bInReload)
+	if (bInAttack3 || bInReload || bInUse)
 	{
 		if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus && BattleBus_EjectPlayer(client))
 			return Plugin_Continue;
 	}
 	
 	// Allow picking up weapons with +attack2, +attack3 and +reload
-	if (bInAttack2 || bInAttack3 || bInReload)
+	if (bInAttack2 || bInAttack3 || bInReload || bInUse)
 	{
 		KeyValues kv = new KeyValues("+use_action_slot_item_server");
 		FakeClientCommandKeyValues(client, kv);

@@ -37,6 +37,7 @@ void Console_Init()
 	Console_AddCommandListener(CommandListener_Build, "build");
 	Console_AddCommandListener(CommandListener_Destroy, "destroy");
 	Console_AddCommandListener(CommandListener_EurekaTeleport, "eureka_teleport");
+	Console_AddCommandListener(OnCommand_voicemenu, "voicemenu");
 }
 
 void Console_Toggle(bool enable)
@@ -228,15 +229,21 @@ static Action CommandListener_Destroy(int client, const char[] command, int argc
 
 static Action CommandListener_EurekaTeleport(int client, const char[] command, int argc)
 {
-	if (argc < 1)
-	{
-		// No argument teleports home by default
+	// Prevent home teleport from Eureka Effect (no arg = teleport home)
+	if (argc < 1 || view_as<eEurekaTeleportTargets>(GetCmdArgInt(1)) == EUREKA_TELEPORT_HOME)
 		return Plugin_Handled;
-	}
 	
-	if (view_as<eEurekaTeleportTargets>(GetCmdArgInt(1)) == EUREKA_TELEPORT_HOME)
+	return Plugin_Continue;
+}
+
+static Action OnCommand_voicemenu(int client, const char[] command, int argc)
+{
+	// Two birds with one stone:
+	// - Allow players to pick up weapons by calling MEDIC!
+	// - Prevent "save me" bubbles from being visible through the entire map.
+	if (argc >= 2 && GetCmdArgInt(1) == 0 && GetCmdArgInt(2) == 0)
 	{
-		// Prevent home teleport from Eureka Effect
+		FRPlayer(client).m_nQueuedButtons |= IN_USE;
 		return Plugin_Handled;
 	}
 	

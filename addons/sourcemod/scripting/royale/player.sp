@@ -23,6 +23,7 @@ static float m_flLastMedigunDrainTime[MAXPLAYERS + 1];
 static int m_hWearableVM[MAXPLAYERS + 1];
 static int m_iOpeningCrate[MAXPLAYERS + 1];
 static FRPlayerState m_nPlayerState[MAXPLAYERS + 1];
+static int m_nQueuedButtons[MAXPLAYERS + 1];
 
 methodmap FRPlayer < CBaseCombatCharacter
 {
@@ -100,6 +101,18 @@ methodmap FRPlayer < CBaseCombatCharacter
 		public set(FRPlayerState nPlayerState)
 		{
 			m_nPlayerState[this.index] = nPlayerState;
+		}
+	}
+
+	property int m_nQueuedButtons 
+	{
+		public get()
+		{
+			return m_nQueuedButtons[this.index];
+		}
+		public set(int nQueuedButtons)
+		{
+			m_nQueuedButtons[this.index] = nQueuedButtons;
 		}
 	}
 	
@@ -343,6 +356,7 @@ methodmap FRPlayer < CBaseCombatCharacter
 		this.m_flLastMedigunDrainTime = -1.0;
 		this.m_iOpeningCrate = INVALID_ENT_REFERENCE;
 		this.m_hWearableVM = INVALID_ENT_REFERENCE;
+		this.m_nQueuedButtons = 0;
 		this.SetPlayerState(FRPlayerState_Waiting);
 	}
 }
