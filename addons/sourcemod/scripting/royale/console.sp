@@ -18,53 +18,16 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-enum struct CommandListenerData
-{
-	CommandListener callback;
-	char command[64];
-}
-
-static ArrayList g_commandListenerData;
-
 void Console_Init()
 {
-	g_commandListenerData = new ArrayList(sizeof(CommandListenerData));
-	
-	Console_AddCommandListener(CommandListener_DropItem, "dropitem");
-	Console_AddCommandListener(CommandListener_JoinTeam, "jointeam");
-	Console_AddCommandListener(CommandListener_JoinTeam, "autoteam");
-	Console_AddCommandListener(CommandListener_JoinTeam, "spectate");
-	Console_AddCommandListener(CommandListener_Build, "build");
-	Console_AddCommandListener(CommandListener_Destroy, "destroy");
-	Console_AddCommandListener(CommandListener_EurekaTeleport, "eureka_teleport");
-	Console_AddCommandListener(OnCommand_voicemenu, "voicemenu");
-}
-
-void Console_Toggle(bool enable)
-{
-	for (int i = 0; i < g_commandListenerData.Length; i++)
-	{
-		CommandListenerData data;
-		if (g_commandListenerData.GetArray(i, data))
-		{
-			if (enable)
-			{
-				AddCommandListener(data.callback, data.command);
-			}
-			else
-			{
-				RemoveCommandListener(data.callback, data.command);
-			}
-		}
-	}
-}
-
-static void Console_AddCommandListener(CommandListener callback, const char[] command = "")
-{
-	CommandListenerData data;
-	data.callback = callback;
-	strcopy(data.command, sizeof(data.command), command);
-	g_commandListenerData.PushArray(data);
+	PSM_AddCommandListener(CommandListener_DropItem, "dropitem");
+	PSM_AddCommandListener(CommandListener_JoinTeam, "jointeam");
+	PSM_AddCommandListener(CommandListener_JoinTeam, "autoteam");
+	PSM_AddCommandListener(CommandListener_JoinTeam, "spectate");
+	PSM_AddCommandListener(CommandListener_Build, "build");
+	PSM_AddCommandListener(CommandListener_Destroy, "destroy");
+	PSM_AddCommandListener(CommandListener_EurekaTeleport, "eureka_teleport");
+	PSM_AddCommandListener(CommandListener_VoiceMenu, "voicemenu");
 }
 
 static Action CommandListener_DropItem(int client, const char[] command, int argc)
@@ -236,7 +199,7 @@ static Action CommandListener_EurekaTeleport(int client, const char[] command, i
 	return Plugin_Continue;
 }
 
-static Action OnCommand_voicemenu(int client, const char[] command, int argc)
+static Action CommandListener_VoiceMenu(int client, const char[] command, int argc)
 {
 	// Two birds with one stone:
 	// - Allow players to pick up weapons by calling MEDIC!

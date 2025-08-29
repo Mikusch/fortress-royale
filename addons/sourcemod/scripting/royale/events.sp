@@ -20,13 +20,6 @@
 
 #define MAX_EVENT_NAME_LENGTH	32
 
-enum struct EventData
-{
-	char name[MAX_EVENT_NAME_LENGTH];
-	EventHook callback;
-	EventHookMode mode;
-}
-
 static char g_aSoundPlayerKill[][] = 
 {
 	")vo/announcer_dec_kill01.mp3", 
@@ -46,18 +39,14 @@ static char g_aSoundPlayerKill[][] =
 	")vo/announcer_dec_kill15.mp3", 
 };
 
-ArrayList g_Events;
-
 void Events_Init()
 {
-	g_Events = new ArrayList(sizeof(EventData));
-	
-	Events_AddEvent("player_spawn", EventHook_PlayerSpawn);
-	Events_AddEvent("player_death", EventHook_PlayerDeath_Pre, EventHookMode_Pre);
-	Events_AddEvent("player_death", EventHook_PlayerDeath_Post, EventHookMode_Post);
-	Events_AddEvent("player_team", EventHook_PlayerTeam, EventHookMode_Pre);
-	Events_AddEvent("teamplay_round_start", EventHook_TeamplayRoundStart);
-	Events_AddEvent("teamplay_broadcast_audio", EventHook_TeamplayBroadcastAudio, EventHookMode_Pre);
+	PSM_AddEventHook("player_spawn", OnGameEvent_player_spawn);
+	PSM_AddEventHook("player_death", OnGameEvent_player_death, EventHookMode_Pre);
+	PSM_AddEventHook("player_death", OnGameEventPost_player_death, EventHookMode_Post);
+	PSM_AddEventHook("player_team", OnGameEvent_player_team, EventHookMode_Pre);
+	PSM_AddEventHook("teamplay_round_start", OnGameEvent_teamplay_round_start);
+	PSM_AddEventHook("teamplay_broadcast_audio", OnGameEvent_teamplay_broadcast_audio, EventHookMode_Pre);
 }
 
 void Events_Precache()
@@ -68,46 +57,7 @@ void Events_Precache()
 	}
 }
 
-void Events_Toggle(bool enable)
-{
-	for (int i = 0; i < g_Events.Length; i++)
-	{
-		EventData data;
-		if (g_Events.GetArray(i, data))
-		{
-			if (enable)
-			{
-				HookEvent(data.name, data.callback, data.mode);
-			}
-			else
-			{
-				UnhookEvent(data.name, data.callback, data.mode);
-			}
-		}
-	}
-}
-
-static void Events_AddEvent(const char[] name, EventHook callback, EventHookMode mode = EventHookMode_Post)
-{
-	Event event = CreateEvent(name, true);
-	if (event)
-	{
-		event.Cancel();
-		
-		EventData data;
-		strcopy(data.name, sizeof(data.name), name);
-		data.callback = callback;
-		data.mode = mode;
-		
-		g_Events.PushArray(data);
-	}
-	else
-	{
-		LogError("Failed to create event with name %s", name);
-	}
-}
-
-static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
+static void OnGameEvent_player_spawn(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return;
@@ -138,7 +88,7 @@ static void EventHook_PlayerSpawn(Event event, const char[] name, bool dontBroad
 	}
 }
 
-static Action EventHook_PlayerDeath_Pre(Event event, const char[] name, bool dontBroadcast)
+static Action OnGameEvent_player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
@@ -203,7 +153,7 @@ static Action EventHook_PlayerDeath_Pre(Event event, const char[] name, bool don
 	return Plugin_Changed;
 }
 
-static void EventHook_PlayerDeath_Post(Event event, const char[] name, bool dontBroadcast)
+static void OnGameEventPost_player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return;
@@ -306,7 +256,7 @@ static void Timer_MovePlayerToDeadTeam(Handle timer, int userid)
 	TF2_ChangeClientTeam(client, TFTeam_Blue);
 }
 
-static Action EventHook_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
+static Action OnGameEvent_player_team(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	TFTeam team = view_as<TFTeam>(event.GetInt("team"));
@@ -320,7 +270,7 @@ static Action EventHook_PlayerTeam(Event event, const char[] name, bool dontBroa
 	return Plugin_Changed;
 }
 
-static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool dontBroadcast)
+static void OnGameEvent_teamplay_round_start(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return;
@@ -343,7 +293,7 @@ static void EventHook_TeamplayRoundStart(Event event, const char[] name, bool do
 	}
 }
 
-static Action EventHook_TeamplayBroadcastAudio(Event event, const char[] name, bool dontBroadcast)
+static Action OnGameEvent_teamplay_broadcast_audio(Event event, const char[] name, bool dontBroadcast)
 {
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;

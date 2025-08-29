@@ -118,33 +118,6 @@ void BattleBus_OnSetupFinished()
 	}
 }
 
-void BattleBus_OnEntityDestroyed(int entity)
-{
-	if (entity == EntRefToEntIndex(g_hBusPropEnt))
-	{
-		// Stop any lingering sounds when the bus gets destroyed
-		ArrayList sounds = g_battleBusData.sounds;
-		if (sounds)
-		{
-			for (int i = 0; i < sounds.Length; i++)
-			{
-				char szSound[PLATFORM_MAX_PATH];
-				if (sounds.GetString(i, szSound, sizeof(szSound)))
-				{
-					if (PrecacheScriptSound(szSound))
-					{
-						EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
-					}
-					else if (PrecacheSound(szSound))
-					{
-						StopSound(entity, SNDCHAN_STATIC, szSound);
-					}
-				}
-			}
-		}
-	}
-}
-
 bool BattleBus_IsActive()
 {
 	return g_flBusSpawnTime + g_battleBusData.travel_time > GetGameTime();
@@ -257,6 +230,8 @@ static bool BattleBus_InitBusEnt(int bus, Timer func)
 	}
 	
 	g_hBusPropEnt = EntIndexToEntRef(bus);
+	CBaseEntity(g_hBusPropEnt).Hook_UpdateOnRemove(BattleBus_UpdateOnRemove);
+
 	g_flBusSpawnTime = GetGameTime();
 	
 	TeleportEntity(bus, vecOrigin, vecAngles, vecVelocity);
@@ -444,4 +419,30 @@ static int BattleBus_CreateCameraEntity()
 static bool BattleBus_IsValidBus(int entity)
 {
 	return IsValidEntity(entity) && EntIndexToEntRef(EntRefToEntIndex(entity)) == g_hBusPropEnt;
+}
+
+static MRESReturn BattleBus_UpdateOnRemove(int entity)
+{
+	// Stop any lingering sounds when the bus gets destroyed
+	ArrayList sounds = g_battleBusData.sounds;
+	if (sounds)
+	{
+		for (int i = 0; i < sounds.Length; i++)
+		{
+			char szSound[PLATFORM_MAX_PATH];
+			if (sounds.GetString(i, szSound, sizeof(szSound)))
+			{
+				if (PrecacheScriptSound(szSound))
+				{
+					EmitGameSoundToAll(szSound, entity, SND_STOP | SND_STOPLOOPING);
+				}
+				else if (PrecacheSound(szSound))
+				{
+					StopSound(entity, SNDCHAN_STATIC, szSound);
+				}
+			}
+		}
+	}
+
+	return MRES_Ignored;
 }

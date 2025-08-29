@@ -18,7 +18,6 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-#define LIBRARY_TF2ITEMS		"TF2Items"
 #define LIBRARY_FRIENDLYFIRE	"friendlyfire"
 
 #define MAX_WEAPONS				48	// Max number of weapons available

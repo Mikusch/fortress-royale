@@ -28,31 +28,27 @@
 #include <tf2attributes>
 #include <cbasenpc>
 #include <vscript>
-#undef REQUIRE_EXTENSIONS
-#tryinclude <tf2items>
-#define REQUIRE_EXTENSIONS
+#include <tf2items>
+#include <pluginstatemanager>
 
 #define PLUGIN_VERSION	"2.0.0"
 
-ConVar sm_fr_enable;
-ConVar sm_fr_setup_length;
-ConVar sm_fr_truce_duration;
-ConVar sm_fr_crate_open_time;
-ConVar sm_fr_crate_open_range;
-ConVar sm_fr_crate_max_drops;
-ConVar sm_fr_crate_max_extra_drops;
-ConVar sm_fr_max_ammo_boost;
-ConVar sm_fr_parachute_auto_height;
-ConVar sm_fr_fists_damage_multiplier;
-ConVar sm_fr_medigun_damage;
-ConVar sm_fr_dropped_weapon_ammo_percentage;
-ConVar sm_fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
+ConVar fr_setup_length;
+ConVar fr_truce_duration;
+ConVar fr_crate_open_time;
+ConVar fr_crate_open_range;
+ConVar fr_crate_max_drops;
+ConVar fr_crate_max_extra_drops;
+ConVar fr_max_ammo_boost;
+ConVar fr_parachute_auto_height;
+ConVar fr_fists_damage_multiplier;
+ConVar fr_medigun_damage;
+ConVar fr_dropped_weapon_ammo_percentage;
+ConVar fr_health_multiplier[view_as<int>(TFClass_Engineer) + 1];
 
 ConVar mp_disable_respawn_times;
 ConVar spec_freeze_traveltime;
 
-bool g_bEnabled;
-bool g_bTF2Items;
 bool g_bIsMapRunning;
 bool g_bBypassGiveNamedItemHook;
 bool g_bAllowForceRespawn;
@@ -94,37 +90,25 @@ public void OnPluginStart()
 	LoadTranslations("common.phrases");
 	LoadTranslations("royale.phrases");
 	
-	g_bTF2Items = LibraryExists(LIBRARY_TF2ITEMS);
+	GameData gamedata = new GameData("royale");
+	if (!gamedata)
+		SetFailState("Could not find royale gamedata");
 	
+	PSM_Init("fr_enabled", gamedata);
+	PSM_AddPluginStateChangedHook(OnPluginStateChanged);
+
 	FREntity.Init();
 	
 	Console_Init();
 	ConVars_Init();
+	DHooks_Init();
 	Events_Init();
-	SDKHooks_Init();
 	
-	GameData gamedata = new GameData("royale");
-	if (gamedata)
-	{
-		DHooks_Init(gamedata);
-		SDKCalls_Init(gamedata);
-		
-		g_iOffset_CTFDroppedWeapon_m_nAmmo = gamedata.GetOffset("CTFDroppedWeapon::m_nAmmo");
-		
-		delete gamedata;
-	}
-	else
-	{
-		SetFailState("Could not find royale gamedata");
-	}
-}
+	SDKCalls_Init(gamedata);
+	
+	g_iOffset_CTFDroppedWeapon_m_nAmmo = gamedata.GetOffset("CTFDroppedWeapon::m_nAmmo");
 
-public void OnPluginEnd()
-{
-	if (!g_bEnabled)
-		return;
-	
-	TogglePlugin(false);
+	delete gamedata;
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
@@ -136,42 +120,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	}
 	
 	return APLRes_Success;
-}
-
-public void OnLibraryAdded(const char[] name)
-{
-	if (StrEqual(name, LIBRARY_TF2ITEMS))
-	{
-		// Loading TF2Items while our own GiveNamedItem hook is active leads to crashes... abort immediately!
-		if (g_bEnabled && !g_bTF2Items)
-			SetFailState("TF2Items was loaded while Fortress Royale is active!");
-		
-		g_bTF2Items = true;
-	}
-	
-	ConVars_OnLibraryAdded(name);
-}
-
-public void OnLibraryRemoved(const char[] name)
-{
-	if (StrEqual(name, LIBRARY_TF2ITEMS))
-	{
-		g_bTF2Items = false;
-		
-		// If TF2Items is being unloaded, use our own hook instead
-		if (g_bEnabled)
-		{
-			for (int client = 1; client <= MaxClients; client++)
-			{
-				if (!IsClientInGame(client))
-					continue;
-				
-				DHooks_HookGiveNamedItem(client);
-			}
-		}
-	}
-	
-	ConVars_OnLibraryRemoved(name);
 }
 
 public void OnMapStart()
@@ -194,15 +142,12 @@ public void OnMapEnd()
 
 public void OnConfigsExecuted()
 {
-	if (g_bEnabled != sm_fr_enable.BoolValue)
-	{
-		TogglePlugin(sm_fr_enable.BoolValue);
-	}
+	PSM_TogglePluginState();
 }
 
 public void OnGameFrame()
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return;
 	
 	Zone_Think();
@@ -252,7 +197,7 @@ public void OnGameFrame()
 				if (IsValidClient(target) && IsPlayerAlive(target))
 				{
 					float flMult = SDKCall_CTFPlayer_IsCritBoosted(client) ? 3.0 : 1.0;
-					SDKHooks_TakeDamage(target, client, client, sm_fr_medigun_damage.FloatValue * flMult, DMG_ENERGYBEAM);
+					SDKHooks_TakeDamage(target, client, client, fr_medigun_damage.FloatValue * flMult, DMG_ENERGYBEAM);
 					FRPlayer(client).m_flLastMedigunDrainTime = GetGameTime();
 				}
 			}
@@ -275,14 +220,9 @@ public void TF2_OnWaitingForPlayersEnd()
 
 public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDefIndex, Handle &item)
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return Plugin_Continue;
 	
-	return FR_OnGiveNamedItem(client, classname, itemDefIndex);
-}
-
-public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iItemDefIndex)
-{
 	if (g_bBypassGiveNamedItemHook)
 		return Plugin_Continue;
 	
@@ -290,7 +230,7 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 		return Plugin_Continue;
 	
 	TFClassType nClass = TF2_GetPlayerClass(client);
-	int iLoadoutSlot = TF2Econ_GetItemLoadoutSlot(iItemDefIndex, nClass);
+	int iLoadoutSlot = TF2Econ_GetItemLoadoutSlot(itemDefIndex, nClass);
 	
 	if (iLoadoutSlot == -1)
 		return Plugin_Continue;
@@ -312,7 +252,7 @@ public Action FR_OnGiveNamedItem(int client, const char[] szWeaponName, int iIte
 	}
 	
 	// Keep cosmetics and action items (except Grappling Hook)
-	if (iLoadoutSlot > LOADOUT_POSITION_PDA2 && !StrEqual(szWeaponName, "tf_weapon_grapplinghook"))
+	if (iLoadoutSlot > LOADOUT_POSITION_PDA2 && !StrEqual(classname, "tf_weapon_grapplinghook"))
 		return Plugin_Continue;
 	
 	// Remove everything else
@@ -336,44 +276,20 @@ public Action OnClientCommandKeyValues(int client, KeyValues kv)
 
 public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3], float angles[3], int &weapon, int &subtype, int &cmdnum, int &tickcount, int &seed, int mouse[2])
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return Plugin_Continue;
 	
 	if (IsInWaitingForPlayers())
 		return Plugin_Continue;
 	
-	int afButtonChanged = GetEntProp(client, Prop_Data, "m_afButtonPressed") | GetEntProp(client, Prop_Data, "m_afButtonReleased");
-	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonChanged & IN_ATTACK2);
-	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonChanged & IN_ATTACK3);
-	bool bInReload = (buttons & IN_RELOAD && afButtonChanged & IN_RELOAD);
-	bool bInUse = (buttons & IN_USE && afButtonChanged & IN_USE);
-	
-	// Find a crate in range and open it
-	if (OpenCrateInRange(client, buttons))
-		return Plugin_Continue;
-	else
-		FRPlayer(client).StopOpeningCrate();
-	
-	// Ejecting from the bus (only allows +attack3 and +reload)
-	if (bInAttack3 || bInReload || bInUse)
-	{
-		if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus && BattleBus_EjectPlayer(client))
-			return Plugin_Continue;
-	}
-	
-	// Allow picking up weapons with +attack2, +attack3 and +reload
-	if (bInAttack2 || bInAttack3 || bInReload || bInUse)
-	{
-		KeyValues kv = new KeyValues("+use_action_slot_item_server");
-		FakeClientCommandKeyValues(client, kv);
-		delete kv;
-
-		kv = new KeyValues("-use_action_slot_item_server");
-		FakeClientCommandKeyValues(client, kv);
-		delete kv;
-	}
-	
 	Action action = Plugin_Continue;
+
+	if (FRPlayer(client).m_nQueuedButtons != 0)
+	{
+		buttons |= FRPlayer(client).m_nQueuedButtons;
+		FRPlayer(client).m_nQueuedButtons = 0;
+		action = Plugin_Changed;
+	}
 	
 	if (FRPlayer(client).m_bIsParachuting)
 	{
@@ -396,7 +312,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 				TR_GetEndPosition(vecEndPos);
 				
 				// Automatically open parachute a certain distance from the ground
-				if (GetVectorDistance(vecOrigin, vecEndPos) <= sm_fr_parachute_auto_height.FloatValue)
+				if (GetVectorDistance(vecOrigin, vecEndPos) <= fr_parachute_auto_height.FloatValue)
 				{
 					TF2_AddCondition(client, TFCond_Parachute);
 					action = Plugin_Changed;
@@ -408,9 +324,43 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 	return action;
 }
 
+public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float vel[3], const float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, const int mouse[2])
+{
+	int afButtonChanged = GetEntProp(client, Prop_Data, "m_afButtonPressed") | GetEntProp(client, Prop_Data, "m_afButtonReleased");
+	bool bInAttack2 = (buttons & IN_ATTACK2 && afButtonChanged & IN_ATTACK2);
+	bool bInAttack3 = (buttons & IN_ATTACK3 && afButtonChanged & IN_ATTACK3);
+	bool bInReload = (buttons & IN_RELOAD && afButtonChanged & IN_RELOAD);
+	bool bInUse = (buttons & IN_USE && afButtonChanged & IN_USE);
+	
+	// Find a crate in range and open it
+	if (OpenCrateInRange(client, buttons))
+		return;
+	else
+		FRPlayer(client).StopOpeningCrate();
+	
+	// Ejecting from the bus (only allows +attack3 and +reload)
+	if (bInAttack3 || bInReload || bInUse)
+	{
+		if (FRPlayer(client).GetPlayerState() == FRPlayerState_InBattleBus && BattleBus_EjectPlayer(client))
+			return;
+	}
+	
+	// Allow picking up weapons with +attack2, +attack3 and +reload
+	if (bInAttack2 || bInAttack3 || bInReload || bInUse)
+	{
+		KeyValues kv = new KeyValues("+use_action_slot_item_server");
+		FakeClientCommandKeyValues(client, kv);
+		delete kv;
+
+		kv = new KeyValues("-use_action_slot_item_server");
+		FakeClientCommandKeyValues(client, kv);
+		delete kv;
+	}
+}
+
 public void TF2_OnConditionRemoved(int client, TFCond condition)
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return;
 	
 	if (!IsPlayerAlive(client))
@@ -458,7 +408,7 @@ static bool OpenCrateInRange(int client, int buttons)
 	float vecCenter[3];
 	CBaseEntity(client).WorldSpaceCenter(vecCenter);
 	
-	ScaleVector(vecForward, sm_fr_crate_open_range.FloatValue);
+	ScaleVector(vecForward, fr_crate_open_range.FloatValue);
 	AddVectors(vecCenter, vecForward, vecCenter);
 	float vecSize[3] = { 24.0, 24.0, 24.0 };
 	
@@ -485,7 +435,7 @@ static bool EnumerateCrates(int entity, int client)
 
 public void OnClientPutInServer(int client)
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return;
 	
 	FRPlayer(client).Init();
@@ -493,7 +443,7 @@ public void OnClientPutInServer(int client)
 
 public void OnEntityCreated(int entity, const char[] classname)
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return;
 	
 	DHooks_HookEntity(entity, classname);
@@ -502,32 +452,21 @@ public void OnEntityCreated(int entity, const char[] classname)
 
 public void OnEntityDestroyed(int entity)
 {
-	if (!g_bEnabled)
+	if (!PSM_IsEnabled())
 		return;
 	
-	SDKHooks_UnhookEntity(entity);
-	BattleBus_OnEntityDestroyed(entity);
+	PSM_SDKUnhook(entity);
 	
 	if (FREntity.IsEntityTracked(entity))
 		FREntity(entity).Destroy();
 }
 
-void TogglePlugin(bool bEnable)
+static void OnPluginStateChanged(bool bEnabled)
 {
-	g_bEnabled = bEnable;
-	
-	Console_Toggle(bEnable);
-	ConVars_Toggle(bEnable);
-	DHooks_Toggle(bEnable);
-	Events_Toggle(bEnable);
-	
-	SetVariantString(bEnable ? "ForceEnableUpgrades(2)" : "ForceEnableUpgrades(0)");
-	AcceptEntityInput(0, "RunScriptCode");
-	
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "*")) != -1)
 	{
-		if (bEnable)
+		if (bEnabled)
 		{
 			char classname[64];
 			if (!GetEntityClassname(entity, classname, sizeof(classname)))
@@ -537,13 +476,11 @@ void TogglePlugin(bool bEnable)
 		}
 		else
 		{
-			SDKHooks_UnhookEntity(entity);
-			
 			if (FREntity.IsEntityTracked(entity))
 				FREntity(entity).Destroy();
 		}
 	}
-	
+
 	ServerCommand("mp_restartgame_immediate 1");
 }
 
@@ -577,7 +514,7 @@ void OnRoundStart()
 	int timer = CreateEntityByName("team_round_timer");
 	if (IsValidEntity(timer))
 	{
-		DispatchKeyValueFloat(timer, "setup_length", sm_fr_setup_length.FloatValue);
+		DispatchKeyValueFloat(timer, "setup_length", fr_setup_length.FloatValue);
 		DispatchKeyValueInt(timer, "show_in_hud", 1);
 		DispatchKeyValueInt(timer, "start_paused", 0);
 		

@@ -18,173 +18,46 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-enum struct DetourData
-{
-	char name[64];
-	DynamicDetour detour;
-	DHookCallback callback_pre;
-	DHookCallback callback_post;
-}
-
-static ArrayList g_dynamicDetours;
-static ArrayList g_dynamicHookIds;
-
-static DynamicHook g_DHook_CTFPlayer_GiveNamedItem;
 static DynamicHook g_DHook_CBaseCombatCharacter_TakeHealth;
 static DynamicHook g_DHook_CBasePlayer_ForceRespawn;
 static DynamicHook g_DHook_CBaseCombatWeapon_PrimaryAttack;
 static DynamicHook g_DHook_CBaseCombatWeapon_SecondaryAttack;
 
-static int g_iHookIdGiveNamedItem[MAXPLAYERS + 1];
-
 static TFClassType g_nPrevClass;
 
-void DHooks_Init(GameData gamedata)
+void DHooks_Init()
 {
-	g_dynamicDetours = new ArrayList(sizeof(DetourData));
-	g_dynamicHookIds = new ArrayList();
+	g_DHook_CBaseCombatCharacter_TakeHealth = PSM_AddDynamicHookFromConf("CBaseCombatCharacter::TakeHealth");
+	g_DHook_CBasePlayer_ForceRespawn = PSM_AddDynamicHookFromConf("CBasePlayer::ForceRespawn");
+	g_DHook_CBaseCombatWeapon_PrimaryAttack = PSM_AddDynamicHookFromConf("CBaseCombatWeapon::PrimaryAttack");
+	g_DHook_CBaseCombatWeapon_SecondaryAttack = PSM_AddDynamicHookFromConf("CBaseCombatWeapon::SecondaryAttack");
 	
-	g_DHook_CTFPlayer_GiveNamedItem = DHooks_AddDynamicHook(gamedata, "CTFPlayer::GiveNamedItem");
-	g_DHook_CBaseCombatCharacter_TakeHealth = DHooks_AddDynamicHook(gamedata, "CBaseCombatCharacter::TakeHealth");
-	g_DHook_CBasePlayer_ForceRespawn = DHooks_AddDynamicHook(gamedata, "CBasePlayer::ForceRespawn");
-	g_DHook_CBaseCombatWeapon_PrimaryAttack = DHooks_AddDynamicHook(gamedata, "CBaseCombatWeapon::PrimaryAttack");
-	g_DHook_CBaseCombatWeapon_SecondaryAttack = DHooks_AddDynamicHook(gamedata, "CBaseCombatWeapon::SecondaryAttack");
-	
-	DHooks_AddDynamicDetour(gamedata, "CTFDroppedWeapon::Create", DHookCallback_CTFDroppedWeapon_Create_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::PickupWeaponFromOther", DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxAmmo", _, DHookCallback_CTFPlayer_GetMaxAmmo_Post);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GiveAmmo", DHookCallback_CTFPlayer_GiveAmmo_Pre, DHookCallback_CTFPlayer_GiveAmmo_Post);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::GetMaxHealthForBuffing", _, DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::RegenThink", DHookCallback_CTFPlayer_RegenThink_Pre, DHookCallback_CTFPlayer_RegenThink_Post);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayer::DoClassSpecialSkill", DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::CanRecieveMedigunChargeEffect", DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre);
-	DHooks_AddDynamicDetour(gamedata, "CTFPlayerShared::Heal", DHookCallback_CTFPlayerShared_Heal_Pre);
-}
-
-void DHooks_Toggle(bool enable)
-{
-	for (int i = 0; i < g_dynamicDetours.Length; i++)
-	{
-		DetourData data;
-		if (g_dynamicDetours.GetArray(i, data))
-		{
-			DHooks_ToggleDetour(data, enable);
-		}
-	}
-	
-	if (!enable)
-	{
-		// Remove virtual hooks
-		for (int i = g_dynamicHookIds.Length - 1; i >= 0; i--)
-		{
-			int hookid = g_dynamicHookIds.Get(i);
-			DynamicHook.RemoveHook(hookid);
-		}
-		
-		for (int client = 1; client <= MaxClients; client++)
-		{
-			DHooks_UnhookGiveNamedItem(client);
-		}
-	}
+	PSM_AddDynamicDetourFromConf("CTFDroppedWeapon::Create", CTFDroppedWeapon_Create_Pre);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::PickupWeaponFromOther", CTFPlayer_PickupWeaponFromOther_Pre);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::GetMaxAmmo", _, CTFPlayer_GetMaxAmmo_Post);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::GiveAmmo", CTFPlayer_GiveAmmo_Pre, CTFPlayer_GiveAmmo_Post);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::GetMaxHealthForBuffing", _, CTFPlayer_GetMaxHealthForBuffing_Post);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::RegenThink", CTFPlayer_RegenThink_Pre, CTFPlayer_RegenThink_Post);
+	PSM_AddDynamicDetourFromConf("CTFPlayer::DoClassSpecialSkill", CTFPlayer_DoClassSpecialSkill_Pre);
+	PSM_AddDynamicDetourFromConf("CTFPlayerShared::CanRecieveMedigunChargeEffect", CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre);
+	PSM_AddDynamicDetourFromConf("CTFPlayerShared::Heal", CTFPlayerShared_Heal_Pre);
 }
 
 void DHooks_HookEntity(int entity, const char[] classname)
 {
 	if (IsEntityClient(entity))
 	{
-		DHooks_HookGiveNamedItem(entity);
-		DHooks_HookEntityInternal(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, entity, DHookCallback_CBaseCombatCharacter_TakeHealth_Pre);
-		DHooks_HookEntityInternal(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, entity, DHookCallback_CBasePlayer_ForceRespawn_Pre);
+		PSM_DHookEntity(g_DHook_CBaseCombatCharacter_TakeHealth, Hook_Pre, entity, CBaseCombatCharacter_TakeHealth_Pre);
+		PSM_DHookEntity(g_DHook_CBasePlayer_ForceRespawn, Hook_Pre, entity, CBasePlayer_ForceRespawn_Pre);
 	}
 	else if (StrEqual(classname, "tf_weapon_fists"))
 	{
-		DHooks_HookEntityInternal(g_DHook_CBaseCombatWeapon_PrimaryAttack, Hook_Post, entity, DHookCallback_CTFFists_PrimaryAttack_Post);
-		DHooks_HookEntityInternal(g_DHook_CBaseCombatWeapon_SecondaryAttack, Hook_Post, entity, DHookCallback_CTFFists_SecondaryAttack_Post);
+		PSM_DHookEntity(g_DHook_CBaseCombatWeapon_PrimaryAttack, Hook_Post, entity, CTFFists_PrimaryAttack_Post);
+		PSM_DHookEntity(g_DHook_CBaseCombatWeapon_SecondaryAttack, Hook_Post, entity, CTFFists_SecondaryAttack_Post);
 	}
 }
 
-void DHooks_HookGiveNamedItem(int client)
-{
-	if (!g_bTF2Items)
-		g_iHookIdGiveNamedItem[client] = g_DHook_CTFPlayer_GiveNamedItem.HookEntity(Hook_Pre, client, DHookCallback_CTFPlayer_GiveNamedItem_Pre, DHookRemovalCB_OnHookRemoved);
-}
-
-void DHooks_UnhookGiveNamedItem(int client)
-{
-	if (g_iHookIdGiveNamedItem[client])
-	{
-		if (DynamicHook.RemoveHook(g_iHookIdGiveNamedItem[client]))
-		{
-			g_iHookIdGiveNamedItem[client] = 0;
-		}
-	}
-}
-
-static void DHooks_AddDynamicDetour(GameData gamedata, const char[] name, DHookCallback callbackPre = INVALID_FUNCTION, DHookCallback callbackPost = INVALID_FUNCTION)
-{
-	DynamicDetour detour = DynamicDetour.FromConf(gamedata, name);
-	if (detour)
-	{
-		DetourData data;
-		strcopy(data.name, sizeof(data.name), name);
-		data.detour = detour;
-		data.callback_pre = callbackPre;
-		data.callback_post = callbackPost;
-		
-		g_dynamicDetours.PushArray(data);
-	}
-	else
-	{
-		LogError("Failed to create detour setup handle: %s", name);
-	}
-}
-
-static DynamicHook DHooks_AddDynamicHook(GameData gamedata, const char[] name)
-{
-	DynamicHook hook = DynamicHook.FromConf(gamedata, name);
-	if (!hook)
-		LogError("Failed to create hook setup handle for %s", name);
-	
-	return hook;
-}
-
-static void DHooks_HookEntityInternal(DynamicHook hook, HookMode mode, int entity, DHookCallback callback)
-{
-	if (!hook)
-		return;
-	
-	int hookid = hook.HookEntity(mode, entity, callback, DHookRemovalCB_OnHookRemoved);
-	if (hookid != INVALID_HOOK_ID)
-		g_dynamicHookIds.Push(hookid);
-}
-
-static void DHooks_ToggleDetour(DetourData data, bool enable)
-{
-	if (data.callback_pre != INVALID_FUNCTION)
-	{
-		if (enable)
-			data.detour.Enable(Hook_Pre, data.callback_pre);
-		else
-			data.detour.Disable(Hook_Pre, data.callback_pre);
-	}
-	
-	if (data.callback_post != INVALID_FUNCTION)
-	{
-		if (enable)
-			data.detour.Enable(Hook_Post, data.callback_post);
-		else
-			data.detour.Disable(Hook_Post, data.callback_post);
-	}
-}
-
-static void DHookRemovalCB_OnHookRemoved(int hookid)
-{
-	int index = g_dynamicHookIds.FindValue(hookid);
-	if (index != -1)
-		g_dynamicHookIds.Erase(index);
-}
-
-static MRESReturn DHookCallback_CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHookParam params)
+static MRESReturn CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHookParam params)
 {
 	if (IsInWaitingForPlayers())
 		return MRES_Ignored;
@@ -199,7 +72,7 @@ static MRESReturn DHookCallback_CTFDroppedWeapon_Create_Pre(DHookReturn ret, DHo
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, DHookReturn ret, DHookParam params)
+static MRESReturn CTFPlayer_PickupWeaponFromOther_Pre(int player, DHookReturn ret, DHookParam params)
 {
 	int droppedWeapon = params.Get(1);
 	
@@ -301,49 +174,19 @@ static MRESReturn DHookCallback_CTFPlayer_PickupWeaponFromOther_Pre(int player, 
 	return MRES_Supercede;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_GetMaxAmmo_Post(int player, DHookReturn ret, DHookParam params)
+static MRESReturn CTFPlayer_GetMaxAmmo_Post(int player, DHookReturn ret, DHookParam params)
 {
 	if (g_bInGiveAmmo)
 	{
 		// Allow extra ammo from packs
-		ret.Value = RoundToNearest(float(ret.Value) * sm_fr_max_ammo_boost.FloatValue);
+		ret.Value = RoundToNearest(float(ret.Value) * fr_max_ammo_boost.FloatValue);
 		return MRES_Supercede;
 	}
 	
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_GiveNamedItem_Pre(int player, DHookReturn ret, DHookParam params)
-{
-	// If szName is NULL, don't generate an item
-	if (params.IsNull(1))
-	{
-		ret.Value = -1;
-		return MRES_Supercede;
-	}
-	
-	// If pScriptItem is NULL, let it through
-	if (params.IsNull(3))
-	{
-		return MRES_Ignored;
-	}
-	
-	char szName[64];
-	params.GetString(1, szName, sizeof(szName));
-	
-	// CEconItemView::m_iItemDefinitionIndex
-	int iItemDefIndex = params.GetObjectVar(3, 0x4, ObjectValueType_Int) & 0xFFFF;
-	
-	if (FR_OnGiveNamedItem(player, szName, iItemDefIndex) >= Plugin_Handled)
-	{
-		ret.Value = -1;
-		return MRES_Supercede;
-	}
-	
-	return MRES_Ignored;
-}
-
-static MRESReturn DHookCallback_CBaseCombatCharacter_TakeHealth_Pre(int player, DHookReturn ret, DHookParam params)
+static MRESReturn CBaseCombatCharacter_TakeHealth_Pre(int player, DHookReturn ret, DHookParam params)
 {
 	if (g_bInHealthKitTouch)
 	{
@@ -359,7 +202,7 @@ static MRESReturn DHookCallback_CBaseCombatCharacter_TakeHealth_Pre(int player, 
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Pre(int player, DHookReturn ret, DHookParam params)
+static MRESReturn CTFPlayer_GiveAmmo_Pre(int player, DHookReturn ret, DHookParam params)
 {
 	if (params.Get(4) == kAmmoSource_Pickup)
 	{
@@ -369,7 +212,7 @@ static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Pre(int player, DHookReturn r
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Post(int player, DHookReturn ret, DHookParam params)
+static MRESReturn CTFPlayer_GiveAmmo_Post(int player, DHookReturn ret, DHookParam params)
 {
 	if (params.Get(4) == kAmmoSource_Pickup)
 	{
@@ -379,7 +222,7 @@ static MRESReturn DHookCallback_CTFPlayer_GiveAmmo_Post(int player, DHookReturn 
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
+static MRESReturn CBasePlayer_ForceRespawn_Pre(int player)
 {
 	if (IsInWaitingForPlayers())
 		return MRES_Ignored;
@@ -391,7 +234,7 @@ static MRESReturn DHookCallback_CBasePlayer_ForceRespawn_Pre(int player)
 	return MRES_Supercede;
 }
 
-static MRESReturn DHookCallback_CTFFists_PrimaryAttack_Post(int fists)
+static MRESReturn CTFFists_PrimaryAttack_Post(int fists)
 {
 	int owner = GetEntPropEnt(fists, Prop_Send, "m_hOwner");
 	if (IsValidClient(owner))
@@ -402,7 +245,7 @@ static MRESReturn DHookCallback_CTFFists_PrimaryAttack_Post(int fists)
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFFists_SecondaryAttack_Post(int fists)
+static MRESReturn CTFFists_SecondaryAttack_Post(int fists)
 {
 	int owner = GetEntPropEnt(fists, Prop_Send, "m_hOwner");
 	if (IsValidClient(owner))
@@ -413,7 +256,7 @@ static MRESReturn DHookCallback_CTFFists_SecondaryAttack_Post(int fists)
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player, DHookReturn ret)
+static MRESReturn CTFPlayer_GetMaxHealthForBuffing_Post(int player, DHookReturn ret)
 {
 	TFClassType nClass = TF2_GetPlayerClass(player);
 	if (nClass == TFClass_Unknown)
@@ -421,11 +264,11 @@ static MRESReturn DHookCallback_CTFPlayer_GetMaxHealthForBuffing_Post(int player
 	
 	// Increase class maximum health
 	int iMaxHealth = ret.Value;
-	ret.Value = RoundToFloor(iMaxHealth * sm_fr_health_multiplier[nClass].FloatValue);
+	ret.Value = RoundToFloor(iMaxHealth * fr_health_multiplier[nClass].FloatValue);
 	return MRES_Supercede;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_RegenThink_Pre(int player)
+static MRESReturn CTFPlayer_RegenThink_Pre(int player)
 {
 	// Disable passive health regen for Medic
 	if (TF2_GetPlayerClass(player) == TFClass_Medic)
@@ -437,7 +280,7 @@ static MRESReturn DHookCallback_CTFPlayer_RegenThink_Pre(int player)
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_RegenThink_Post(int player)
+static MRESReturn CTFPlayer_RegenThink_Post(int player)
 {
 	if (g_nPrevClass == TFClass_Medic)
 	{
@@ -448,7 +291,7 @@ static MRESReturn DHookCallback_CTFPlayer_RegenThink_Post(int player)
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre(int player, DHookReturn ret)
+static MRESReturn CTFPlayer_DoClassSpecialSkill_Pre(int player, DHookReturn ret)
 {
 	// Don't allow using class special skills with fists
 	if (IsWeaponFists(GetEntPropEnt(player, Prop_Send, "m_hActiveWeapon")))
@@ -460,7 +303,7 @@ static MRESReturn DHookCallback_CTFPlayer_DoClassSpecialSkill_Pre(int player, DH
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre(Address pShared, DHookReturn ret, DHookParam params)
+static MRESReturn CTFPlayerShared_CanRecieveMedigunChargeEffect_Pre(Address pShared, DHookReturn ret, DHookParam params)
 {
 	int client = TF2Util_GetPlayerFromSharedAddress(pShared);
 	
@@ -481,7 +324,7 @@ static MRESReturn DHookCallback_CTFPlayerShared_CanRecieveMedigunChargeEffect_Pr
 	return MRES_Ignored;
 }
 
-static MRESReturn DHookCallback_CTFPlayerShared_Heal_Pre(Address pShared, DHookParam params)
+static MRESReturn CTFPlayerShared_Heal_Pre(Address pShared, DHookParam params)
 {
 	int client = TF2Util_GetPlayerFromSharedAddress(pShared);
 	int healer = params.Get(1);

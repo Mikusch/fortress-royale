@@ -18,202 +18,41 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define COMMAND_MAX_LENGTH	512
-
-enum struct ConVarData
-{
-	char name[COMMAND_MAX_LENGTH];
-	char value[COMMAND_MAX_LENGTH];
-	char initial_value[COMMAND_MAX_LENGTH];
-}
-
-static StringMap g_ConVars;
-
 void ConVars_Init()
 {
-	g_ConVars = new StringMap();
+	fr_setup_length = CreateConVar("fr_setup_length", "15", "Time before the battle bus takes off.");
+	fr_truce_duration = CreateConVar("fr_truce_duration", "60", "Length of the truce period.");
+	fr_crate_open_time = CreateConVar("fr_crate_open_time", "3", "Amount of time to open a crate.");
+	fr_crate_open_range = CreateConVar("fr_crate_open_range", "64", "Range in HU that players may open crates from.");
+	fr_crate_max_drops = CreateConVar("fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
+	fr_crate_max_extra_drops = CreateConVar("fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
+	fr_max_ammo_boost = CreateConVar("fr_max_ammo_boost", "1.5", "Maximum ammo factor that players are allowed to carry.", _, true, 1.0);
+	fr_parachute_auto_height = CreateConVar("fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
+	fr_fists_damage_multiplier = CreateConVar("fr_fists_damage_multiplier", "0.7", "Damage multiplier to starting fists.");
+	fr_medigun_damage = CreateConVar("fr_medigun_damage", "2", "Amount of damage that Medi Guns should deal per tick.");
+	fr_dropped_weapon_ammo_percentage = CreateConVar("fr_dropped_weapon_ammo_percentage", "0.25", "How much of its maximum ammo a dropped weapon should start with.");
 	
-	CreateConVar("sm_fr_version", PLUGIN_VERSION, "Plugin version.", FCVAR_SPONLY | FCVAR_REPLICATED | FCVAR_NOTIFY | FCVAR_DONTRECORD);
-	sm_fr_enable = CreateConVar("sm_fr_enable", "1", "Enable the plugin?");
-	sm_fr_setup_length = CreateConVar("sm_fr_setup_length", "15", "Time before the battle bus takes off.");
-	sm_fr_truce_duration = CreateConVar("sm_fr_truce_duration", "60", "Length of the truce period.");
-	sm_fr_crate_open_time = CreateConVar("sm_fr_crate_open_time", "3", "Amount of time to open a crate.");
-	sm_fr_crate_open_range = CreateConVar("sm_fr_crate_open_range", "64", "Range in HU that players may open crates from.");
-	sm_fr_crate_max_drops = CreateConVar("sm_fr_crate_max_drops", "1", "Maximum amount of drops a player can receive from a crate.");
-	sm_fr_crate_max_extra_drops = CreateConVar("sm_fr_crate_max_extra_drops", "2", "Maximum amount of extra drops a player can receive from a crate.");
-	sm_fr_max_ammo_boost = CreateConVar("sm_fr_max_ammo_boost", "1.5", "Maximum ammo factor that players are allowed to carry.", _, true, 1.0);
-	sm_fr_parachute_auto_height = CreateConVar("sm_fr_parachute_auto_height", "2500", "Minimum height from the ground for parachute to auto-activate.");
-	sm_fr_fists_damage_multiplier = CreateConVar("sm_fr_fists_damage_multiplier", "0.7", "Damage multiplier to starting fists.");
-	sm_fr_medigun_damage = CreateConVar("sm_fr_medigun_damage", "2", "Amount of damage that Medi Guns should deal per tick.");
-	sm_fr_dropped_weapon_ammo_percentage = CreateConVar("sm_fr_dropped_weapon_ammo_percentage", "0.25", "How much of its maximum ammo a dropped weapon should start with.");
-	
-	sm_fr_health_multiplier[TFClass_Scout] = CreateConVar("sm_fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
-	sm_fr_health_multiplier[TFClass_Sniper] = CreateConVar("sm_fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
-	sm_fr_health_multiplier[TFClass_Soldier] = CreateConVar("sm_fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");
-	sm_fr_health_multiplier[TFClass_DemoMan] = CreateConVar("sm_fr_health_multiplier_demoman", "2", "Multiplier to maximum health for Demoman.");
-	sm_fr_health_multiplier[TFClass_Medic] = CreateConVar("sm_fr_health_multiplier_medic", "1.5", "Multiplier to maximum health for Medic.");
-	sm_fr_health_multiplier[TFClass_Heavy] = CreateConVar("sm_fr_health_multiplier_heavy", "1.75", "Multiplier to maximum health for Heavy.");
-	sm_fr_health_multiplier[TFClass_Pyro] = CreateConVar("sm_fr_health_multiplier_pyro", "1.6", "Multiplier to maximum health for Pyro.");
-	sm_fr_health_multiplier[TFClass_Spy] = CreateConVar("sm_fr_health_multiplier_spy", "1.6", "Multiplier to maximum health for Spy.");
-	sm_fr_health_multiplier[TFClass_Engineer] = CreateConVar("sm_fr_health_multiplier_engineer", "1.6", "Multiplier to maximum health for Engineer.");
-	
-	sm_fr_enable.AddChangeHook(ConVarChanged_OnEnableChanged);
+	fr_health_multiplier[TFClass_Scout] = CreateConVar("fr_health_multiplier_scout", "1.6", "Multiplier to maximum health for Scout.");
+	fr_health_multiplier[TFClass_Sniper] = CreateConVar("fr_health_multiplier_sniper", "2", "Multiplier to maximum health for Sniper.");
+	fr_health_multiplier[TFClass_Soldier] = CreateConVar("fr_health_multiplier_soldier", "1.75", "Multiplier to maximum health for Soldier.");
+	fr_health_multiplier[TFClass_DemoMan] = CreateConVar("fr_health_multiplier_demoman", "2", "Multiplier to maximum health for Demoman.");
+	fr_health_multiplier[TFClass_Medic] = CreateConVar("fr_health_multiplier_medic", "1.5", "Multiplier to maximum health for Medic.");
+	fr_health_multiplier[TFClass_Heavy] = CreateConVar("fr_health_multiplier_heavy", "1.75", "Multiplier to maximum health for Heavy.");
+	fr_health_multiplier[TFClass_Pyro] = CreateConVar("fr_health_multiplier_pyro", "1.6", "Multiplier to maximum health for Pyro.");
+	fr_health_multiplier[TFClass_Spy] = CreateConVar("fr_health_multiplier_spy", "1.6", "Multiplier to maximum health for Spy.");
+	fr_health_multiplier[TFClass_Engineer] = CreateConVar("fr_health_multiplier_engineer", "1.6", "Multiplier to maximum health for Engineer.");
 	
 	mp_disable_respawn_times = FindConVar("mp_disable_respawn_times");
 	spec_freeze_traveltime = FindConVar("spec_freeze_traveltime");
 	
-	ConVars_AddConVar("tf_powerup_mode", "1");
-	ConVars_AddConVar("tf_weapon_criticals", "0");
-	ConVars_AddConVar("tf_parachute_maxspeed_xy", "600.0f");
-	ConVars_AddConVar("tf_parachute_maxspeed_z", "-200.0f");
-	ConVars_AddConVar("tf_spawn_glows_duration", "0");
-	ConVars_AddConVar("mp_teams_unbalance_limit", "0");
-	ConVars_AddConVar("mp_autoteambalance", "0");
-	ConVars_AddConVar("mp_scrambleteams_auto", "0");
-	ConVars_AddConVar("mp_forcecamera", "0");
-	ConVars_AddConVar("mp_friendlyfire", "1");
-}
-
-void ConVars_Toggle(bool enable)
-{
-	StringMapSnapshot snapshot = g_ConVars.Snapshot();
-	for (int i = 0; i < snapshot.Length; i++)
-	{
-		int size = snapshot.KeyBufferSize(i);
-		char[] key = new char[size];
-		snapshot.GetKey(i, key, size);
-		
-		if (enable)
-		{
-			ConVars_Enable(key);
-		}
-		else
-		{
-			ConVars_Disable(key);
-		}
-	}
-	delete snapshot;
-}
-
-void ConVars_OnLibraryAdded(const char[] name)
-{
-	if (StrEqual(name, LIBRARY_FRIENDLYFIRE))
-	{
-		ConVars_AddConVar("sm_friendlyfire_medic_allow_healing", "1");
-	}
-}
-
-void ConVars_OnLibraryRemoved(const char[] name)
-{
-	if (StrEqual(name, LIBRARY_FRIENDLYFIRE))
-	{
-		ConVars_RemoveConVar("sm_friendlyfire_medic_allow_healing");
-	}
-}
-
-static void ConVars_AddConVar(const char[] name, const char[] value)
-{
-	ConVar convar = FindConVar(name);
-	if (convar)
-	{
-		// Store convar data
-		ConVarData data;
-		strcopy(data.name, sizeof(data.name), name);
-		strcopy(data.value, sizeof(data.value), value);
-		g_ConVars.SetArray(name, data, sizeof(data));
-		
-		if (g_bEnabled)
-		{
-			ConVars_Enable(name);
-		}
-	}
-	else
-	{
-		LogError("Failed to find convar with name %s", name);
-	}
-}
-
-static void ConVars_RemoveConVar(const char[] name)
-{
-	ConVar convar = FindConVar(name);
-	if (convar)
-	{
-		if (g_bEnabled)
-		{
-			ConVars_Disable(name);
-		}
-		
-		g_ConVars.Remove(name);
-	}
-	else
-	{
-		LogError("Failed to find convar with name %s", name);
-	}
-}
-
-static void ConVars_Enable(const char[] name)
-{
-	ConVarData data;
-	if (g_ConVars.GetArray(name, data, sizeof(data)))
-	{
-		ConVar convar = FindConVar(data.name);
-		
-		// Store the current value so we can later reset the convar to it
-		convar.GetString(data.initial_value, sizeof(data.initial_value));
-		g_ConVars.SetArray(name, data, sizeof(data));
-		
-		// Update the current value
-		convar.SetString(data.value);
-		convar.AddChangeHook(ConVarChanged_OnTrackedConVarChanged);
-	}
-	else
-	{
-		LogError("Failed to enable convar with name %s", name);
-	}
-}
-
-static void ConVars_Disable(const char[] name)
-{
-	ConVarData data;
-	if (g_ConVars.GetArray(name, data, sizeof(data)))
-	{
-		ConVar convar = FindConVar(data.name);
-		
-		g_ConVars.SetArray(name, data, sizeof(data));
-		
-		// Restore the convar value
-		convar.RemoveChangeHook(ConVarChanged_OnTrackedConVarChanged);
-		convar.SetString(data.initial_value);
-	}
-	else
-	{
-		LogError("Failed to disable convar with name %s", name);
-	}
-}
-
-static void ConVarChanged_OnTrackedConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	char[] name = new char[sizeof(ConVarData::name)];
-	convar.GetName(name, sizeof(ConVarData::name));
-	
-	ConVarData data;
-	if (g_ConVars.GetArray(name, data, sizeof(data)))
-	{
-		if (!StrEqual(newValue, data.value))
-		{
-			strcopy(data.initial_value, sizeof(data.initial_value), newValue);
-			g_ConVars.SetArray(name, data, sizeof(data));
-			
-			// Restore our value
-			convar.SetString(data.value);
-		}
-	}
-}
-
-static void ConVarChanged_OnEnableChanged(ConVar convar, const char[] oldValue, const char[] newValue)
-{
-	if (g_bEnabled != convar.BoolValue)
-	{
-		TogglePlugin(convar.BoolValue);
-	}
+	PSM_AddEnforcedConVar("tf_powerup_mode", "1");
+	PSM_AddEnforcedConVar("tf_weapon_criticals", "0");
+	PSM_AddEnforcedConVar("tf_parachute_maxspeed_xy", "600.0f");
+	PSM_AddEnforcedConVar("tf_parachute_maxspeed_z", "-200.0f");
+	PSM_AddEnforcedConVar("tf_spawn_glows_duration", "0");
+	PSM_AddEnforcedConVar("mp_teams_unbalance_limit", "0");
+	PSM_AddEnforcedConVar("mp_autoteambalance", "0");
+	PSM_AddEnforcedConVar("mp_scrambleteams_auto", "0");
+	PSM_AddEnforcedConVar("mp_forcecamera", "0");
+	PSM_AddEnforcedConVar("mp_friendlyfire", "1");
 }

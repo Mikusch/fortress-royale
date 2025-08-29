@@ -85,7 +85,6 @@ methodmap FREntity < CBaseEntity
 		if (this.m_listIndex == -1)
 			return;
 		
-		// Remove the entry from local storage
 		g_entityProperties.Erase(this.m_listIndex);
 	}
 	

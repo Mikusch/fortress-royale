@@ -74,7 +74,7 @@
 			{
 				"library"	"server"
 				"linux"		"@_ZN9CTFPlayer22GetMaxHealthForBuffingEv"
-				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x53\x56\x57\x8B\xF9\xFF\xB7\xC8\x22\x00\x00"
+				"windows"	"\x55\x8B\xEC\x83\xEC\x20\x53\x56\x57\x8B\xF9\xFF\xB7\xD0\x22\x00\x00"
 			}
 			"CTFPlayer::RegenThink"
 			{
@@ -344,32 +344,6 @@
 					"pHealScorer"
 					{
 						"type"	"cbaseentity"
-					}
-				}
-			}
-			"CTFPlayer::GiveNamedItem"
-			{
-				"offset"	"CTFPlayer::GiveNamedItem"
-				"hooktype"	"entity"
-				"return"	"cbaseentity"
-				"this"		"entity"
-				"arguments"
-				{
-					"pszName"
-					{
-						"type"	"charptr"
-					}
-					"iSubType"
-					{
-						"type"	"int"
-					}
-					"pScriptItem"
-					{
-						"type"	"objectptr"
-					}
-					"bForce"
-					{
-						"type"	"bool"
 					}
 				}
 			}

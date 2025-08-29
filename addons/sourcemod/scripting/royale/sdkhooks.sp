@@ -18,72 +18,31 @@
 #pragma newdecls required
 #pragma semicolon 1
 
-enum struct SDKHookData
-{
-	int ref;
-	SDKHookType type;
-	SDKHookCB callback;
-}
-
-static ArrayList g_hookData;
-
-void SDKHooks_Init()
-{
-	g_hookData = new ArrayList(sizeof(SDKHookData));
-}
-
 void SDKHooks_HookEntity(int entity, const char[] classname)
 {
 	if (IsEntityClient(entity))
 	{
-		SDKHooks_HookEntityInternal(entity, SDKHook_WeaponEquipPost, SDKHookCB_Client_WeaponEquipPost);
-		SDKHooks_HookEntityInternal(entity, SDKHook_WeaponSwitchPost, SDKHookCB_Client_WeaponSwitchPost);
-		SDKHooks_HookEntityInternal(entity, SDKHook_ShouldCollide, SDKHookCB_Client_ShouldCollide);
-		SDKHooks_HookEntityInternal(entity, SDKHook_OnTakeDamage, SDKHookCB_Client_OnTakeDamage);
+		PSM_SDKHook(entity, SDKHook_WeaponEquipPost, CTFPlayer_WeaponEquipPost);
+		PSM_SDKHook(entity, SDKHook_WeaponSwitchPost, CTFPlayer_WeaponSwitchPost);
+		PSM_SDKHook(entity, SDKHook_ShouldCollide, CTFPlayer_ShouldCollide);
+		PSM_SDKHook(entity, SDKHook_OnTakeDamage, CTFPlayer_OnTakeDamage);
 	}
 	else if (StrEqual(classname, "tf_player_manager"))
 	{
-		SDKHooks_HookEntityInternal(entity, SDKHook_ThinkPost, SDKHookCB_CTFPlayerResource_ThinkPost);
+		PSM_SDKHook(entity, SDKHook_ThinkPost, CTFPlayerResource_ThinkPost);
 	}
 	else if (!strncmp(classname, "prop_", 5))
 	{
-		SDKHooks_HookEntityInternal(entity, SDKHook_SpawnPost, SDKHookCB_PropDynamic_SpawnPost);
+		PSM_SDKHook(entity, SDKHook_SpawnPost, CDynamicProp_SpawnPost);
 	}
 	else if (!strncmp(classname, "item_healthkit_", 15))
 	{
-		SDKHooks_HookEntityInternal(entity, SDKHook_Touch, SDKHookCB_ItemHealthKit_Touch);
-		SDKHooks_HookEntityInternal(entity, SDKHook_TouchPost, SDKHookCB_ItemHealthKit_TouchPost);
+		PSM_SDKHook(entity, SDKHook_Touch, CHealthKit_Touch);
+		PSM_SDKHook(entity, SDKHook_TouchPost, CHealthKit_TouchPost);
 	}
 }
 
-void SDKHooks_UnhookEntity(int entity)
-{
-	int ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
-	
-	for (int i = g_hookData.Length - 1; i >= 0; i--)
-	{
-		SDKHookData data;
-		if (g_hookData.GetArray(i, data) && ref == data.ref)
-		{
-			SDKUnhook(data.ref, data.type, data.callback);
-			g_hookData.Erase(i);
-		}
-	}
-}
-
-static void SDKHooks_HookEntityInternal(int entity, SDKHookType type, SDKHookCB callback)
-{
-	SDKHookData data;
-	data.ref = IsValidEdict(entity) ? EntIndexToEntRef(entity) : entity;
-	data.type = type;
-	data.callback = callback;
-	
-	g_hookData.PushArray(data);
-	
-	SDKHook(entity, type, callback);
-}
-
-static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
+static void CTFPlayer_WeaponEquipPost(int client, int weapon)
 {
 	if (ShouldUseCustomViewModel(client, weapon))
 	{
@@ -93,7 +52,7 @@ static void SDKHookCB_Client_WeaponEquipPost(int client, int weapon)
 	}
 }
 
-static void SDKHookCB_Client_WeaponSwitchPost(int client, int weapon)
+static void CTFPlayer_WeaponSwitchPost(int client, int weapon)
 {
 	if (ShouldUseCustomViewModel(client, weapon))
 	{
@@ -114,7 +73,7 @@ static void SDKHookCB_Client_WeaponSwitchPost(int client, int weapon)
 	}
 }
 
-static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
+static bool CTFPlayer_ShouldCollide(int entity, int collisiongroup, int contentsmask, bool originalResult)
 {
 	// Avoid getting stuck in players while parachuting
 	if (collisiongroup == COLLISION_GROUP_PLAYER_MOVEMENT && FRPlayer(entity).m_bIsParachuting)
@@ -123,7 +82,7 @@ static bool SDKHookCB_Client_ShouldCollide(int entity, int collisiongroup, int c
 	return originalResult;
 }
 
-static Action SDKHookCB_Client_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
+static Action CTFPlayer_OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype)
 {
 	if (victim != attacker && IsValidClient(attacker))
 	{
@@ -131,7 +90,7 @@ static Action SDKHookCB_Client_OnTakeDamage(int victim, int &attacker, int &infl
 		int weapon = GetEntPropEnt(attacker, Prop_Send, "m_hActiveWeapon");
 		if (IsWeaponFists(weapon))
 		{
-			damage *= sm_fr_fists_damage_multiplier.FloatValue;
+			damage *= fr_fists_damage_multiplier.FloatValue;
 			return Plugin_Changed;
 		}
 	}
@@ -139,7 +98,7 @@ static Action SDKHookCB_Client_OnTakeDamage(int victim, int &attacker, int &infl
 	return Plugin_Continue;
 }
 
-static void SDKHookCB_CTFPlayerResource_ThinkPost(int entity)
+static void CTFPlayerResource_ThinkPost(int entity)
 {
 	for (int client = 1; client <= MaxClients; client++)
 	{
@@ -150,7 +109,7 @@ static void SDKHookCB_CTFPlayerResource_ThinkPost(int entity)
 	}
 }
 
-static void SDKHookCB_PropDynamic_SpawnPost(int entity)
+static void CDynamicProp_SpawnPost(int entity)
 {
 	if (!g_bIsMapRunning || !IsInWaitingForPlayers())
 		return;
@@ -162,14 +121,14 @@ static void SDKHookCB_PropDynamic_SpawnPost(int entity)
 	}
 }
 
-static Action SDKHookCB_ItemHealthKit_Touch(int entity, int other)
+static Action CHealthKit_Touch(int entity, int other)
 {
 	g_bInHealthKitTouch = true;
 	
 	return Plugin_Continue;
 }
 
-static void SDKHookCB_ItemHealthKit_TouchPost(int entity, int other)
+static void CHealthKit_TouchPost(int entity, int other)
 {
 	g_bInHealthKitTouch = false;
 }
