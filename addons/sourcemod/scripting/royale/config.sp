@@ -281,6 +281,7 @@ enum struct WeaponData
 	int defindex;
 	char world_model[PLATFORM_MAX_PATH];
 	ArrayList reskins;
+	StringMap attributes;
 	
 	void Parse(KeyValues kv)
 	{
@@ -310,12 +311,33 @@ enum struct WeaponData
 				}
 				kv.GoBack();
 			}
+			
+			if (kv.JumpToKey("attributes", false))
+			{
+				this.attributes = new StringMap();
+				if (kv.GotoFirstSubKey(false))
+				{
+					do
+					{
+						char key[CONFIG_FIELD_MAX_LENGTH];
+						if (kv.GetSectionName(key, sizeof(key)))
+						{
+							float value = kv.GetFloat(NULL_STRING);
+							this.attributes.SetValue(key, value);
+						}
+					}
+					while (kv.GotoNextKey(false));
+					kv.GoBack();
+				}
+				kv.GoBack();
+			}
 		}
 	}
 	
 	void Delete()
 	{
 		delete this.reskins;
+		delete this.attributes;
 	}
 }
 
@@ -643,4 +665,32 @@ bool Config_CreateItem(int client, int crate, ItemData item)
 	}
 	
 	return true;
+}
+
+void Config_ApplyWeaponAttributes(int weapon, int iItemDefIndex)
+{
+	if (!IsValidEntity(weapon))
+		return;
+	
+	WeaponData data;
+	if (!Config_GetWeaponDataByDefIndex(iItemDefIndex, data))
+		return;
+	
+	if (data.attributes == null)
+		return;
+	
+	// Apply each attribute from the weapon config
+	StringMapSnapshot snapshot = data.attributes.Snapshot();
+	for (int i = 0; i < snapshot.Length; i++)
+	{
+		char szAttribute[256];
+		snapshot.GetKey(i, szAttribute, sizeof(szAttribute));
+		
+		float flValue;
+		if (data.attributes.GetValue(szAttribute, flValue))
+		{
+			TF2Attrib_SetByName(weapon, szAttribute, flValue);
+		}
+	}
+	delete snapshot;
 }

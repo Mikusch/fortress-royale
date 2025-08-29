@@ -259,6 +259,11 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int itemDef
 	return Plugin_Handled;
 }
 
+public void TF2Items_OnGiveNamedItem_Post(int client, char[] classname, int itemDefIndex, int level, int quality, int entity)
+{
+	Config_ApplyWeaponAttributes(entity, itemDefIndex);
+}
+
 public Action OnClientCommandKeyValues(int client, KeyValues kv)
 {
 	char section[32];
