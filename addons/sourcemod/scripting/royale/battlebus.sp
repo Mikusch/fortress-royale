@@ -115,6 +115,7 @@ void BattleBus_OnSetupFinished()
 		FRPlayer(client).SetPlayerState(FRPlayerState_InBattleBus);
 		
 		SetClientViewEntity(client, camera);
+		PrintKeyHintText(client, "%t", "BattleBus_HowToDrop");
 	}
 }
 

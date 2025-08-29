@@ -21,6 +21,10 @@
 	{
 		"en"		"Incoming special supply drop from the sky!"
 	}
+	"BattleBus_HowToDrop"
+	{
+		"en"		"%%+voicemenu 0 0%% EJECT FROM CARRIER"
+	}
 	"MatchEnd_Stalemate"
 	{
 		"en"		"Stalemate! You are all losers!"

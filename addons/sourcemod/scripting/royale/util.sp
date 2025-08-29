@@ -580,3 +580,15 @@ bool FClassnameIs(int entity, const char[] szClassname)
 	char m_iClassname[64];
 	return GetEntityClassname(entity, m_iClassname, sizeof(m_iClassname)) && StrEqual(szClassname, m_iClassname);
 }
+
+void PrintKeyHintText(int client, const char[] format, any...)
+{
+	char buffer[256];
+	SetGlobalTransTarget(client);
+	VFormat(buffer, sizeof(buffer), format, 3);
+	
+	BfWrite bf = UserMessageToBfWrite(StartMessageOne("KeyHintText", client));
+	bf.WriteByte(1);	// One message
+	bf.WriteString(buffer);
+	EndMessage();
+}
