@@ -501,8 +501,8 @@ static void Zone_CalculateNewPosition()
 	if (phase.moves_zone)
 	{
 		// Don't allow moving zones to travel across the whole map
-		flMinOffset = flCurrentDiameter / 2.0;
-		flMaxOffset = flCurrentDiameter * 2.0;
+		flMinOffset = flCurrentDiameter / 4.0;
+		flMaxOffset = flCurrentDiameter * 1.5;
 	}
 	else
 	{
