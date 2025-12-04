@@ -486,7 +486,10 @@ static void OnPluginStateChanged(bool bEnabled)
 		}
 	}
 
-	ServerCommand("mp_restartgame_immediate 1");
+	if (GameRules_GetRoundState() >= RoundState_Preround && !GameRules_GetProp("m_bInWaitingForPlayers"))
+	{
+		ServerCommand("mp_restartgame_immediate 1");
+	}
 }
 
 void OnRoundStart()
